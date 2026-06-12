@@ -157,6 +157,7 @@ dbt/Lightdash **erfassen nichts** — sie rechnen/zeigen. Erfassung passiert in 
 - **Management-Controlling** (DB/Forecast), **keine doppelte Buchführung/Bilanz** — statutarische GuV + DATEV bleiben die „Naht" zur FiBu (Ist-Gemeinkosten später via dlt).
 - **Echtzeit-/operative HubSpot↔Vendure-Flows** (Deal-Won → Vendure-Auftrag, Webhooks) sind operativ und gehören in die n8n/Quarkus-Flow-Orchestrierung — hier **nicht** Teil des Forecast-Showcase.
 - **Airbyte** nur als designierte Ausbaustufe für *breite* Enterprise-Integration (viele Quellen) — im Showcase bewusst dlt.
+- **Operative Seminarverwaltung ausgegliedert:** Durchführung/Dozent/Raum/Teilnehmer + die MDM-Verwaltungsmasken liegen im eigenen **[Formularverwaltung-Showcase](../formularverwaltung-planung/)** (Quarkus-`seminar`-Service + Vue-Cockpit). Die **Kostendeckung je Durchführung** (Re-Grain `fct_seminar_db` Grain → Durchführung, neuer Mart `fct_seminar_run_utilization`, Erlös am Session-Datum) ist designierte **Erweiterung dieses Controllings**, getriggert über dessen Datenvertrag (Schema `seminar` + `order_line.seminarRunId`).
 
 ## 8. Externe Abhängigkeiten (wie Stripe/Keycloak im Shop)
 
