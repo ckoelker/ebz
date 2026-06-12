@@ -38,4 +38,11 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
     GRANT SELECT ON TABLES TO "${READER_USER}";
 EOSQL
 
+# PG15+: der DB-Owner besitzt NICHT automatisch das public-Schema (kein CREATE).
+# Damit die Owner-User ihre Tabellen anlegen können, public-Schema je Warehouse-DB übertragen.
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
+  -c "ALTER SCHEMA public OWNER TO \"${CONTROLLING_USER}\";"
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${LIGHTDASH_DB}" \
+  -c "ALTER SCHEMA public OWNER TO \"${LIGHTDASH_USER}\";"
+
 echo "initdb: DBs 'controlling' + 'lightdash' und User (controlling/lightdash/${READER_USER}) sichergestellt."

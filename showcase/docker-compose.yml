@@ -121,5 +121,32 @@ services:
     ports:
       - "${ADMINER_PORT:-8082}:8080"
 
+  # ── Controlling (M1+) — nur mit Profil `controlling` gestartet ──
+  #   docker compose --profile controlling up -d --build
+  # So bleibt der Shop-Stack schlank; die Integration wird nur bei Bedarf gebaut.
+
+  # HubSpot-Ingestion (Camel Quarkus + LangChain4j/OpenAI) → Warehouse-DB `controlling`.
+  # KI-Anreicherung via OpenAI (AVV/DPA vorhanden); ohne OPENAI_API_KEY → regelbasierter Fallback.
+  integration:
+    build: ./integration
+    profiles: ["controlling"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      CONTROLLING_DB: ${CONTROLLING_DB:-controlling}
+      CONTROLLING_USER: ${CONTROLLING_USER:-controlling}
+      CONTROLLING_PASSWORD: ${CONTROLLING_PASSWORD:-controlling}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4o-mini}
+      # Default Fixture-Mock; auf 'hubspot' setzen (+ HUBSPOT_TOKEN) für Real-Modus.
+      INGESTION_SOURCE: ${INGESTION_SOURCE:-fixture}
+      HUBSPOT_TOKEN: ${HUBSPOT_TOKEN:-}
+    ports:
+      - "${INTEGRATION_PORT:-8090}:8090"
+
 volumes:
   postgres_data:

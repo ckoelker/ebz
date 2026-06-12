@@ -1,0 +1,70 @@
+{
+  "_comment": "Mock einer HubSpot CRM v3 Deals-Antwort (results[].properties). Default-Quelle des M1-Showcase ohne HUBSPOT_TOKEN. Enthält bewusst Negativfälle: 2004 = falsche Pipeline (L6-Filter), 2005 = Fremdwährung (EUR-Erzwingung). 2003 = gewonnen (landet, dbt trennt offen/gewonnen via L2).",
+  "results": [
+    {
+      "id": "2001",
+      "properties": {
+        "dealname": "Inhouse-Seminar Führungskräfteentwicklung – Müller GmbH & Co. KG",
+        "amount": "12500.00",
+        "deal_currency_code": "EUR",
+        "dealstage": "presentationscheduled",
+        "pipeline": "inhouse",
+        "company": "Müller GmbH & Co. KG",
+        "description": "Zweitägiges Inhouse-Training für 14 Führungskräfte zu Mitarbeiterführung und Konfliktmanagement. Termin Q3, Räume beim Kunden.",
+        "hs_lastmodifieddate": "2026-05-20T10:15:00Z"
+      }
+    },
+    {
+      "id": "2002",
+      "properties": {
+        "dealname": "Compliance-Schulung DSGVO (inhouse) – Krause & Partner mbB",
+        "amount": "4800.00",
+        "deal_currency_code": "EUR",
+        "dealstage": "qualifiedtobuy",
+        "pipeline": "inhouse",
+        "company": "Krause und Partner mbB Rechtsanwälte",
+        "description": "Pflichtschulung Datenschutz für die gesamte Kanzlei, ca. 30 Teilnehmer, Webinar-Format gewünscht.",
+        "hs_lastmodifieddate": "2026-06-02T08:40:00Z"
+      }
+    },
+    {
+      "id": "2003",
+      "properties": {
+        "dealname": "Inhouse IT-Security-Awareness – Nordbau AG",
+        "amount": "9900.00",
+        "deal_currency_code": "EUR",
+        "dealstage": "closedwon",
+        "pipeline": "inhouse",
+        "company": "Nordbau Aktiengesellschaft",
+        "description": "Awareness-Programm Phishing/Passwortsicherheit für 120 Mitarbeitende, drei Standorte.",
+        "hs_lastmodifieddate": "2026-06-09T16:05:00Z"
+      }
+    },
+    {
+      "id": "2004",
+      "properties": {
+        "dealname": "Offenes Seminar Projektmanagement (Frühjahr)",
+        "amount": "1800.00",
+        "deal_currency_code": "EUR",
+        "dealstage": "qualifiedtobuy",
+        "pipeline": "default",
+        "company": "Diverse Einzelbucher",
+        "description": "Offenes Seminar, Einzelanmeldungen – NICHT Inhouse (muss von der Ingestion gefiltert werden).",
+        "hs_lastmodifieddate": "2026-06-01T11:00:00Z"
+      }
+    },
+    {
+      "id": "2005",
+      "properties": {
+        "dealname": "Inhouse Leadership Workshop – Helvetia Trading SA",
+        "amount": "8200.00",
+        "deal_currency_code": "CHF",
+        "dealstage": "presentationscheduled",
+        "pipeline": "inhouse",
+        "company": "Helvetia Trading SA",
+        "description": "Fremdwährung CHF – muss verworfen werden (Warehouse erzwingt EUR, L6/L17).",
+        "hs_lastmodifieddate": "2026-06-05T09:30:00Z"
+      }
+    }
+  ]
+}
