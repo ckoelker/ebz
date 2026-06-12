@@ -5,8 +5,18 @@
   "registrationAllowed": false,
   "loginWithEmailAllowed": true,
   "roles": {
-    "realm": [{ "name": "staff", "description": "EBZ Mitarbeiter:in" }]
+    "realm": [
+      { "name": "staff", "description": "EBZ Mitarbeiter:in" },
+      { "name": "controlling", "description": "Darf Controlling/Unternehmens-GuV sehen (L23: Gehälter in Gemeinkosten)" }
+    ]
   },
+  "groups": [
+    {
+      "name": "controlling",
+      "path": "/controlling",
+      "realmRoles": ["controlling"]
+    }
+  ],
   "clients": [
     {
       "clientId": "staff-frontend",
@@ -22,6 +32,36 @@
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:5173/*"
       }
+    },
+    {
+      "clientId": "lightdash",
+      "name": "Lightdash BI (Controlling)",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "lightdash-dev-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "redirectUris": ["http://localhost:8084/*"],
+      "webOrigins": ["http://localhost:8084", "+"],
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8084/*"
+      },
+      "protocolMappers": [
+        {
+          "name": "groups",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-group-membership-mapper",
+          "consentRequired": false,
+          "config": {
+            "full.path": "false",
+            "id.token.claim": "true",
+            "access.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "claim.name": "groups"
+          }
+        }
+      ]
     }
   ],
   "users": [
@@ -33,6 +73,17 @@
       "firstName": "Stefan",
       "lastName": "Mitarbeiter",
       "credentials": [{ "type": "password", "value": "staff", "temporary": false }],
+      "realmRoles": ["staff"],
+      "groups": ["/controlling"]
+    },
+    {
+      "username": "staff2",
+      "email": "staff2@ebz.de",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Sabine",
+      "lastName": "Sachbearbeitung",
+      "credentials": [{ "type": "password", "value": "staff2", "temporary": false }],
       "realmRoles": ["staff"]
     }
   ]

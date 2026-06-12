@@ -19,6 +19,9 @@ import org.jboss.logging.Logger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.quarkus.arc.Arc;
+import io.quarkus.arc.ManagedContext;
+
 import de.netzfactor.ebz.controlling.integration.enrichment.DealEnricher;
 import de.netzfactor.ebz.controlling.integration.model.HubSpotDeal;
 import de.netzfactor.ebz.controlling.integration.model.RawDeal;
@@ -54,6 +57,26 @@ public class IngestionService {
 
     @Transactional
     public IngestionResult ingest() {
+        // Der Camel-Timer-Thread hat — anders als der REST-Pfad — keinen aktiven CDI-Request-Kontext.
+        // Der LangChain4j-AiService (@RegisterAiService, request-scoped) liefe sonst in eine
+        // ContextNotActiveException → regelbasierter Fallback statt LLM. Daher den Request-Kontext
+        // für die Dauer des Laufs aktivieren (auf dem REST-Pfad ist er bereits aktiv → nichts tun).
+        ManagedContext requestContext = Arc.container().requestContext();
+        boolean activatedHere = false;
+        if (!requestContext.isActive()) {
+            requestContext.activate();
+            activatedHere = true;
+        }
+        try {
+            return doIngest();
+        } finally {
+            if (activatedHere) {
+                requestContext.terminate();
+            }
+        }
+    }
+
+    private IngestionResult doIngest() {
         String raw = dealSource.fetchDealsJson();
         int fetched = 0, skipped = 0, upserted = 0, reused = 0, viaLlm = 0, viaFallback = 0, review = 0;
 

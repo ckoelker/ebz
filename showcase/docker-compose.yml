@@ -110,6 +110,15 @@ services:
       KC_HTTP_ENABLED: "true"
     ports:
       - "${KEYCLOAK_PORT:-8088}:8080"
+      # Zusätzlicher Port für die EINE OIDC-URL, die Browser UND Container teilen
+      # (M4): http://keycloak.localhost:8080 — Browser lösen *.localhost→127.0.0.1
+      # auf (RFC 6761), Container über den Netz-Alias unten. So bleibt die Shop-SSO
+      # auf localhost:8088 unangetastet, ohne hosts-Datei-Eingriff.
+      - "8080:8080"
+    networks:
+      default:
+        aliases:
+          - keycloak.localhost
     volumes:
       - ./vendure/keycloak/realms:/opt/keycloak/data/import:ro
 
@@ -145,8 +154,55 @@ services:
       # Default Fixture-Mock; auf 'hubspot' setzen (+ HUBSPOT_TOKEN) für Real-Modus.
       INGESTION_SOURCE: ${INGESTION_SOURCE:-fixture}
       HUBSPOT_TOKEN: ${HUBSPOT_TOKEN:-}
+      # L6-Filter: HubSpot-Pipeline-ID der Inhouse-Deals. Echte Default-Pipeline = `default`
+      # (Label „Sales Pipeline"); der Fixture-Mock nutzt `inhouse`.
+      HUBSPOT_INHOUSE_PIPELINE: ${HUBSPOT_INHOUSE_PIPELINE:-inhouse}
     ports:
       - "${INTEGRATION_PORT:-8090}:8090"
+
+  # Lightdash (Self-Serve-BI) auf die dbt-Marts (Schema `analytics` in DB `controlling`).
+  # Metadaten in eigener DB `lightdash` (eigener User) desselben Postgres. Zugang NUR
+  # über Keycloak-OIDC (Realm `ebz-staff`, Client `lightdash`). Profil `controlling`.
+  lightdash:
+    image: lightdash/lightdash:0.3059.0
+    profiles: ["controlling"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Metadaten-DB (eigene DB + User im gemeinsamen Postgres)
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGUSER: ${LIGHTDASH_USER:-lightdash}
+      PGPASSWORD: ${LIGHTDASH_PASSWORD:-lightdash}
+      PGDATABASE: ${LIGHTDASH_DB:-lightdash}
+      LIGHTDASH_SECRET: ${LIGHTDASH_SECRET:-lightdash-dev-secret-change-me}
+      SITE_URL: http://localhost:${LIGHTDASH_PORT:-8084}
+      PORT: "8080"
+      NODE_ENV: production
+      SECURE_COOKIES: "false"
+      TRUST_PROXY: "false"
+      # dbt-Projekt (gemountet) — Lightdash kompiliert daraus die semantische Schicht.
+      DBT_PROJECT_DIR: /usr/app/dbt
+      # ── Keycloak-OIDC (Realm ebz-staff, Client lightdash) ──
+      # Eine URL für Browser (Redirect) UND Container (Token/Discovery): keycloak.localhost:8080.
+      AUTH_OIDC_CLIENT_ID: lightdash
+      AUTH_OIDC_CLIENT_SECRET: ${LIGHTDASH_OIDC_SECRET:-lightdash-dev-secret}
+      AUTH_OIDC_METADATA_DOCUMENT_URL: http://keycloak.localhost:8080/realms/ebz-staff/.well-known/openid-configuration
+      AUTH_OIDC_AUTH_METHOD: client_secret_post
+      AUTH_OIDC_SCOPES: "profile email"
+      # Beim ersten Login Nutzer per E-Mail anlegen/verknüpfen (JIT-Provisioning).
+      AUTH_ENABLE_OIDC_TO_EMAIL_LINKING: "true"
+      # SSO-Gruppen → Lightdash-Gruppen (L23: Sichtbarkeit der Unternehmens-GuV).
+      AUTH_ENABLE_GROUP_SYNC: "true"
+      # L21: Passwort-Login bleibt für den Bootstrap zunächst AN; nach dem ersten
+      # SSO-Admin-Login auf "true" setzen (SSO-Zwang) und neu hochfahren.
+      AUTH_DISABLE_PASSWORD_AUTHENTICATION: ${LIGHTDASH_DISABLE_PW:-false}
+    volumes:
+      - ./dbt:/usr/app/dbt
+    ports:
+      - "${LIGHTDASH_PORT:-8084}:8080"
 
 volumes:
   postgres_data:
