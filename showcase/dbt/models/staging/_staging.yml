@@ -15,9 +15,10 @@ models:
         data_tests: [unique, not_null]
       - name: status
         data_tests:
+          # Plain-Syntax (statt 1.11-`arguments:`) für max. Kompatibilität mit dem
+          # von Lightdash gebündelten dbt (M4); unser dbt 1.11 warnt nur (Deprecation).
           - accepted_values:
-              arguments:
-                values: ['scheduled', 'invoiced']
+              values: ['scheduled', 'invoiced']
   - name: stg_vendure_seminar_cost
     columns:
       - name: cost_id
@@ -29,5 +30,4 @@ models:
       - name: currency
         data_tests:
           - accepted_values:
-              arguments:
-                values: ['EUR']
+              values: ['EUR']

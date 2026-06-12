@@ -3,45 +3,157 @@ version: 2
 models:
   - name: fct_seminar_db
     description: "Seminar-Deckungsbeitrag + Break-even je Variante (DB I/II/Ergebnis)."
+    meta:
+      label: "Seminar-Deckungsbeitrag"
+      primary_key: product_variant_id
     columns:
       - name: product_variant_id
+        description: "Seminar-Produktvariante"
         data_tests: [unique, not_null]
-      - name: revenue_net_cents
-        data_tests: [not_null]
+        meta:
+          dimension:
+            type: string
+            label: "Seminar-Variante"
       - name: participants
+        description: "Teilnehmer:innen (platzierte Buchungen)"
         data_tests: [not_null]
+        meta:
+          dimension:
+            type: number
+            label: "Teilnehmer:innen"
+          metrics:
+            total_participants:
+              type: sum
+              label: "Teilnehmer gesamt"
+      - name: break_even_participants
+        description: "Break-even-Teilnehmerzahl (Ergebnis = 0)"
+        meta:
+          dimension:
+            type: number
+            label: "Break-even (TN)"
+      - name: revenue_net_eur
+        description: "Umsatz netto (€)"
+        data_tests: [not_null]
+        meta:
+          metrics:
+            total_revenue:
+              type: sum
+              label: "Umsatz (netto, €)"
+      - name: db1_eur
+        meta:
+          metrics:
+            total_db1:
+              type: sum
+              label: "DB I (€)"
+      - name: db2_eur
+        meta:
+          metrics:
+            total_db2:
+              type: sum
+              label: "DB II (€)"
+      - name: overhead_eur
+        meta:
+          metrics:
+            total_overhead:
+              type: sum
+              label: "Umlage Gemeinkosten (€)"
+      - name: result_eur
+        meta:
+          metrics:
+            total_result:
+              type: sum
+              label: "Ergebnis (€)"
+      - name: contribution_per_tn_eur
+        meta:
+          metrics:
+            avg_contribution_per_tn:
+              type: average
+              label: "Ø Stückdeckungsbeitrag (€/TN)"
+
+  - name: fct_forecast
+    description: "Monats-GuV-Forecast = actual + contracted + gewichtete Pipeline − Gemeinkosten."
+    meta:
+      label: "Unternehmens-Forecast"
+    columns:
+      - name: month
+        description: "Monat (Europe/Berlin)"
+        data_tests: [unique, not_null]
+        meta:
+          dimension:
+            type: date
+            label: "Monat"
+      - name: actual_net_eur
+        meta:
+          metrics:
+            sum_actual:
+              type: sum
+              label: "Ist (€)"
+      - name: contracted_net_eur
+        meta:
+          metrics:
+            sum_contracted:
+              type: sum
+              label: "Gesichert (€)"
+      - name: pipeline_weighted_net_eur
+        meta:
+          metrics:
+            sum_pipeline:
+              type: sum
+              label: "Pipeline gewichtet (€)"
+      - name: overhead_cost_eur
+        meta:
+          metrics:
+            sum_overhead:
+              type: sum
+              label: "Gemeinkosten (€)"
+      - name: revenue_forecast_eur
+        meta:
+          metrics:
+            sum_revenue_forecast:
+              type: sum
+              label: "Erlös-Forecast (€)"
+      - name: result_forecast_eur
+        description: "Ergebnis-Forecast (€)"
+        data_tests: [not_null]
+        meta:
+          metrics:
+            sum_result_forecast:
+              type: sum
+              label: "Ergebnis-Forecast (€)"
 
   - name: dim_month
     description: "Lückenlose Monatsachse (Date-Spine, L14)."
     columns:
       - name: month
         data_tests: [unique, not_null]
+        meta:
+          dimension:
+            type: date
+            label: "Monat"
 
   - name: fct_revenue_actual
     description: "Bucket actual je Monat (netto)."
     columns:
       - name: month
         data_tests: [unique, not_null]
+        meta:
+          dimension: { type: date, label: "Monat" }
 
   - name: fct_revenue_contracted
     description: "Bucket contracted je Monat (netto)."
     columns:
       - name: month
         data_tests: [unique, not_null]
+        meta:
+          dimension: { type: date, label: "Monat" }
 
   - name: fct_pipeline_weighted
     description: "Bucket pipeline (gewichtet) je Monat (netto)."
     columns:
       - name: month
         data_tests: [unique, not_null]
-
-  - name: fct_forecast
-    description: "Monats-GuV-Forecast = actual + contracted + pipeline − Gemeinkosten."
-    columns:
-      - name: month
-        data_tests: [unique, not_null]
-      - name: result_forecast_net_cents
-        data_tests: [not_null]
+        meta:
+          dimension: { type: date, label: "Monat" }
 
 unit_tests:
   - name: seminar_break_even_worked_example

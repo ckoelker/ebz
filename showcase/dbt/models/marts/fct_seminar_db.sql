@@ -53,7 +53,8 @@ pool as (
 ),
 total_weight as (
     select sum(alloc_weight) as tw from weights
-)
+),
+calc as (
 select
     w.product_variant_id,
     w.participants,
@@ -85,3 +86,16 @@ select
               )::int
          else null end                                                            as break_even_participants
 from weights w
+)
+-- Euro-Komfortspalten (Cent/100) für die BI-Schicht; Cent bleiben die kanonische Wahrheit.
+select
+    calc.*,
+    round(calc.revenue_net_cents / 100.0, 2)         as revenue_net_eur,
+    round(calc.variable_cost_cents / 100.0, 2)       as variable_cost_eur,
+    round(calc.fixed_cost_cents / 100.0, 2)          as fixed_cost_eur,
+    round(calc.overhead_cents / 100.0, 2)            as overhead_eur,
+    round(calc.db1_cents / 100.0, 2)                 as db1_eur,
+    round(calc.db2_cents / 100.0, 2)                 as db2_eur,
+    round(calc.result_cents / 100.0, 2)              as result_eur,
+    round(calc.contribution_per_tn_cents / 100.0, 2) as contribution_per_tn_eur
+from calc
