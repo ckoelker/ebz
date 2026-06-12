@@ -1,0 +1,8 @@
+# pnpm 11 Settings-Home (siehe ../vendure/pnpm-workspace.yaml für die Begründungen).
+nodeLinker: hoisted
+trustPolicy: "off"
+# Cooldown gegen frisch publizierte Pakete aus (0 Min): die gepinnten Frontend-
+# Versionen (vue 3.5.38 etc.) sind teils erst Tage alt und liefen bereits unter npm.
+minimumReleaseAge: 0
+allowBuilds:
+  esbuild: true

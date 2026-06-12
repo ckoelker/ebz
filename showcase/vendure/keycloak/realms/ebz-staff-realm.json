@@ -1,0 +1,39 @@
+{
+  "realm": "ebz-staff",
+  "enabled": true,
+  "sslRequired": "none",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": true,
+  "roles": {
+    "realm": [{ "name": "staff", "description": "EBZ Mitarbeiter:in" }]
+  },
+  "clients": [
+    {
+      "clientId": "staff-frontend",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "rootUrl": "http://localhost:5173",
+      "redirectUris": ["http://localhost:5173/*"],
+      "webOrigins": ["http://localhost:5173", "+"],
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5173/*"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "staff",
+      "email": "staff@ebz.de",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Stefan",
+      "lastName": "Mitarbeiter",
+      "credentials": [{ "type": "password", "value": "staff", "temporary": false }],
+      "realmRoles": ["staff"]
+    }
+  ]
+}

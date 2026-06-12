@@ -1,0 +1,26 @@
+# pnpm 11 Settings-Home (ersetzt das alte package.json-"pnpm"-Feld und diverse .npmrc-Keys).
+# Wechsel npm -> pnpm eines bestehenden Vendure-Projekts.
+
+# Flaches node_modules wie bei npm — schont Vendure/Plugins, die auf gehoistete
+# (transitive) Abhängigkeiten zugreifen.
+nodeLinker: hoisted
+
+# Supply-Chain-Trust-Downgrade-Check aus: pnpm 11.5+ blockt sonst transitive
+# Altpakete (chokidar@4.0.3, semver@6.3.1 u. a.), deren neuere Publishes die
+# Provenance-Attestation verloren haben. Diese Deps liefen bereits unter npm —
+# für den Dev-/Showcase-Stand bewusst deaktiviert.
+trustPolicy: "off"
+
+# Cooldown gegen frisch publizierte Pakete aus (0 Min) — gepinnte Versionen, liefen bereits unter npm.
+minimumReleaseAge: 0
+
+# Build-Skripte freigeben: native/Setup-Module, die Vendure zur Laufzeit braucht
+# (bcrypt = Passwort-Hashing, sharp = AssetServer-Bildverarbeitung, esbuild).
+# msw ist nur Test-Mocking -> nicht freigegeben.
+allowBuilds:
+  bcrypt: true
+  sharp: true
+  esbuild: true
+  '@nestjs/core': true
+  '@apollo/protobufjs': true
+  msw: false

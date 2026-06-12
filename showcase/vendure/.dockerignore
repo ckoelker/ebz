@@ -1,0 +1,9 @@
+node_modules
+dist
+.vendure
+vendure.sqlite
+static/assets
+static/email/test-emails
+.env
+npm-debug.log
+*.log
