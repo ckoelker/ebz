@@ -28,6 +28,11 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "$POSTGRES_DB" <<-E
   SELECT 'CREATE DATABASE "${LIGHTDASH_DB}" OWNER "${LIGHTDASH_USER}"'
    WHERE NOT EXISTS (SELECT FROM pg_database WHERE datname = '${LIGHTDASH_DB}')\gexec
 
+  -- Owner defensiv erzwingen (auch falls die DB schon mit anderem Owner existierte):
+  -- der Owner braucht CREATE auf der DB, damit z. B. dlt sein Schema `vendure` anlegen kann.
+  ALTER DATABASE "${CONTROLLING_DB}" OWNER TO "${CONTROLLING_USER}";
+  ALTER DATABASE "${LIGHTDASH_DB}"   OWNER TO "${LIGHTDASH_USER}";
+
   -- Read-only-Zugriff des dlt-Users auf die Shop-DB (${POSTGRES_DB}):
   GRANT CONNECT ON DATABASE "${POSTGRES_DB}" TO "${READER_USER}";
   GRANT USAGE ON SCHEMA public TO "${READER_USER}";

@@ -236,6 +236,38 @@ const PRODUCTS = [
       subscription: { subscriptionInterval: 'month', subscriptionIntervalCount: 1, subscriptionTotalCount: 36 } },
 ];
 
+// --- Seminar-Kosten (M2) -----------------------------------------------------
+// Beispiel-Kostenpositionen für das Tagesseminar (Deckungsbeitragsrechnung).
+// Reproduziert das Rechenbeispiel des Plans: Fix 1.800 € + variabel 25 €/TN.
+// Beträge in Cent, netto. Idempotent (vorhandene Positionen je Variante werden übersprungen).
+const SEMINAR_COSTS = {
+    'tagesseminar-mietrecht-aktuell': [
+        { costType: 'dozent',   label: 'Dozentenhonorar',   amount: 120000, isVariable: false, perParticipant: false },
+        { costType: 'raum',     label: 'Raummiete',         amount:  60000, isVariable: false, perParticipant: false },
+        { costType: 'material', label: 'Seminarunterlagen', amount:   1500, isVariable: true,  perParticipant: true  },
+        { costType: 'catering', label: 'Tagungsverpflegung', amount:  1000, isVariable: true,  perParticipant: true  },
+    ],
+};
+
+async function ensureSeminarCosts() {
+    const d = await gql(`query { products(options:{take:200}){ items { slug variants { id name } } } }`);
+    for (const [slug, costs] of Object.entries(SEMINAR_COSTS)) {
+        const product = d.products.items.find(p => p.slug === slug);
+        const variant = product?.variants?.[0];
+        if (!variant) { console.log(`• Seminar-Variante für ${slug} (noch) nicht vorhanden — übersprungen`); continue; }
+        const ex = await gql(`query($id:ID!){ seminarCosts(productVariantId:$id){ costType } }`, { id: variant.id });
+        const have = new Set(ex.seminarCosts.map(c => c.costType));
+        for (const c of costs) {
+            if (have.has(c.costType)) { console.log(`• Kostenposition ${c.costType} (${variant.name}) existiert`); continue; }
+            await gql(
+                `mutation($input:CreateSeminarCostInput!){ createSeminarCost(input:$input){ id } }`,
+                { input: { productVariantId: variant.id, currencyCode: 'EUR', ...c } });
+            const kind = `${c.isVariable ? 'variabel' : 'fix'}${c.perParticipant ? '/TN' : ''}`;
+            console.log(`✓ Kostenposition: ${c.label} (${(c.amount / 100).toFixed(2)} €, ${kind})`);
+        }
+    }
+}
+
 async function main() {
     console.log(`→ Seed gegen ${ADMIN_API}`);
     await login();
@@ -249,6 +281,7 @@ async function main() {
     await ensurePaymentMethod();
     const existing = await listProducts();
     for (const def of PRODUCTS) await ensureProduct(def, existing, taxCategoryId);
+    await ensureSeminarCosts();
     console.log('\nFertig.');
 }
 

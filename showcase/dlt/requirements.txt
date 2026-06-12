@@ -1,0 +1,6 @@
+# Showcase M2 — dlt-Pipeline (Commodity-EL Vendure → Warehouse).
+# Pin-Politik wie im §0-Versionsplan: konkrete Versionen, kein `latest`.
+# Hinweis: Plan pinnt Python 3.12; auf dieser Maschine ist 3.13 installiert —
+# dlt 1.27.2 läuft auf 3.13 (real verifiziert). psycopg2-binary kommt über das
+# [postgres]-Extra; explizit nicht zusätzlich gepinnt (Kette dem Extra überlassen).
+dlt[postgres]==1.27.2

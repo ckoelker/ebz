@@ -15,6 +15,7 @@ import { StripeSubscriptionPlugin } from '@pinelab/vendure-plugin-stripe-subscri
 import { ShowcaseSubscriptionStrategy } from './subscription-strategy';
 import { RecurringInvoicePlugin } from './plugins/recurring-invoice/recurring-invoice.plugin';
 import { recurringInvoiceTask } from './plugins/recurring-invoice/recurring-invoice.task';
+import { SeminarCostPlugin } from './plugins/seminar-cost/seminar-cost.plugin';
 import { KeycloakShopAuthStrategy } from './plugins/keycloak/keycloak-shop.strategy';
 import { KeycloakAdminAuthStrategy } from './plugins/keycloak/keycloak-admin.strategy';
 import 'dotenv/config';
@@ -152,6 +153,8 @@ export const config: VendureConfig = {
         }),
         // M4: interner Rechnungslauf (Rechnungs-/SEPA-Pfad)
         RecurringInvoicePlugin,
+        // M2: Seminar-Kosten / Deckungsbeitragsrechnung (Erlöse liegen in den Orders)
+        SeminarCostPlugin,
         EmailPlugin.init({
             devMode: true,
             outputPath: path.join(__dirname, '../static/email/test-emails'),

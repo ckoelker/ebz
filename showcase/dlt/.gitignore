@@ -1,0 +1,7 @@
+# dlt-lokaler Zustand & venv — nicht committen
+.venv/
+__pycache__/
+*.pyc
+# dlt legt lokalen Pipeline-State/Logs hier ab:
+.dlt/pipelines/
+~/.dlt/

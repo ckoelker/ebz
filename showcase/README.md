@@ -79,7 +79,9 @@ Superadmin `superadmin`/`superadmin`. SSO-Testnutzer `customer`/`customer` (Shop
 | SSO — Keycloak, 2 Realms strikt getrennt (Kunde + Staff) | ✅ |
 | M5 — Vue-Frontend (PrimeVue) | 🟡 in Arbeit — F1-Buch-Flow end-to-end grün (Browser-verifiziert) |
 | Umbau pnpm + Single-Postgres + `.env` | ✅ (2026-06-12) |
-| **Controlling** (M0–M5: dlt/Camel+LangChain4j/dbt/Lightdash) | ⏭ geplant — siehe controlling-planung |
+| **Controlling M1** — HubSpot-Ingestion (Camel Quarkus + LangChain4j/OpenAI) | ✅ |
+| **Controlling M2** — Seminar-Kosten-Plugin + dlt-Load (Vendure→Warehouse) | ✅ |
+| **Controlling M3–M5** — dbt (Break-even/Forecast) · Lightdash · Auswertung | ⏭ geplant — siehe controlling-planung |
 
 ## Shop-Bausteine (Kurz)
 
@@ -119,12 +121,27 @@ node scripts/smoke-sso.mjs             # SSO Kunde/Staff getrennt + Negativtest
 node scripts/smoke-checkout-f1.mjs     # F1 Checkout end-to-end
 ```
 
-## Controlling (Ausblick)
+## Controlling
 
 Best-of-Breed-Erweiterung: **dlt** (Vendure→Warehouse) + **Camel Quarkus + LangChain4j** (HubSpot-Pull
 + KI-Konvertierung) → **dbt** (DB-Stufen/Break-even/Forecast) → **Lightdash** (Keycloak-gesichert).
-Code kommt flach nach `integration/`, `dlt/`, `dbt/`, `lightdash/`. Plan & Versionsmatrix:
+Code liegt flach in `integration/`, `dlt/`, `dbt/`, `lightdash/`. Plan & Versionsmatrix:
 [../controlling-planung/Showcase-Realisierungsplan-Controlling.md](../controlling-planung/Showcase-Realisierungsplan-Controlling.md).
+
+**M1 — HubSpot-Ingestion** (`integration/`, fertig): Quarkus/Camel/LangChain4j-Service, nur mit Profil
+`controlling`: `docker compose --profile controlling up -d --build`. Details: [integration/](integration/).
+
+**M2 — Vendure-Anbindung** (fertig):
+- *Seminar-Kosten-Plugin* (`vendure/src/plugins/seminar-cost/`): Custom-Entity `SeminarCost`
+  (fix/variabel, je Seminar/je Teilnehmer:in; Admin-API + Dashboard) auf den Seminar-Varianten.
+- *dlt-Pipeline* (`dlt/`, Commodity-EL): kopiert `order`/`order_line`/`installment`/`seminar_cost`
+  aus DB `vendure` (read-only `controlling_reader`, **ohne PII**) ins Warehouse-Schema
+  `controlling.vendure`. Idempotent (Merge auf `id` + Watermark `updatedAt`).
+  ```bash
+  cd vendure && pnpm run seed && node scripts/seed-demo-orders.mjs   # Katalog+Kosten+Bewegungsdaten
+  cd ../dlt  && python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt
+  .venv/Scripts/python vendure_to_warehouse.py                       # Load → DB controlling
+  ```
 
 ## Dev-/Architektur-Hinweise
 
