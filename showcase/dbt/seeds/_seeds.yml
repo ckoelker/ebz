@@ -1,0 +1,34 @@
+version: 2
+
+seeds:
+  - name: stage_probabilities
+    description: "Controlling-Setzung: HubSpot-Stage → Abschluss-Wahrscheinlichkeit + typische Monate bis Abschluss (L7, nicht hardcoden)."
+    config:
+      column_types:
+        stage: varchar
+        probability: numeric(4,2)
+        months_to_close: integer
+    columns:
+      - name: stage
+        data_tests: [unique, not_null]
+      - name: probability
+        data_tests: [not_null]
+
+  - name: overhead_plan
+    description: "Geplante, auf Seminare umlegbare Gemeinkosten je Monat (Plan; Ist später aus FiBu)."
+    config:
+      column_types:
+        period_month: varchar
+        amount_eur: numeric(12,2)
+    columns:
+      - name: period_month
+        data_tests: [not_null]
+
+  - name: allocation_keys
+    description: "Umlageschlüssel — dokumentiert + umschaltbar (L19). Genau eine Zeile active=true."
+    config:
+      column_types:
+        active: boolean
+    columns:
+      - name: basis
+        data_tests: [unique, not_null]

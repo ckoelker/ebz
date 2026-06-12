@@ -1,0 +1,8 @@
+stage,probability,months_to_close
+appointmentscheduled,0.20,3
+qualifiedtobuy,0.40,2
+presentationscheduled,0.60,1
+decisionmakerboughtin,0.80,1
+contractsent,0.90,1
+closedwon,1.00,0
+closedlost,0.00,0

@@ -1,0 +1,3 @@
+basis,weight_column,active,description
+revenue_share,revenue_net_cents,true,Gemeinkosten nach Umsatzanteil je Seminar
+participant_share,participants,false,Alternative: Umlage nach Teilnehmerzahl

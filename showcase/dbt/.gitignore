@@ -1,0 +1,7 @@
+# dbt-Artefakte & venv — nicht committen
+.venv/
+target/
+dbt_packages/
+logs/
+*.pyc
+__pycache__/

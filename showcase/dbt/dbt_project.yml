@@ -1,0 +1,31 @@
+# Showcase M3 — dbt Core: Transform + Forecast-Logik („das Gehirn").
+# Liest das Warehouse (DB `controlling`: Schema `vendure` von dlt/M2 + `public` von M1),
+# rechnet Seminar-Deckungsbeitrag/Break-even und den treiberbasierten Monats-Forecast.
+name: 'ebz_controlling'
+version: '1.0.0'
+config-version: 2
+
+profile: 'ebz_controlling'
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+test-paths: ["tests"]
+target-path: "target"
+clean-targets: ["target", "dbt_packages", "logs"]
+
+vars:
+  # Eine Währung erzwingen (L17).
+  currency: 'EUR'
+  # MwSt-Satz, um Installment-Bruttobeträge auf netto zu bringen (eine Steuerklasse im Showcase).
+  vat_rate: 0.19
+  # Anker für die Forecast-Monatszuordnung der Pipeline/gewonnenen Deals.
+  # Leer => current_date (Monatsbeginn). Für reproduzierbare Demos überschreibbar.
+  forecast_anchor: ''
+
+models:
+  ebz_controlling:
+    staging:
+      +materialized: view
+    marts:
+      +materialized: table

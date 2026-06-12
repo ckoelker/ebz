@@ -1,0 +1,19 @@
+version: 2
+
+sources:
+  # Von dlt geladen (M2): Warehouse-Schema `vendure` in DB `controlling`.
+  - name: vendure
+    schema: vendure
+    description: "Vendure-Shop-Bewegungsdaten, per dlt repliziert (ohne PII, L29)."
+    tables:
+      - name: order
+      - name: order_line
+      - name: installment
+      - name: seminar_cost
+
+  # Von der Camel-Quarkus/LangChain4j-Integration geladen (M1): Schema `public`.
+  - name: hubspot
+    schema: public
+    description: "HubSpot-Deals, angereichert (KI-Klassifikation), idempotenter Upsert."
+    tables:
+      - name: stg_hubspot_deal

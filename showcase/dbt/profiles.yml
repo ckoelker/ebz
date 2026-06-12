@@ -1,0 +1,15 @@
+# Projekt-lokales Profil (Aufruf mit `--profiles-dir .`). Werte aus der Umgebung,
+# Defaults passen zu showcase/.env (Postgres auf Host-Port 6543, DB `controlling`).
+ebz_controlling:
+  target: dev
+  outputs:
+    dev:
+      type: postgres
+      host: "{{ env_var('CONTROLLING_DB_HOST', 'localhost') }}"
+      port: "{{ env_var('CONTROLLING_DB_PORT', '6543') | int }}"
+      user: "{{ env_var('CONTROLLING_USER', 'controlling') }}"
+      password: "{{ env_var('CONTROLLING_PASSWORD', 'controlling') }}"
+      dbname: "{{ env_var('CONTROLLING_DB', 'controlling') }}"
+      schema: analytics
+      threads: 4
+      sslmode: disable

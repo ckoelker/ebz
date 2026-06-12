@@ -1,0 +1,6 @@
+# Showcase M3 — dbt Core. Pin-Politik wie §0-Versionsplan: die offiziell zusammen
+# freigegebene „compatible-track"-Paarung (Juni 2026), NICHT mit Pre-Releases mischen.
+# Hinweis: Plan pinnt Python 3.12; real verifiziert auf der vorhandenen 3.13.3
+# (dbt-core 1.11.8 + dbt-postgres 1.10.0 installieren + `dbt build` grün auf 3.13).
+dbt-core==1.11.8
+dbt-postgres==1.10.0

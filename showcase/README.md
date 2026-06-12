@@ -81,7 +81,8 @@ Superadmin `superadmin`/`superadmin`. SSO-Testnutzer `customer`/`customer` (Shop
 | Umbau pnpm + Single-Postgres + `.env` | ✅ (2026-06-12) |
 | **Controlling M1** — HubSpot-Ingestion (Camel Quarkus + LangChain4j/OpenAI) | ✅ |
 | **Controlling M2** — Seminar-Kosten-Plugin + dlt-Load (Vendure→Warehouse) | ✅ |
-| **Controlling M3–M5** — dbt (Break-even/Forecast) · Lightdash · Auswertung | ⏭ geplant — siehe controlling-planung |
+| **Controlling M3** — dbt (Seminar-DB/Break-even + Drei-Bucket-Forecast) | ✅ |
+| **Controlling M4–M5** — Lightdash (Keycloak-gesichert) · Auswertung | ⏭ geplant — siehe controlling-planung |
 
 ## Shop-Bausteine (Kurz)
 
@@ -141,6 +142,15 @@ Code liegt flach in `integration/`, `dlt/`, `dbt/`, `lightdash/`. Plan & Version
   cd vendure && pnpm run seed && node scripts/seed-demo-orders.mjs   # Katalog+Kosten+Bewegungsdaten
   cd ../dlt  && python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt
   .venv/Scripts/python vendure_to_warehouse.py                       # Load → DB controlling
+  ```
+
+**M3 — dbt (Transform + Forecast)** (fertig): Seminar-Deckungsbeitrag/Break-even
+(`fct_seminar_db`) + treiberbasierter Monats-Forecast aus drei disjunkten Erlös-Buckets
+(`fct_forecast`); Tests erzwingen Drei-Bucket-Disjunktheit (L1), Umlage-Reconciliation
+(L16) und das Plan-Rechenbeispiel (Unit-Test, Break-even 5 TN). Reihenfolge **dlt → dbt → BI** (L26).
+  ```bash
+  cd dbt && python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt
+  .venv/Scripts/dbt build --profiles-dir .                           # → Schema analytics in DB controlling
   ```
 
 ## Dev-/Architektur-Hinweise

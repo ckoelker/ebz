@@ -1,0 +1,33 @@
+version: 2
+
+models:
+  - name: stg_vendure_orders
+    columns:
+      - name: order_id
+        data_tests: [unique, not_null]
+  - name: stg_vendure_order_lines
+    columns:
+      - name: order_line_id
+        data_tests: [unique, not_null]
+  - name: stg_vendure_installments
+    columns:
+      - name: installment_id
+        data_tests: [unique, not_null]
+      - name: status
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['scheduled', 'invoiced']
+  - name: stg_vendure_seminar_cost
+    columns:
+      - name: cost_id
+        data_tests: [unique, not_null]
+  - name: stg_hubspot_deals
+    columns:
+      - name: deal_id
+        data_tests: [unique, not_null]
+      - name: currency
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: ['EUR']

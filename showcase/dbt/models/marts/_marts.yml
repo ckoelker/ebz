@@ -1,0 +1,66 @@
+version: 2
+
+models:
+  - name: fct_seminar_db
+    description: "Seminar-Deckungsbeitrag + Break-even je Variante (DB I/II/Ergebnis)."
+    columns:
+      - name: product_variant_id
+        data_tests: [unique, not_null]
+      - name: revenue_net_cents
+        data_tests: [not_null]
+      - name: participants
+        data_tests: [not_null]
+
+  - name: dim_month
+    description: "Lückenlose Monatsachse (Date-Spine, L14)."
+    columns:
+      - name: month
+        data_tests: [unique, not_null]
+
+  - name: fct_revenue_actual
+    description: "Bucket actual je Monat (netto)."
+    columns:
+      - name: month
+        data_tests: [unique, not_null]
+
+  - name: fct_revenue_contracted
+    description: "Bucket contracted je Monat (netto)."
+    columns:
+      - name: month
+        data_tests: [unique, not_null]
+
+  - name: fct_pipeline_weighted
+    description: "Bucket pipeline (gewichtet) je Monat (netto)."
+    columns:
+      - name: month
+        data_tests: [unique, not_null]
+
+  - name: fct_forecast
+    description: "Monats-GuV-Forecast = actual + contracted + pipeline − Gemeinkosten."
+    columns:
+      - name: month
+        data_tests: [unique, not_null]
+      - name: result_forecast_net_cents
+        data_tests: [not_null]
+
+unit_tests:
+  - name: seminar_break_even_worked_example
+    description: "Rechenbeispiel des Plans: 600 €/TN, Fix 1.800 €, var. 25 €/TN, Umlage 800 € → Break-even 5 TN."
+    model: fct_seminar_db
+    given:
+      - input: ref('stg_vendure_order_lines')
+        rows:
+          - { product_variant_id: 'X', order_placed_quantity: 10, line_net_cents: 600000, is_seminar: true }
+      - input: ref('stg_vendure_seminar_cost')
+        rows:
+          - { product_variant_id: 'X', amount_net_cents: 180000, is_variable: false, per_participant: false }
+          - { product_variant_id: 'X', amount_net_cents: 2500,   is_variable: true,  per_participant: true }
+      - input: ref('overhead_plan')
+        rows:
+          - { period_month: '2026-06', amount_eur: 800 }
+      - input: ref('allocation_keys')
+        rows:
+          - { basis: 'revenue_share', active: true }
+    expect:
+      rows:
+        - { product_variant_id: 'X', db2_cents: 395000, result_cents: 315000, break_even_participants: 5 }
