@@ -82,6 +82,75 @@ public class RechnungslaufService {
         return ergebnis;
     }
 
+    /**
+     * Erzeugt aus den aktiven Hochschul-Anmeldungen eines Semesters Rechnungs-Entwürfe (R6).
+     * <p>
+     * Je Anmeldung entstehen <b>Forderungsteile</b>: bei Firmen-Split (dualer Studienplatz) zwei
+     * getrennte Rechnungen (Firmenanteil + Eigenanteil) an verschiedene Debitoren — unabhängige
+     * Forderungen ohne Restschuld-Haftung; sonst eine Rechnung über die volle Gebühr. Jeder Teil wird
+     * in {@code ratenAnzahl} Raten zerlegt (ganzzahlig, Restbetrag in die letzte Rate; gestaffelte
+     * Fälligkeit). Alle Positionen {@code BEFREIT} (§4 UStG, Bildung). Idempotent über {@code laufSchluessel}.
+     */
+    @Transactional
+    public List<Rechnung> erzeugeHochschulEntwuerfe(String semester) {
+        List<Anmeldung> anmeldungen = Anmeldung.list(
+                "typ = ?1 and status = ?2 and semester = ?3",
+                AnmeldungTyp.HOCHSCHULE, AnmeldungStatus.AKTIV, semester);
+
+        List<Rechnung> ergebnis = new ArrayList<>();
+        for (Anmeldung a : anmeldungen) {
+            for (Forderungsteil teil : forderungsteile(a)) {
+                int n = a.ratenAnzahl == null || a.ratenAnzahl < 1 ? 1 : a.ratenAnzahl;
+                long basis = teil.betragCent / n;
+                for (int i = 1; i <= n; i++) {
+                    long rate = i < n ? basis : teil.betragCent - basis * (n - 1);
+                    String schluessel = "HOCHSCHULE|%s|%d|%d|%s|r%d"
+                            .formatted(semester, a.id, teil.debitorId, teil.label, i);
+                    Rechnung vorhanden = Rechnung.find("laufSchluessel", schluessel).firstResult();
+                    if (vorhanden != null) {
+                        ergebnis.add(vorhanden);
+                        continue;
+                    }
+                    String ratenZusatz = n > 1 ? " (Rate %d/%d)".formatted(i, n) : "";
+                    String zeitraum = "Semester %s – %s%s".formatted(semester, teil.label, ratenZusatz);
+
+                    Rechnung r = new Rechnung();
+                    r.belegart = Belegart.RECHNUNG;
+                    r.bereich = Bereich.HOCHSCHULE;
+                    r.debitorId = teil.debitorId;
+                    r.zeitraumBezeichnung = zeitraum;
+                    r.laufSchluessel = schluessel;
+                    r.status = RechnungStatus.ENTWURF;
+                    r.zahlungszielTage = 14 + (i - 1) * 30; // gestaffelte Fälligkeit je Rate
+                    r.persist();
+
+                    RechnungPosition p = basis(r, a);
+                    p.beschreibung = "Studiengebühr %s (%s%s) – %s"
+                            .formatted(semester, teil.label, ratenZusatz, a.teilnehmerName);
+                    p.einzelbetragCent = (int) rate;
+                    p.leistungsart = Leistungsart.SONSTIGE;
+                    r.positionen.add(p);
+                    ergebnis.add(r);
+                }
+            }
+        }
+        return ergebnis;
+    }
+
+    private static List<Forderungsteil> forderungsteile(Anmeldung a) {
+        long voll = a.semesterbetragCent == null ? 0 : a.semesterbetragCent;
+        if (a.firmaDebitorId != null && a.firmaAnteilCent != null) {
+            return List.of(
+                    new Forderungsteil(a.firmaDebitorId, a.firmaAnteilCent, "Firmenanteil"),
+                    new Forderungsteil(a.zahlungspflichtigerDebitorId, voll - a.firmaAnteilCent, "Eigenanteil"));
+        }
+        return List.of(new Forderungsteil(a.zahlungspflichtigerDebitorId, voll, "Studiengebühr"));
+    }
+
+    /** Ein Forderungsanteil einer Hochschul-Anmeldung (Debitor + Betrag + Bezeichnung). */
+    private record Forderungsteil(Long debitorId, long betragCent, String label) {
+    }
+
     private static RechnungPosition unterrichtsposition(Rechnung r, Anmeldung a, String zeitraum) {
         RechnungPosition p = basis(r, a);
         p.beschreibung = "Unterricht (%s) – %s".formatted(zeitraum, a.teilnehmerName);

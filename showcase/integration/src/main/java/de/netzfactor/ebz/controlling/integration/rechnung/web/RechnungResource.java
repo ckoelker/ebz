@@ -35,6 +35,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.dto.ManuellePositionDt
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.MergeRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungPositionDto;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.HochschulLaufRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungslaufRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
@@ -317,6 +318,18 @@ public class RechnungResource {
                 .stream().map(RechnungResource::toRechnung).toList();
     }
 
+    /** Hochschul-Rechnungslauf (R6): je Anmeldung Firmen-Split (zwei Rechnungen) und/oder Raten. */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/laeufe/hochschule")
+    @Transactional
+    @APIResponse(responseCode = "200", description = "Erzeugte/idempotent wiederverwendete Entwürfe",
+            content = @Content(schema = @Schema(implementation = RechnungDto.class)))
+    public List<RechnungDto> hochschulLauf(@Valid HochschulLaufRequest req) {
+        return rechnungslauf.erzeugeHochschulEntwuerfe(req.semester())
+                .stream().map(RechnungResource::toRechnung).toList();
+    }
+
     // ───────────────────────── Rechnungen lesen ─────────────────────────
     @GET
     @Path("/rechnungen")
@@ -497,13 +510,16 @@ public class RechnungResource {
         a.uebernachtungBetragCent = dto.uebernachtungBetragCent();
         a.semester = dto.semester();
         a.semesterbetragCent = dto.semesterbetragCent();
+        a.firmaDebitorId = dto.firmaDebitorId();
+        a.firmaAnteilCent = dto.firmaAnteilCent();
+        a.ratenAnzahl = dto.ratenAnzahl();
     }
 
     private static AnmeldungDto toAnmeldung(Anmeldung a) {
         return new AnmeldungDto(a.id, a.version, a.typ, a.teilnehmerName, a.teilnehmerEmail,
                 a.bildungsangebotId, a.zahlungspflichtigerDebitorId, a.status,
                 a.schuljahr, a.halbjahr, a.zimmerart, a.unterrichtBetragCent, a.uebernachtungBetragCent,
-                a.semester, a.semesterbetragCent);
+                a.semester, a.semesterbetragCent, a.firmaDebitorId, a.firmaAnteilCent, a.ratenAnzahl);
     }
 
     private static RechnungDto toRechnung(Rechnung r) {

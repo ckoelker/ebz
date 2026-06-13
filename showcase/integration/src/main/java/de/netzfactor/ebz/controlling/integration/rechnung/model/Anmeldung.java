@@ -71,10 +71,25 @@ public class Anmeldung extends PanacheEntity {
     @Column(name = "uebernachtung_betrag_cent")
     public Integer uebernachtungBetragCent;
 
-    // ── HOCHSCHULE (R6, Felder vorbereitet) ──
+    // ── HOCHSCHULE (R6) ──
     @Column(name = "semester", length = 6)
     public String semester;
 
     @Column(name = "semesterbetrag_cent")
     public Integer semesterbetragCent;
+
+    /**
+     * Optionaler Firmen-Mitzahler (z. B. duales Studium): trägt den {@code firmaAnteilCent}; dann
+     * entstehen ZWEI getrennte Rechnungen (Firma + Studierende:r) als unabhängige Forderungen ohne
+     * Restschuld-Haftung. {@code null} = die ganze Gebühr geht an {@code zahlungspflichtigerDebitorId}.
+     */
+    @Column(name = "firma_debitor_id")
+    public Long firmaDebitorId;
+
+    @Column(name = "firma_anteil_cent")
+    public Integer firmaAnteilCent;
+
+    /** Anzahl Raten je Forderung (1/null = komplett in einer Rechnung). */
+    @Column(name = "raten_anzahl")
+    public Integer ratenAnzahl;
 }
