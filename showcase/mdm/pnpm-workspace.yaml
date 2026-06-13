@@ -1,0 +1,9 @@
+# pnpm 11 Settings (siehe ../frontend/pnpm-workspace.yaml). MDM-Cockpit (P1.0).
+nodeLinker: hoisted
+trustPolicy: "off"
+# Cooldown gegen frisch publizierte Pakete aus (0): die Pins sind bewusst gewählt + verifiziert.
+minimumReleaseAge: 0
+allowBuilds:
+  esbuild: true
+  # vue-demi-Postinstall wählt den Vue-3-Pfad (für @tanstack/vue-query/pinia).
+  vue-demi: true

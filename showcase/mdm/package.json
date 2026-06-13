@@ -1,0 +1,37 @@
+{
+  "name": "ebz-mdm-cockpit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.5.2",
+  "description": "EBZ Formularverwaltung — MDM-Cockpit (Bildungsangebote, P1.0). Vue 3 gegen den Quarkus-bildung-Service; typsicher generiert aus /q/openapi (Stack B).",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "preview": "vite preview",
+    "typecheck": "vue-tsc --noEmit",
+    "gen": "openapi-ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@primeuix/themes": "2.0.3",
+    "@tanstack/vue-query": "5.101.0",
+    "@vee-validate/zod": "4.15.1",
+    "pinia": "3.0.4",
+    "primeicons": "7.0.0",
+    "primevue": "4.5.5",
+    "vee-validate": "4.15.1",
+    "vue": "3.5.38",
+    "vue-router": "5.1.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@hey-api/openapi-ts": "0.98.2",
+    "@types/node": "^22.19.21",
+    "@vitejs/plugin-vue": "6.0.7",
+    "typescript": "6.0.3",
+    "vite": "8.0.16",
+    "vitest": "4.1.8",
+    "vue-tsc": "3.3.4"
+  }
+}

@@ -50,4 +50,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}"
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${LIGHTDASH_DB}" \
   -c "ALTER SCHEMA public OWNER TO \"${LIGHTDASH_USER}\";"
 
-echo "initdb: DBs 'controlling' + 'lightdash' und User (controlling/lightdash/${READER_USER}) sichergestellt."
+# Formularverwaltung P1.0: Schema `bildung` (Bildungsangebote-MDM) in DB `controlling`, dem
+# controlling-User gehörend (Hibernate-update legt nur Tabellen an, nicht das Schema selbst).
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
+  -c "CREATE SCHEMA IF NOT EXISTS bildung AUTHORIZATION \"${CONTROLLING_USER}\";"
+
+echo "initdb: DBs 'controlling' + 'lightdash', Schema 'bildung' und User (controlling/lightdash/${READER_USER}) sichergestellt."

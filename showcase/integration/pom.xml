@@ -76,7 +76,7 @@
       <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
 
-    <!-- Persistenz: Warehouse DB `controlling` (stg_hubspot_deal) -->
+    <!-- Persistenz: Warehouse DB `controlling` (stg_hubspot_deal + Schema `bildung`) -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-hibernate-orm-panache</artifactId>
@@ -84,6 +84,18 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-jdbc-postgresql</artifactId>
+    </dependency>
+
+    <!-- ── Formularverwaltung P1.0 (Bildungsangebote, Stack B) ──
+         Bean Validation = EINZIGE Validierungsquelle (F3) → smallrye-openapi spiegelt die
+         Constraints ins /q/openapi-JSON-Schema → @hey-api/openapi-ts generiert TS+zod (§5). -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-hibernate-validator</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-openapi</artifactId>
     </dependency>
 
     <!-- Camel Quarkus: zeitgesteuerter Pull + Orchestrierung + realer HTTP-Pull -->
@@ -114,7 +126,13 @@
     <!-- Test -->
     <dependency>
       <groupId>io.quarkus</groupId>
-      <artifactId>quarkus-junit</artifactId>
+      <artifactId>quarkus-junit5</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Spec-Test 1 (§5): /q/openapi trägt die Bean-Validation-Constraints (rest-assured) -->
+    <dependency>
+      <groupId>io.rest-assured</groupId>
+      <artifactId>rest-assured</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

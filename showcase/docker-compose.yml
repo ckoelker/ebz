@@ -160,6 +160,18 @@ services:
     ports:
       - "${INTEGRATION_PORT:-8090}:8090"
 
+  # MDM-Cockpit (Formularverwaltung P1.0) — Vue-3-SPA (PrimeVue), per nginx ausgeliefert.
+  # Verwaltungsmaske „Bildungsangebote"; spricht den integration-Service (/bildung, /q) über
+  # den nginx-Proxy an. Typsicher generiert aus /q/openapi (Stack B). Profil `controlling`.
+  mdm:
+    build: ./mdm
+    profiles: ["controlling"]
+    restart: unless-stopped
+    depends_on:
+      - integration
+    ports:
+      - "${MDM_PORT:-5174}:80"
+
   # MinIO — S3-kompatibler Objektspeicher (self-host). Lightdash 0.3059 ERZWINGT S3
   # (Pre-Aggregate-Results); ohne S3-Env bricht der Start schon beim Config-Parsing ab.
   # Nur die S3-API (:9000) wird benötigt. Profil `controlling`.
