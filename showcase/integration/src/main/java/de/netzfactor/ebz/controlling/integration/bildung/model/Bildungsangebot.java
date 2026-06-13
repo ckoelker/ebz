@@ -67,12 +67,28 @@ public class Bildungsangebot extends PanacheEntity {
     @Column(name = "preis_modell", nullable = false, length = 16)
     public PreisModell preisModell;
 
+    // ── Zahlplan (F3–F6): datengetriebene Quelle für die Vendure-Varianten-/Subscription-Projektion. ──
+    /** Listenpreis je Rate in Cent (Vendure-Minor-Units); leer = (noch) kein verkaufbarer Preis. */
+    @Column(name = "preis_cent")
+    public Integer preisCent;
+
+    /** Monate je Abrechnungsperiode (ABO/RATEN → subscriptionIntervalCount); leer ⇒ 1. */
+    @Column(name = "abrechnung_intervall_monate")
+    public Integer abrechnungIntervallMonate;
+
+    /** Anzahl Raten gesamt (RATEN → subscriptionTotalCount); leer/0 = unbefristet (ABO). */
+    @Column(name = "raten_gesamt")
+    public Integer ratenGesamt;
+
     @Column(name = "shop_verkauf", nullable = false)
     public boolean shopVerkauf;
 
-    /** Naht zu Vendure (§11.6). */
+    /** Naht zu Vendure (§11.6): projiziertes Produkt + dessen Variante (Idempotenz der Re-Projektion). */
     @Column(name = "vendure_product_id", length = 64)
     public String vendureProductId;
+
+    @Column(name = "vendure_variant_id", length = 64)
+    public String vendureVariantId;
 
     @Column(name = "zielgruppe", length = 200)
     public String zielgruppe;
@@ -152,7 +168,4 @@ public class Bildungsangebot extends PanacheEntity {
 
     @Column(name = "akkreditierung_bis")
     public LocalDate akkreditierungBis;
-
-    @Column(name = "raten_anzahl")
-    public Integer ratenAnzahl;
 }

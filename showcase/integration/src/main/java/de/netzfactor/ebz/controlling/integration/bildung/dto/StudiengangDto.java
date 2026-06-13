@@ -31,6 +31,9 @@ public record StudiengangDto(
         LocalDate gueltigBis,
         @Size(max = 120) String verantwortlich,
         @NotNull PreisModell preisModell,
+        @Min(0) Integer preisCent,
+        @Min(1) Integer abrechnungIntervallMonate,
+        @Min(0) Integer ratenGesamt,
         boolean shopVerkauf,
         @Size(max = 64) String vendureProductId,
         @Size(max = 200) String zielgruppe,
@@ -40,6 +43,5 @@ public record StudiengangDto(
         @NotNull @Pattern(regexp = "^(WS|SS)\\d{4}$") String startsemester,
         @Min(1) int regelstudienzeitSemester,
         LocalDate akkreditierungBis,
-        @Min(0) int ratenAnzahl,
         @Min(0) int plaetze) implements GemeinsamesAngebot {
 }

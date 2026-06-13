@@ -21,6 +21,9 @@ export type BerufsschuljahrDto = {
     gueltigBis?: LocalDate;
     verantwortlich?: string;
     preisModell: PreisModell;
+    preisCent?: number;
+    abrechnungIntervallMonate?: number;
+    ratenGesamt?: number;
     shopVerkauf?: boolean;
     vendureProductId?: string;
     zielgruppe?: string;
@@ -80,6 +83,7 @@ export type ProjektionErgebnis = {
     id?: number;
     code?: string;
     vendureProductId?: string;
+    vendureVariantId?: string;
 };
 
 export type RegistryItemDto = {
@@ -106,6 +110,9 @@ export type SeminarDto = {
     gueltigBis?: LocalDate;
     verantwortlich?: string;
     preisModell: PreisModell;
+    preisCent?: number;
+    abrechnungIntervallMonate?: number;
+    ratenGesamt?: number;
     shopVerkauf?: boolean;
     vendureProductId?: string;
     zielgruppe?: string;
@@ -144,6 +151,9 @@ export type StudiengangDto = {
     gueltigBis?: LocalDate;
     verantwortlich?: string;
     preisModell: PreisModell;
+    preisCent?: number;
+    abrechnungIntervallMonate?: number;
+    ratenGesamt?: number;
     shopVerkauf?: boolean;
     vendureProductId?: string;
     zielgruppe?: string;
@@ -152,7 +162,6 @@ export type StudiengangDto = {
     startsemester: string;
     regelstudienzeitSemester?: number;
     akkreditierungBis?: LocalDate;
-    ratenAnzahl?: number;
     plaetze?: number;
 };
 
@@ -169,6 +178,9 @@ export type TagungDto = {
     gueltigBis?: LocalDate;
     verantwortlich?: string;
     preisModell: PreisModell;
+    preisCent?: number;
+    abrechnungIntervallMonate?: number;
+    ratenGesamt?: number;
     shopVerkauf?: boolean;
     vendureProductId?: string;
     zielgruppe?: string;

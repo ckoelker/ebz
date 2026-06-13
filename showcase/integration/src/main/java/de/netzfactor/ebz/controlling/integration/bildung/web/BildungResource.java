@@ -85,8 +85,10 @@ public class BildungResource {
                     .entity(new Fehler("Nur Angebote im Status AKTIV werden in den Shop projiziert.")).build();
         }
         try {
-            e.vendureProductId = vendure.projiziere(e); // dirty → Flush am Tx-Commit (Zurückschreiben)
-            return Response.ok(new ProjektionErgebnis(e.id, e.code, e.vendureProductId)).build();
+            VendureProjektion.Ergebnis r = vendure.projiziere(e); // dirty → Flush am Tx-Commit (Zurückschreiben)
+            e.vendureProductId = r.productId();
+            e.vendureVariantId = r.variantId();
+            return Response.ok(new ProjektionErgebnis(e.id, e.code, e.vendureProductId, e.vendureVariantId)).build();
         } catch (VendureException ex) {
             return Response.status(Response.Status.BAD_GATEWAY).entity(new Fehler(ex.getMessage())).build();
         }
@@ -347,6 +349,9 @@ public class BildungResource {
         e.gueltigBis = dto.gueltigBis();
         e.verantwortlich = dto.verantwortlich();
         e.preisModell = dto.preisModell();
+        e.preisCent = dto.preisCent();
+        e.abrechnungIntervallMonate = dto.abrechnungIntervallMonate();
+        e.ratenGesamt = dto.ratenGesamt();
         e.shopVerkauf = dto.shopVerkauf();
         e.vendureProductId = dto.vendureProductId();
         e.zielgruppe = dto.zielgruppe();
@@ -375,7 +380,8 @@ public class BildungResource {
     private static SeminarDto toSeminar(Bildungsangebot e) {
         return new SeminarDto(e.id, e.version, BildungsangebotTyp.SEMINAR,
                 e.code, e.titel, e.bereich, e.kurzbeschreibung, e.status, e.gueltigAb, e.gueltigBis,
-                e.verantwortlich, e.preisModell, e.shopVerkauf, e.vendureProductId, e.zielgruppe,
+                e.verantwortlich, e.preisModell, e.preisCent, e.abrechnungIntervallMonate, e.ratenGesamt,
+                e.shopVerkauf, e.vendureProductId, e.zielgruppe,
                 e.kategorie, nz(e.dauerUE), e.abschluss, nz(e.zertifikat), nz(e.minTN), nz(e.maxTN));
     }
 
@@ -394,7 +400,8 @@ public class BildungResource {
     private static TagungDto toTagung(Bildungsangebot e) {
         return new TagungDto(e.id, e.version, BildungsangebotTyp.TAGUNG,
                 e.code, e.titel, e.bereich, e.kurzbeschreibung, e.status, e.gueltigAb, e.gueltigBis,
-                e.verantwortlich, e.preisModell, e.shopVerkauf, e.vendureProductId, e.zielgruppe,
+                e.verantwortlich, e.preisModell, e.preisCent, e.abrechnungIntervallMonate, e.ratenGesamt,
+                e.shopVerkauf, e.vendureProductId, e.zielgruppe,
                 e.thema, e.terminVon, e.terminBis, e.ort, e.programmUrl, nz(e.maxTN));
     }
 
@@ -413,7 +420,8 @@ public class BildungResource {
     private static BerufsschuljahrDto toBerufsschuljahr(Bildungsangebot e) {
         return new BerufsschuljahrDto(e.id, e.version, BildungsangebotTyp.BERUFSSCHULJAHR,
                 e.code, e.titel, e.bereich, e.kurzbeschreibung, e.status, e.gueltigAb, e.gueltigBis,
-                e.verantwortlich, e.preisModell, e.shopVerkauf, e.vendureProductId, e.zielgruppe,
+                e.verantwortlich, e.preisModell, e.preisCent, e.abrechnungIntervallMonate, e.ratenGesamt,
+                e.shopVerkauf, e.vendureProductId, e.zielgruppe,
                 e.fachrichtung, e.schuljahr, nz(e.jahrgang), e.beginn, e.schildNrwSchluessel, nz(e.plaetze));
     }
 
@@ -426,16 +434,16 @@ public class BildungResource {
         e.startsemester = dto.startsemester();
         e.regelstudienzeitSemester = dto.regelstudienzeitSemester();
         e.akkreditierungBis = dto.akkreditierungBis();
-        e.ratenAnzahl = dto.ratenAnzahl();
         e.plaetze = dto.plaetze();
     }
 
     private static StudiengangDto toStudiengang(Bildungsangebot e) {
         return new StudiengangDto(e.id, e.version, BildungsangebotTyp.STUDIENGANG,
                 e.code, e.titel, e.bereich, e.kurzbeschreibung, e.status, e.gueltigAb, e.gueltigBis,
-                e.verantwortlich, e.preisModell, e.shopVerkauf, e.vendureProductId, e.zielgruppe,
+                e.verantwortlich, e.preisModell, e.preisCent, e.abrechnungIntervallMonate, e.ratenGesamt,
+                e.shopVerkauf, e.vendureProductId, e.zielgruppe,
                 e.studienAbschluss, e.studienform, e.startsemester, nz(e.regelstudienzeitSemester),
-                e.akkreditierungBis, nz(e.ratenAnzahl), nz(e.plaetze));
+                e.akkreditierungBis, nz(e.plaetze));
     }
 
     private static RegistryItemDto toRegistry(Bildungsangebot e) {

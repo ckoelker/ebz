@@ -62,6 +62,9 @@ export const zBerufsschuljahrDto = z.object({
     gueltigBis: zLocalDate.optional(),
     verantwortlich: z.string().max(120).optional(),
     preisModell: zPreisModell,
+    preisCent: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    abrechnungIntervallMonate: z.number().int().gte(1).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    ratenGesamt: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     shopVerkauf: z.boolean().optional(),
     vendureProductId: z.string().max(64).optional(),
     zielgruppe: z.string().max(200).optional(),
@@ -76,7 +79,8 @@ export const zBerufsschuljahrDto = z.object({
 export const zProjektionErgebnis = z.object({
     id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     code: z.string().optional(),
-    vendureProductId: z.string().optional()
+    vendureProductId: z.string().optional(),
+    vendureVariantId: z.string().optional()
 });
 
 export const zRegistryItemDto = z.object({
@@ -112,6 +116,9 @@ export const zSeminarDto = z.object({
     gueltigBis: zLocalDate.optional(),
     verantwortlich: z.string().max(120).optional(),
     preisModell: zPreisModell,
+    preisCent: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    abrechnungIntervallMonate: z.number().int().gte(1).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    ratenGesamt: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     shopVerkauf: z.boolean().optional(),
     vendureProductId: z.string().max(64).optional(),
     zielgruppe: z.string().max(200).optional(),
@@ -182,6 +189,9 @@ export const zStudiengangDto = z.object({
     gueltigBis: zLocalDate.optional(),
     verantwortlich: z.string().max(120).optional(),
     preisModell: zPreisModell,
+    preisCent: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    abrechnungIntervallMonate: z.number().int().gte(1).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    ratenGesamt: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     shopVerkauf: z.boolean().optional(),
     vendureProductId: z.string().max(64).optional(),
     zielgruppe: z.string().max(200).optional(),
@@ -190,7 +200,6 @@ export const zStudiengangDto = z.object({
     startsemester: z.string().regex(/^(WS|SS)\d{4}$/),
     regelstudienzeitSemester: z.number().int().gte(1).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     akkreditierungBis: zLocalDate.optional(),
-    ratenAnzahl: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     plaetze: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
 });
 
@@ -207,6 +216,9 @@ export const zTagungDto = z.object({
     gueltigBis: zLocalDate.optional(),
     verantwortlich: z.string().max(120).optional(),
     preisModell: zPreisModell,
+    preisCent: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    abrechnungIntervallMonate: z.number().int().gte(1).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    ratenGesamt: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
     shopVerkauf: z.boolean().optional(),
     vendureProductId: z.string().max(64).optional(),
     zielgruppe: z.string().max(200).optional(),

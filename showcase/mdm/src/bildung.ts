@@ -36,6 +36,9 @@ export const gemeinsameFelder: FeldDef[] = [
   { name: 'bereich', label: 'Bereich', art: 'select', options: z.zBereich.options },
   { name: 'status', label: 'Status', art: 'select', options: z.zAngebotStatus.options },
   { name: 'preisModell', label: 'Preismodell', art: 'select', options: z.zPreisModell.options },
+  { name: 'preisCent', label: 'Preis je Rate (Cent)', art: 'number' },
+  { name: 'abrechnungIntervallMonate', label: 'Abrechnungsintervall (Monate)', art: 'number' },
+  { name: 'ratenGesamt', label: 'Raten gesamt (0 = unbefristet)', art: 'number' },
   { name: 'gueltigAb', label: 'Gültig ab', art: 'date' },
   { name: 'gueltigBis', label: 'Gültig bis', art: 'date' },
   { name: 'verantwortlich', label: 'Verantwortlich', art: 'text' },
@@ -123,7 +126,6 @@ export const typen: Record<Typ, TypConfig> = {
       { name: 'startsemester', label: 'Startsemester (WS/SS+Jahr)', art: 'text' },
       { name: 'regelstudienzeitSemester', label: 'Regelstudienzeit (Sem.)', art: 'number' },
       { name: 'akkreditierungBis', label: 'Akkreditierung bis', art: 'date' },
-      { name: 'ratenAnzahl', label: 'Raten-Anzahl', art: 'number' },
       { name: 'plaetze', label: 'Plätze', art: 'number' },
     ],
     list: () => sdk.getBildungStudiengaenge(),
@@ -159,7 +161,7 @@ export function leeresAngebot(typ: Typ): Record<string, unknown> {
   if (typ === 'SEMINAR') Object.assign(base, { kategorie: 'SONSTIGE', dauerUE: 1, minTN: 0, maxTN: 1, zertifikat: false });
   if (typ === 'TAGUNG') Object.assign(base, { thema: '', terminVon: base.gueltigAb, maxTN: 1 });
   if (typ === 'BERUFSSCHULJAHR') Object.assign(base, { fachrichtung: '', schuljahr: '', jahrgang: 1, plaetze: 0 });
-  if (typ === 'STUDIENGANG') Object.assign(base, { abschluss: 'BACHELOR', studienform: 'VOLLZEIT', startsemester: '', regelstudienzeitSemester: 1, ratenAnzahl: 0, plaetze: 0 });
+  if (typ === 'STUDIENGANG') Object.assign(base, { abschluss: 'BACHELOR', studienform: 'VOLLZEIT', startsemester: '', regelstudienzeitSemester: 1, plaetze: 0 });
   return base;
 }
 

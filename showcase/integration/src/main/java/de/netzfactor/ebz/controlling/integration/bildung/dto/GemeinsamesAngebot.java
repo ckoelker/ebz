@@ -31,6 +31,12 @@ public interface GemeinsamesAngebot {
 
     PreisModell preisModell();
 
+    Integer preisCent();
+
+    Integer abrechnungIntervallMonate();
+
+    Integer ratenGesamt();
+
     boolean shopVerkauf();
 
     String vendureProductId();

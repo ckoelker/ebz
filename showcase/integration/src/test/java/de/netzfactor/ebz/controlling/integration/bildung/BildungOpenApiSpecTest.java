@@ -125,6 +125,22 @@ class BildungOpenApiSpecTest {
     }
 
     @Test
+    void zahlplanFelderImSchemaOptionalMitConstraints() {
+        // F3–F6: gemeinsame Zahlplan-Felder im Schema (minimum), aber OPTIONAL (nicht required) —
+        // ein Angebot ohne Preis bleibt valide; die Variante entsteht erst bei gesetztem preisCent.
+        given()
+                .queryParam("format", "json")
+                .when().get("/q/openapi")
+                .then()
+                .statusCode(200)
+                .body("components.schemas.SeminarDto.properties.preisCent.minimum", equalTo(0))
+                .body("components.schemas.SeminarDto.properties.abrechnungIntervallMonate.minimum", equalTo(1))
+                .body("components.schemas.SeminarDto.properties.ratenGesamt.minimum", equalTo(0))
+                .body("components.schemas.SeminarDto.required",
+                        org.hamcrest.Matchers.not(hasItems("preisCent", "abrechnungIntervallMonate", "ratenGesamt")));
+    }
+
+    @Test
     void shopProjektionEndpunktExistiertImOpenApiSchema() {
         // P1.3-Naht (§11.6): der Projektions-Endpunkt ist Teil des Vertrags (für die SDK-Generierung).
         given()
