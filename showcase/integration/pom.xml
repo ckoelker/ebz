@@ -97,6 +97,12 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-openapi</artifactId>
     </dependency>
+    <!-- RBAC (P1.2, §11.5/F6): OIDC-Resource-Server gegen Keycloak-Realm ebz-staff,
+         @RolesAllowed an den Schreib-Endpunkten der Bildungsangebote. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-oidc</artifactId>
+    </dependency>
 
     <!-- Camel Quarkus: zeitgesteuerter Pull + Orchestrierung + realer HTTP-Pull -->
     <dependency>
@@ -133,6 +139,12 @@
     <dependency>
       <groupId>io.rest-assured</groupId>
       <artifactId>rest-assured</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- @TestSecurity: RBAC-geschützte Endpunkte im Test ohne echtes Keycloak prüfen -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-test-security</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

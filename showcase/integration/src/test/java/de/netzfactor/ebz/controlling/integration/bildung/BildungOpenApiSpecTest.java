@@ -8,6 +8,7 @@ import static org.hamcrest.Matchers.hasItems;
 import org.junit.jupiter.api.Test;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 
 /**
@@ -88,9 +89,10 @@ class BildungOpenApiSpecTest {
     }
 
     @Test
+    @TestSecurity(user = "pfleger", roles = "katalog-pflege")
     void crossFieldVerletzungLiefert400MitGueltigBis() {
         // Ansonsten valides Seminar, nur gueltigBis VOR gueltigAb → 400 aus dem Klassen-Validator,
-        // Verletzung am Feld gueltigBis (für die Cockpit-Anzeige).
+        // Verletzung am Feld gueltigBis (für die Cockpit-Anzeige). @TestSecurity liefert die RBAC-Rolle.
         String body = """
                 {"code":"SEM-CF-001","titel":"Cross-Field-Test","bereich":"AKADEMIE","status":"ENTWURF",
                  "gueltigAb":"2026-09-01","gueltigBis":"2026-08-01","preisModell":"EINMALIG",
@@ -103,5 +105,22 @@ class BildungOpenApiSpecTest {
                 .then()
                 .statusCode(400)
                 .body(containsString("gueltigBis"));
+    }
+
+    @Test
+    @TestSecurity(user = "nurstaff", roles = "staff")
+    void schreibenOhneKatalogPflegeRolleIstVerboten() {
+        // RBAC (§11.5/F6): valides Seminar, aber ohne Rolle katalog-pflege → 403 (vor Validierung).
+        String body = """
+                {"code":"SEM-RBAC-1","titel":"RBAC-Test","bereich":"AKADEMIE","status":"ENTWURF",
+                 "gueltigAb":"2026-09-01","preisModell":"EINMALIG","shopVerkauf":false,
+                 "kategorie":"SONSTIGE","dauerUE":8,"minTN":1,"maxTN":10}
+                """;
+        given()
+                .contentType(ContentType.JSON)
+                .body(body)
+                .when().post("/bildung/seminare")
+                .then()
+                .statusCode(403);
     }
 }

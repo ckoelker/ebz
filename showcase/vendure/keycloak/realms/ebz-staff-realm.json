@@ -7,7 +7,8 @@
   "roles": {
     "realm": [
       { "name": "staff", "description": "EBZ Mitarbeiter:in" },
-      { "name": "controlling", "description": "Darf Controlling/Unternehmens-GuV sehen (L23: Gehälter in Gemeinkosten)" }
+      { "name": "controlling", "description": "Darf Controlling/Unternehmens-GuV sehen (L23: Gehälter in Gemeinkosten)" },
+      { "name": "katalog-pflege", "description": "Darf Bildungsangebote (MDM-Katalog) anlegen/ändern/archivieren (P1.2 RBAC, §11.5)" }
     ]
   },
   "groups": [
@@ -18,6 +19,22 @@
     }
   ],
   "clients": [
+    {
+      "clientId": "mdm-cockpit",
+      "name": "MDM-Cockpit (Bildungsangebote)",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "rootUrl": "http://localhost:5174",
+      "redirectUris": ["http://localhost:5174/*"],
+      "webOrigins": ["http://localhost:5174", "+"],
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5174/*"
+      }
+    },
     {
       "clientId": "staff-frontend",
       "enabled": true,
@@ -73,7 +90,7 @@
       "firstName": "Stefan",
       "lastName": "Mitarbeiter",
       "credentials": [{ "type": "password", "value": "staff", "temporary": false }],
-      "realmRoles": ["staff"],
+      "realmRoles": ["staff", "katalog-pflege"],
       "groups": ["/controlling"]
     },
     {

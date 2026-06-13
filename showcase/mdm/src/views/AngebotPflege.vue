@@ -13,6 +13,7 @@ import Message from 'primevue/message';
 import StammdatenFelder from '@/components/StammdatenFelder.vue';
 import TypSpezifischeFelder from '@/components/TypSpezifischeFelder.vue';
 import { typen, leeresAngebot, violationsZuFehlern, type Typ, type AngebotDto } from '@/bildung';
+import { login } from '@/auth';
 
 const route = useRoute();
 const router = useRouter();
@@ -43,10 +44,19 @@ const speichern = handleSubmit(async (values) => {
   serverFehler.value = null;
   const body = values as unknown as AngebotDto;
   const res = id !== null ? await config.update(id, body) : await config.create(body);
-  if (res.error) {
+  if (res.error || (res.response && !res.response.ok)) {
+    const status = res.response?.status;
+    if (status === 401) {
+      login(); // nicht angemeldet → SSO-Redirect
+      return;
+    }
+    if (status === 403) {
+      serverFehler.value = 'Keine Berechtigung: Rolle „katalog-pflege" erforderlich.';
+      return;
+    }
     const fehler = violationsZuFehlern(res.error);
     if (Object.keys(fehler).length) setErrors(fehler);
-    else serverFehler.value = `Speichern fehlgeschlagen (HTTP ${res.response?.status ?? '?'}).`;
+    else serverFehler.value = `Speichern fehlgeschlagen (HTTP ${status ?? '?'}).`;
     return;
   }
   await queryClient.invalidateQueries({ queryKey: ['angebote'] });

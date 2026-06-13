@@ -3,6 +3,7 @@ package de.netzfactor.ebz.controlling.integration.bildung.web;
 import java.net.URI;
 import java.util.List;
 
+import jakarta.annotation.security.RolesAllowed;
 import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.ws.rs.Consumes;
@@ -62,6 +63,7 @@ public class BildungResource {
         return e == null ? notFound() : Response.ok(toSeminar(e)).build();
     }
 
+    @RolesAllowed("katalog-pflege")
     @POST
     @Path("/seminare")
     @Transactional
@@ -72,6 +74,7 @@ public class BildungResource {
         return created("/bildung/seminare/" + e.id, toSeminar(e));
     }
 
+    @RolesAllowed("katalog-pflege")
     @PUT
     @Path("/seminare/{id}")
     @Transactional
@@ -87,6 +90,7 @@ public class BildungResource {
         return Response.ok(toSeminar(e)).build();
     }
 
+    @RolesAllowed("katalog-pflege")
     @DELETE
     @Path("/seminare/{id}")
     @Transactional
@@ -110,6 +114,7 @@ public class BildungResource {
         return e == null ? notFound() : Response.ok(toTagung(e)).build();
     }
 
+    @RolesAllowed("katalog-pflege")
     @POST
     @Path("/tagungen")
     @Transactional
@@ -120,6 +125,7 @@ public class BildungResource {
         return created("/bildung/tagungen/" + e.id, toTagung(e));
     }
 
+    @RolesAllowed("katalog-pflege")
     @PUT
     @Path("/tagungen/{id}")
     @Transactional
@@ -135,6 +141,7 @@ public class BildungResource {
         return Response.ok(toTagung(e)).build();
     }
 
+    @RolesAllowed("katalog-pflege")
     @DELETE
     @Path("/tagungen/{id}")
     @Transactional
@@ -158,6 +165,7 @@ public class BildungResource {
         return e == null ? notFound() : Response.ok(toBerufsschuljahr(e)).build();
     }
 
+    @RolesAllowed("katalog-pflege")
     @POST
     @Path("/berufsschuljahre")
     @Transactional
@@ -168,6 +176,7 @@ public class BildungResource {
         return created("/bildung/berufsschuljahre/" + e.id, toBerufsschuljahr(e));
     }
 
+    @RolesAllowed("katalog-pflege")
     @PUT
     @Path("/berufsschuljahre/{id}")
     @Transactional
@@ -183,6 +192,7 @@ public class BildungResource {
         return Response.ok(toBerufsschuljahr(e)).build();
     }
 
+    @RolesAllowed("katalog-pflege")
     @DELETE
     @Path("/berufsschuljahre/{id}")
     @Transactional
@@ -206,6 +216,7 @@ public class BildungResource {
         return e == null ? notFound() : Response.ok(toStudiengang(e)).build();
     }
 
+    @RolesAllowed("katalog-pflege")
     @POST
     @Path("/studiengaenge")
     @Transactional
@@ -216,6 +227,7 @@ public class BildungResource {
         return created("/bildung/studiengaenge/" + e.id, toStudiengang(e));
     }
 
+    @RolesAllowed("katalog-pflege")
     @PUT
     @Path("/studiengaenge/{id}")
     @Transactional
@@ -231,6 +243,7 @@ public class BildungResource {
         return Response.ok(toStudiengang(e)).build();
     }
 
+    @RolesAllowed("katalog-pflege")
     @DELETE
     @Path("/studiengaenge/{id}")
     @Transactional

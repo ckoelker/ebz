@@ -1,12 +1,20 @@
 <script setup lang="ts">
-// Rahmen des MDM-Cockpits: Kopfzeile + Router-Outlet. Inhalt = Liste / Pflege (siehe router.ts).
+// Rahmen des MDM-Cockpits: Kopfzeile (mit SSO-Status) + Router-Outlet.
 import { RouterLink, RouterView } from 'vue-router';
+import Button from 'primevue/button';
+import { auth, login, logout } from './auth';
 </script>
 
 <template>
   <header class="topbar">
     <RouterLink to="/" class="marke">EBZ MDM · Bildungsangebote</RouterLink>
     <span class="hint">Formularverwaltung-Showcase · Stack B</span>
+    <span class="spacer" />
+    <template v-if="auth.bereit">
+      <span v-if="auth.angemeldet" class="user"><i class="pi pi-user" /> {{ auth.benutzer }}</span>
+      <Button v-if="auth.angemeldet" label="Abmelden" size="small" text @click="logout" />
+      <Button v-else label="Anmelden" icon="pi pi-sign-in" size="small" @click="login" />
+    </template>
   </header>
   <main class="inhalt">
     <RouterView />
@@ -36,6 +44,15 @@ body {
 .hint {
   font-size: 0.8rem;
   opacity: 0.85;
+}
+.spacer {
+  flex: 1;
+}
+.user {
+  font-size: 0.9rem;
+}
+.topbar :deep(.p-button) {
+  color: #fff;
 }
 .inhalt {
   max-width: 1000px;
