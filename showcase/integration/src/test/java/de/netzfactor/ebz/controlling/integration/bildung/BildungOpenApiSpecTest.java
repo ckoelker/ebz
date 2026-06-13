@@ -41,14 +41,34 @@ class BildungOpenApiSpecTest {
 
     @Test
     void perTypEndpunkteSindFlachVorhanden() {
-        // §11.2: per-Typ-API statt oneOf — die flachen Seminar-Pfade + die Registry existieren.
+        // §11.2: per-Typ-API statt oneOf — ALLE vier Subtyp-Pfade + die Registry existieren (P1.1-Kernbeweis).
         given()
                 .queryParam("format", "json")
                 .when().get("/q/openapi")
                 .then()
                 .statusCode(200)
                 .body("paths", org.hamcrest.Matchers.hasKey("/bildung/seminare"))
-                .body("paths", org.hamcrest.Matchers.hasKey("/bildung/seminare/{id}"))
+                .body("paths", org.hamcrest.Matchers.hasKey("/bildung/tagungen"))
+                .body("paths", org.hamcrest.Matchers.hasKey("/bildung/berufsschuljahre"))
+                .body("paths", org.hamcrest.Matchers.hasKey("/bildung/studiengaenge"))
                 .body("paths", org.hamcrest.Matchers.hasKey("/bildung/angebote"));
+    }
+
+    @Test
+    void subtypSchemasTragenTypSpezifischeConstraints() {
+        // Jeder Subtyp ist ein eigenes FLACHES Schema mit seinen Constraints (kein oneOf/Vererbung im Schema).
+        given()
+                .queryParam("format", "json")
+                .when().get("/q/openapi")
+                .then()
+                .statusCode(200)
+                // Tagung: programmUrl-Pattern + maxTN minimum
+                .body("components.schemas.TagungDto.properties.programmUrl.pattern", equalTo("^https?://.+"))
+                .body("components.schemas.TagungDto.required", hasItems("thema", "terminVon"))
+                // Berufsschuljahr: schuljahr-Format JJJJ/JJ
+                .body("components.schemas.BerufsschuljahrDto.properties.schuljahr.pattern", equalTo("^\\d{4}/\\d{2}$"))
+                // Studiengang: startsemester-Format WS/SS+Jahr
+                .body("components.schemas.StudiengangDto.properties.startsemester.pattern", equalTo("^(WS|SS)\\d{4}$"))
+                .body("components.schemas.StudiengangDto.required", hasItems("abschluss", "studienform", "startsemester"));
     }
 }

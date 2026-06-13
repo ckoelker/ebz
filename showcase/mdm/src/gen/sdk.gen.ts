@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteBildungSeminareByIdData, DeleteBildungSeminareByIdResponses, GetBildungAngeboteData, GetBildungAngeboteResponses, GetBildungSeminareByIdData, GetBildungSeminareByIdResponses, GetBildungSeminareData, GetBildungSeminareResponses, GetIngestReviewData, GetIngestReviewResponses, GetIngestStatsData, GetIngestStatsResponses, PostBildungSeminareData, PostBildungSeminareErrors, PostBildungSeminareResponses, PostIngestRunData, PostIngestRunResponses, PutBildungSeminareByIdData, PutBildungSeminareByIdErrors, PutBildungSeminareByIdResponses } from './types.gen';
+import type { DeleteBildungBerufsschuljahreByIdData, DeleteBildungBerufsschuljahreByIdResponses, DeleteBildungSeminareByIdData, DeleteBildungSeminareByIdResponses, DeleteBildungStudiengaengeByIdData, DeleteBildungStudiengaengeByIdResponses, DeleteBildungTagungenByIdData, DeleteBildungTagungenByIdResponses, GetBildungAngeboteData, GetBildungAngeboteResponses, GetBildungBerufsschuljahreByIdData, GetBildungBerufsschuljahreByIdResponses, GetBildungBerufsschuljahreData, GetBildungBerufsschuljahreResponses, GetBildungSeminareByIdData, GetBildungSeminareByIdResponses, GetBildungSeminareData, GetBildungSeminareResponses, GetBildungStudiengaengeByIdData, GetBildungStudiengaengeByIdResponses, GetBildungStudiengaengeData, GetBildungStudiengaengeResponses, GetBildungTagungenByIdData, GetBildungTagungenByIdResponses, GetBildungTagungenData, GetBildungTagungenResponses, GetIngestReviewData, GetIngestReviewResponses, GetIngestStatsData, GetIngestStatsResponses, PostBildungBerufsschuljahreData, PostBildungBerufsschuljahreErrors, PostBildungBerufsschuljahreResponses, PostBildungSeminareData, PostBildungSeminareErrors, PostBildungSeminareResponses, PostBildungStudiengaengeData, PostBildungStudiengaengeErrors, PostBildungStudiengaengeResponses, PostBildungTagungenData, PostBildungTagungenErrors, PostBildungTagungenResponses, PostIngestRunData, PostIngestRunResponses, PutBildungBerufsschuljahreByIdData, PutBildungBerufsschuljahreByIdErrors, PutBildungBerufsschuljahreByIdResponses, PutBildungSeminareByIdData, PutBildungSeminareByIdErrors, PutBildungSeminareByIdResponses, PutBildungStudiengaengeByIdData, PutBildungStudiengaengeByIdErrors, PutBildungStudiengaengeByIdResponses, PutBildungTagungenByIdData, PutBildungTagungenByIdErrors, PutBildungTagungenByIdResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -24,12 +24,51 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 export const getBildungAngebote = <ThrowOnError extends boolean = false>(options?: Options<GetBildungAngeboteData, ThrowOnError>): RequestResult<GetBildungAngeboteResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetBildungAngeboteResponses, unknown, ThrowOnError>({ url: '/bildung/angebote', ...options });
 
 /**
- * List
+ * List Berufsschuljahre
+ */
+export const getBildungBerufsschuljahre = <ThrowOnError extends boolean = false>(options?: Options<GetBildungBerufsschuljahreData, ThrowOnError>): RequestResult<GetBildungBerufsschuljahreResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetBildungBerufsschuljahreResponses, unknown, ThrowOnError>({ url: '/bildung/berufsschuljahre', ...options });
+
+/**
+ * Create Berufsschuljahr
+ */
+export const postBildungBerufsschuljahre = <ThrowOnError extends boolean = false>(options: Options<PostBildungBerufsschuljahreData, ThrowOnError>): RequestResult<PostBildungBerufsschuljahreResponses, PostBildungBerufsschuljahreErrors, ThrowOnError> => (options.client ?? client).post<PostBildungBerufsschuljahreResponses, PostBildungBerufsschuljahreErrors, ThrowOnError>({
+    url: '/bildung/berufsschuljahre',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Archive Berufsschuljahr
+ */
+export const deleteBildungBerufsschuljahreById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungBerufsschuljahreByIdData, ThrowOnError>): RequestResult<DeleteBildungBerufsschuljahreByIdResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteBildungBerufsschuljahreByIdResponses, unknown, ThrowOnError>({ url: '/bildung/berufsschuljahre/{id}', ...options });
+
+/**
+ * Get Berufsschuljahr
+ */
+export const getBildungBerufsschuljahreById = <ThrowOnError extends boolean = false>(options: Options<GetBildungBerufsschuljahreByIdData, ThrowOnError>): RequestResult<GetBildungBerufsschuljahreByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetBildungBerufsschuljahreByIdResponses, unknown, ThrowOnError>({ url: '/bildung/berufsschuljahre/{id}', ...options });
+
+/**
+ * Update Berufsschuljahr
+ */
+export const putBildungBerufsschuljahreById = <ThrowOnError extends boolean = false>(options: Options<PutBildungBerufsschuljahreByIdData, ThrowOnError>): RequestResult<PutBildungBerufsschuljahreByIdResponses, PutBildungBerufsschuljahreByIdErrors, ThrowOnError> => (options.client ?? client).put<PutBildungBerufsschuljahreByIdResponses, PutBildungBerufsschuljahreByIdErrors, ThrowOnError>({
+    url: '/bildung/berufsschuljahre/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Seminare
  */
 export const getBildungSeminare = <ThrowOnError extends boolean = false>(options?: Options<GetBildungSeminareData, ThrowOnError>): RequestResult<GetBildungSeminareResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetBildungSeminareResponses, unknown, ThrowOnError>({ url: '/bildung/seminare', ...options });
 
 /**
- * Create
+ * Create Seminar
  */
 export const postBildungSeminare = <ThrowOnError extends boolean = false>(options: Options<PostBildungSeminareData, ThrowOnError>): RequestResult<PostBildungSeminareResponses, PostBildungSeminareErrors, ThrowOnError> => (options.client ?? client).post<PostBildungSeminareResponses, PostBildungSeminareErrors, ThrowOnError>({
     url: '/bildung/seminare',
@@ -41,20 +80,98 @@ export const postBildungSeminare = <ThrowOnError extends boolean = false>(option
 });
 
 /**
- * Archive
+ * Archive Seminar
  */
 export const deleteBildungSeminareById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungSeminareByIdData, ThrowOnError>): RequestResult<DeleteBildungSeminareByIdResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteBildungSeminareByIdResponses, unknown, ThrowOnError>({ url: '/bildung/seminare/{id}', ...options });
 
 /**
- * Get
+ * Get Seminar
  */
 export const getBildungSeminareById = <ThrowOnError extends boolean = false>(options: Options<GetBildungSeminareByIdData, ThrowOnError>): RequestResult<GetBildungSeminareByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetBildungSeminareByIdResponses, unknown, ThrowOnError>({ url: '/bildung/seminare/{id}', ...options });
 
 /**
- * Update
+ * Update Seminar
  */
 export const putBildungSeminareById = <ThrowOnError extends boolean = false>(options: Options<PutBildungSeminareByIdData, ThrowOnError>): RequestResult<PutBildungSeminareByIdResponses, PutBildungSeminareByIdErrors, ThrowOnError> => (options.client ?? client).put<PutBildungSeminareByIdResponses, PutBildungSeminareByIdErrors, ThrowOnError>({
     url: '/bildung/seminare/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Studiengaenge
+ */
+export const getBildungStudiengaenge = <ThrowOnError extends boolean = false>(options?: Options<GetBildungStudiengaengeData, ThrowOnError>): RequestResult<GetBildungStudiengaengeResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetBildungStudiengaengeResponses, unknown, ThrowOnError>({ url: '/bildung/studiengaenge', ...options });
+
+/**
+ * Create Studiengang
+ */
+export const postBildungStudiengaenge = <ThrowOnError extends boolean = false>(options: Options<PostBildungStudiengaengeData, ThrowOnError>): RequestResult<PostBildungStudiengaengeResponses, PostBildungStudiengaengeErrors, ThrowOnError> => (options.client ?? client).post<PostBildungStudiengaengeResponses, PostBildungStudiengaengeErrors, ThrowOnError>({
+    url: '/bildung/studiengaenge',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Archive Studiengang
+ */
+export const deleteBildungStudiengaengeById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungStudiengaengeByIdData, ThrowOnError>): RequestResult<DeleteBildungStudiengaengeByIdResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteBildungStudiengaengeByIdResponses, unknown, ThrowOnError>({ url: '/bildung/studiengaenge/{id}', ...options });
+
+/**
+ * Get Studiengang
+ */
+export const getBildungStudiengaengeById = <ThrowOnError extends boolean = false>(options: Options<GetBildungStudiengaengeByIdData, ThrowOnError>): RequestResult<GetBildungStudiengaengeByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetBildungStudiengaengeByIdResponses, unknown, ThrowOnError>({ url: '/bildung/studiengaenge/{id}', ...options });
+
+/**
+ * Update Studiengang
+ */
+export const putBildungStudiengaengeById = <ThrowOnError extends boolean = false>(options: Options<PutBildungStudiengaengeByIdData, ThrowOnError>): RequestResult<PutBildungStudiengaengeByIdResponses, PutBildungStudiengaengeByIdErrors, ThrowOnError> => (options.client ?? client).put<PutBildungStudiengaengeByIdResponses, PutBildungStudiengaengeByIdErrors, ThrowOnError>({
+    url: '/bildung/studiengaenge/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Tagungen
+ */
+export const getBildungTagungen = <ThrowOnError extends boolean = false>(options?: Options<GetBildungTagungenData, ThrowOnError>): RequestResult<GetBildungTagungenResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetBildungTagungenResponses, unknown, ThrowOnError>({ url: '/bildung/tagungen', ...options });
+
+/**
+ * Create Tagung
+ */
+export const postBildungTagungen = <ThrowOnError extends boolean = false>(options: Options<PostBildungTagungenData, ThrowOnError>): RequestResult<PostBildungTagungenResponses, PostBildungTagungenErrors, ThrowOnError> => (options.client ?? client).post<PostBildungTagungenResponses, PostBildungTagungenErrors, ThrowOnError>({
+    url: '/bildung/tagungen',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Archive Tagung
+ */
+export const deleteBildungTagungenById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungTagungenByIdData, ThrowOnError>): RequestResult<DeleteBildungTagungenByIdResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteBildungTagungenByIdResponses, unknown, ThrowOnError>({ url: '/bildung/tagungen/{id}', ...options });
+
+/**
+ * Get Tagung
+ */
+export const getBildungTagungenById = <ThrowOnError extends boolean = false>(options: Options<GetBildungTagungenByIdData, ThrowOnError>): RequestResult<GetBildungTagungenByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetBildungTagungenByIdResponses, unknown, ThrowOnError>({ url: '/bildung/tagungen/{id}', ...options });
+
+/**
+ * Update Tagung
+ */
+export const putBildungTagungenById = <ThrowOnError extends boolean = false>(options: Options<PutBildungTagungenByIdData, ThrowOnError>): RequestResult<PutBildungTagungenByIdResponses, PutBildungTagungenByIdErrors, ThrowOnError> => (options.client ?? client).put<PutBildungTagungenByIdResponses, PutBildungTagungenByIdErrors, ThrowOnError>({
+    url: '/bildung/tagungen/{id}',
     ...options,
     headers: {
         'Content-Type': 'application/json',

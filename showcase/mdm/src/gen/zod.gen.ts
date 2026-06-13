@@ -49,6 +49,30 @@ export const zPreisModell = z.enum([
     'RATEN'
 ]);
 
+export const zBerufsschuljahrDto = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    version: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    typ: zBildungsangebotTyp.optional(),
+    code: z.string().regex(/^[A-Z0-9-]{2,32}$/),
+    titel: z.string().max(200).regex(/\S/),
+    bereich: zBereich,
+    kurzbeschreibung: z.string().max(2000).optional(),
+    status: zAngebotStatus,
+    gueltigAb: zLocalDate,
+    gueltigBis: zLocalDate.optional(),
+    verantwortlich: z.string().max(120).optional(),
+    preisModell: zPreisModell,
+    shopVerkauf: z.boolean().optional(),
+    vendureProductId: z.string().max(64).optional(),
+    zielgruppe: z.string().max(200).optional(),
+    fachrichtung: z.string().max(200).regex(/\S/),
+    schuljahr: z.string().regex(/^\d{4}\/\d{2}$/),
+    jahrgang: z.number().int().gte(1).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    beginn: zLocalDate.optional(),
+    schildNrwSchluessel: z.string().max(32).optional(),
+    plaetze: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
+});
+
 export const zRegistryItemDto = z.object({
     id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     typ: zBildungsangebotTyp.optional(),
@@ -130,10 +154,88 @@ export const zStats = z.object({
     viaFallback: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+export const zStudienabschluss = z.enum(['BACHELOR', 'MASTER']);
+
+export const zStudienform = z.enum([
+    'VOLLZEIT',
+    'DUAL',
+    'BERUFSBEGLEITEND'
+]);
+
+export const zStudiengangDto = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    version: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    typ: zBildungsangebotTyp.optional(),
+    code: z.string().regex(/^[A-Z0-9-]{2,32}$/),
+    titel: z.string().max(200).regex(/\S/),
+    bereich: zBereich,
+    kurzbeschreibung: z.string().max(2000).optional(),
+    status: zAngebotStatus,
+    gueltigAb: zLocalDate,
+    gueltigBis: zLocalDate.optional(),
+    verantwortlich: z.string().max(120).optional(),
+    preisModell: zPreisModell,
+    shopVerkauf: z.boolean().optional(),
+    vendureProductId: z.string().max(64).optional(),
+    zielgruppe: z.string().max(200).optional(),
+    abschluss: zStudienabschluss,
+    studienform: zStudienform,
+    startsemester: z.string().regex(/^(WS|SS)\d{4}$/),
+    regelstudienzeitSemester: z.number().int().gte(1).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    akkreditierungBis: zLocalDate.optional(),
+    ratenAnzahl: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    plaetze: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
+});
+
+export const zTagungDto = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    version: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    typ: zBildungsangebotTyp.optional(),
+    code: z.string().regex(/^[A-Z0-9-]{2,32}$/),
+    titel: z.string().max(200).regex(/\S/),
+    bereich: zBereich,
+    kurzbeschreibung: z.string().max(2000).optional(),
+    status: zAngebotStatus,
+    gueltigAb: zLocalDate,
+    gueltigBis: zLocalDate.optional(),
+    verantwortlich: z.string().max(120).optional(),
+    preisModell: zPreisModell,
+    shopVerkauf: z.boolean().optional(),
+    vendureProductId: z.string().max(64).optional(),
+    zielgruppe: z.string().max(200).optional(),
+    thema: z.string().max(200).regex(/\S/),
+    terminVon: zLocalDate,
+    terminBis: zLocalDate.optional(),
+    ort: z.string().max(200).optional(),
+    programmUrl: z.string().max(300).regex(/^https?:\/\/.+/).optional(),
+    maxTN: z.number().int().gte(1).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
+});
+
 /**
  * OK
  */
 export const zGetBildungAngeboteResponse = z.array(zRegistryItemDto);
+
+/**
+ * OK
+ */
+export const zGetBildungBerufsschuljahreResponse = z.array(zBerufsschuljahrDto);
+
+export const zPostBildungBerufsschuljahreBody = zBerufsschuljahrDto;
+
+export const zDeleteBildungBerufsschuljahreByIdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+export const zGetBildungBerufsschuljahreByIdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+export const zPutBildungBerufsschuljahreByIdBody = zBerufsschuljahrDto;
+
+export const zPutBildungBerufsschuljahreByIdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
 
 /**
  * OK
@@ -153,6 +255,48 @@ export const zGetBildungSeminareByIdPath = z.object({
 export const zPutBildungSeminareByIdBody = zSeminarDto;
 
 export const zPutBildungSeminareByIdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * OK
+ */
+export const zGetBildungStudiengaengeResponse = z.array(zStudiengangDto);
+
+export const zPostBildungStudiengaengeBody = zStudiengangDto;
+
+export const zDeleteBildungStudiengaengeByIdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+export const zGetBildungStudiengaengeByIdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+export const zPutBildungStudiengaengeByIdBody = zStudiengangDto;
+
+export const zPutBildungStudiengaengeByIdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * OK
+ */
+export const zGetBildungTagungenResponse = z.array(zTagungDto);
+
+export const zPostBildungTagungenBody = zTagungDto;
+
+export const zDeleteBildungTagungenByIdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+export const zGetBildungTagungenByIdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+export const zPutBildungTagungenByIdBody = zTagungDto;
+
+export const zPutBildungTagungenByIdPath = z.object({
     id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
 });
 

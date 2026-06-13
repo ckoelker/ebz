@@ -8,6 +8,30 @@ export type AngebotStatus = 'ENTWURF' | 'AKTIV' | 'ARCHIVIERT';
 
 export type Bereich = 'BERUFSSCHULE' | 'HOCHSCHULE' | 'AKADEMIE';
 
+export type BerufsschuljahrDto = {
+    id?: number;
+    version?: number;
+    typ?: BildungsangebotTyp;
+    code: string;
+    titel: string;
+    bereich: Bereich;
+    kurzbeschreibung?: string;
+    status: AngebotStatus;
+    gueltigAb: LocalDate;
+    gueltigBis?: LocalDate;
+    verantwortlich?: string;
+    preisModell: PreisModell;
+    shopVerkauf?: boolean;
+    vendureProductId?: string;
+    zielgruppe?: string;
+    fachrichtung: string;
+    schuljahr: string;
+    jahrgang?: number;
+    beginn?: LocalDate;
+    schildNrwSchluessel?: string;
+    plaetze?: number;
+};
+
 export type BildungsangebotTyp = 'SEMINAR' | 'TAGUNG' | 'BERUFSSCHULJAHR' | 'STUDIENGANG';
 
 export type DeliveryType = 'INHOUSE' | 'OFFEN' | 'UNBEKANNT';
@@ -96,6 +120,59 @@ export type Stats = {
     viaFallback?: number;
 };
 
+export type Studienabschluss = 'BACHELOR' | 'MASTER';
+
+export type Studienform = 'VOLLZEIT' | 'DUAL' | 'BERUFSBEGLEITEND';
+
+export type StudiengangDto = {
+    id?: number;
+    version?: number;
+    typ?: BildungsangebotTyp;
+    code: string;
+    titel: string;
+    bereich: Bereich;
+    kurzbeschreibung?: string;
+    status: AngebotStatus;
+    gueltigAb: LocalDate;
+    gueltigBis?: LocalDate;
+    verantwortlich?: string;
+    preisModell: PreisModell;
+    shopVerkauf?: boolean;
+    vendureProductId?: string;
+    zielgruppe?: string;
+    abschluss: Studienabschluss;
+    studienform: Studienform;
+    startsemester: string;
+    regelstudienzeitSemester?: number;
+    akkreditierungBis?: LocalDate;
+    ratenAnzahl?: number;
+    plaetze?: number;
+};
+
+export type TagungDto = {
+    id?: number;
+    version?: number;
+    typ?: BildungsangebotTyp;
+    code: string;
+    titel: string;
+    bereich: Bereich;
+    kurzbeschreibung?: string;
+    status: AngebotStatus;
+    gueltigAb: LocalDate;
+    gueltigBis?: LocalDate;
+    verantwortlich?: string;
+    preisModell: PreisModell;
+    shopVerkauf?: boolean;
+    vendureProductId?: string;
+    zielgruppe?: string;
+    thema: string;
+    terminVon: LocalDate;
+    terminBis?: LocalDate;
+    ort?: string;
+    programmUrl?: string;
+    maxTN?: number;
+};
+
 export type GetBildungAngeboteData = {
     body?: never;
     path?: never;
@@ -111,6 +188,98 @@ export type GetBildungAngeboteResponses = {
 };
 
 export type GetBildungAngeboteResponse = GetBildungAngeboteResponses[keyof GetBildungAngeboteResponses];
+
+export type GetBildungBerufsschuljahreData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/bildung/berufsschuljahre';
+};
+
+export type GetBildungBerufsschuljahreResponses = {
+    /**
+     * OK
+     */
+    200: Array<BerufsschuljahrDto>;
+};
+
+export type GetBildungBerufsschuljahreResponse = GetBildungBerufsschuljahreResponses[keyof GetBildungBerufsschuljahreResponses];
+
+export type PostBildungBerufsschuljahreData = {
+    body: BerufsschuljahrDto;
+    path?: never;
+    query?: never;
+    url: '/bildung/berufsschuljahre';
+};
+
+export type PostBildungBerufsschuljahreErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+};
+
+export type PostBildungBerufsschuljahreResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteBildungBerufsschuljahreByIdData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/berufsschuljahre/{id}';
+};
+
+export type DeleteBildungBerufsschuljahreByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetBildungBerufsschuljahreByIdData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/berufsschuljahre/{id}';
+};
+
+export type GetBildungBerufsschuljahreByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PutBildungBerufsschuljahreByIdData = {
+    body: BerufsschuljahrDto;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/berufsschuljahre/{id}';
+};
+
+export type PutBildungBerufsschuljahreByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+};
+
+export type PutBildungBerufsschuljahreByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
 
 export type GetBildungSeminareData = {
     body?: never;
@@ -198,6 +367,190 @@ export type PutBildungSeminareByIdErrors = {
 };
 
 export type PutBildungSeminareByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetBildungStudiengaengeData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/bildung/studiengaenge';
+};
+
+export type GetBildungStudiengaengeResponses = {
+    /**
+     * OK
+     */
+    200: Array<StudiengangDto>;
+};
+
+export type GetBildungStudiengaengeResponse = GetBildungStudiengaengeResponses[keyof GetBildungStudiengaengeResponses];
+
+export type PostBildungStudiengaengeData = {
+    body: StudiengangDto;
+    path?: never;
+    query?: never;
+    url: '/bildung/studiengaenge';
+};
+
+export type PostBildungStudiengaengeErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+};
+
+export type PostBildungStudiengaengeResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteBildungStudiengaengeByIdData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/studiengaenge/{id}';
+};
+
+export type DeleteBildungStudiengaengeByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetBildungStudiengaengeByIdData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/studiengaenge/{id}';
+};
+
+export type GetBildungStudiengaengeByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PutBildungStudiengaengeByIdData = {
+    body: StudiengangDto;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/studiengaenge/{id}';
+};
+
+export type PutBildungStudiengaengeByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+};
+
+export type PutBildungStudiengaengeByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetBildungTagungenData = {
+    body?: never;
+    path?: never;
+    query?: never;
+    url: '/bildung/tagungen';
+};
+
+export type GetBildungTagungenResponses = {
+    /**
+     * OK
+     */
+    200: Array<TagungDto>;
+};
+
+export type GetBildungTagungenResponse = GetBildungTagungenResponses[keyof GetBildungTagungenResponses];
+
+export type PostBildungTagungenData = {
+    body: TagungDto;
+    path?: never;
+    query?: never;
+    url: '/bildung/tagungen';
+};
+
+export type PostBildungTagungenErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+};
+
+export type PostBildungTagungenResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type DeleteBildungTagungenByIdData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/tagungen/{id}';
+};
+
+export type DeleteBildungTagungenByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type GetBildungTagungenByIdData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/tagungen/{id}';
+};
+
+export type GetBildungTagungenByIdResponses = {
+    /**
+     * OK
+     */
+    200: unknown;
+};
+
+export type PutBildungTagungenByIdData = {
+    body: TagungDto;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/tagungen/{id}';
+};
+
+export type PutBildungTagungenByIdErrors = {
+    /**
+     * Bad Request
+     */
+    400: unknown;
+};
+
+export type PutBildungTagungenByIdResponses = {
     /**
      * OK
      */
