@@ -224,7 +224,8 @@ public class RechnungResource {
         LocalDate v = datum(von, LocalDate.of(2000, 1, 1));
         LocalDate b = datum(bis, LocalDate.of(2999, 12, 31));
         byte[] csv = datev.extfCsv(datev.belege(v, b, bereich), v, b);
-        return Response.ok(csv)
+        // EXTF ist Windows-1252-kodiert (DATEV-Vorgabe) — Charset passend deklarieren.
+        return Response.ok(csv).type("text/csv; charset=windows-1252")
                 .header("Content-Disposition", "attachment; filename=\"EXTF_Buchungsstapel_" + v + "_" + b + ".csv\"")
                 .build();
     }

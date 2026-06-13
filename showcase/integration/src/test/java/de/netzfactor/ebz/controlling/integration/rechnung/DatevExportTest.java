@@ -68,7 +68,9 @@ class DatevExportTest {
         // EXTF-Buchungsstapel abrufbar (text/csv, Format-Kopf, enthält Belegnummer)
         String csv = given().when()
                 .get("/rechnung/datev/buchungsstapel?von=" + heute + "&bis=" + heute + "&bereich=BERUFSSCHULE")
-                .then().statusCode(200).contentType("text/csv").extract().asString();
+                .then().statusCode(200)
+                .header("Content-Type", org.hamcrest.Matchers.containsString("text/csv"))
+                .extract().asString();
         org.junit.jupiter.api.Assertions.assertTrue(csv.startsWith("\"EXTF\";700;21;\"Buchungsstapel\""), "EXTF-Kopf");
         org.junit.jupiter.api.Assertions.assertTrue(csv.contains(nr), "Belegnummer im Stapel");
 
