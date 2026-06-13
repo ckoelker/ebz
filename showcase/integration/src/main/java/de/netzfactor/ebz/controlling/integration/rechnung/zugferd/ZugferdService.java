@@ -66,11 +66,17 @@ public class ZugferdService {
                 .setContact(new Contact(v.kontaktName(), v.kontaktTelefon(), v.email()))
                 .addBankDetails(new BankDetails(v.iban(), v.bic()));
 
+        // Verkäufer = elektronische Adresse BT-34 (für EN-16931/XRechnung gefordert).
+        sender.setEmail(v.email());
+
         var k = d.empfaenger();
         TradeParty recipient = new TradeParty(k.name(), nz(k.strasse()), nz(k.plz()), nz(k.ort()),
                 k.land() == null ? "DE" : k.land());
         if (k.ustId() != null && !k.ustId().isBlank()) {
             recipient.addVATID(k.ustId());
+        }
+        if (k.email() != null && !k.email().isBlank()) {
+            recipient.setEmail(k.email()); // Käufer elektronische Adresse BT-49
         }
 
         Invoice invoice = new Invoice()
@@ -79,19 +85,35 @@ public class ZugferdService {
                 .setDueDate(toDate(d.faelligAm()))
                 .setSender(sender)
                 .setRecipient(recipient)
+                .setReferenceNumber(k.debitorNr()) // Käuferreferenz BT-10 (hier Kunden-Nr.)
                 .setPaymentTermDescription("Zahlbar innerhalb von " + d.zahlungszielTage()
                         + " Tagen ohne Abzug. Kunden-Nr. " + k.debitorNr()
-                        + ", Rechnungs-Nr. " + d.nummer() + " angeben.");
+                        + ", Beleg-Nr. " + d.nummer() + " angeben.");
         if (d.zeitraumBezeichnung() != null && !d.zeitraumBezeichnung().isBlank()) {
             invoice.addNote(d.zeitraumBezeichnung());
         }
+        // Leistungszeitraum BG-14 (BT-73/BT-74), wenn ableitbar.
+        if (d.leistungVon() != null && d.leistungBis() != null) {
+            invoice.setDetailedDeliveryPeriod(toDate(d.leistungVon()), toDate(d.leistungBis()));
+        }
+        // Korrekturbeleg: Typ 381 (Gutschrift/Storno) + Pflicht-Bezug auf die Originalrechnung (BT-25/26).
+        if (d.gutschrift()) {
+            invoice.setCreditNote();
+        }
+        if (d.originalNummer() != null && !d.originalNummer().isBlank()) {
+            invoice.setInvoiceReferencedDocumentID(d.originalNummer());
+            if (d.originalDatum() != null) {
+                invoice.setInvoiceReferencedIssueDate(toDate(d.originalDatum()));
+            }
+        }
 
         for (RechnungZugferdDaten.Position p : d.positionen()) {
-            // Steuerbefreit (§4 UStG): Kategorie E, 0 %, mit Befreiungsgrund.
+            // Steuerbefreit (§4 UStG): Kategorie E, 0 %, mit Befreiungsgrund. Bei Gutschrift/Storno
+            // werden die Beträge positiv geführt (EN-16931-Konvention für Typ 381).
             Product product = new Product(p.beschreibung(), p.beschreibung(), "C62", BigDecimal.ZERO);
             product.setTaxCategoryCode("E");
             product.setTaxExemptionReason(d.befreiungsgrund());
-            invoice.addItem(new Item(product, cent(p.betragCent()), BigDecimal.ONE));
+            invoice.addItem(new Item(product, cent(d.anzeige(p.betragCent())), BigDecimal.ONE));
         }
         return invoice;
     }

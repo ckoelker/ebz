@@ -97,10 +97,16 @@ public class PdfA3Generator {
         textRight(cs, reg, 10, RIGHT, 150 + ROW, d.ausstellungsdatum().format(DATUM));
 
         float y = 250;
-        text(cs, bold, 13, LEFT, y, "Rechnung " + d.nummer());
+        String bez = d.belegBezeichnung() == null || d.belegBezeichnung().isBlank() ? "Rechnung" : d.belegBezeichnung();
+        text(cs, bold, 13, LEFT, y, bez + " " + d.nummer());
         y += ROW;
         if (d.zeitraumBezeichnung() != null && !d.zeitraumBezeichnung().isBlank()) {
             text(cs, reg, 10, LEFT, y, d.zeitraumBezeichnung());
+            y += ROW;
+        }
+        if (d.originalNummer() != null && !d.originalNummer().isBlank()) {
+            text(cs, reg, 10, LEFT, y, "Bezug auf Rechnung " + d.originalNummer()
+                    + (d.originalDatum() == null ? "" : " vom " + d.originalDatum().format(DATUM)));
             y += ROW;
         }
 
@@ -116,8 +122,8 @@ public class PdfA3Generator {
                 text(cs, reg, 10, LEFT, y, zeile);
                 y += ROW;
             }
-            // Betrag auf Höhe der ersten Beschreibungszeile dieser Position
-            textRight(cs, reg, 10, RIGHT, y - ROW, money(p.betragCent()));
+            // Betrag auf Höhe der ersten Beschreibungszeile dieser Position (bei Gutschrift/Storno positiv)
+            textRight(cs, reg, 10, RIGHT, y - ROW, money(d.anzeige(p.betragCent())));
         }
         linie(cs, LEFT, y, RIGHT);
         y += ROW;
@@ -217,7 +223,7 @@ public class PdfA3Generator {
             id.setPart(3);
             id.setConformance("B");
             DublinCoreSchema dc = xmp.createAndAddDublinCoreSchema();
-            dc.setTitle("Rechnung " + d.nummer());
+            dc.setTitle((d.belegBezeichnung() == null || d.belegBezeichnung().isBlank() ? "Rechnung" : d.belegBezeichnung()) + " " + d.nummer());
             dc.addCreator(d.verkaeufer().name());
             ByteArrayOutputStream xmpOut = new ByteArrayOutputStream();
             new XmpSerializer().serialize(xmp, xmpOut, true);
@@ -230,7 +236,7 @@ public class PdfA3Generator {
 
     private void setzeDokumentInfo(PDDocument doc, RechnungZugferdDaten d) {
         PDDocumentInformation info = doc.getDocumentInformation();
-        info.setTitle("Rechnung " + d.nummer());
+        info.setTitle((d.belegBezeichnung() == null || d.belegBezeichnung().isBlank() ? "Rechnung" : d.belegBezeichnung()) + " " + d.nummer());
         info.setAuthor(d.verkaeufer().name());
         info.setCreationDate(Calendar.getInstance());
         info.setProducer("EBZ integration (Quarkus + PDFBox)");

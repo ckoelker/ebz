@@ -57,8 +57,22 @@ class ZugferdEndpointTest {
         byte[] pdf = given().when().get("/rechnung/rechnungen/" + rid + "/zugferd").then()
                 .statusCode(200)
                 .contentType("application/pdf")
-                .header("Content-Disposition", startsWith("attachment; filename=\"rechnung-RE-BS-"))
+                .header("Content-Disposition", startsWith("attachment; filename=\"beleg-RE-BS-"))
                 .extract().asByteArray();
+        pruefePdf(pdf);
+
+        // Storno → Korrekturbeleg (Typ 381) liefert ebenfalls ein valides ZUGFeRD-PDF
+        long stornoId = given().when().post("/rechnung/rechnungen/" + rid + "/storno").then()
+                .statusCode(200).extract().jsonPath().getLong("id");
+        byte[] stornoPdf = given().when().get("/rechnung/rechnungen/" + stornoId + "/zugferd").then()
+                .statusCode(200)
+                .contentType("application/pdf")
+                .header("Content-Disposition", startsWith("attachment; filename=\"beleg-ST-BS-"))
+                .extract().asByteArray();
+        pruefePdf(stornoPdf);
+    }
+
+    private static void pruefePdf(byte[] pdf) {
         org.junit.jupiter.api.Assertions.assertTrue(pdf.length > 3000, "PDF nicht leer");
         String magic = new String(pdf, 0, 5, java.nio.charset.StandardCharsets.ISO_8859_1);
         org.junit.jupiter.api.Assertions.assertEquals("%PDF-", magic, "PDF-Magic erwartet");

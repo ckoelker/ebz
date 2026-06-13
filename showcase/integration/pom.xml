@@ -30,6 +30,10 @@
          an dessen PDFBox-Version angleichen (dependency:tree prüfen, [[verify-version-compatibility]]). -->
     <mustang.version>2.24.0</mustang.version>
     <pdfbox.version>3.0.7</pdfbox.version>
+    <!-- GoBD-Archiv (R2, §4 Säule 4): plain MinIO-SDK statt Quarkiverse-Extension — quarkus-minio
+         zielt auf Quarkus 3.19, wir laufen auf 3.33 (Versions-Mismatch vermieden, [[verify-version-compatibility]]).
+         MinioClient wird als CDI-Bean produziert; voller Zugriff auf Object-Lock/Retention (WORM). -->
+    <minio.version>8.5.17</minio.version>
 
     <compiler-plugin.version>3.13.0</compiler-plugin.version>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
@@ -164,6 +168,13 @@
       <groupId>org.apache.pdfbox</groupId>
       <artifactId>xmpbox</artifactId>
       <version>${pdfbox.version}</version>
+    </dependency>
+
+    <!-- GoBD-Archiv (R2, §4 Säule 4): MinIO-SDK für revisionssichere WORM-Ablage (Object-Lock + Retention). -->
+    <dependency>
+      <groupId>io.minio</groupId>
+      <artifactId>minio</artifactId>
+      <version>${minio.version}</version>
     </dependency>
 
     <!-- Test -->

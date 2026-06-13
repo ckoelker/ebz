@@ -32,16 +32,16 @@ import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungPositionDt
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungslaufRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
-import de.netzfactor.ebz.controlling.integration.rechnung.model.Belegart;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungPosition;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungStatus;
+import de.netzfactor.ebz.controlling.integration.rechnung.gobd.GobdArchivService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungslaufService;
-import de.netzfactor.ebz.controlling.integration.rechnung.zugferd.EbzVerkaeufer;
 import de.netzfactor.ebz.controlling.integration.rechnung.zugferd.RechnungZugferdDaten;
+import de.netzfactor.ebz.controlling.integration.rechnung.zugferd.RechnungZugferdMapper;
 import de.netzfactor.ebz.controlling.integration.rechnung.zugferd.ZugferdService;
 
 /**
@@ -66,7 +66,10 @@ public class RechnungResource {
     ZugferdService zugferd;
 
     @Inject
-    EbzVerkaeufer verkaeufer;
+    RechnungZugferdMapper zugferdMapper;
+
+    @Inject
+    GobdArchivService gobdArchiv;
 
     // ───────────────────────── Debitoren ─────────────────────────
     @GET
@@ -207,9 +210,10 @@ public class RechnungResource {
     }
 
     /**
-     * Liefert die Rechnung als ZUGFeRD-E-Rechnung (PDF/A-3 + EN-16931-XML), R2 (§4b). Nur für
-     * ausgestellte (festgeschriebene) Belege der Belegart RECHNUNG; der Mustang-Validator ist
-     * Pflicht-Tor — schlägt er an, wird nichts ausgeliefert (502 mit Report).
+     * Liefert den Beleg als ZUGFeRD-E-Rechnung (PDF/A-3 + EN-16931-XML), R2 (§4b). Für jeden
+     * ausgestellten (festgeschriebenen) Beleg — Rechnung (Typ 380) wie Korrekturbeleg (Gutschrift/
+     * Storno = Typ 381 mit Bezug aufs Original). Der Mustang-Validator ist Pflicht-Tor — schlägt er
+     * an, wird nichts ausgeliefert (502 mit Report).
      */
     @RolesAllowed("rechnung-pflege")
     @GET
@@ -221,25 +225,19 @@ public class RechnungResource {
         if (r == null) {
             return notFound();
         }
-        if (r.status != RechnungStatus.AUSGESTELLT && r.status != RechnungStatus.BEZAHLT) {
-            return jsonFehler(Response.Status.CONFLICT, "E-Rechnung nur für ausgestellte Belege (Status: " + r.status + ").");
-        }
-        if (r.belegart != Belegart.RECHNUNG) {
-            return jsonFehler(Response.Status.CONFLICT, "ZUGFeRD-Erzeugung in R2a nur für Belegart RECHNUNG (hier: " + r.belegart + ").");
-        }
-        Debitor d = Debitor.findById(r.debitorId);
-        if (d == null) {
-            return jsonFehler(Response.Status.CONFLICT, "Debitor zur Rechnung fehlt: " + r.debitorId);
+        if (r.status != RechnungStatus.AUSGESTELLT && r.status != RechnungStatus.BEZAHLT
+                && r.status != RechnungStatus.STORNIERT) {
+            return jsonFehler(Response.Status.CONFLICT, "E-Rechnung nur für festgeschriebene Belege (Status: " + r.status + ").");
         }
         try {
-            RechnungZugferdDaten daten = toZugferdDaten(r, d);
+            RechnungZugferdDaten daten = zugferdMapper.baue(r);
             ZugferdService.Ergebnis erg = zugferd.erzeugeUndValidiere(daten);
             if (!erg.valide()) {
                 return jsonFehler(Response.Status.BAD_GATEWAY,
                         "ZUGFeRD-Validierung fehlgeschlagen — nicht ausgeliefert. Report: " + erg.report());
             }
             return Response.ok(erg.pdf())
-                    .header("Content-Disposition", "attachment; filename=\"rechnung-" + r.nummer + ".pdf\"")
+                    .header("Content-Disposition", "attachment; filename=\"beleg-" + r.nummer + ".pdf\"")
                     .build();
         } catch (Exception ex) {
             return jsonFehler(Response.Status.BAD_GATEWAY, "ZUGFeRD-Erzeugung fehlgeschlagen: " + ex.getMessage());
@@ -261,7 +259,7 @@ public class RechnungResource {
     @Consumes(MediaType.WILDCARD)
     @Transactional
     public RechnungDto ausstellen(@PathParam("id") Long id) {
-        return toRechnung(rechnungService.ausstellen(id));
+        return festschreibenUndArchivieren(rechnungService.ausstellen(id));
     }
 
     @RolesAllowed("rechnung-pflege")
@@ -270,7 +268,7 @@ public class RechnungResource {
     @Consumes(MediaType.WILDCARD)
     @Transactional
     public RechnungDto storno(@PathParam("id") Long id) {
-        return toRechnung(rechnungService.storno(id));
+        return festschreibenUndArchivieren(rechnungService.storno(id));
     }
 
     @RolesAllowed("rechnung-pflege")
@@ -278,7 +276,7 @@ public class RechnungResource {
     @Path("/rechnungen/{id}/gutschrift")
     @Transactional
     public RechnungDto gutschrift(@PathParam("id") Long id, @Valid KorrekturRequest req) {
-        return toRechnung(rechnungService.gutschrift(id, req.grund(), req.positionen()));
+        return festschreibenUndArchivieren(rechnungService.gutschrift(id, req.grund(), req.positionen()));
     }
 
     @RolesAllowed("rechnung-pflege")
@@ -286,7 +284,17 @@ public class RechnungResource {
     @Path("/rechnungen/{id}/nachberechnung")
     @Transactional
     public RechnungDto nachberechnung(@PathParam("id") Long id, @Valid KorrekturRequest req) {
-        return toRechnung(rechnungService.nachberechnung(id, req.grund(), req.positionen()));
+        return festschreibenUndArchivieren(rechnungService.nachberechnung(id, req.grund(), req.positionen()));
+    }
+
+    /**
+     * Festschreibung + GoBD-Archivierung in EINER Transaktion: schlägt das Archivieren des validierten
+     * ZUGFeRD fehl (Validierung 409 / MinIO 500), rollt die Festschreibung zurück — kein ausgestellter
+     * Beleg ohne revisionssicheren E-Rechnungs-Beleg.
+     */
+    private RechnungDto festschreibenUndArchivieren(Rechnung r) {
+        gobdArchiv.archiviereWennAktiv(r);
+        return toRechnung(r);
     }
 
     // ───────────────────────── Helfer ─────────────────────────
@@ -309,17 +317,6 @@ public class RechnungResource {
     private static Response jsonFehler(Response.Status status, String message) {
         return Response.status(status).type(MediaType.APPLICATION_JSON)
                 .entity(new RegelVerletzungMapper.Fehler(message)).build();
-    }
-
-    private RechnungZugferdDaten toZugferdDaten(Rechnung r, Debitor d) {
-        var empf = new RechnungZugferdDaten.Empfaenger(d.debitorNr, d.name, d.strasse, d.plz, d.ort, d.land, d.ustId);
-        List<RechnungZugferdDaten.Position> pos = r.positionen.stream()
-                .map(p -> new RechnungZugferdDaten.Position(p.beschreibung, p.betragCent()))
-                .toList();
-        String grund = r.positionen.stream().map(p -> p.befreiungsgrund).filter(g -> g != null && !g.isBlank())
-                .findFirst().orElse("Umsatzsteuerbefreit nach § 4 UStG (Bildungsleistung)");
-        return new RechnungZugferdDaten(r.nummer, r.ausstellungsdatum, r.zahlungszielTage,
-                verkaeufer.snapshot(), empf, r.zeitraumBezeichnung, grund, pos);
     }
 
     private static void applyDebitor(DebitorDto dto, Debitor d) {
