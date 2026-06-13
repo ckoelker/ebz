@@ -19,6 +19,7 @@ Planungs-/Konzept-Doku, **kein Code**.
 - **[R1-Code-Plan-Rechnungsstellung.md](R1-Code-Plan-Rechnungsstellung.md)** — konkreter
   Implementierungsplan im `integration`-Service (Schema `rechnung`, Datenmodell, Lebenszyklus/
   Festschreibung, Services, REST-Endpunkte, Teststrategie); R1-Slice = Berufsschule end-to-end.
+  **STATUS: GEBAUT + VERIFIZIERT (2026-06-13)** — 11 Tests grün + live end-to-end gegen den Stack.
 
 ## Kurzfassung
 - **Ist:** Im Showcase entstehen noch keine echten Rechnungen (Vendure = Bestellungen + Raten-
@@ -33,4 +34,6 @@ Planungs-/Konzept-Doku, **kein Code**.
   USt-Behandlung je Leistung, bestehende Debitoren-Nummernkreise, Rahmenrabatte, Storno-/Gutschrift-
   Regeln, E-Rechnungs-Pflicht-Timeline.
 
-> Status: **Konzept, noch nicht umgesetzt.** Build erst nach Klärung der offenen Punkte (R0).
+> Status: **R1 (Berufsschule end-to-end) GEBAUT + VERIFIZIERT** (Backend im `integration`-Service,
+> Schema `rechnung`). Die nächsten Milestones (R2 ZUGFeRD, R3 Debitoren-Match/Merge, R4 DATEV …)
+> bleiben Konzept; der DATEV-Weg ist weiter beim Kunden zu klären.

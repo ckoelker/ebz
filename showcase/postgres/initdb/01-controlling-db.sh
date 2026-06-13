@@ -55,4 +55,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${LIGHTDASH_DB}" \
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
   -c "CREATE SCHEMA IF NOT EXISTS bildung AUTHORIZATION \"${CONTROLLING_USER}\";"
 
-echo "initdb: DBs 'controlling' + 'lightdash', Schema 'bildung' und User (controlling/lightdash/${READER_USER}) sichergestellt."
+# Rechnungsstellung R1: Schema `rechnung` (Billing/Beleg-SoR) in DB `controlling`, analog `bildung`
+# (Hibernate-update legt nur die Tabellen an, nicht das Schema selbst).
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
+  -c "CREATE SCHEMA IF NOT EXISTS rechnung AUTHORIZATION \"${CONTROLLING_USER}\";"
+
+echo "initdb: DBs 'controlling' + 'lightdash', Schemata 'bildung'+'rechnung' und User (controlling/lightdash/${READER_USER}) sichergestellt."

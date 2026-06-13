@@ -2,7 +2,14 @@
 
 > Konkreter Implementierungsplan auf Basis der [Fachklärung](R1-Fachklaerung-Rechnungsstellung.md).
 > **R1-Slice = Berufsschule end-to-end** (interne Rechnung). **ZUGFeRD = R2, Debitoren-Match/Merge =
-> R3, DATEV = R4, Hochschule = R6, Vendure-Quelle = R7.** Stand 2026-06-13. Noch kein Code.
+> R3, DATEV = R4, Hochschule = R6, Vendure-Quelle = R7.** Stand 2026-06-13.
+>
+> **STATUS: GEBAUT + VERIFIZIERT (2026-06-13).** Package `…integration.rechnung` (model/dto/
+> validation/service/web), Schema `rechnung` (5 Tabellen), Nummernkreis-Seeding beim Start, RBAC-Rolle
+> `rechnung-pflege` (Keycloak-Realm + live). Tests: 11 grün (4 OpenAPI-Spec, 5 Lebenszyklus rest-
+> assured, 2 Nummernkreis-Unit inkl. nebenläufig-lückenlos). Live gegen den Stack end-to-end geprüft
+> (Token `staff2`: 401 ohne Token, Sammelrechnung 3 Pos./430.000 Cent, Ausstellen `RE-BS-00004`,
+> 2× 409-Festschreibungs-Guards, Storno `ST-BS-00003` mit −430.000 + Original STORNIERT).
 
 ## Architektur-Rollen
 - **Vendure** = Commerce/Zahlung-SoR (Webshop, Karte/Stripe, SEPA, Subscriptions, Self-Service).

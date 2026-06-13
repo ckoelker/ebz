@@ -8,7 +8,8 @@
     "realm": [
       { "name": "staff", "description": "EBZ Mitarbeiter:in" },
       { "name": "controlling", "description": "Darf Controlling/Unternehmens-GuV sehen (L23: Gehälter in Gemeinkosten)" },
-      { "name": "katalog-pflege", "description": "Darf Bildungsangebote (MDM-Katalog) anlegen/ändern/archivieren (P1.2 RBAC, §11.5)" }
+      { "name": "katalog-pflege", "description": "Darf Bildungsangebote (MDM-Katalog) anlegen/ändern/archivieren (P1.2 RBAC, §11.5)" },
+      { "name": "rechnung-pflege", "description": "Darf Debitoren/Anmeldungen pflegen und Rechnungen erzeugen/ausstellen/stornieren (R1 RBAC)" }
     ]
   },
   "groups": [
@@ -90,7 +91,7 @@
       "firstName": "Stefan",
       "lastName": "Mitarbeiter",
       "credentials": [{ "type": "password", "value": "staff", "temporary": false }],
-      "realmRoles": ["staff", "katalog-pflege"],
+      "realmRoles": ["staff", "katalog-pflege", "rechnung-pflege"],
       "groups": ["/controlling"]
     },
     {
@@ -101,7 +102,7 @@
       "firstName": "Sabine",
       "lastName": "Sachbearbeitung",
       "credentials": [{ "type": "password", "value": "staff2", "temporary": false }],
-      "realmRoles": ["staff"]
+      "realmRoles": ["staff", "rechnung-pflege"]
     }
   ]
 }
