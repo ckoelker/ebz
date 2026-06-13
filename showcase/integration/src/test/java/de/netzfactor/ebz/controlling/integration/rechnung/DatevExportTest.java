@@ -47,9 +47,10 @@ class DatevExportTest {
                          "status":"AKTIV","schuljahr":"%s","halbjahr":1,"zimmerart":"DOPPEL",
                          "unterrichtBetragCent":150000,"uebernachtungBetragCent":130000}""".formatted(debitorId, sj))
                 .when().post("/rechnung/anmeldungen").then().statusCode(201);
-        long rid = given().contentType(ContentType.JSON).body("{\"schuljahr\":\"%s\",\"halbjahr\":1}".formatted(sj))
-                .when().post("/rechnung/laeufe").then().statusCode(200)
-                .extract().jsonPath().getList("id", Long.class).get(0);
+        io.restassured.path.json.JsonPath lauf = given().contentType(ContentType.JSON)
+                .body("{\"schuljahr\":\"%s\",\"halbjahr\":1}".formatted(sj))
+                .when().post("/rechnung/laeufe").then().statusCode(200).extract().jsonPath();
+        long rid = lauf.getList("id", Long.class).get(lauf.getList("debitorId").indexOf((int) debitorId));
         String nr = given().when().post("/rechnung/rechnungen/" + rid + "/ausstellen").then().statusCode(200)
                 .extract().jsonPath().getString("nummer");
 
