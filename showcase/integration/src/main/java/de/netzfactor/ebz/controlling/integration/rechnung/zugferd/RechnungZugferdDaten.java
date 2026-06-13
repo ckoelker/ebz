@@ -39,8 +39,12 @@ public record RechnungZugferdDaten(
             String land, String ustId, String email) {
     }
 
-    /** Positionszeile; Betrag in Cent (Menge ist in der Berufsschule stets 1). */
-    public record Position(String beschreibung, long betragCent) {
+    /**
+     * Positionszeile; Betrag in Cent (Menge ist in der Berufsschule stets 1).
+     * {@code steuerKategorie} = EN-16931-Code ("E" = steuerbefreit, "S" = Regelsteuer),
+     * {@code steuersatz} = Prozent (0 bei E).
+     */
+    public record Position(String beschreibung, long betragCent, String steuerKategorie, int steuersatz) {
     }
 
     public LocalDate faelligAm() {

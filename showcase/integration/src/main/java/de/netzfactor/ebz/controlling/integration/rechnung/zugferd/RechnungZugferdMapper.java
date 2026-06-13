@@ -11,6 +11,7 @@ import jakarta.inject.Inject;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Belegart;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Steuerfall;
 
 /**
  * Baut aus einer (festgeschriebenen) {@link Rechnung} das persistenzfreie {@link RechnungZugferdDaten}
@@ -39,12 +40,14 @@ public class RechnungZugferdMapper {
                 d.land, d.ustId, d.email);
 
         List<RechnungZugferdDaten.Position> pos = r.positionen.stream()
-                .map(p -> new RechnungZugferdDaten.Position(p.beschreibung, p.betragCent()))
+                .map(p -> new RechnungZugferdDaten.Position(p.beschreibung, p.betragCent(),
+                        p.steuerfall == Steuerfall.BEFREIT ? "E" : "S", p.steuersatz))
                 .toList();
 
+        boolean hatBefreit = r.positionen.stream().anyMatch(p -> p.steuerfall == Steuerfall.BEFREIT);
         String grund = r.positionen.stream().map(p -> p.befreiungsgrund)
                 .filter(g -> g != null && !g.isBlank()).findFirst()
-                .orElse("Umsatzsteuerbefreit nach § 4 UStG (Bildungsleistung)");
+                .orElse(hatBefreit ? "Umsatzsteuerbefreit nach § 4 UStG (Bildungsleistung)" : "");
 
         boolean gutschrift = r.belegart == Belegart.GUTSCHRIFT || r.belegart == Belegart.STORNO;
 

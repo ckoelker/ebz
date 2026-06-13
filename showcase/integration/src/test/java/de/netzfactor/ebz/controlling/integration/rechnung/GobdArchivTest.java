@@ -74,11 +74,12 @@ class GobdArchivTest {
                          "unterrichtBetragCent":150000,"uebernachtungBetragCent":130000}""".formatted(debitor, sj))
                 .when().post("/rechnung/anmeldungen").then().statusCode(201);
 
-        long rid = given().contentType(ContentType.JSON)
+        io.restassured.path.json.JsonPath lauf = given().contentType(ContentType.JSON)
                 .body("""
                         {"schuljahr":"%s","halbjahr":1}""".formatted(sj))
-                .when().post("/rechnung/laeufe").then().statusCode(200)
-                .extract().jsonPath().getList("id", Long.class).get(0);
+                .when().post("/rechnung/laeufe").then().statusCode(200).extract().jsonPath();
+        int idx = lauf.getList("debitorId").indexOf((int) debitor);
+        long rid = lauf.getList("id", Long.class).get(idx);
 
         // Ausstellen = Festschreibung + GoBD-Archivierung in einer Transaktion
         String nummer = given().when().post("/rechnung/rechnungen/" + rid + "/ausstellen").then()

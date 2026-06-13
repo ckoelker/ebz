@@ -39,12 +39,26 @@ class ZugferdPipelineTest {
                 "Schuljahr 2025/2026, 1. Halbjahr",
                 "Umsatzsteuerbefreit nach § 4 UStG (Bildungsleistung)", "Rechnung",
                 false, null, null, LocalDate.of(2025, 8, 1), LocalDate.of(2026, 1, 31),
-                List.of(new RechnungZugferdDaten.Position("Unterricht (Schuljahr 2025/2026, 1. Halbjahr) – Anna Azubi", 150000),
-                        new RechnungZugferdDaten.Position("Übernachtung Doppelzimmer (Schuljahr 2025/2026, 1. Halbjahr) – Anna Azubi", 130000),
-                        new RechnungZugferdDaten.Position("Unterricht (Schuljahr 2025/2026, 1. Halbjahr) – Ben Azubi", 150000)));
+                List.of(new RechnungZugferdDaten.Position("Unterricht (Schuljahr 2025/2026, 1. Halbjahr) – Anna Azubi", 150000, "E", 0),
+                        new RechnungZugferdDaten.Position("Übernachtung Doppelzimmer (Schuljahr 2025/2026, 1. Halbjahr) – Anna Azubi", 130000, "E", 0),
+                        new RechnungZugferdDaten.Position("Unterricht (Schuljahr 2025/2026, 1. Halbjahr) – Ben Azubi", 150000, "E", 0)));
 
         ZugferdService.Ergebnis erg = new ZugferdService().erzeugeUndValidiere(daten);
         schreibeUndPruefe(erg, "rechnung-zugferd.pdf");
+    }
+
+    @Test
+    void erzeugtValidesZugferd_regelsteuer19() throws Exception {
+        // Shop-Rechnung (R7): steuerpflichtige Positionen (Kategorie S, 19 %) — kein §4-Befreiungsgrund.
+        var empf = empf();
+        var daten = new RechnungZugferdDaten("RE-SH-00001", LocalDate.of(2026, 6, 13), 14, ebz(), empf,
+                "Shop-Bestellung VENDURE-1001", "", "Rechnung",
+                false, null, null, null, null,
+                List.of(new RechnungZugferdDaten.Position("Fachbuch Controlling", 4990, "S", 19),
+                        new RechnungZugferdDaten.Position("Seminarunterlagen", 2500, "S", 19)));
+
+        ZugferdService.Ergebnis erg = new ZugferdService().erzeugeUndValidiere(daten);
+        schreibeUndPruefe(erg, "shop-zugferd.pdf");
     }
 
     @Test
@@ -55,8 +69,8 @@ class ZugferdPipelineTest {
                 "Schuljahr 2025/2026, 1. Halbjahr – Vollstorno",
                 "Umsatzsteuerbefreit nach § 4 UStG (Bildungsleistung)", "Storno",
                 true, "RE-BS-00001", LocalDate.of(2026, 6, 13), null, null,
-                List.of(new RechnungZugferdDaten.Position("Storno: Unterricht – Anna Azubi", -150000),
-                        new RechnungZugferdDaten.Position("Storno: Übernachtung Doppelzimmer – Anna Azubi", -130000)));
+                List.of(new RechnungZugferdDaten.Position("Storno: Unterricht – Anna Azubi", -150000, "E", 0),
+                        new RechnungZugferdDaten.Position("Storno: Übernachtung Doppelzimmer – Anna Azubi", -130000, "E", 0)));
 
         ZugferdService.Ergebnis erg = new ZugferdService().erzeugeUndValidiere(daten);
         schreibeUndPruefe(erg, "storno-zugferd.pdf");

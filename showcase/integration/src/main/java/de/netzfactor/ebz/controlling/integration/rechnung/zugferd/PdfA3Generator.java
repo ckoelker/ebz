@@ -130,9 +130,12 @@ public class PdfA3Generator {
         text(cs, bold, 11, LEFT, y, "Gesamtbetrag");
         textRight(cs, bold, 11, RIGHT, y, money(d.gesamtCent()));
 
-        // Steuerhinweis (Befreiung) + Zahlungshinweis
+        // Steuerhinweis: Befreiungsgrund (steuerfrei) bzw. USt-Hinweis (steuerpflichtig) + Zahlungshinweis
         y += 2 * ROW;
-        y = absatz(cs, reg, 9, y, d.befreiungsgrund());
+        String steuerhinweis = d.befreiungsgrund() != null && !d.befreiungsgrund().isBlank()
+                ? d.befreiungsgrund()
+                : "Im Gesamtbetrag ist die gesetzliche Umsatzsteuer gemäß den Positionen enthalten.";
+        y = absatz(cs, reg, 9, y, steuerhinweis);
         y += 6;
         absatz(cs, reg, 9, y, "Zahlbar innerhalb von " + d.zahlungszielTage() + " Tagen (bis "
                 + d.faelligAm().format(DATUM) + ") ohne Abzug auf das Konto bei der " + v.bankName()

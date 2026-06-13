@@ -30,6 +30,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.dto.BestandImportDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.DatevProtokollDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.DebitorAliasDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.DebitorAnlageDto;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.ExterneBestellung;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.KorrekturRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.ManuellePositionDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.MergeRequest;
@@ -50,6 +51,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.datev.Buchungssatz;
 import de.netzfactor.ebz.controlling.integration.rechnung.datev.DatevService;
 import de.netzfactor.ebz.controlling.integration.rechnung.datev.DatevUebergabe;
 import de.netzfactor.ebz.controlling.integration.rechnung.gobd.GobdArchivService;
+import de.netzfactor.ebz.controlling.integration.rechnung.service.BestellungBillingService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungslaufService;
@@ -89,6 +91,9 @@ public class RechnungResource {
 
     @Inject
     DatevService datev;
+
+    @Inject
+    BestellungBillingService bestellungBilling;
 
     // ───────────────────────── Debitoren ─────────────────────────
     @GET
@@ -328,6 +333,23 @@ public class RechnungResource {
     public List<RechnungDto> hochschulLauf(@Valid HochschulLaufRequest req) {
         return rechnungslauf.erzeugeHochschulEntwuerfe(req.semester())
                 .stream().map(RechnungResource::toRechnung).toList();
+    }
+
+    /**
+     * Quellen-agnostische Naht (R7): eine externe Bestellung (z. B. bezahlte Vendure-Order) wird neben
+     * der Anmeldung zur Abrechnungsbasis — Kunde via Debitoren-Hoheit (R3) aufgelöst, Bestellung
+     * idempotent (200 bei erneutem Push) in einen Rechnungs-Entwurf überführt.
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/quellen/bestellung")
+    @Transactional
+    public Response bestellungUebernehmen(@Valid ExterneBestellung bestellung) {
+        long vorher = Rechnung.count();
+        Rechnung r = bestellungBilling.ausBestellung(bestellung);
+        boolean neu = Rechnung.count() > vorher;
+        return Response.status(neu ? Response.Status.CREATED : Response.Status.OK)
+                .entity(toRechnung(r)).build();
     }
 
     // ───────────────────────── Rechnungen lesen ─────────────────────────

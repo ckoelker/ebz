@@ -108,11 +108,14 @@ public class ZugferdService {
         }
 
         for (RechnungZugferdDaten.Position p : d.positionen()) {
-            // Steuerbefreit (§4 UStG): Kategorie E, 0 %, mit Befreiungsgrund. Bei Gutschrift/Storno
-            // werden die Beträge positiv geführt (EN-16931-Konvention für Typ 381).
-            Product product = new Product(p.beschreibung(), p.beschreibung(), "C62", BigDecimal.ZERO);
-            product.setTaxCategoryCode("E");
-            product.setTaxExemptionReason(d.befreiungsgrund());
+            // Steuer je Position: Kategorie E (steuerbefreit §4, mit Befreiungsgrund) oder S (Regelsatz).
+            // Bei Gutschrift/Storno werden die Beträge positiv geführt (EN-16931-Konvention für Typ 381).
+            String kategorie = p.steuerKategorie() == null || p.steuerKategorie().isBlank() ? "E" : p.steuerKategorie();
+            Product product = new Product(p.beschreibung(), p.beschreibung(), "C62", BigDecimal.valueOf(p.steuersatz()));
+            product.setTaxCategoryCode(kategorie);
+            if ("E".equals(kategorie)) {
+                product.setTaxExemptionReason(d.befreiungsgrund());
+            }
             invoice.addItem(new Item(product, cent(d.anzeige(p.betragCent())), BigDecimal.ONE));
         }
         return invoice;
