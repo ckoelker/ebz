@@ -160,6 +160,39 @@ services:
     ports:
       - "${INTEGRATION_PORT:-8090}:8090"
 
+  # MinIO — S3-kompatibler Objektspeicher (self-host). Lightdash 0.3059 ERZWINGT S3
+  # (Pre-Aggregate-Results); ohne S3-Env bricht der Start schon beim Config-Parsing ab.
+  # Nur die S3-API (:9000) wird benötigt. Profil `controlling`.
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    profiles: ["controlling"]
+    restart: unless-stopped
+    command: server /data
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+    volumes:
+      - minio_data:/data
+
+  # Einmaliger Init: wartet bis MinIO bereit ist, legt den Lightdash-Bucket an, endet.
+  minio-createbucket:
+    image: minio/mc:RELEASE.2025-08-13T08-35-41Z
+    profiles: ["controlling"]
+    depends_on:
+      - minio
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      LIGHTDASH_S3_BUCKET: ${LIGHTDASH_S3_BUCKET:-lightdash}
+    entrypoint: >
+      /bin/sh -c "
+      until mc alias set local http://minio:9000 \"$${MINIO_ROOT_USER}\" \"$${MINIO_ROOT_PASSWORD}\"; do echo 'warte auf minio...'; sleep 2; done;
+      mc mb --ignore-existing local/\"$${LIGHTDASH_S3_BUCKET}\";
+      echo 'bucket bereit';
+      "
+
   # Lightdash (Self-Serve-BI) auf die dbt-Marts (Schema `analytics` in DB `controlling`).
   # Metadaten in eigener DB `lightdash` (eigener User) desselben Postgres. Zugang NUR
   # über Keycloak-OIDC (Realm `ebz-staff`, Client `lightdash`). Profil `controlling`.
@@ -170,6 +203,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio-createbucket:
+        condition: service_completed_successfully
     environment:
       # Metadaten-DB (eigene DB + User im gemeinsamen Postgres)
       PGHOST: postgres
@@ -183,6 +218,13 @@ services:
       NODE_ENV: production
       SECURE_COOKIES: "false"
       TRUST_PROXY: "false"
+      # ── S3 (MinIO) — von Lightdash 0.3059 erzwungen (Pre-Aggregate-Results) ──
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: ${S3_REGION:-us-east-1}
+      S3_BUCKET: ${LIGHTDASH_S3_BUCKET:-lightdash}
+      S3_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      S3_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin}
+      S3_FORCE_PATH_STYLE: "true"
       # dbt-Projekt (gemountet) — Lightdash kompiliert daraus die semantische Schicht.
       DBT_PROJECT_DIR: /usr/app/dbt
       # ── Keycloak-OIDC (Realm ebz-staff, Client lightdash) ──
@@ -191,7 +233,9 @@ services:
       AUTH_OIDC_CLIENT_SECRET: ${LIGHTDASH_OIDC_SECRET:-lightdash-dev-secret}
       AUTH_OIDC_METADATA_DOCUMENT_URL: http://keycloak.localhost:8080/realms/ebz-staff/.well-known/openid-configuration
       AUTH_OIDC_AUTH_METHOD: client_secret_post
-      AUTH_OIDC_SCOPES: "profile email"
+      # 'openid' ist Pflicht — sonst liefert Keycloak kein id_token (OAuth2 statt OIDC)
+      # → Lightdash: "id_token not present in TokenSet". profile/email für JIT-Provisioning.
+      AUTH_OIDC_SCOPES: "openid profile email"
       # Beim ersten Login Nutzer per E-Mail anlegen/verknüpfen (JIT-Provisioning).
       AUTH_ENABLE_OIDC_TO_EMAIL_LINKING: "true"
       # SSO-Gruppen → Lightdash-Gruppen (L23: Sichtbarkeit der Unternehmens-GuV).
@@ -206,3 +250,4 @@ services:
 
 volumes:
   postgres_data:
+  minio_data:
