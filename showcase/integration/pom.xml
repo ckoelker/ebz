@@ -24,6 +24,13 @@
     <!-- Differenzierer: explizit gepinnt (kein Platform-BOM-Member) -->
     <quarkus-langchain4j.version>1.10.0</quarkus-langchain4j.version>
 
+    <!-- ── Rechnungsstellung R2: ZUGFeRD/E-Rechnung (Konzept §4f, Lösungsoption Mustang) ──
+         Mustang = Apache-2.0 (vs Konik AGPL). PDFBox + xmpbox EXAKT auf die von Mustang transitiv
+         gezogene Version pinnen (sonst Klassenpfad-Mismatch). Beim Anheben von Mustang diesen Wert
+         an dessen PDFBox-Version angleichen (dependency:tree prüfen, [[verify-version-compatibility]]). -->
+    <mustang.version>2.24.0</mustang.version>
+    <pdfbox.version>3.0.7</pdfbox.version>
+
     <compiler-plugin.version>3.13.0</compiler-plugin.version>
     <surefire-plugin.version>3.2.5</surefire-plugin.version>
   </properties>
@@ -132,6 +139,31 @@
     <dependency>
       <groupId>io.quarkiverse.langchain4j</groupId>
       <artifactId>quarkus-langchain4j-openai</artifactId>
+    </dependency>
+
+    <!-- ── Rechnungsstellung R2: ZUGFeRD/Factur-X erzeugen + Pflicht-Validierung ──
+         Mustang `library` baut die EN-16931-Invoice + bettet sie ins PDF/A-3 ein; `validator`
+         ist das harte Tor (PDF/A- + EN-16931-Prüfung) vor Auslieferung/Archiv. -->
+    <dependency>
+      <groupId>org.mustangproject</groupId>
+      <artifactId>library</artifactId>
+      <version>${mustang.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.mustangproject</groupId>
+      <artifactId>validator</artifactId>
+      <version>${mustang.version}</version>
+    </dependency>
+    <!-- PDFBox + xmpbox explizit gepinnt für deterministisches PDF/A-3 (= Mustangs Version). -->
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>pdfbox</artifactId>
+      <version>${pdfbox.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.pdfbox</groupId>
+      <artifactId>xmpbox</artifactId>
+      <version>${pdfbox.version}</version>
     </dependency>
 
     <!-- Test -->
