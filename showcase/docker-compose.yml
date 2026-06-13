@@ -143,9 +143,15 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      minio:
+        condition: service_started
     environment:
       DB_HOST: postgres
       DB_PORT: "5432"
+      # GoBD-Archiv (R2, §4 Säule 4): validiertes ZUGFeRD revisionssicher in MinIO-WORM ablegen.
+      MINIO_URL: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
       CONTROLLING_DB: ${CONTROLLING_DB:-controlling}
       CONTROLLING_USER: ${CONTROLLING_USER:-controlling}
       CONTROLLING_PASSWORD: ${CONTROLLING_PASSWORD:-controlling}
