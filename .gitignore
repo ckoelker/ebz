@@ -44,5 +44,6 @@ __pycache__/
 .DS_Store
 Thumbs.db
 .idea/
+.vscode/
 *.swp
 .claude/settings.local.json
