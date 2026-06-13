@@ -121,11 +121,15 @@ class RechnungLebenszyklusTest {
         String schuljahr = eindeutigesSchuljahr();
         createBsAnmeldung(debitor, schuljahr, "Carla Azubi", "EINZEL", 150000, 126000);
 
-        long rechnungId = given().contentType(ContentType.JSON)
+        io.restassured.path.json.JsonPath lauf = given().contentType(ContentType.JSON)
                 .body("""
                         {"schuljahr":"%s","halbjahr":2}""".formatted(schuljahr))
                 .when().post("/rechnung/laeufe").then().statusCode(200)
-                .extract().jsonPath().getList("id", Long.class).get(0);
+                .extract().jsonPath();
+        // genau die Rechnung dieses Debitors wählen (robust gegen Schuljahr-Kollisionen in der Shared-DB)
+        int idx = lauf.getList("debitorId").indexOf((int) debitor);
+        org.junit.jupiter.api.Assertions.assertTrue(idx >= 0, "Sammelrechnung für Debitor erwartet");
+        long rechnungId = lauf.getList("id", Long.class).get(idx);
 
         // manuelle Position im Entwurf → 3. Position
         given().contentType(ContentType.JSON)

@@ -61,4 +61,26 @@ public class Debitor extends PanacheEntity {
 
     @Column(name = "email", length = 200)
     public String email;
+
+    // ───────────────────────── R3: Debitoren-Hoheit ─────────────────────────
+
+    /**
+     * AKTIV = Golden-Record; ZUSAMMENGEFUEHRT = in {@link #goldenDebitorId} gemergte Dublette.
+     * DB-Spalte bewusst nullable (Schema-Update ergänzt sie auf der befüllten Tabelle; Altzeilen ohne
+     * Wert gelten als aktiv) — neue/gepflegte Debitoren setzen stets AKTIV.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", length = 20)
+    public DebitorStatus status = DebitorStatus.AKTIV;
+
+    /** Bei ZUSAMMENGEFUEHRT der überlebende Debitor; sonst {@code null}. */
+    @Column(name = "golden_debitor_id")
+    public Long goldenDebitorId;
+
+    /**
+     * Normalisierter Dublettenschlüssel (USt-IdNr. bzw. Name+PLZ) für Match/Merge-Kandidaten — die
+     * Hoheits-Schicht setzt ihn bei jeder Anlage, siehe {@code DebitorHoheitService}.
+     */
+    @Column(name = "match_schluessel", length = 120)
+    public String matchSchluessel;
 }

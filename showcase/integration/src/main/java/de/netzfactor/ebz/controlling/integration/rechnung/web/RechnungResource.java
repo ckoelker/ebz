@@ -25,8 +25,12 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.AnmeldungDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.DebitorDto;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.BestandImportDto;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.DebitorAliasDto;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.DebitorAnlageDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.KorrekturRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.ManuellePositionDto;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.MergeRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungPositionDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungslaufRequest;
@@ -34,10 +38,13 @@ import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.DebitorAlias;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.DebitorStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungPosition;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.gobd.GobdArchivService;
+import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungslaufService;
 import de.netzfactor.ebz.controlling.integration.rechnung.zugferd.RechnungZugferdDaten;
@@ -70,6 +77,9 @@ public class RechnungResource {
 
     @Inject
     GobdArchivService gobdArchiv;
+
+    @Inject
+    DebitorHoheitService debitorHoheit;
 
     // ───────────────────────── Debitoren ─────────────────────────
     @GET
@@ -112,6 +122,73 @@ public class RechnungResource {
         }
         applyDebitor(dto, d);
         return Response.ok(toDebitor(d)).build();
+    }
+
+    // ───────────────────────── Debitoren-Hoheit (R3) ─────────────────────────
+
+    /**
+     * Gouvernierte Anlage: zentrale Nummernvergabe + idempotenter Dublettenschutz. Existiert bereits
+     * ein Golden-Record gleicher Identität im Bereich, wird er wiederverwendet (200) statt einer neuen
+     * Dublette (201).
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/debitoren/anlegen")
+    @Transactional
+    public Response anlegenDebitor(@Valid DebitorAnlageDto dto) {
+        long vorher = Debitor.count();
+        Debitor d = debitorHoheit.findeOderLege(toStammdaten(dto));
+        boolean neu = Debitor.count() > vorher;
+        return Response.status(neu ? Response.Status.CREATED : Response.Status.OK)
+                .entity(toDebitor(d)).build();
+    }
+
+    /** Altbestand übernehmen: dedupliziert auf den Golden-Record und konserviert die Altnummer als Alias. */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/debitoren/import")
+    @Transactional
+    public DebitorDto importDebitor(@Valid BestandImportDto req) {
+        return toDebitor(debitorHoheit.importiereBestand(toStammdaten(req.debitor()), req.quelle(), req.externeNr()));
+    }
+
+    /** Löst eine externe/alte Debitorennummer auf den aktiven Golden-Record auf. */
+    @GET
+    @Path("/debitoren/aufloesen")
+    @Transactional
+    public Response aufloesenDebitor(@QueryParam("quelle") String quelle, @QueryParam("externeNr") String externeNr) {
+        Debitor d = debitorHoheit.aufloesen(quelle, externeNr);
+        return d == null ? notFound() : Response.ok(toDebitor(d)).build();
+    }
+
+    /** Dublettenkandidaten zu einem Debitor (gleicher Dublettenschlüssel im Bereich). */
+    @GET
+    @Path("/debitoren/{id}/kandidaten")
+    @Transactional
+    public List<DebitorDto> kandidaten(@PathParam("id") Long id) {
+        return debitorHoheit.kandidaten(id).stream().map(RechnungResource::toDebitor).toList();
+    }
+
+    /** Aliase (Altnummern) eines Debitors. */
+    @GET
+    @Path("/debitoren/{id}/aliase")
+    @Transactional
+    public List<DebitorAliasDto> aliase(@PathParam("id") Long id) {
+        return debitorHoheit.aliase(id).stream().map(RechnungResource::toAlias).toList();
+    }
+
+    /** Führt eine Dublette ({@code quellId}) in den Golden-Record ({@code zielId}) zusammen. */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/debitoren/merge")
+    @Transactional
+    public DebitorDto mergeDebitoren(@Valid MergeRequest req) {
+        return toDebitor(debitorHoheit.merge(req.quellId(), req.zielId()));
+    }
+
+    private static DebitorHoheitService.Stammdaten toStammdaten(DebitorAnlageDto dto) {
+        return new DebitorHoheitService.Stammdaten(dto.bereich(), dto.rolle(), dto.name(), dto.strasse(),
+                dto.plz(), dto.ort(), dto.land(), dto.ustId(), dto.iban(), dto.email());
     }
 
     // ───────────────────────── Anmeldungen ─────────────────────────
@@ -331,11 +408,21 @@ public class RechnungResource {
         d.ustId = dto.ustId();
         d.iban = dto.iban();
         d.email = dto.email();
+        // R3: auch manuell gepflegte Debitoren bekommen den Dublettenschlüssel, damit Match/Merge greift.
+        if (d.status == null) {
+            d.status = DebitorStatus.AKTIV;
+        }
+        d.matchSchluessel = DebitorHoheitService.matchSchluessel(dto.name(), dto.plz(), dto.ustId());
     }
 
     private static DebitorDto toDebitor(Debitor d) {
         return new DebitorDto(d.id, d.version, d.debitorNr, d.bereich, d.rolle, d.name,
-                d.strasse, d.plz, d.ort, d.land, d.ustId, d.iban, d.email);
+                d.strasse, d.plz, d.ort, d.land, d.ustId, d.iban, d.email,
+                d.status == null ? null : d.status.name(), d.goldenDebitorId);
+    }
+
+    private static DebitorAliasDto toAlias(DebitorAlias a) {
+        return new DebitorAliasDto(a.id, a.debitorId, a.quelle, a.externeNr);
     }
 
     private static void applyAnmeldung(AnmeldungDto dto, Anmeldung a) {
