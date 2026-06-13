@@ -1,6 +1,7 @@
 package de.netzfactor.ebz.controlling.integration.rechnung.web;
 
 import java.net.URI;
+import java.time.LocalDate;
 import java.util.List;
 
 import jakarta.annotation.security.RolesAllowed;
@@ -26,6 +27,7 @@ import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.AnmeldungDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.DebitorDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.BestandImportDto;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.DatevProtokollDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.DebitorAliasDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.DebitorAnlageDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.KorrekturRequest;
@@ -43,6 +45,9 @@ import de.netzfactor.ebz.controlling.integration.rechnung.model.DebitorStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungPosition;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungStatus;
+import de.netzfactor.ebz.controlling.integration.rechnung.datev.Buchungssatz;
+import de.netzfactor.ebz.controlling.integration.rechnung.datev.DatevService;
+import de.netzfactor.ebz.controlling.integration.rechnung.datev.DatevUebergabe;
 import de.netzfactor.ebz.controlling.integration.rechnung.gobd.GobdArchivService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungService;
@@ -80,6 +85,9 @@ public class RechnungResource {
 
     @Inject
     DebitorHoheitService debitorHoheit;
+
+    @Inject
+    DatevService datev;
 
     // ───────────────────────── Debitoren ─────────────────────────
     @GET
@@ -189,6 +197,55 @@ public class RechnungResource {
     private static DebitorHoheitService.Stammdaten toStammdaten(DebitorAnlageDto dto) {
         return new DebitorHoheitService.Stammdaten(dto.bereich(), dto.rolle(), dto.name(), dto.strasse(),
                 dto.plz(), dto.ort(), dto.land(), dto.ustId(), dto.iban(), dto.email());
+    }
+
+    // ───────────────────────── DATEV-Übergabe (R4) ─────────────────────────
+
+    /** Buchungssätze (Vorschau) der festgeschriebenen Belege eines Zeitraums. */
+    @RolesAllowed("rechnung-pflege")
+    @GET
+    @Path("/datev/buchungssaetze")
+    @Transactional
+    public List<Buchungssatz> datevBuchungssaetze(@QueryParam("von") String von,
+            @QueryParam("bis") String bis, @QueryParam("bereich") Bereich bereich) {
+        LocalDate v = datum(von, LocalDate.of(2000, 1, 1));
+        LocalDate b = datum(bis, LocalDate.of(2999, 12, 31));
+        return datev.buchungssaetze(datev.belege(v, b, bereich));
+    }
+
+    /** DATEV-Buchungsstapel als EXTF-CSV (Import-Brücke) für den Zeitraum. */
+    @RolesAllowed("rechnung-pflege")
+    @GET
+    @Path("/datev/buchungsstapel")
+    @Produces("text/csv")
+    @Transactional
+    public Response datevBuchungsstapel(@QueryParam("von") String von,
+            @QueryParam("bis") String bis, @QueryParam("bereich") Bereich bereich) {
+        LocalDate v = datum(von, LocalDate.of(2000, 1, 1));
+        LocalDate b = datum(bis, LocalDate.of(2999, 12, 31));
+        byte[] csv = datev.extfCsv(datev.belege(v, b, bereich), v, b);
+        return Response.ok(csv)
+                .header("Content-Disposition", "attachment; filename=\"EXTF_Buchungsstapel_" + v + "_" + b + ".csv\"")
+                .build();
+    }
+
+    /** Übergabe an den aktiven DATEV-Weg (datev.modus): EXTF-CSV-Brücke bzw. DATEV-Cloud-Mock. */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/datev/uebergabe")
+    @Consumes(MediaType.WILDCARD)
+    @Transactional
+    public DatevProtokollDto datevUebergeben(@QueryParam("von") String von,
+            @QueryParam("bis") String bis, @QueryParam("bereich") Bereich bereich) {
+        LocalDate v = datum(von, LocalDate.of(2000, 1, 1));
+        LocalDate b = datum(bis, LocalDate.of(2999, 12, 31));
+        DatevUebergabe.Protokoll p = datev.uebergeben(datev.belege(v, b, bereich), v, b);
+        return new DatevProtokollDto(p.modus(), p.referenz(), p.anzahlBuchungen(),
+                p.artefakt() == null ? 0 : p.artefakt().length, p.hinweis());
+    }
+
+    private static LocalDate datum(String s, LocalDate fallback) {
+        return s == null || s.isBlank() ? fallback : LocalDate.parse(s);
     }
 
     // ───────────────────────── Anmeldungen ─────────────────────────
