@@ -1,27 +1,45 @@
 <script setup lang="ts">
-// P1.0-Landing — Beleg, dass das Cockpit-Gerüst (Vue + PrimeVue) lädt. Die Verwaltungsmaske
-// „Bildungsangebote" (Liste/Detail/Edit aus generierter zod) baut P1.2 auf diesem Gerüst auf.
-import Card from 'primevue/card';
-
-const stack = [
-  'Quelle: /q/openapi (Bean Validation, eine Wahrheit)',
-  '→ @hey-api/openapi-ts: TS-Typen + Fetch-Client + zod',
-  '→ vee-validate + @vee-validate/zod (P1.2)',
-  '→ PrimeVue 4 Masken (P1.2)',
-];
+// Rahmen des MDM-Cockpits: Kopfzeile + Router-Outlet. Inhalt = Liste / Pflege (siehe router.ts).
+import { RouterLink, RouterView } from 'vue-router';
 </script>
 
 <template>
-  <main style="max-width: 760px; margin: 3rem auto; font-family: system-ui, sans-serif">
-    <h1>EBZ MDM — Bildungsangebote</h1>
-    <p>Formularverwaltung-Showcase · PoC P1.0 · Stack B (typsicher, spec-getestet, generiert).</p>
-    <Card>
-      <template #title>Generator-Spine</template>
-      <template #content>
-        <ol>
-          <li v-for="s in stack" :key="s">{{ s }}</li>
-        </ol>
-      </template>
-    </Card>
+  <header class="topbar">
+    <RouterLink to="/" class="marke">EBZ MDM · Bildungsangebote</RouterLink>
+    <span class="hint">Formularverwaltung-Showcase · Stack B</span>
+  </header>
+  <main class="inhalt">
+    <RouterView />
   </main>
 </template>
+
+<style>
+body {
+  margin: 0;
+  font-family: system-ui, sans-serif;
+  background: var(--p-content-background, #fff);
+  color: var(--p-text-color, #1f2937);
+}
+.topbar {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.9rem 1.5rem;
+  background: var(--p-primary-color, #6366f1);
+  color: #fff;
+}
+.marke {
+  font-weight: 800;
+  color: #fff;
+  text-decoration: none;
+}
+.hint {
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.inhalt {
+  max-width: 1000px;
+  margin: 1.5rem auto;
+  padding: 0 1.25rem;
+}
+</style>

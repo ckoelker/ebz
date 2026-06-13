@@ -1,12 +1,14 @@
 package de.netzfactor.ebz.controlling.integration.bildung;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasItems;
 
 import org.junit.jupiter.api.Test;
 
 import io.quarkus.test.junit.QuarkusTest;
+import io.restassured.http.ContentType;
 
 /**
  * Spec-Test 1 (Plan §5, Krit. 2 „über die Spezifikation testbar").
@@ -70,5 +72,36 @@ class BildungOpenApiSpecTest {
                 // Studiengang: startsemester-Format WS/SS+Jahr
                 .body("components.schemas.StudiengangDto.properties.startsemester.pattern", equalTo("^(WS|SS)\\d{4}$"))
                 .body("components.schemas.StudiengangDto.required", hasItems("abschluss", "studienform", "startsemester"));
+    }
+
+    @Test
+    void crossFieldGueltigerZeitraumIstServerSeitigNichtImSchema() {
+        // Die Cross-Field-Regel (gueltigBis ≥ gueltigAb, §11.9-D/F14) darf NICHT als Feld-Constraint
+        // im JSON-Schema stehen — sie ist eine Klassen-Regel und lebt server-seitig.
+        given()
+                .queryParam("format", "json")
+                .when().get("/q/openapi")
+                .then()
+                .statusCode(200)
+                // gueltigBis bleibt ein simples Datumsfeld ohne abgeleitete Min-/Vergleichs-Constraint
+                .body("components.schemas.SeminarDto.properties.gueltigBis.minimum", org.hamcrest.Matchers.nullValue());
+    }
+
+    @Test
+    void crossFieldVerletzungLiefert400MitGueltigBis() {
+        // Ansonsten valides Seminar, nur gueltigBis VOR gueltigAb → 400 aus dem Klassen-Validator,
+        // Verletzung am Feld gueltigBis (für die Cockpit-Anzeige).
+        String body = """
+                {"code":"SEM-CF-001","titel":"Cross-Field-Test","bereich":"AKADEMIE","status":"ENTWURF",
+                 "gueltigAb":"2026-09-01","gueltigBis":"2026-08-01","preisModell":"EINMALIG",
+                 "shopVerkauf":false,"kategorie":"SONSTIGE","dauerUE":8,"minTN":1,"maxTN":10}
+                """;
+        given()
+                .contentType(ContentType.JSON)
+                .body(body)
+                .when().post("/bildung/seminare")
+                .then()
+                .statusCode(400)
+                .body(containsString("gueltigBis"));
     }
 }

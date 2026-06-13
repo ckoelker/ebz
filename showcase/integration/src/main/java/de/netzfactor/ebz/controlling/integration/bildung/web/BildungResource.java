@@ -16,15 +16,15 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
-import de.netzfactor.ebz.controlling.integration.bildung.dto.BildungDtos.BerufsschuljahrDto;
-import de.netzfactor.ebz.controlling.integration.bildung.dto.BildungDtos.GemeinsamesAngebot;
-import de.netzfactor.ebz.controlling.integration.bildung.dto.BildungDtos.RegistryItemDto;
-import de.netzfactor.ebz.controlling.integration.bildung.dto.BildungDtos.SeminarDto;
-import de.netzfactor.ebz.controlling.integration.bildung.dto.BildungDtos.StudiengangDto;
-import de.netzfactor.ebz.controlling.integration.bildung.dto.BildungDtos.TagungDto;
+import de.netzfactor.ebz.controlling.integration.bildung.dto.BerufsschuljahrDto;
+import de.netzfactor.ebz.controlling.integration.bildung.dto.GemeinsamesAngebot;
+import de.netzfactor.ebz.controlling.integration.bildung.dto.RegistryItemDto;
+import de.netzfactor.ebz.controlling.integration.bildung.dto.SeminarDto;
+import de.netzfactor.ebz.controlling.integration.bildung.dto.StudiengangDto;
+import de.netzfactor.ebz.controlling.integration.bildung.dto.TagungDto;
+import de.netzfactor.ebz.controlling.integration.bildung.model.AngebotStatus;
 import de.netzfactor.ebz.controlling.integration.bildung.model.Bildungsangebot;
-import de.netzfactor.ebz.controlling.integration.bildung.model.BildungEnums.AngebotStatus;
-import de.netzfactor.ebz.controlling.integration.bildung.model.BildungEnums.BildungsangebotTyp;
+import de.netzfactor.ebz.controlling.integration.bildung.model.BildungsangebotTyp;
 
 /**
  * Eine Resource für die gesamte Bildungsangebot-Familie (schlank: eine Klasse statt fünf + Mapper).

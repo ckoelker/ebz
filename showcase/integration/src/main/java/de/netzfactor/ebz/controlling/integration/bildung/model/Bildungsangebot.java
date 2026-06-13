@@ -11,14 +11,6 @@ import jakarta.persistence.Version;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
-import de.netzfactor.ebz.controlling.integration.bildung.model.BildungEnums.AngebotStatus;
-import de.netzfactor.ebz.controlling.integration.bildung.model.BildungEnums.Bereich;
-import de.netzfactor.ebz.controlling.integration.bildung.model.BildungEnums.BildungsangebotTyp;
-import de.netzfactor.ebz.controlling.integration.bildung.model.BildungEnums.PreisModell;
-import de.netzfactor.ebz.controlling.integration.bildung.model.BildungEnums.SeminarKategorie;
-import de.netzfactor.ebz.controlling.integration.bildung.model.BildungEnums.Studienabschluss;
-import de.netzfactor.ebz.controlling.integration.bildung.model.BildungEnums.Studienform;
-
 /**
  * EINE flache Entity für alle Bildungsangebote (§11.1). Schlanke Realisierung des
  * Single-Table-Modells: statt JPA-Vererbung (Supertyp + 4 Subtypen) trägt sie eine
