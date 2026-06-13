@@ -157,6 +157,11 @@ services:
       # L6-Filter: HubSpot-Pipeline-ID der Inhouse-Deals. Echte Default-Pipeline = `default`
       # (Label „Sales Pipeline"); der Fixture-Mock nutzt `inhouse`.
       HUBSPOT_INHOUSE_PIPELINE: ${HUBSPOT_INHOUSE_PIPELINE:-inhouse}
+      # Naht zu Vendure (P1.3, §11.6): Shop-Projektion ruft die Vendure-Admin-API über den
+      # Compose-Netz-Alias `server`; Auth via nativem Superadmin-Login.
+      VENDURE_ADMIN_URL: http://server:3000
+      SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-superadmin}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-superadmin}
     ports:
       - "${INTEGRATION_PORT:-8090}:8090"
 

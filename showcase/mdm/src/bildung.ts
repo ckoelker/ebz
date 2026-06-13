@@ -136,6 +136,14 @@ export const typen: Record<Typ, TypConfig> = {
 
 export const alleTypen = Object.keys(typen) as Typ[];
 
+/**
+ * Shop-Projektion (P1.3, §11.6): stößt das Anlegen/Aktualisieren des Vendure-Produkts an und
+ * bekommt die vendureProductId zurück. Typ-übergreifend (gemeinsames Feld shopVerkauf) → ein
+ * Endpunkt über der Registry-ID, kein per-Typ-Aufruf.
+ */
+export const projiziereInShop = (id: number) =>
+  sdk.postBildungAngeboteByIdShopProjektion({ path: { id } });
+
 /** Sinnvolle Defaults für ein neues Angebot eines Typs (Pflichtfelder vorbelegt). */
 export function leeresAngebot(typ: Typ): Record<string, unknown> {
   const base: Record<string, unknown> = {

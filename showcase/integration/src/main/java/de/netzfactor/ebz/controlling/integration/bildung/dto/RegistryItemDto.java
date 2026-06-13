@@ -12,5 +12,6 @@ public record RegistryItemDto(
         String titel,
         Bereich bereich,
         AngebotStatus status,
-        boolean shopVerkauf) {
+        boolean shopVerkauf,
+        String vendureProductId) {
 }

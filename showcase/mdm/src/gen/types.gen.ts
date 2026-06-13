@@ -76,6 +76,12 @@ export type LocalDate = string;
 
 export type PreisModell = 'EINMALIG' | 'ABO' | 'RATEN';
 
+export type ProjektionErgebnis = {
+    id?: number;
+    code?: string;
+    vendureProductId?: string;
+};
+
 export type RegistryItemDto = {
     id?: number;
     typ?: BildungsangebotTyp;
@@ -84,6 +90,7 @@ export type RegistryItemDto = {
     bereich?: Bereich;
     status?: AngebotStatus;
     shopVerkauf?: boolean;
+    vendureProductId?: string;
 };
 
 export type SeminarDto = {
@@ -189,6 +196,35 @@ export type GetBildungAngeboteResponses = {
 
 export type GetBildungAngeboteResponse = GetBildungAngeboteResponses[keyof GetBildungAngeboteResponses];
 
+export type PostBildungAngeboteByIdShopProjektionData = {
+    body?: never;
+    path: {
+        id: number;
+    };
+    query?: never;
+    url: '/bildung/angebote/{id}/shop-projektion';
+};
+
+export type PostBildungAngeboteByIdShopProjektionErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
+};
+
+export type PostBildungAngeboteByIdShopProjektionResponses = {
+    /**
+     * Projiziert; vendureProductId zurückgeschrieben
+     */
+    200: ProjektionErgebnis;
+};
+
+export type PostBildungAngeboteByIdShopProjektionResponse = PostBildungAngeboteByIdShopProjektionResponses[keyof PostBildungAngeboteByIdShopProjektionResponses];
+
 export type GetBildungBerufsschuljahreData = {
     body?: never;
     path?: never;
@@ -217,6 +253,14 @@ export type PostBildungBerufsschuljahreErrors = {
      * Bad Request
      */
     400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type PostBildungBerufsschuljahreResponses = {
@@ -233,6 +277,17 @@ export type DeleteBildungBerufsschuljahreByIdData = {
     };
     query?: never;
     url: '/bildung/berufsschuljahre/{id}';
+};
+
+export type DeleteBildungBerufsschuljahreByIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type DeleteBildungBerufsschuljahreByIdResponses = {
@@ -272,6 +327,14 @@ export type PutBildungBerufsschuljahreByIdErrors = {
      * Bad Request
      */
     400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type PutBildungBerufsschuljahreByIdResponses = {
@@ -309,6 +372,14 @@ export type PostBildungSeminareErrors = {
      * Bad Request
      */
     400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type PostBildungSeminareResponses = {
@@ -325,6 +396,17 @@ export type DeleteBildungSeminareByIdData = {
     };
     query?: never;
     url: '/bildung/seminare/{id}';
+};
+
+export type DeleteBildungSeminareByIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type DeleteBildungSeminareByIdResponses = {
@@ -364,6 +446,14 @@ export type PutBildungSeminareByIdErrors = {
      * Bad Request
      */
     400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type PutBildungSeminareByIdResponses = {
@@ -401,6 +491,14 @@ export type PostBildungStudiengaengeErrors = {
      * Bad Request
      */
     400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type PostBildungStudiengaengeResponses = {
@@ -417,6 +515,17 @@ export type DeleteBildungStudiengaengeByIdData = {
     };
     query?: never;
     url: '/bildung/studiengaenge/{id}';
+};
+
+export type DeleteBildungStudiengaengeByIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type DeleteBildungStudiengaengeByIdResponses = {
@@ -456,6 +565,14 @@ export type PutBildungStudiengaengeByIdErrors = {
      * Bad Request
      */
     400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type PutBildungStudiengaengeByIdResponses = {
@@ -493,6 +610,14 @@ export type PostBildungTagungenErrors = {
      * Bad Request
      */
     400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type PostBildungTagungenResponses = {
@@ -509,6 +634,17 @@ export type DeleteBildungTagungenByIdData = {
     };
     query?: never;
     url: '/bildung/tagungen/{id}';
+};
+
+export type DeleteBildungTagungenByIdErrors = {
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type DeleteBildungTagungenByIdResponses = {
@@ -548,6 +684,14 @@ export type PutBildungTagungenByIdErrors = {
      * Bad Request
      */
     400: unknown;
+    /**
+     * Not Authorized
+     */
+    401: unknown;
+    /**
+     * Not Allowed
+     */
+    403: unknown;
 };
 
 export type PutBildungTagungenByIdResponses = {

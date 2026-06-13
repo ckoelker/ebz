@@ -103,6 +103,11 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-oidc</artifactId>
     </dependency>
+    <!-- Naht zu Vendure (P1.3, §11.6): GraphQL-over-HTTP gegen die Admin-API zur Produkt-Projektion. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-rest-client-jackson</artifactId>
+    </dependency>
 
     <!-- Camel Quarkus: zeitgesteuerter Pull + Orchestrierung + realer HTTP-Pull -->
     <dependency>

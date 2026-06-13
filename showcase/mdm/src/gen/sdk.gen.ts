@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteBildungBerufsschuljahreByIdData, DeleteBildungBerufsschuljahreByIdResponses, DeleteBildungSeminareByIdData, DeleteBildungSeminareByIdResponses, DeleteBildungStudiengaengeByIdData, DeleteBildungStudiengaengeByIdResponses, DeleteBildungTagungenByIdData, DeleteBildungTagungenByIdResponses, GetBildungAngeboteData, GetBildungAngeboteResponses, GetBildungBerufsschuljahreByIdData, GetBildungBerufsschuljahreByIdResponses, GetBildungBerufsschuljahreData, GetBildungBerufsschuljahreResponses, GetBildungSeminareByIdData, GetBildungSeminareByIdResponses, GetBildungSeminareData, GetBildungSeminareResponses, GetBildungStudiengaengeByIdData, GetBildungStudiengaengeByIdResponses, GetBildungStudiengaengeData, GetBildungStudiengaengeResponses, GetBildungTagungenByIdData, GetBildungTagungenByIdResponses, GetBildungTagungenData, GetBildungTagungenResponses, GetIngestReviewData, GetIngestReviewResponses, GetIngestStatsData, GetIngestStatsResponses, PostBildungBerufsschuljahreData, PostBildungBerufsschuljahreErrors, PostBildungBerufsschuljahreResponses, PostBildungSeminareData, PostBildungSeminareErrors, PostBildungSeminareResponses, PostBildungStudiengaengeData, PostBildungStudiengaengeErrors, PostBildungStudiengaengeResponses, PostBildungTagungenData, PostBildungTagungenErrors, PostBildungTagungenResponses, PostIngestRunData, PostIngestRunResponses, PutBildungBerufsschuljahreByIdData, PutBildungBerufsschuljahreByIdErrors, PutBildungBerufsschuljahreByIdResponses, PutBildungSeminareByIdData, PutBildungSeminareByIdErrors, PutBildungSeminareByIdResponses, PutBildungStudiengaengeByIdData, PutBildungStudiengaengeByIdErrors, PutBildungStudiengaengeByIdResponses, PutBildungTagungenByIdData, PutBildungTagungenByIdErrors, PutBildungTagungenByIdResponses } from './types.gen';
+import type { DeleteBildungBerufsschuljahreByIdData, DeleteBildungBerufsschuljahreByIdErrors, DeleteBildungBerufsschuljahreByIdResponses, DeleteBildungSeminareByIdData, DeleteBildungSeminareByIdErrors, DeleteBildungSeminareByIdResponses, DeleteBildungStudiengaengeByIdData, DeleteBildungStudiengaengeByIdErrors, DeleteBildungStudiengaengeByIdResponses, DeleteBildungTagungenByIdData, DeleteBildungTagungenByIdErrors, DeleteBildungTagungenByIdResponses, GetBildungAngeboteData, GetBildungAngeboteResponses, GetBildungBerufsschuljahreByIdData, GetBildungBerufsschuljahreByIdResponses, GetBildungBerufsschuljahreData, GetBildungBerufsschuljahreResponses, GetBildungSeminareByIdData, GetBildungSeminareByIdResponses, GetBildungSeminareData, GetBildungSeminareResponses, GetBildungStudiengaengeByIdData, GetBildungStudiengaengeByIdResponses, GetBildungStudiengaengeData, GetBildungStudiengaengeResponses, GetBildungTagungenByIdData, GetBildungTagungenByIdResponses, GetBildungTagungenData, GetBildungTagungenResponses, GetIngestReviewData, GetIngestReviewResponses, GetIngestStatsData, GetIngestStatsResponses, PostBildungAngeboteByIdShopProjektionData, PostBildungAngeboteByIdShopProjektionErrors, PostBildungAngeboteByIdShopProjektionResponses, PostBildungBerufsschuljahreData, PostBildungBerufsschuljahreErrors, PostBildungBerufsschuljahreResponses, PostBildungSeminareData, PostBildungSeminareErrors, PostBildungSeminareResponses, PostBildungStudiengaengeData, PostBildungStudiengaengeErrors, PostBildungStudiengaengeResponses, PostBildungTagungenData, PostBildungTagungenErrors, PostBildungTagungenResponses, PostIngestRunData, PostIngestRunResponses, PutBildungBerufsschuljahreByIdData, PutBildungBerufsschuljahreByIdErrors, PutBildungBerufsschuljahreByIdResponses, PutBildungSeminareByIdData, PutBildungSeminareByIdErrors, PutBildungSeminareByIdResponses, PutBildungStudiengaengeByIdData, PutBildungStudiengaengeByIdErrors, PutBildungStudiengaengeByIdResponses, PutBildungTagungenByIdData, PutBildungTagungenByIdErrors, PutBildungTagungenByIdResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -24,6 +24,15 @@ export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends 
 export const getBildungAngebote = <ThrowOnError extends boolean = false>(options?: Options<GetBildungAngeboteData, ThrowOnError>): RequestResult<GetBildungAngeboteResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetBildungAngeboteResponses, unknown, ThrowOnError>({ url: '/bildung/angebote', ...options });
 
 /**
+ * Projiziere In Shop
+ */
+export const postBildungAngeboteByIdShopProjektion = <ThrowOnError extends boolean = false>(options: Options<PostBildungAngeboteByIdShopProjektionData, ThrowOnError>): RequestResult<PostBildungAngeboteByIdShopProjektionResponses, PostBildungAngeboteByIdShopProjektionErrors, ThrowOnError> => (options.client ?? client).post<PostBildungAngeboteByIdShopProjektionResponses, PostBildungAngeboteByIdShopProjektionErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/bildung/angebote/{id}/shop-projektion',
+    ...options
+});
+
+/**
  * List Berufsschuljahre
  */
 export const getBildungBerufsschuljahre = <ThrowOnError extends boolean = false>(options?: Options<GetBildungBerufsschuljahreData, ThrowOnError>): RequestResult<GetBildungBerufsschuljahreResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetBildungBerufsschuljahreResponses, unknown, ThrowOnError>({ url: '/bildung/berufsschuljahre', ...options });
@@ -32,6 +41,7 @@ export const getBildungBerufsschuljahre = <ThrowOnError extends boolean = false>
  * Create Berufsschuljahr
  */
 export const postBildungBerufsschuljahre = <ThrowOnError extends boolean = false>(options: Options<PostBildungBerufsschuljahreData, ThrowOnError>): RequestResult<PostBildungBerufsschuljahreResponses, PostBildungBerufsschuljahreErrors, ThrowOnError> => (options.client ?? client).post<PostBildungBerufsschuljahreResponses, PostBildungBerufsschuljahreErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/bildung/berufsschuljahre',
     ...options,
     headers: {
@@ -43,7 +53,11 @@ export const postBildungBerufsschuljahre = <ThrowOnError extends boolean = false
 /**
  * Archive Berufsschuljahr
  */
-export const deleteBildungBerufsschuljahreById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungBerufsschuljahreByIdData, ThrowOnError>): RequestResult<DeleteBildungBerufsschuljahreByIdResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteBildungBerufsschuljahreByIdResponses, unknown, ThrowOnError>({ url: '/bildung/berufsschuljahre/{id}', ...options });
+export const deleteBildungBerufsschuljahreById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungBerufsschuljahreByIdData, ThrowOnError>): RequestResult<DeleteBildungBerufsschuljahreByIdResponses, DeleteBildungBerufsschuljahreByIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteBildungBerufsschuljahreByIdResponses, DeleteBildungBerufsschuljahreByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/bildung/berufsschuljahre/{id}',
+    ...options
+});
 
 /**
  * Get Berufsschuljahr
@@ -54,6 +68,7 @@ export const getBildungBerufsschuljahreById = <ThrowOnError extends boolean = fa
  * Update Berufsschuljahr
  */
 export const putBildungBerufsschuljahreById = <ThrowOnError extends boolean = false>(options: Options<PutBildungBerufsschuljahreByIdData, ThrowOnError>): RequestResult<PutBildungBerufsschuljahreByIdResponses, PutBildungBerufsschuljahreByIdErrors, ThrowOnError> => (options.client ?? client).put<PutBildungBerufsschuljahreByIdResponses, PutBildungBerufsschuljahreByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/bildung/berufsschuljahre/{id}',
     ...options,
     headers: {
@@ -71,6 +86,7 @@ export const getBildungSeminare = <ThrowOnError extends boolean = false>(options
  * Create Seminar
  */
 export const postBildungSeminare = <ThrowOnError extends boolean = false>(options: Options<PostBildungSeminareData, ThrowOnError>): RequestResult<PostBildungSeminareResponses, PostBildungSeminareErrors, ThrowOnError> => (options.client ?? client).post<PostBildungSeminareResponses, PostBildungSeminareErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/bildung/seminare',
     ...options,
     headers: {
@@ -82,7 +98,11 @@ export const postBildungSeminare = <ThrowOnError extends boolean = false>(option
 /**
  * Archive Seminar
  */
-export const deleteBildungSeminareById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungSeminareByIdData, ThrowOnError>): RequestResult<DeleteBildungSeminareByIdResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteBildungSeminareByIdResponses, unknown, ThrowOnError>({ url: '/bildung/seminare/{id}', ...options });
+export const deleteBildungSeminareById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungSeminareByIdData, ThrowOnError>): RequestResult<DeleteBildungSeminareByIdResponses, DeleteBildungSeminareByIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteBildungSeminareByIdResponses, DeleteBildungSeminareByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/bildung/seminare/{id}',
+    ...options
+});
 
 /**
  * Get Seminar
@@ -93,6 +113,7 @@ export const getBildungSeminareById = <ThrowOnError extends boolean = false>(opt
  * Update Seminar
  */
 export const putBildungSeminareById = <ThrowOnError extends boolean = false>(options: Options<PutBildungSeminareByIdData, ThrowOnError>): RequestResult<PutBildungSeminareByIdResponses, PutBildungSeminareByIdErrors, ThrowOnError> => (options.client ?? client).put<PutBildungSeminareByIdResponses, PutBildungSeminareByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/bildung/seminare/{id}',
     ...options,
     headers: {
@@ -110,6 +131,7 @@ export const getBildungStudiengaenge = <ThrowOnError extends boolean = false>(op
  * Create Studiengang
  */
 export const postBildungStudiengaenge = <ThrowOnError extends boolean = false>(options: Options<PostBildungStudiengaengeData, ThrowOnError>): RequestResult<PostBildungStudiengaengeResponses, PostBildungStudiengaengeErrors, ThrowOnError> => (options.client ?? client).post<PostBildungStudiengaengeResponses, PostBildungStudiengaengeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/bildung/studiengaenge',
     ...options,
     headers: {
@@ -121,7 +143,11 @@ export const postBildungStudiengaenge = <ThrowOnError extends boolean = false>(o
 /**
  * Archive Studiengang
  */
-export const deleteBildungStudiengaengeById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungStudiengaengeByIdData, ThrowOnError>): RequestResult<DeleteBildungStudiengaengeByIdResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteBildungStudiengaengeByIdResponses, unknown, ThrowOnError>({ url: '/bildung/studiengaenge/{id}', ...options });
+export const deleteBildungStudiengaengeById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungStudiengaengeByIdData, ThrowOnError>): RequestResult<DeleteBildungStudiengaengeByIdResponses, DeleteBildungStudiengaengeByIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteBildungStudiengaengeByIdResponses, DeleteBildungStudiengaengeByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/bildung/studiengaenge/{id}',
+    ...options
+});
 
 /**
  * Get Studiengang
@@ -132,6 +158,7 @@ export const getBildungStudiengaengeById = <ThrowOnError extends boolean = false
  * Update Studiengang
  */
 export const putBildungStudiengaengeById = <ThrowOnError extends boolean = false>(options: Options<PutBildungStudiengaengeByIdData, ThrowOnError>): RequestResult<PutBildungStudiengaengeByIdResponses, PutBildungStudiengaengeByIdErrors, ThrowOnError> => (options.client ?? client).put<PutBildungStudiengaengeByIdResponses, PutBildungStudiengaengeByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/bildung/studiengaenge/{id}',
     ...options,
     headers: {
@@ -149,6 +176,7 @@ export const getBildungTagungen = <ThrowOnError extends boolean = false>(options
  * Create Tagung
  */
 export const postBildungTagungen = <ThrowOnError extends boolean = false>(options: Options<PostBildungTagungenData, ThrowOnError>): RequestResult<PostBildungTagungenResponses, PostBildungTagungenErrors, ThrowOnError> => (options.client ?? client).post<PostBildungTagungenResponses, PostBildungTagungenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/bildung/tagungen',
     ...options,
     headers: {
@@ -160,7 +188,11 @@ export const postBildungTagungen = <ThrowOnError extends boolean = false>(option
 /**
  * Archive Tagung
  */
-export const deleteBildungTagungenById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungTagungenByIdData, ThrowOnError>): RequestResult<DeleteBildungTagungenByIdResponses, unknown, ThrowOnError> => (options.client ?? client).delete<DeleteBildungTagungenByIdResponses, unknown, ThrowOnError>({ url: '/bildung/tagungen/{id}', ...options });
+export const deleteBildungTagungenById = <ThrowOnError extends boolean = false>(options: Options<DeleteBildungTagungenByIdData, ThrowOnError>): RequestResult<DeleteBildungTagungenByIdResponses, DeleteBildungTagungenByIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteBildungTagungenByIdResponses, DeleteBildungTagungenByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/bildung/tagungen/{id}',
+    ...options
+});
 
 /**
  * Get Tagung
@@ -171,6 +203,7 @@ export const getBildungTagungenById = <ThrowOnError extends boolean = false>(opt
  * Update Tagung
  */
 export const putBildungTagungenById = <ThrowOnError extends boolean = false>(options: Options<PutBildungTagungenByIdData, ThrowOnError>): RequestResult<PutBildungTagungenByIdResponses, PutBildungTagungenByIdErrors, ThrowOnError> => (options.client ?? client).put<PutBildungTagungenByIdResponses, PutBildungTagungenByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
     url: '/bildung/tagungen/{id}',
     ...options,
     headers: {

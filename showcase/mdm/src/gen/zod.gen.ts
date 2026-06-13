@@ -73,6 +73,12 @@ export const zBerufsschuljahrDto = z.object({
     plaetze: z.number().int().gte(0).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional()
 });
 
+export const zProjektionErgebnis = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    code: z.string().optional(),
+    vendureProductId: z.string().optional()
+});
+
 export const zRegistryItemDto = z.object({
     id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     typ: zBildungsangebotTyp.optional(),
@@ -80,7 +86,8 @@ export const zRegistryItemDto = z.object({
     titel: z.string().optional(),
     bereich: zBereich.optional(),
     status: zAngebotStatus.optional(),
-    shopVerkauf: z.boolean().optional()
+    shopVerkauf: z.boolean().optional(),
+    vendureProductId: z.string().optional()
 });
 
 export const zSeminarKategorie = z.enum([
@@ -215,6 +222,15 @@ export const zTagungDto = z.object({
  * OK
  */
 export const zGetBildungAngeboteResponse = z.array(zRegistryItemDto);
+
+export const zPostBildungAngeboteByIdShopProjektionPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * Projiziert; vendureProductId zurückgeschrieben
+ */
+export const zPostBildungAngeboteByIdShopProjektionResponse = zProjektionErgebnis;
 
 /**
  * OK

@@ -123,4 +123,52 @@ class BildungOpenApiSpecTest {
                 .then()
                 .statusCode(403);
     }
+
+    @Test
+    void shopProjektionEndpunktExistiertImOpenApiSchema() {
+        // P1.3-Naht (§11.6): der Projektions-Endpunkt ist Teil des Vertrags (für die SDK-Generierung).
+        given()
+                .queryParam("format", "json")
+                .when().get("/q/openapi")
+                .then()
+                .statusCode(200)
+                .body("paths", org.hamcrest.Matchers.hasKey("/bildung/angebote/{id}/shop-projektion"));
+    }
+
+    @Test
+    @TestSecurity(user = "nurstaff", roles = "staff")
+    void shopProjektionOhneKatalogPflegeRolleIstVerboten() {
+        // RBAC vor Geschäftslogik: ohne Rolle 403 — der Vendure-Pfad wird gar nicht erst betreten.
+        given()
+                .when().post("/bildung/angebote/424242/shop-projektion")
+                .then()
+                .statusCode(403);
+    }
+
+    @Test
+    @TestSecurity(user = "pfleger", roles = "katalog-pflege")
+    void shopProjektionNurFuerVerkaeuflicheAktiveAngebote() {
+        // Guard (§11.6): ein nicht-verkäufliches Angebot → 409, ohne Vendure überhaupt zu rufen.
+        // Eindeutiger Code je Lauf — die Test-DB ist die echte `controlling`-DB (kein Throwaway).
+        String code = "SEM-PROJ-" + System.currentTimeMillis();
+        String body = """
+                {"code":"%s","titel":"Nicht im Shop","bereich":"AKADEMIE","status":"AKTIV",
+                 "gueltigAb":"2026-09-01","preisModell":"EINMALIG","shopVerkauf":false,
+                 "kategorie":"SONSTIGE","dauerUE":8,"minTN":1,"maxTN":10}
+                """.formatted(code);
+        String location = given()
+                .contentType(ContentType.JSON)
+                .body(body)
+                .when().post("/bildung/seminare")
+                .then()
+                .statusCode(201)
+                .extract().header("Location");
+        Long id = Long.valueOf(location.substring(location.lastIndexOf('/') + 1));
+
+        given()
+                .when().post("/bildung/angebote/" + id + "/shop-projektion")
+                .then()
+                .statusCode(409)
+                .body(containsString("shopVerkauf"));
+    }
 }

@@ -17,8 +17,15 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 
+import jakarta.inject.Inject;
+
+import org.eclipse.microprofile.openapi.annotations.media.Content;
+import org.eclipse.microprofile.openapi.annotations.media.Schema;
+import org.eclipse.microprofile.openapi.annotations.responses.APIResponse;
+
 import de.netzfactor.ebz.controlling.integration.bildung.dto.BerufsschuljahrDto;
 import de.netzfactor.ebz.controlling.integration.bildung.dto.GemeinsamesAngebot;
+import de.netzfactor.ebz.controlling.integration.bildung.dto.ProjektionErgebnis;
 import de.netzfactor.ebz.controlling.integration.bildung.dto.RegistryItemDto;
 import de.netzfactor.ebz.controlling.integration.bildung.dto.SeminarDto;
 import de.netzfactor.ebz.controlling.integration.bildung.dto.StudiengangDto;
@@ -26,6 +33,8 @@ import de.netzfactor.ebz.controlling.integration.bildung.dto.TagungDto;
 import de.netzfactor.ebz.controlling.integration.bildung.model.AngebotStatus;
 import de.netzfactor.ebz.controlling.integration.bildung.model.Bildungsangebot;
 import de.netzfactor.ebz.controlling.integration.bildung.model.BildungsangebotTyp;
+import de.netzfactor.ebz.controlling.integration.bildung.vendure.VendureException;
+import de.netzfactor.ebz.controlling.integration.bildung.vendure.VendureProjektion;
 
 /**
  * Eine Resource für die gesamte Bildungsangebot-Familie (schlank: eine Klasse statt fünf + Mapper).
@@ -39,12 +48,52 @@ import de.netzfactor.ebz.controlling.integration.bildung.model.BildungsangebotTy
 @Consumes(MediaType.APPLICATION_JSON)
 public class BildungResource {
 
+    @Inject
+    VendureProjektion vendure;
+
     // ── Registry (typ-übergreifend) ──
     @GET
     @Path("/angebote")
     @Transactional
     public List<RegistryItemDto> registry() {
         return Bildungsangebot.<Bildungsangebot>listAll().stream().map(BildungResource::toRegistry).toList();
+    }
+
+    /**
+     * Projiziert das (verkäufliche, aktive) Angebot nach Vendure und schreibt die Produkt-ID zurück
+     * (Naht §11.6). Typ-übergreifend (gemeinsames Feld {@code shopVerkauf}). Idempotent: ein bereits
+     * gesetztes {@code vendureProductId} führt zum Update statt zum Neuanlegen.
+     */
+    @RolesAllowed("katalog-pflege")
+    @POST
+    @Path("/angebote/{id}/shop-projektion")
+    @Consumes(MediaType.WILDCARD) // kein Request-Body → klassenweites @Consumes(JSON) hier nicht erzwingen
+    @APIResponse(responseCode = "200", description = "Projiziert; vendureProductId zurückgeschrieben",
+            content = @Content(schema = @Schema(implementation = ProjektionErgebnis.class)))
+    @Transactional
+    public Response projiziereInShop(@PathParam("id") Long id) {
+        Bildungsangebot e = Bildungsangebot.findById(id);
+        if (e == null) {
+            return notFound();
+        }
+        if (!e.shopVerkauf) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(new Fehler("Angebot ist nicht für den Shop-Verkauf markiert (shopVerkauf=false).")).build();
+        }
+        if (e.status != AngebotStatus.AKTIV) {
+            return Response.status(Response.Status.CONFLICT)
+                    .entity(new Fehler("Nur Angebote im Status AKTIV werden in den Shop projiziert.")).build();
+        }
+        try {
+            e.vendureProductId = vendure.projiziere(e); // dirty → Flush am Tx-Commit (Zurückschreiben)
+            return Response.ok(new ProjektionErgebnis(e.id, e.code, e.vendureProductId)).build();
+        } catch (VendureException ex) {
+            return Response.status(Response.Status.BAD_GATEWAY).entity(new Fehler(ex.getMessage())).build();
+        }
+    }
+
+    /** Schlanke Fehler-Payload für die Cockpit-Anzeige (Conflict/Bad-Gateway-Fälle der Projektion). */
+    public record Fehler(String message) {
     }
 
     // ── SEMINAR ──
@@ -390,6 +439,7 @@ public class BildungResource {
     }
 
     private static RegistryItemDto toRegistry(Bildungsangebot e) {
-        return new RegistryItemDto(e.id, e.typ, e.code, e.titel, e.bereich, e.status, e.shopVerkauf);
+        return new RegistryItemDto(e.id, e.typ, e.code, e.titel, e.bereich, e.status, e.shopVerkauf,
+                e.vendureProductId);
     }
 }
