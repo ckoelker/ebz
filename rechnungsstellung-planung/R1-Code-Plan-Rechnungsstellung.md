@@ -23,7 +23,7 @@ Geldbeträge durchgängig **Integer Cent**. Enums als String-Spalten (kein DB-Ch
 
 **`Anmeldung`** — Abrechnungsbasis der Vertrags-Ströme (R1: Berufsschule; Hochschule-Felder vorbereitet, Logik R6).
 `id · version · typ (BERUFSSCHULE|HOCHSCHULE) · teilnehmerName · teilnehmerEmail? · bildungsangebotId (→ bildung.Bildungsangebot) · zahlungspflichtigerDebitorId (→ Debitor) · status (AKTIV|ABGEBROCHEN|ABGESCHLOSSEN)`
-- BS: `schuljahr ("JJJJ/JJJJ") · halbjahr (1|2) · zimmerart (KEINE|DOPPEL|EINZEL)`
+- BS: `schuljahr ("JJJJ/JJJJ") · halbjahr (1|2) · zimmerart (KEINE|DOPPEL|EINZEL) · unterrichtBetragCent · uebernachtungBetragCent?` — **variable Werte je Anmeldung = Quelle der Positionsbeträge (Entscheidung a)**.
 - HS (R6): `semester · semesterbetragCent · zahlmodell (KOMPLETT|RATEN) · ratenAnzahl? · ratenIntervallMonate? · splitFirmaDebitorId? · splitFirmaAnteilCent?`
 
 **`Rechnung`** (Kopf).
@@ -35,10 +35,11 @@ Geldbeträge durchgängig **Integer Cent**. Enums als String-Spalten (kein DB-Ch
 **`Nummernkreis`** — lückenlose, atomare Vergabe je **Bereich × Belegart**.
 `id · bereich · belegart · praefix ("RE-BS-2026-") · naechsteNummer`
 
-**`Tarif`** — **konfigurierbare Beträge (Variablen, KEINE Code-Konstanten).** Die genannten Werte
-(Unterricht 1.500, Doppelzimmer ~1.300, Einzelzimmer ~1.260) sind **pflegbare Stammdaten**, nicht
-hartkodiert. `id · bereich · schuljahr · unterrichtCent · doppelzimmerCent · einzelzimmerCent` (BS);
-gilt für den Rechnungslauf des jeweiligen Zeitraums. (Später erweiterbar je Bildungsangebot/Staffel.)
+**Beträge = Positionsbeträge (keine Tarif-Tabelle, keine Konstanten).** Eine Berufsschul-Rechnung
+besteht aus **1–2 Positionen**: **Unterricht** (immer) + **Übernachtung** (nur wenn `zimmerart` ≠
+KEINE, Doppel- oder Einzelzimmer). Die Beträge sind **variable Werte je Anmeldung** (Felder
+`unterrichtBetragCent`/`uebernachtungBetragCent`, Entscheidung a); der Lauf befüllt die Positionen
+daraus vor, im Entwurf editierbar.
 
 ## Lebenszyklus, Festschreibung, Nummernvergabe
 - **ENTWURF**: aus Rechnungslauf; Positionen editierbar/ergänzbar; **keine Nummer**.
@@ -54,9 +55,10 @@ gilt für den Rechnungslauf des jeweiligen Zeitraums. (Später erweiterbar je Bi
 - **`NummernkreisService`** — `String vergib(Bereich, Belegart)` (atomar, lückenlos).
 - **`RechnungslaufService`** — `List<Rechnung> erzeugeEntwuerfe(bereich, schuljahr, halbjahr)`:
   alle aktiven `Anmeldung`en des Zeitraums → **gruppiert je `zahlungspflichtigerDebitor`** (=
-  Sammelrechnung) → je Gruppe eine `Rechnung(ENTWURF)` mit **Standardpositionen aus dem `Tarif`**
-  (Unterricht + Zimmer-Halbjahresbetrag je `zimmerart`) — **Beträge variabel aus Stammdaten, nicht im
-  Code**; alle `BEFREIT`. Idempotent (kein Doppel-Entwurf je Debitor+Zeitraum).
+  Sammelrechnung) → je Gruppe eine `Rechnung(ENTWURF)`; je `Anmeldung` **1–2 Positionen** (Unterricht
+  + Übernachtung, falls `zimmerart` ≠ KEINE), alle `BEFREIT`. **Positionsbeträge vorbefüllt aus den
+  `Anmeldung`-Feldern** (Entscheidung a), im Entwurf editierbar. Idempotent (kein Doppel-Entwurf je
+  Debitor+Zeitraum).
 - **`RechnungService`** — `ausstellen(id)` · `storno(id)` · `gutschrift(id, positionen)` ·
   `nachberechnung(id, positionen)` · `addManuellePosition(id, …)` (nur `ENTWURF`).
 - **(R2)** `ZugferdService` · **(R4)** `DatevUebergabe` (Interface) · **(R3)** `DebitorService` (Match/Merge).
@@ -89,6 +91,6 @@ ZUGFeRD/PDF (R2) · Debitoren-Match/Merge + Migration (R3) · DATEV-Übergabe + 
 Gutschrift-Automatik/Rabatte (R5/6 – Rabatt zurückgestellt) · Hochschule-Lauf + Split + Raten (R6) ·
 Vendure-Order→Abrechnungsbasis + Shop/Seminare (R7).
 
-## Offen (Kundenfragen, nicht R1-blockierend)
-SKR03/04 (R4) · konkrete **Tarif-Werte** (Unterricht/Zimmer — sind **Stammdaten/Variablen**, werden
-gepflegt, nicht im Code) · Debitoren-Bestand/Migration A vs B (R3) · SEPA-Mandatsquelle.
+## Offen (nicht R1-blockierend)
+SKR03/04 (R4) · Debitoren-Bestand/Migration A vs B (R3) · SEPA-Mandatsquelle.
+*(Quelle der Positionsbeträge geklärt: Felder der `Anmeldung`, Entscheidung a.)*

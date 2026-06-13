@@ -43,9 +43,11 @@ agnostisch, gleichberechtigt neben den `Anmeldung`en aus Berufsschule/Hochschule
 
 ## 3. Berufsschule — konkrete Regeln (R1)
 - ✅ **Q3.1** **4 Blöcke** je Halbjahr: **A, B, C, D**.
-- ✅ **Q3.2** Beträge sind **Halbjahresbeträge** „für alle Blöcke zusammen": Unterricht ~1.500 €/HJ,
-  Doppelzimmer ~1.300 €/HJ *oder* Einzelzimmer ~1.260 €/HJ *oder* keine Übernachtung.
-  **⚠️ Diese Beträge sind immer VARIABLEN** → konfigurierbare **Tarif-Stammdaten**, nicht hartkodiert.
+- ✅ **Q3.2** Eine Berufsschul-Rechnung = **1–2 Positionen** mit Halbjahresbeträgen „für alle Blöcke
+  zusammen": **Unterricht** (immer, ~1.500 €/HJ) + **Übernachtung** (nur falls Zimmerart ≠ keine:
+  Doppel ~1.300 / Einzel ~1.260). **⚠️ Beträge sind immer VARIABLEN** = Positionswerte, **keine
+  Tarif-Tabelle / keine Konstanten**. ✅ Quelle = **Felder der `Anmeldung`** (Entscheidung a):
+  Rechnungslauf erzeugt die 1–2 Positionen vorbefüllt, im Entwurf editierbar.
 - ✅ **Q3.3 Krankheit:** Gutschrift **pro Nacht**, gemeldet vom **Teilnehmer**.
 - ✅ **Q3.4 Abbruch:** **manuelle Position mit Betragseingabe** (keine Auto-Berechnung).
 - ✅ **Q3.5 Nachträgliche Übernachtung (+400 €):** **wie Q3.4 — manuelle Position mit Betragseingabe.**
