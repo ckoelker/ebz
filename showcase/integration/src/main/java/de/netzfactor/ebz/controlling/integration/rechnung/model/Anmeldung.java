@@ -1,5 +1,7 @@
 package de.netzfactor.ebz.controlling.integration.rechnung.model;
 
+import java.time.Instant;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -105,4 +107,13 @@ public class Anmeldung extends PanacheEntity {
     /** Anzahl Raten je Forderung (1/null = komplett in einer Rechnung). */
     @Column(name = "raten_anzahl")
     public Integer ratenAnzahl;
+
+    // ── Vertrags-Audit (Anmeldung Berufsschule, Schritt F) ──
+    /** Zeitpunkt der Vertragsbestätigung durch die Firma ({@code BESTAETIGT_EBZ → AKTIV}). */
+    @Column(name = "vertrag_bestaetigt_am")
+    public Instant vertragBestaetigtAm;
+
+    /** {@code party.person} der bestätigenden Firmen-Ansprechperson (Audit). */
+    @Column(name = "vertrag_bestaetigt_von")
+    public Long vertragBestaetigtVon;
 }

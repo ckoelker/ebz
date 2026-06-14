@@ -1,5 +1,7 @@
 package de.netzfactor.ebz.controlling.integration.party.service;
 
+import java.time.Instant;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -69,6 +71,26 @@ public class AnmeldungWorkflowService {
                     Ihr EBZ-Team
                     """.formatted(a.teilnehmerName, schuljahrHalbjahr(a))));
         }
+        return a;
+    }
+
+    /**
+     * Die Firma bestätigt abschließend den Vertrag ({@code BESTAETIGT_EBZ → AKTIV}) — ab jetzt
+     * abrechenbar, der bestehende Rechnungslauf zieht sie. Mit Audit (wer/wann).
+     */
+    @Transactional
+    public Anmeldung bestaetigeVertrag(Long anmeldungId, Long bestaetigerPersonId) {
+        Anmeldung a = Anmeldung.findById(anmeldungId);
+        if (a == null) {
+            throw RegelVerletzung.nichtGefunden("Anmeldung nicht gefunden: " + anmeldungId);
+        }
+        if (a.status != AnmeldungStatus.BESTAETIGT_EBZ) {
+            throw new RegelVerletzung("Nur EBZ-bestätigte Anmeldungen können vertraglich bestätigt werden "
+                    + "(aktuell: " + a.status + ").");
+        }
+        a.status = AnmeldungStatus.AKTIV;
+        a.vertragBestaetigtAm = Instant.now();
+        a.vertragBestaetigtVon = bestaetigerPersonId;
         return a;
     }
 
