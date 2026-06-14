@@ -22,8 +22,8 @@
 			<bpmn:incoming>flow_start__task_rechnungslauf_bucht_anmeldung</bpmn:incoming>
 			<bpmn:outgoing>flow_task_rechnungslauf_bucht_anmeldung__end</bpmn:outgoing>
 		</bpmn:task>
-		<bpmn:sequenceFlow id="flow_start__task_rechnungslauf_bucht_anmeldung" name="" sourceRef="start" targetRef="task_rechnungslauf_bucht_anmeldung"/>
 		<bpmn:sequenceFlow id="flow_task_rechnungslauf_bucht_anmeldung__end" name="" sourceRef="task_rechnungslauf_bucht_anmeldung" targetRef="end"/>
+		<bpmn:sequenceFlow id="flow_start__task_rechnungslauf_bucht_anmeldung" name="" sourceRef="start" targetRef="task_rechnungslauf_bucht_anmeldung"/>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="diagram_sub-rechnungslauf">
     <bpmndi:BPMNPlane id="plane_sub-rechnungslauf" bpmnElement="collab_sub-rechnungslauf">
@@ -42,17 +42,17 @@
       <bpmndi:BPMNShape id="task_rechnungslauf_bucht_anmeldung_di" bpmnElement="task_rechnungslauf_bucht_anmeldung">
         <omgdc:Bounds x="280" y="15" width="100" height="80"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="flow_start__task_rechnungslauf_bucht_anmeldung_di" bpmnElement="flow_start__task_rechnungslauf_bucht_anmeldung">
-        <omgdi:waypoint x="136" y="55"/>
-        <omgdi:waypoint x="208" y="55"/>
-        <omgdi:waypoint x="208" y="55"/>
-        <omgdi:waypoint x="280" y="55"/>
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_task_rechnungslauf_bucht_anmeldung__end_di" bpmnElement="flow_task_rechnungslauf_bucht_anmeldung__end">
         <omgdi:waypoint x="380" y="55"/>
         <omgdi:waypoint x="420" y="55"/>
         <omgdi:waypoint x="420" y="55"/>
         <omgdi:waypoint x="460" y="55"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_start__task_rechnungslauf_bucht_anmeldung_di" bpmnElement="flow_start__task_rechnungslauf_bucht_anmeldung">
+        <omgdi:waypoint x="136" y="55"/>
+        <omgdi:waypoint x="208" y="55"/>
+        <omgdi:waypoint x="208" y="55"/>
+        <omgdi:waypoint x="280" y="55"/>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

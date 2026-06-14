@@ -287,155 +287,205 @@ def _swimlane(xml_text: str, name_zu_akteur: dict, name_zu_system: dict, titel: 
             f'    </bpmndi:BPMNPlane>\n  </bpmndi:BPMNDiagram>\n</bpmn:definitions>\n')
 
 
-def _call_activities(xml_text: str) -> str:
-    """Übersicht (A): wandelt die Phasen-Tasks in Call-Activities um, die auf die Subprozess-Datei
-    verweisen (`calledElement = process_sub-<phase>`) → im Camunda Modeler navigierbar."""
-    label_zu_phase = {_xml_attr(v): k for k, v in PHASE_LABEL.items()}
-
-    def conv(m: re.Match) -> str:
-        attrs, inner = m.group(1), m.group(2)
-        nm = re.search(r'name="([^"]+)"', attrs)
-        phase = label_zu_phase.get(nm.group(1)) if nm else None
-        if not phase:
-            return m.group(0)
-        return (f'<bpmn:callActivity {attrs} calledElement="process_sub-{phase.lower()}">'
-                f'{inner}</bpmn:callActivity>')
-
-    return re.sub(r"<bpmn:task ([^>]*?)>(.*?)</bpmn:task>", conv, xml_text, flags=re.S)
+# Geometrie-Konstanten für die eingebetteten Phasen-Blöcke (Swimlanes).
+_EVT, _GW, _TW, _TH = 36, 50, 100, 80
+_COLW, _PAD, _LANE_H, _LANE_LBL, _GAP = 170, 20, 110, 24, 80
 
 
-def _gesamt(sub_semantik: dict, name_akteur: dict, name_system: dict) -> str:
-    """
-    Gesamt-Sicht (B): EINE Datei, in der jede Phase ein **eingebetteter, aufklappbarer**
-    {@code bpmn:subProcess} (isExpanded) mit ihren entdeckten Schritten ist — im Camunda Modeler je
-    Phase im Canvas auf-/zuklappbar. Phasen werden linear in der fachlichen Reihenfolge verkettet.
-    """
+def _phase_block(phase: str, semantik: str, name_akteur: dict, name_system: dict) -> dict:
+    """Layoutet eine Phase als Swimlane-Block (relativ zu (0,0)): Lanes je Akteur, Spalte =
+    Reihenfolge. Liefert Geometrie + fertige laneSet-/flowElement-XML (Ids je Phase präfixiert)."""
     from collections import deque
-    EVT, GW, TW, TH = 36, 50, 100, 80
-    COLW, PAD, BOX_H, GAP, HEAD = 170, 30, 200, 80, 24
+    proc = ET.fromstring(semantik).find(f"{{{BPMN_NS}}}process")
+    pref = phase.lower() + "__"
+    nodes, order, flows, adj, radj = {}, [], [], {}, {}
+    for el in list(proc):
+        tag = el.tag.split("}", 1)[1]
+        eid = pref + el.get("id")
+        if tag == "sequenceFlow":
+            s, t = pref + el.get("sourceRef"), pref + el.get("targetRef")
+            flows.append((eid, s, t))
+            adj.setdefault(s, []).append(t)
+            radj.setdefault(t, []).append(s)
+        else:
+            nodes[eid] = {"tag": tag, "name": el.get("name") or ""}
+            order.append(eid)
+    for info in nodes.values():
+        t = info["tag"]
+        info["w"], info["h"] = (_EVT, _EVT) if t.endswith("Event") else (_GW, _GW) if "Gateway" in t else (_TW, _TH)
+    indeg = {n: len(radj.get(n, [])) for n in nodes}
+    col = {n: 0 for n in nodes}
+    q = deque([n for n in nodes if indeg[n] == 0])
+    while q:
+        u = q.popleft()
+        for v in adj.get(u, []):
+            col[v] = max(col[v], col[u] + 1)
+            indeg[v] -= 1
+            if indeg[v] == 0:
+                q.append(v)
+
+    def akteur(nid, seen=None):
+        seen = seen or set()
+        if nid in seen:
+            return AKTEUR_ORDER[0]
+        seen.add(nid)
+        if nodes[nid]["name"] in name_akteur:
+            return name_akteur[nodes[nid]["name"]]
+        nb = (radj.get(nid) or adj.get(nid) or [None])[0]
+        return akteur(nb, seen) if nb in nodes else AKTEUR_ORDER[0]
+
+    lane_of = {n: akteur(n) for n in nodes}
+    lanes = [a for a in AKTEUR_ORDER if a in set(lane_of.values())]
+    lane_y = {a: i * _LANE_H for i, a in enumerate(lanes)}
+    maxcol = max(col.values()) if col else 0
+    content_w = _LANE_LBL + _PAD + maxcol * _COLW + _TW + _PAD
+    content_h = len(lanes) * _LANE_H
+    rel = {n: (_LANE_LBL + _PAD + col[n] * _COLW, lane_y[lane_of[n]] + (_LANE_H - nodes[n]["h"]) / 2,
+               nodes[n]["w"], nodes[n]["h"]) for n in nodes}
+
+    fe = []
+    for n in order:
+        info = nodes[n]
+        nm = info["name"]
+        label = f"{nm} · {name_system[nm]}" if info["tag"] == "task" and nm in name_system else nm
+        ins = "".join(f"<bpmn:incoming>{f[0]}</bpmn:incoming>" for f in flows if f[2] == n)
+        outs = "".join(f"<bpmn:outgoing>{f[0]}</bpmn:outgoing>" for f in flows if f[1] == n)
+        attr = f'id="{n}"' + (f' name="{_xml_attr(label)}"' if nm else "")
+        fe.append(f"<bpmn:{info['tag']} {attr}>{ins}{outs}</bpmn:{info['tag']}>")
+    fe += [f'<bpmn:sequenceFlow id="{fid}" sourceRef="{s}" targetRef="{t}"/>' for fid, s, t in flows]
+
+    pl = phase.lower()
+    ls = [f'<bpmn:laneSet id="laneset_{pl}">']
+    for a in lanes:
+        ls.append(f'<bpmn:lane id="lane_{pl}_{_slug(a)}" name="{_xml_attr(a)}">')
+        ls += [f"<bpmn:flowNodeRef>{n}</bpmn:flowNodeRef>" for n in order if lane_of[n] == a]
+        ls.append("</bpmn:lane>")
+    ls.append("</bpmn:laneSet>")
+
+    return {"phase": phase, "spid": f"sp_{pl}", "name": PHASE_LABEL[phase], "order": order, "flows": flows,
+            "lanes": lanes, "lane_y": lane_y, "rel": rel, "content_w": content_w, "content_h": content_h,
+            "laneset": "".join(ls), "fe": "".join(fe)}
+
+
+def _block_di(b: dict, ox: float, oy: float) -> list:
+    """DI (Lane- + Knoten-Shapes + orthogonale Kanten) eines Phasen-Blocks ab Ursprung (ox,oy)."""
+    pl = b["phase"].lower()
+    out = []
+    for a in b["lanes"]:
+        out.append(f'<bpmndi:BPMNShape id="lane_{pl}_{_slug(a)}_di" bpmnElement="lane_{pl}_{_slug(a)}"'
+                   f' isHorizontal="true"><omgdc:Bounds x="{ox + _LANE_LBL:.0f}" y="{oy + b["lane_y"][a]:.0f}"'
+                   f' width="{b["content_w"] - _LANE_LBL:.0f}" height="{_LANE_H}"/></bpmndi:BPMNShape>')
+    for n in b["order"]:
+        rx, ry, w, h = b["rel"][n]
+        out.append(f'<bpmndi:BPMNShape id="{n}_di" bpmnElement="{n}"><omgdc:Bounds x="{ox + rx:.0f}"'
+                   f' y="{oy + ry:.0f}" width="{w}" height="{h}"/></bpmndi:BPMNShape>')
+    for fid, s, t in b["flows"]:
+        sx, sy, sw, sh = b["rel"][s]
+        tx, ty, tw, th = b["rel"][t]
+        x1, y1, x2, y2 = ox + sx + sw, oy + sy + sh / 2, ox + tx, oy + ty + th / 2
+        mx = (x1 + x2) / 2
+        out.append(f'<bpmndi:BPMNEdge id="{fid}_di" bpmnElement="{fid}"><omgdi:waypoint x="{x1:.0f}"'
+                   f' y="{y1:.0f}"/><omgdi:waypoint x="{mx:.0f}" y="{y1:.0f}"/><omgdi:waypoint x="{mx:.0f}"'
+                   f' y="{y2:.0f}"/><omgdi:waypoint x="{x2:.0f}" y="{y2:.0f}"/></bpmndi:BPMNEdge>')
+    return out
+
+
+def _embedded(sub_semantik: dict, name_akteur: dict, name_system: dict, collapsed: bool) -> str:
+    """
+    EINE Datei mit je Phase einem eingebetteten {@code bpmn:subProcess} (mit Swimlanes), linear verkettet.
+    {@code collapsed=False}: aufgeklappt inline (Gesamt-Sicht). {@code collapsed=True}: eingeklappt mit
+    eigener DI-Plane je Phase → im Camunda Modeler per Drilldown aufklappbar (Übersicht).
+    """
     phases = [p for p in PHASE_LABEL if p in sub_semantik]
+    blocks = [_phase_block(p, sub_semantik[p], name_akteur, name_system) for p in phases]
 
-    sps = []
-    for phase in phases:
-        proc = ET.fromstring(sub_semantik[phase]).find(f"{{{BPMN_NS}}}process")
-        pref = phase.lower() + "__"
-        nodes, order, flows, adj, radj = {}, [], [], {}, {}
-        for el in list(proc):
-            tag = el.tag.split("}", 1)[1]
-            eid = pref + el.get("id")
-            if tag == "sequenceFlow":
-                s, t = pref + el.get("sourceRef"), pref + el.get("targetRef")
-                flows.append((eid, s, t))
-                adj.setdefault(s, []).append(t)
-                radj.setdefault(t, []).append(s)
-            else:
-                nodes[eid] = {"tag": tag, "name": el.get("name") or ""}
-                order.append(eid)
-        for info in nodes.values():
-            t = info["tag"]
-            info["w"], info["h"] = (EVT, EVT) if t.endswith("Event") else (GW, GW) if "Gateway" in t else (TW, TH)
-        indeg = {n: len(radj.get(n, [])) for n in nodes}
-        col = {n: 0 for n in nodes}
-        q = deque([n for n in nodes if indeg[n] == 0])
-        while q:
-            u = q.popleft()
-            for v in adj.get(u, []):
-                col[v] = max(col[v], col[u] + 1)
-                indeg[v] -= 1
-                if indeg[v] == 0:
-                    q.append(v)
-        maxcol = max(col.values()) if col else 0
-        box_w = PAD * 2 + maxcol * COLW + TW
-        rel = {n: (PAD + col[n] * COLW, HEAD + (BOX_H - HEAD - nodes[n]["h"]) / 2, nodes[n]["w"], nodes[n]["h"])
-               for n in nodes}
-        sps.append({"phase": phase, "id": f"sp_{phase.lower()}", "name": PHASE_LABEL[phase], "box_w": box_w,
-                    "nodes": nodes, "order": order, "flows": flows, "rel": rel})
-
-    # Äußeres Layout: start → [Phasen-Box]* → end (linear)
-    center_y = 40 + BOX_H / 2
-    cursor = 40
-    abspos = {}  # element-id -> (x,y,w,h) absolut
-    abspos["of_start"] = (cursor, center_y - EVT / 2, EVT, EVT)
-    cursor += EVT + GAP
-    for sp in sps:
-        sp["x"], sp["y"] = cursor, 40
-        abspos[sp["id"]] = (cursor, 40, sp["box_w"], BOX_H)
-        for n in sp["order"]:
-            rx, ry, w, h = sp["rel"][n]
-            abspos[n] = (cursor + rx, 40 + ry, w, h)
-        cursor += sp["box_w"] + GAP
-    abspos["of_end"] = (cursor, center_y - EVT / 2, EVT, EVT)
-
-    # Äußere Sequenzflüsse
-    kette = ["of_start"] + [sp["id"] for sp in sps] + ["of_end"]
-    outer_flows = [(f"oflow_{i}", kette[i], kette[i + 1]) for i in range(len(kette) - 1)]
-    outer_out = {s: [] for s in kette}
-    outer_in = {s: [] for s in kette}
-    for fid, s, t in outer_flows:
-        outer_out[s].append(fid)
-        outer_in[t].append(fid)
+    kette = ["of_start"] + [b["spid"] for b in blocks] + ["of_end"]
+    flows = [(f"oflow_{i}", kette[i], kette[i + 1]) for i in range(len(kette) - 1)]
+    fout = {s: [f for f, a, _ in flows if a == s] for s in kette}
+    fin = {s: [f for f, _, z in flows if z == s] for s in kette}
 
     # Prozess-XML
-    pe = [f'    <bpmn:startEvent id="of_start" name="Start">'
-          + "".join(f"<bpmn:outgoing>{f}</bpmn:outgoing>" for f in outer_out["of_start"]) + "</bpmn:startEvent>"]
-    for sp in sps:
-        fe = []
-        for n in sp["order"]:
-            info = sp["nodes"][n]
-            tag, nm = info["tag"], info["name"]
-            label = nm
-            if tag == "task" and (name_akteur.get(nm) or name_system.get(nm)):
-                label = f"{nm} — {name_akteur.get(nm)} · {name_system.get(nm)}"
-            ins = "".join(f"<bpmn:incoming>{f[0]}</bpmn:incoming>" for f in sp["flows"] if f[2] == n)
-            outs = "".join(f"<bpmn:outgoing>{f[0]}</bpmn:outgoing>" for f in sp["flows"] if f[1] == n)
-            attr = f'id="{n}"' + (f' name="{_xml_attr(label)}"' if nm else "")
-            fe.append(f"<bpmn:{tag} {attr}>{ins}{outs}</bpmn:{tag}>")
-        for fid, s, t in sp["flows"]:
-            fe.append(f'<bpmn:sequenceFlow id="{fid}" sourceRef="{s}" targetRef="{t}"/>')
-        pe.append(f'    <bpmn:subProcess id="{sp["id"]}" name="{_xml_attr(sp["name"])}">'
-                  + "".join(f"<bpmn:incoming>{f}</bpmn:incoming>" for f in outer_in[sp["id"]])
-                  + "".join(f"<bpmn:outgoing>{f}</bpmn:outgoing>" for f in outer_out[sp["id"]])
-                  + "".join(fe) + "</bpmn:subProcess>")
+    pe = ['    <bpmn:startEvent id="of_start" name="Start">'
+          + "".join(f"<bpmn:outgoing>{f}</bpmn:outgoing>" for f in fout["of_start"]) + "</bpmn:startEvent>"]
+    for b in blocks:
+        pe.append(f'    <bpmn:subProcess id="{b["spid"]}" name="{_xml_attr(b["name"])}">'
+                  + "".join(f"<bpmn:incoming>{f}</bpmn:incoming>" for f in fin[b["spid"]])
+                  + "".join(f"<bpmn:outgoing>{f}</bpmn:outgoing>" for f in fout[b["spid"]])
+                  + b["laneset"] + b["fe"] + "</bpmn:subProcess>")
     pe.append('    <bpmn:endEvent id="of_end" name="Ende">'
-              + "".join(f"<bpmn:incoming>{f}</bpmn:incoming>" for f in outer_in["of_end"]) + "</bpmn:endEvent>")
-    for fid, s, t in outer_flows:
-        pe.append(f'    <bpmn:sequenceFlow id="{fid}" sourceRef="{s}" targetRef="{t}"/>')
+              + "".join(f"<bpmn:incoming>{f}</bpmn:incoming>" for f in fin["of_end"]) + "</bpmn:endEvent>")
+    pe += [f'    <bpmn:sequenceFlow id="{f}" sourceRef="{s}" targetRef="{t}"/>' for f, s, t in flows]
 
-    # DI
-    def shape(eid, expanded=False):
-        x, y, w, h = abspos[eid]
+    def shape(eid, x, y, w, h, expanded=False):
         ex = ' isExpanded="true"' if expanded else ""
         return (f'      <bpmndi:BPMNShape id="{eid}_di" bpmnElement="{eid}"{ex}>'
                 f'<omgdc:Bounds x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" height="{h:.0f}"/></bpmndi:BPMNShape>')
 
-    def edge(fid, s, t):
-        sx, sy, sw, sh = abspos[s]
-        tx, ty, tw, th = abspos[t]
-        x1, y1, x2, y2 = sx + sw, sy + sh / 2, tx, ty + th / 2
+    def oedge(fid, a, z, box):
+        ax, ay, aw, ah = box[a]
+        zx, zy, zw, zh = box[z]
+        x1, y1, x2, y2 = ax + aw, ay + ah / 2, zx, zy + zh / 2
         mx = (x1 + x2) / 2
-        return (f'      <bpmndi:BPMNEdge id="{fid}_di" bpmnElement="{fid}">'
-                f'<omgdi:waypoint x="{x1:.0f}" y="{y1:.0f}"/><omgdi:waypoint x="{mx:.0f}" y="{y1:.0f}"/>'
-                f'<omgdi:waypoint x="{mx:.0f}" y="{y2:.0f}"/><omgdi:waypoint x="{x2:.0f}" y="{y2:.0f}"/>'
-                f"</bpmndi:BPMNEdge>")
-
-    di = [shape("of_start")]
-    for sp in sps:
-        di.append(shape(sp["id"], expanded=True))
-        di += [shape(n) for n in sp["order"]]
-        di += [edge(*f) for f in sp["flows"]]
-    di.append(shape("of_end"))
-    di += [edge(*f) for f in outer_flows]
+        return (f'      <bpmndi:BPMNEdge id="{fid}_di" bpmnElement="{fid}"><omgdi:waypoint x="{x1:.0f}"'
+                f' y="{y1:.0f}"/><omgdi:waypoint x="{mx:.0f}" y="{y1:.0f}"/><omgdi:waypoint x="{mx:.0f}"'
+                f' y="{y2:.0f}"/><omgdi:waypoint x="{x2:.0f}" y="{y2:.0f}"/></bpmndi:BPMNEdge>')
 
     nl = "\n"
+    if collapsed:
+        # Übersicht: kleine eingeklappte Kästen in einer Reihe; Detail je Phase in eigener Plane.
+        COLLW, COLLH, ROWY = 150, 90, 80
+        box = {}
+        cur = 40
+        box["of_start"] = (cur, ROWY + COLLH / 2 - _EVT / 2, _EVT, _EVT)
+        cur += _EVT + _GAP
+        for b in blocks:
+            box[b["spid"]] = (cur, ROWY, COLLW, COLLH)
+            cur += COLLW + _GAP
+        box["of_end"] = (cur, ROWY + COLLH / 2 - _EVT / 2, _EVT, _EVT)
+        root = [shape("of_start", *box["of_start"])]
+        root += [shape(b["spid"], *box[b["spid"]]) for b in blocks]
+        root.append(shape("of_end", *box["of_end"]))
+        root += [oedge(f, s, t, box) for f, s, t in flows]
+        diagrams = [f'  <bpmndi:BPMNDiagram id="diagram_root"><bpmndi:BPMNPlane id="plane_root"'
+                    f' bpmnElement="process_uebersicht">\n{nl.join(root)}\n'
+                    f'  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>']
+        for b in blocks:
+            diagrams.append(f'  <bpmndi:BPMNDiagram id="diagram_{b["phase"].lower()}">'
+                            f'<bpmndi:BPMNPlane id="plane_{b["phase"].lower()}" bpmnElement="{b["spid"]}">\n'
+                            f'{nl.join(_block_di(b, 0, 0))}\n  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>')
+        proc_id, diagram_xml = "process_uebersicht", nl.join(diagrams)
+    else:
+        # Gesamt: alle Phasen aufgeklappt inline auf einer Plane.
+        OY = 60
+        maxh = max(b["content_h"] for b in blocks)
+        cy = OY + maxh / 2
+        box = {}
+        di = []
+        cur = 40
+        box["of_start"] = (cur, cy - _EVT / 2, _EVT, _EVT)
+        di.append(shape("of_start", *box["of_start"]))
+        cur += _EVT + _GAP
+        for b in blocks:
+            box[b["spid"]] = (cur, OY, b["content_w"], b["content_h"])
+            di.append(shape(b["spid"], cur, OY, b["content_w"], b["content_h"], expanded=True))
+            di += _block_di(b, cur, OY)
+            cur += b["content_w"] + _GAP
+        box["of_end"] = (cur, cy - _EVT / 2, _EVT, _EVT)
+        di.append(shape("of_end", *box["of_end"]))
+        di += [oedge(f, s, t, box) for f, s, t in flows]
+        proc_id = "process_gesamt"
+        diagram_xml = (f'  <bpmndi:BPMNDiagram id="diagram_gesamt"><bpmndi:BPMNPlane id="plane_gesamt"'
+                       f' bpmnElement="process_gesamt">\n{nl.join(di)}\n'
+                       f'  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>')
+
+    # process_id im subProcess-Container muss zur Plane passen → Prozess-Id setzen
     return (f'<?xml version="1.0" encoding="UTF-8"?>\n'
-            f'<!-- swimlane-laidout: Gesamt-Sicht mit eingebetteten Subprozessen (generate.py) -->\n'
+            f'<!-- swimlane-laidout: eingebettete Subprozesse ({"eingeklappt/drilldown" if collapsed else "aufgeklappt"}) -->\n'
             f'<bpmn:definitions xmlns:bpmn="{BPMN_NS}" xmlns:bpmndi="{DI_NS}"'
             f' xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"'
             f' xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://ebz/prozessdoku">\n'
-            f'  <bpmn:process id="process_gesamt" isExecutable="false">\n{nl.join(pe)}\n  </bpmn:process>\n'
-            f'  <bpmndi:BPMNDiagram id="diagram_gesamt">\n'
-            f'    <bpmndi:BPMNPlane id="plane_gesamt" bpmnElement="process_gesamt">\n{nl.join(di)}\n'
-            f'    </bpmndi:BPMNPlane>\n  </bpmndi:BPMNDiagram>\n</bpmn:definitions>\n')
+            f'  <bpmn:process id="{proc_id}" isExecutable="false">\n{nl.join(pe)}\n  </bpmn:process>\n'
+            f'{diagram_xml}\n</bpmn:definitions>\n')
 
 
 def main() -> None:
@@ -467,19 +517,15 @@ def main() -> None:
             pfad.write_text(_label_anreichern(roh, name_zu_akteur, name_zu_system), encoding="utf-8")
         erzeugt.append(pfad.name)
 
-    # 2) Übersicht: je Fall die Phasen-Sequenz (konsekutive Duplikate je Fall zusammenfassen)
-    ueb = df.copy()
-    ueb["phase_label"] = ueb["phase"].map(PHASE_LABEL)
-    erster_der_phase = ueb["phase"].ne(ueb.groupby("fall")["phase"].shift())
-    ueb = ueb[erster_der_phase]
-    ueb_pfad = OUT / "uebersicht.bpmn"
-    schreibe_bpmn(entdecke(ueb, "phase_label"), ueb_pfad)
-    # (A) Phasen-Tasks → Call-Activities (Klick-Navigation in die Subprozess-Dateien)
-    ueb_pfad.write_text(_call_activities(ueb_pfad.read_text(encoding="utf-8")), encoding="utf-8")
+    # 2) Übersicht: eingebettete, EINGEKLAPPTE Phasen-Subprozesse — im Modeler je Phase per Drilldown
+    #    aufklappbar (eigene DI-Plane je Phase, mit Swimlanes).
+    (OUT / "uebersicht.bpmn").write_text(
+        _embedded(sub_semantik, name_akteur, name_system, collapsed=True), encoding="utf-8")
     erzeugt.append("uebersicht.bpmn")
 
-    # 3) Gesamt-Sicht (B): eine Datei mit eingebetteten, aufklappbaren Phasen-Subprozessen
-    (OUT / "gesamt.bpmn").write_text(_gesamt(sub_semantik, name_akteur, name_system), encoding="utf-8")
+    # 3) Gesamt-Sicht: alle Phasen AUFGEKLAPPT inline, je Phase mit Swimlanes (Lane = Person).
+    (OUT / "gesamt.bpmn").write_text(
+        _embedded(sub_semantik, name_akteur, name_system, collapsed=False), encoding="utf-8")
     erzeugt.append("gesamt.bpmn")
 
     print(f"OK: {len(erzeugt)} BPMN-Dateien in {OUT}")

@@ -1,131 +1,115 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.signavio.com/bpmn20">
-  <bpmn:process id="process_uebersicht" processType="None" isClosed="false" isExecutable="false">
-    <bpmn:startEvent id="start" name="start">
-      <bpmn:outgoing>flow_start__task_anfrage_und_dublettenpruefung</bpmn:outgoing>
-    </bpmn:startEvent>
-    <bpmn:exclusiveGateway id="exclusivegateway_x" name="" gatewayDirection="Converging">
-      <bpmn:incoming>flow_task_login_einladung__exclusivegateway_x</bpmn:incoming>
-      <bpmn:incoming>flow_exclusivegateway_x_2__exclusivegateway_x</bpmn:incoming>
-      <bpmn:outgoing>flow_exclusivegateway_x__task_azubi_anmeldung</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:callActivity id="task_ebz_bestaetigung" name="EBZ-Bestätigung" calledElement="process_sub-ebz_bestaetigung">
-      <bpmn:incoming>flow_task_azubi_anmeldung__task_ebz_bestaetigung</bpmn:incoming>
-      <bpmn:outgoing>flow_task_ebz_bestaetigung__task_vertragsbestaetigung</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="task_vertragsbestaetigung" name="Vertragsbestätigung" calledElement="process_sub-vertrag">
-      <bpmn:incoming>flow_task_ebz_bestaetigung__task_vertragsbestaetigung</bpmn:incoming>
-      <bpmn:outgoing>flow_task_vertragsbestaetigung__task_rechnungslauf</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:exclusiveGateway id="exclusivegateway_x_2" name="" gatewayDirection="Diverging">
-      <bpmn:incoming>flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2</bpmn:incoming>
-      <bpmn:outgoing>flow_exclusivegateway_x_2__task_login_einladung</bpmn:outgoing>
-      <bpmn:outgoing>flow_exclusivegateway_x_2__exclusivegateway_x</bpmn:outgoing>
-    </bpmn:exclusiveGateway>
-    <bpmn:callActivity id="task_rechnungslauf" name="Rechnungslauf" calledElement="process_sub-rechnungslauf">
-      <bpmn:incoming>flow_task_vertragsbestaetigung__task_rechnungslauf</bpmn:incoming>
-      <bpmn:outgoing>flow_task_rechnungslauf__end</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="task_azubi_anmeldung" name="Azubi-Anmeldung" calledElement="process_sub-azubi_anmeldung">
-      <bpmn:incoming>flow_exclusivegateway_x__task_azubi_anmeldung</bpmn:incoming>
-      <bpmn:outgoing>flow_task_azubi_anmeldung__task_ebz_bestaetigung</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:endEvent id="end" name="end">
-      <bpmn:incoming>flow_task_rechnungslauf__end</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:callActivity id="task_anfrage_und_dublettenpruefung" name="Anfrage &#38; Dublettenprüfung" calledElement="process_sub-anfrage_dubletten">
-      <bpmn:incoming>flow_start__task_anfrage_und_dublettenpruefung</bpmn:incoming>
-      <bpmn:outgoing>flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:callActivity id="task_login_einladung" name="Login-Einladung" calledElement="process_sub-einladung">
-      <bpmn:incoming>flow_exclusivegateway_x_2__task_login_einladung</bpmn:incoming>
-      <bpmn:outgoing>flow_task_login_einladung__exclusivegateway_x</bpmn:outgoing>
-    </bpmn:callActivity>
-    <bpmn:sequenceFlow id="flow_task_login_einladung__exclusivegateway_x" name="" sourceRef="task_login_einladung" targetRef="exclusivegateway_x" />
-    <bpmn:sequenceFlow id="flow_start__task_anfrage_und_dublettenpruefung" name="" sourceRef="start" targetRef="task_anfrage_und_dublettenpruefung" />
-    <bpmn:sequenceFlow id="flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2" name="" sourceRef="task_anfrage_und_dublettenpruefung" targetRef="exclusivegateway_x_2" />
-    <bpmn:sequenceFlow id="flow_exclusivegateway_x__task_azubi_anmeldung" name="" sourceRef="exclusivegateway_x" targetRef="task_azubi_anmeldung" />
-    <bpmn:sequenceFlow id="flow_task_azubi_anmeldung__task_ebz_bestaetigung" name="" sourceRef="task_azubi_anmeldung" targetRef="task_ebz_bestaetigung" />
-    <bpmn:sequenceFlow id="flow_task_rechnungslauf__end" name="" sourceRef="task_rechnungslauf" targetRef="end" />
-    <bpmn:sequenceFlow id="flow_task_ebz_bestaetigung__task_vertragsbestaetigung" name="" sourceRef="task_ebz_bestaetigung" targetRef="task_vertragsbestaetigung" />
-    <bpmn:sequenceFlow id="flow_exclusivegateway_x_2__task_login_einladung" name="" sourceRef="exclusivegateway_x_2" targetRef="task_login_einladung" />
-    <bpmn:sequenceFlow id="flow_task_vertragsbestaetigung__task_rechnungslauf" name="" sourceRef="task_vertragsbestaetigung" targetRef="task_rechnungslauf" />
-    <bpmn:sequenceFlow id="flow_exclusivegateway_x_2__exclusivegateway_x" name="" sourceRef="exclusivegateway_x_2" targetRef="exclusivegateway_x" />
+<!-- swimlane-laidout: eingebettete Subprozesse (eingeklappt/drilldown) -->
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://ebz/prozessdoku">
+  <bpmn:process id="process_uebersicht" isExecutable="false">
+    <bpmn:startEvent id="of_start" name="Start"><bpmn:outgoing>oflow_0</bpmn:outgoing></bpmn:startEvent>
+    <bpmn:subProcess id="sp_anfrage_dubletten" name="Anfrage &amp; Dublettenprüfung"><bpmn:incoming>oflow_0</bpmn:incoming><bpmn:outgoing>oflow_1</bpmn:outgoing><bpmn:laneSet id="laneset_anfrage_dubletten"><bpmn:lane id="lane_anfrage_dubletten_interessent_anonym" name="Interessent (anonym)"><bpmn:flowNodeRef>anfrage_dubletten__start</bpmn:flowNodeRef><bpmn:flowNodeRef>anfrage_dubletten__exclusivegateway_x</bpmn:flowNodeRef><bpmn:flowNodeRef>anfrage_dubletten__task_ausbildungsbetrieb_anfrage_stellen</bpmn:flowNodeRef></bpmn:lane><bpmn:lane id="lane_anfrage_dubletten_ebz_sachbearbeitung" name="EBZ-Sachbearbeitung"><bpmn:flowNodeRef>anfrage_dubletten__task_neuanlage_bestaetigen</bpmn:flowNodeRef><bpmn:flowNodeRef>anfrage_dubletten__task_dubletten_merge_bestaetigen</bpmn:flowNodeRef><bpmn:flowNodeRef>anfrage_dubletten__end</bpmn:flowNodeRef><bpmn:flowNodeRef>anfrage_dubletten__exclusivegateway_x_2</bpmn:flowNodeRef></bpmn:lane><bpmn:lane id="lane_anfrage_dubletten_system" name="System"><bpmn:flowNodeRef>anfrage_dubletten__task_ki_dublettenbewertung</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet><bpmn:task id="anfrage_dubletten__task_neuanlage_bestaetigen" name="Neuanlage bestätigen · MDM-Cockpit"><bpmn:incoming>anfrage_dubletten__flow_exclusivegateway_x__task_neuanlage_bestaetigen</bpmn:incoming><bpmn:outgoing>anfrage_dubletten__flow_task_neuanlage_bestaetigen__exclusivegateway_x_2</bpmn:outgoing></bpmn:task><bpmn:task id="anfrage_dubletten__task_dubletten_merge_bestaetigen" name="Dubletten-Merge bestätigen · MDM-Cockpit"><bpmn:incoming>anfrage_dubletten__flow_task_ki_dublettenbewertung__task_dubletten_merge_bestaetigen</bpmn:incoming><bpmn:outgoing>anfrage_dubletten__flow_task_dubletten_merge_bestaetigen__exclusivegateway_x_2</bpmn:outgoing></bpmn:task><bpmn:startEvent id="anfrage_dubletten__start" name="start"><bpmn:outgoing>anfrage_dubletten__flow_start__task_ausbildungsbetrieb_anfrage_stellen</bpmn:outgoing></bpmn:startEvent><bpmn:endEvent id="anfrage_dubletten__end" name="end"><bpmn:incoming>anfrage_dubletten__flow_exclusivegateway_x_2__end</bpmn:incoming></bpmn:endEvent><bpmn:task id="anfrage_dubletten__task_ki_dublettenbewertung" name="KI-Dublettenbewertung · integration-Backend"><bpmn:incoming>anfrage_dubletten__flow_exclusivegateway_x__task_ki_dublettenbewertung</bpmn:incoming><bpmn:outgoing>anfrage_dubletten__flow_task_ki_dublettenbewertung__task_dubletten_merge_bestaetigen</bpmn:outgoing></bpmn:task><bpmn:exclusiveGateway id="anfrage_dubletten__exclusivegateway_x"><bpmn:incoming>anfrage_dubletten__flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x</bpmn:incoming><bpmn:outgoing>anfrage_dubletten__flow_exclusivegateway_x__task_neuanlage_bestaetigen</bpmn:outgoing><bpmn:outgoing>anfrage_dubletten__flow_exclusivegateway_x__task_ki_dublettenbewertung</bpmn:outgoing></bpmn:exclusiveGateway><bpmn:exclusiveGateway id="anfrage_dubletten__exclusivegateway_x_2"><bpmn:incoming>anfrage_dubletten__flow_task_dubletten_merge_bestaetigen__exclusivegateway_x_2</bpmn:incoming><bpmn:incoming>anfrage_dubletten__flow_task_neuanlage_bestaetigen__exclusivegateway_x_2</bpmn:incoming><bpmn:outgoing>anfrage_dubletten__flow_exclusivegateway_x_2__end</bpmn:outgoing></bpmn:exclusiveGateway><bpmn:task id="anfrage_dubletten__task_ausbildungsbetrieb_anfrage_stellen" name="Ausbildungsbetrieb-Anfrage stellen · Portal-SPA"><bpmn:incoming>anfrage_dubletten__flow_start__task_ausbildungsbetrieb_anfrage_stellen</bpmn:incoming><bpmn:outgoing>anfrage_dubletten__flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x</bpmn:outgoing></bpmn:task><bpmn:sequenceFlow id="anfrage_dubletten__flow_exclusivegateway_x_2__end" sourceRef="anfrage_dubletten__exclusivegateway_x_2" targetRef="anfrage_dubletten__end"/><bpmn:sequenceFlow id="anfrage_dubletten__flow_task_dubletten_merge_bestaetigen__exclusivegateway_x_2" sourceRef="anfrage_dubletten__task_dubletten_merge_bestaetigen" targetRef="anfrage_dubletten__exclusivegateway_x_2"/><bpmn:sequenceFlow id="anfrage_dubletten__flow_exclusivegateway_x__task_neuanlage_bestaetigen" sourceRef="anfrage_dubletten__exclusivegateway_x" targetRef="anfrage_dubletten__task_neuanlage_bestaetigen"/><bpmn:sequenceFlow id="anfrage_dubletten__flow_task_ki_dublettenbewertung__task_dubletten_merge_bestaetigen" sourceRef="anfrage_dubletten__task_ki_dublettenbewertung" targetRef="anfrage_dubletten__task_dubletten_merge_bestaetigen"/><bpmn:sequenceFlow id="anfrage_dubletten__flow_exclusivegateway_x__task_ki_dublettenbewertung" sourceRef="anfrage_dubletten__exclusivegateway_x" targetRef="anfrage_dubletten__task_ki_dublettenbewertung"/><bpmn:sequenceFlow id="anfrage_dubletten__flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x" sourceRef="anfrage_dubletten__task_ausbildungsbetrieb_anfrage_stellen" targetRef="anfrage_dubletten__exclusivegateway_x"/><bpmn:sequenceFlow id="anfrage_dubletten__flow_task_neuanlage_bestaetigen__exclusivegateway_x_2" sourceRef="anfrage_dubletten__task_neuanlage_bestaetigen" targetRef="anfrage_dubletten__exclusivegateway_x_2"/><bpmn:sequenceFlow id="anfrage_dubletten__flow_start__task_ausbildungsbetrieb_anfrage_stellen" sourceRef="anfrage_dubletten__start" targetRef="anfrage_dubletten__task_ausbildungsbetrieb_anfrage_stellen"/></bpmn:subProcess>
+    <bpmn:subProcess id="sp_einladung" name="Login-Einladung"><bpmn:incoming>oflow_1</bpmn:incoming><bpmn:outgoing>oflow_2</bpmn:outgoing><bpmn:laneSet id="laneset_einladung"><bpmn:lane id="lane_einladung_firma_ansprechpartner" name="Firma (Ansprechpartner)"><bpmn:flowNodeRef>einladung__task_login_und_konto_claim</bpmn:flowNodeRef><bpmn:flowNodeRef>einladung__end</bpmn:flowNodeRef></bpmn:lane><bpmn:lane id="lane_einladung_ebz_sachbearbeitung" name="EBZ-Sachbearbeitung"><bpmn:flowNodeRef>einladung__task_login_einladung_ausloesen</bpmn:flowNodeRef><bpmn:flowNodeRef>einladung__start</bpmn:flowNodeRef></bpmn:lane><bpmn:lane id="lane_einladung_system" name="System"><bpmn:flowNodeRef>einladung__task_login_provisionieren</bpmn:flowNodeRef><bpmn:flowNodeRef>einladung__task_einladungsmail_senden</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet><bpmn:task id="einladung__task_login_einladung_ausloesen" name="Login-Einladung auslösen · MDM-Cockpit"><bpmn:incoming>einladung__flow_start__task_login_einladung_ausloesen</bpmn:incoming><bpmn:outgoing>einladung__flow_task_login_einladung_ausloesen__task_login_provisionieren</bpmn:outgoing></bpmn:task><bpmn:startEvent id="einladung__start" name="start"><bpmn:outgoing>einladung__flow_start__task_login_einladung_ausloesen</bpmn:outgoing></bpmn:startEvent><bpmn:task id="einladung__task_login_und_konto_claim" name="Login &amp; Konto-Claim · Keycloak"><bpmn:incoming>einladung__flow_task_einladungsmail_senden__task_login_und_konto_claim</bpmn:incoming><bpmn:outgoing>einladung__flow_task_login_und_konto_claim__end</bpmn:outgoing></bpmn:task><bpmn:task id="einladung__task_login_provisionieren" name="Login provisionieren · Keycloak"><bpmn:incoming>einladung__flow_task_login_einladung_ausloesen__task_login_provisionieren</bpmn:incoming><bpmn:outgoing>einladung__flow_task_login_provisionieren__task_einladungsmail_senden</bpmn:outgoing></bpmn:task><bpmn:task id="einladung__task_einladungsmail_senden" name="Einladungsmail senden · Mail"><bpmn:incoming>einladung__flow_task_login_provisionieren__task_einladungsmail_senden</bpmn:incoming><bpmn:outgoing>einladung__flow_task_einladungsmail_senden__task_login_und_konto_claim</bpmn:outgoing></bpmn:task><bpmn:endEvent id="einladung__end" name="end"><bpmn:incoming>einladung__flow_task_login_und_konto_claim__end</bpmn:incoming></bpmn:endEvent><bpmn:sequenceFlow id="einladung__flow_task_login_und_konto_claim__end" sourceRef="einladung__task_login_und_konto_claim" targetRef="einladung__end"/><bpmn:sequenceFlow id="einladung__flow_task_einladungsmail_senden__task_login_und_konto_claim" sourceRef="einladung__task_einladungsmail_senden" targetRef="einladung__task_login_und_konto_claim"/><bpmn:sequenceFlow id="einladung__flow_start__task_login_einladung_ausloesen" sourceRef="einladung__start" targetRef="einladung__task_login_einladung_ausloesen"/><bpmn:sequenceFlow id="einladung__flow_task_login_provisionieren__task_einladungsmail_senden" sourceRef="einladung__task_login_provisionieren" targetRef="einladung__task_einladungsmail_senden"/><bpmn:sequenceFlow id="einladung__flow_task_login_einladung_ausloesen__task_login_provisionieren" sourceRef="einladung__task_login_einladung_ausloesen" targetRef="einladung__task_login_provisionieren"/></bpmn:subProcess>
+    <bpmn:subProcess id="sp_azubi_anmeldung" name="Azubi-Anmeldung"><bpmn:incoming>oflow_2</bpmn:incoming><bpmn:outgoing>oflow_3</bpmn:outgoing><bpmn:laneSet id="laneset_azubi_anmeldung"><bpmn:lane id="lane_azubi_anmeldung_firma_ansprechpartner" name="Firma (Ansprechpartner)"><bpmn:flowNodeRef>azubi_anmeldung__start</bpmn:flowNodeRef><bpmn:flowNodeRef>azubi_anmeldung__task_azubi_anmelden</bpmn:flowNodeRef></bpmn:lane><bpmn:lane id="lane_azubi_anmeldung_system" name="System"><bpmn:flowNodeRef>azubi_anmeldung__task_anmeldung_anlegen_angefragt</bpmn:flowNodeRef><bpmn:flowNodeRef>azubi_anmeldung__end</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet><bpmn:startEvent id="azubi_anmeldung__start" name="start"><bpmn:outgoing>azubi_anmeldung__flow_start__task_azubi_anmelden</bpmn:outgoing></bpmn:startEvent><bpmn:task id="azubi_anmeldung__task_azubi_anmelden" name="Azubi anmelden · Portal-SPA"><bpmn:incoming>azubi_anmeldung__flow_start__task_azubi_anmelden</bpmn:incoming><bpmn:outgoing>azubi_anmeldung__flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt</bpmn:outgoing></bpmn:task><bpmn:task id="azubi_anmeldung__task_anmeldung_anlegen_angefragt" name="Anmeldung anlegen (ANGEFRAGT) · integration-Backend"><bpmn:incoming>azubi_anmeldung__flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt</bpmn:incoming><bpmn:outgoing>azubi_anmeldung__flow_task_anmeldung_anlegen_angefragt__end</bpmn:outgoing></bpmn:task><bpmn:endEvent id="azubi_anmeldung__end" name="end"><bpmn:incoming>azubi_anmeldung__flow_task_anmeldung_anlegen_angefragt__end</bpmn:incoming></bpmn:endEvent><bpmn:sequenceFlow id="azubi_anmeldung__flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt" sourceRef="azubi_anmeldung__task_azubi_anmelden" targetRef="azubi_anmeldung__task_anmeldung_anlegen_angefragt"/><bpmn:sequenceFlow id="azubi_anmeldung__flow_start__task_azubi_anmelden" sourceRef="azubi_anmeldung__start" targetRef="azubi_anmeldung__task_azubi_anmelden"/><bpmn:sequenceFlow id="azubi_anmeldung__flow_task_anmeldung_anlegen_angefragt__end" sourceRef="azubi_anmeldung__task_anmeldung_anlegen_angefragt" targetRef="azubi_anmeldung__end"/></bpmn:subProcess>
+    <bpmn:subProcess id="sp_ebz_bestaetigung" name="EBZ-Bestätigung"><bpmn:incoming>oflow_3</bpmn:incoming><bpmn:outgoing>oflow_4</bpmn:outgoing><bpmn:laneSet id="laneset_ebz_bestaetigung"><bpmn:lane id="lane_ebz_bestaetigung_ebz_sachbearbeitung" name="EBZ-Sachbearbeitung"><bpmn:flowNodeRef>ebz_bestaetigung__start</bpmn:flowNodeRef><bpmn:flowNodeRef>ebz_bestaetigung__task_anmeldung_pruefen_und_bestaetigen</bpmn:flowNodeRef></bpmn:lane><bpmn:lane id="lane_ebz_bestaetigung_system" name="System"><bpmn:flowNodeRef>ebz_bestaetigung__task_bestaetigungsmail_an_firma</bpmn:flowNodeRef><bpmn:flowNodeRef>ebz_bestaetigung__task_bestaetigungsmail_an_azubi</bpmn:flowNodeRef><bpmn:flowNodeRef>ebz_bestaetigung__end</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet><bpmn:task id="ebz_bestaetigung__task_bestaetigungsmail_an_firma" name="Bestätigungsmail an Firma · Mail"><bpmn:incoming>ebz_bestaetigung__flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:incoming><bpmn:outgoing>ebz_bestaetigung__flow_task_bestaetigungsmail_an_firma__end</bpmn:outgoing></bpmn:task><bpmn:task id="ebz_bestaetigung__task_bestaetigungsmail_an_azubi" name="Bestätigungsmail an Azubi · Mail"><bpmn:incoming>ebz_bestaetigung__flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi</bpmn:incoming><bpmn:outgoing>ebz_bestaetigung__flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:outgoing></bpmn:task><bpmn:startEvent id="ebz_bestaetigung__start" name="start"><bpmn:outgoing>ebz_bestaetigung__flow_start__task_anmeldung_pruefen_und_bestaetigen</bpmn:outgoing></bpmn:startEvent><bpmn:task id="ebz_bestaetigung__task_anmeldung_pruefen_und_bestaetigen" name="Anmeldung prüfen &amp; bestätigen · MDM-Cockpit"><bpmn:incoming>ebz_bestaetigung__flow_start__task_anmeldung_pruefen_und_bestaetigen</bpmn:incoming><bpmn:outgoing>ebz_bestaetigung__flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi</bpmn:outgoing></bpmn:task><bpmn:endEvent id="ebz_bestaetigung__end" name="end"><bpmn:incoming>ebz_bestaetigung__flow_task_bestaetigungsmail_an_firma__end</bpmn:incoming></bpmn:endEvent><bpmn:sequenceFlow id="ebz_bestaetigung__flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma" sourceRef="ebz_bestaetigung__task_bestaetigungsmail_an_azubi" targetRef="ebz_bestaetigung__task_bestaetigungsmail_an_firma"/><bpmn:sequenceFlow id="ebz_bestaetigung__flow_start__task_anmeldung_pruefen_und_bestaetigen" sourceRef="ebz_bestaetigung__start" targetRef="ebz_bestaetigung__task_anmeldung_pruefen_und_bestaetigen"/><bpmn:sequenceFlow id="ebz_bestaetigung__flow_task_bestaetigungsmail_an_firma__end" sourceRef="ebz_bestaetigung__task_bestaetigungsmail_an_firma" targetRef="ebz_bestaetigung__end"/><bpmn:sequenceFlow id="ebz_bestaetigung__flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi" sourceRef="ebz_bestaetigung__task_anmeldung_pruefen_und_bestaetigen" targetRef="ebz_bestaetigung__task_bestaetigungsmail_an_azubi"/></bpmn:subProcess>
+    <bpmn:subProcess id="sp_vertrag" name="Vertragsbestätigung"><bpmn:incoming>oflow_4</bpmn:incoming><bpmn:outgoing>oflow_5</bpmn:outgoing><bpmn:laneSet id="laneset_vertrag"><bpmn:lane id="lane_vertrag_firma_ansprechpartner" name="Firma (Ansprechpartner)"><bpmn:flowNodeRef>vertrag__start</bpmn:flowNodeRef><bpmn:flowNodeRef>vertrag__task_ausbildungsvertrag_bestaetigen</bpmn:flowNodeRef><bpmn:flowNodeRef>vertrag__end</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet><bpmn:startEvent id="vertrag__start" name="start"><bpmn:outgoing>vertrag__flow_start__task_ausbildungsvertrag_bestaetigen</bpmn:outgoing></bpmn:startEvent><bpmn:task id="vertrag__task_ausbildungsvertrag_bestaetigen" name="Ausbildungsvertrag bestätigen · Portal-SPA"><bpmn:incoming>vertrag__flow_start__task_ausbildungsvertrag_bestaetigen</bpmn:incoming><bpmn:outgoing>vertrag__flow_task_ausbildungsvertrag_bestaetigen__end</bpmn:outgoing></bpmn:task><bpmn:endEvent id="vertrag__end" name="end"><bpmn:incoming>vertrag__flow_task_ausbildungsvertrag_bestaetigen__end</bpmn:incoming></bpmn:endEvent><bpmn:sequenceFlow id="vertrag__flow_task_ausbildungsvertrag_bestaetigen__end" sourceRef="vertrag__task_ausbildungsvertrag_bestaetigen" targetRef="vertrag__end"/><bpmn:sequenceFlow id="vertrag__flow_start__task_ausbildungsvertrag_bestaetigen" sourceRef="vertrag__start" targetRef="vertrag__task_ausbildungsvertrag_bestaetigen"/></bpmn:subProcess>
+    <bpmn:subProcess id="sp_rechnungslauf" name="Rechnungslauf"><bpmn:incoming>oflow_5</bpmn:incoming><bpmn:outgoing>oflow_6</bpmn:outgoing><bpmn:laneSet id="laneset_rechnungslauf"><bpmn:lane id="lane_rechnungslauf_system" name="System"><bpmn:flowNodeRef>rechnungslauf__end</bpmn:flowNodeRef><bpmn:flowNodeRef>rechnungslauf__start</bpmn:flowNodeRef><bpmn:flowNodeRef>rechnungslauf__task_rechnungslauf_bucht_anmeldung</bpmn:flowNodeRef></bpmn:lane></bpmn:laneSet><bpmn:endEvent id="rechnungslauf__end" name="end"><bpmn:incoming>rechnungslauf__flow_task_rechnungslauf_bucht_anmeldung__end</bpmn:incoming></bpmn:endEvent><bpmn:startEvent id="rechnungslauf__start" name="start"><bpmn:outgoing>rechnungslauf__flow_start__task_rechnungslauf_bucht_anmeldung</bpmn:outgoing></bpmn:startEvent><bpmn:task id="rechnungslauf__task_rechnungslauf_bucht_anmeldung" name="Rechnungslauf bucht Anmeldung · Rechnungslauf"><bpmn:incoming>rechnungslauf__flow_start__task_rechnungslauf_bucht_anmeldung</bpmn:incoming><bpmn:outgoing>rechnungslauf__flow_task_rechnungslauf_bucht_anmeldung__end</bpmn:outgoing></bpmn:task><bpmn:sequenceFlow id="rechnungslauf__flow_task_rechnungslauf_bucht_anmeldung__end" sourceRef="rechnungslauf__task_rechnungslauf_bucht_anmeldung" targetRef="rechnungslauf__end"/><bpmn:sequenceFlow id="rechnungslauf__flow_start__task_rechnungslauf_bucht_anmeldung" sourceRef="rechnungslauf__start" targetRef="rechnungslauf__task_rechnungslauf_bucht_anmeldung"/></bpmn:subProcess>
+    <bpmn:endEvent id="of_end" name="Ende"><bpmn:incoming>oflow_6</bpmn:incoming></bpmn:endEvent>
+    <bpmn:sequenceFlow id="oflow_0" sourceRef="of_start" targetRef="sp_anfrage_dubletten"/>
+    <bpmn:sequenceFlow id="oflow_1" sourceRef="sp_anfrage_dubletten" targetRef="sp_einladung"/>
+    <bpmn:sequenceFlow id="oflow_2" sourceRef="sp_einladung" targetRef="sp_azubi_anmeldung"/>
+    <bpmn:sequenceFlow id="oflow_3" sourceRef="sp_azubi_anmeldung" targetRef="sp_ebz_bestaetigung"/>
+    <bpmn:sequenceFlow id="oflow_4" sourceRef="sp_ebz_bestaetigung" targetRef="sp_vertrag"/>
+    <bpmn:sequenceFlow id="oflow_5" sourceRef="sp_vertrag" targetRef="sp_rechnungslauf"/>
+    <bpmn:sequenceFlow id="oflow_6" sourceRef="sp_rechnungslauf" targetRef="of_end"/>
   </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_process_uebersicht">
-    <bpmndi:BPMNPlane id="BPMNPlane_process_uebersicht" bpmnElement="process_uebersicht">
-      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
-        <omgdc:Bounds x="57" y="52" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_anfrage_und_dublettenpruefung_di" bpmnElement="task_anfrage_und_dublettenpruefung">
-        <omgdc:Bounds x="175" y="30" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="exclusivegateway_x_2_di" bpmnElement="exclusivegateway_x_2" isMarkerVisible="true">
-        <omgdc:Bounds x="350" y="45" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_login_einladung_di" bpmnElement="task_login_einladung">
-        <omgdc:Bounds x="475" y="30" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="exclusivegateway_x_di" bpmnElement="exclusivegateway_x" isMarkerVisible="true">
-        <omgdc:Bounds x="650" y="45" width="50" height="50" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_azubi_anmeldung_di" bpmnElement="task_azubi_anmeldung">
-        <omgdc:Bounds x="775" y="30" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_ebz_bestaetigung_di" bpmnElement="task_ebz_bestaetigung">
-        <omgdc:Bounds x="925" y="30" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_vertragsbestaetigung_di" bpmnElement="task_vertragsbestaetigung">
-        <omgdc:Bounds x="1075" y="30" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_rechnungslauf_di" bpmnElement="task_rechnungslauf">
-        <omgdc:Bounds x="1225" y="30" width="100" height="80" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="end_di" bpmnElement="end">
-        <omgdc:Bounds x="1407" y="52" width="36" height="36" />
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="flow_start__task_anfrage_und_dublettenpruefung_di" bpmnElement="flow_start__task_anfrage_und_dublettenpruefung">
-        <omgdi:waypoint x="93" y="70" />
-        <omgdi:waypoint x="175" y="70" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2_di" bpmnElement="flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2">
-        <omgdi:waypoint x="275" y="70" />
-        <omgdi:waypoint x="350" y="70" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_exclusivegateway_x_2__task_login_einladung_di" bpmnElement="flow_exclusivegateway_x_2__task_login_einladung">
-        <omgdi:waypoint x="400" y="70" />
-        <omgdi:waypoint x="475" y="70" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_exclusivegateway_x_2__exclusivegateway_x_di" bpmnElement="flow_exclusivegateway_x_2__exclusivegateway_x">
-        <omgdi:waypoint x="375" y="95" />
-        <omgdi:waypoint x="375" y="140" />
-        <omgdi:waypoint x="675" y="140" />
-        <omgdi:waypoint x="675" y="95" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_login_einladung__exclusivegateway_x_di" bpmnElement="flow_task_login_einladung__exclusivegateway_x">
-        <omgdi:waypoint x="575" y="70" />
-        <omgdi:waypoint x="650" y="70" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_exclusivegateway_x__task_azubi_anmeldung_di" bpmnElement="flow_exclusivegateway_x__task_azubi_anmeldung">
-        <omgdi:waypoint x="700" y="70" />
-        <omgdi:waypoint x="775" y="70" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_azubi_anmeldung__task_ebz_bestaetigung_di" bpmnElement="flow_task_azubi_anmeldung__task_ebz_bestaetigung">
-        <omgdi:waypoint x="875" y="70" />
-        <omgdi:waypoint x="925" y="70" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_ebz_bestaetigung__task_vertragsbestaetigung_di" bpmnElement="flow_task_ebz_bestaetigung__task_vertragsbestaetigung">
-        <omgdi:waypoint x="1025" y="70" />
-        <omgdi:waypoint x="1075" y="70" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_vertragsbestaetigung__task_rechnungslauf_di" bpmnElement="flow_task_vertragsbestaetigung__task_rechnungslauf">
-        <omgdi:waypoint x="1175" y="70" />
-        <omgdi:waypoint x="1225" y="70" />
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_rechnungslauf__end_di" bpmnElement="flow_task_rechnungslauf__end">
-        <omgdi:waypoint x="1325" y="70" />
-        <omgdi:waypoint x="1407" y="70" />
-      </bpmndi:BPMNEdge>
-    </bpmndi:BPMNPlane>
-  </bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="diagram_root"><bpmndi:BPMNPlane id="plane_root" bpmnElement="process_uebersicht">
+      <bpmndi:BPMNShape id="of_start_di" bpmnElement="of_start"><omgdc:Bounds x="40" y="107" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="sp_anfrage_dubletten_di" bpmnElement="sp_anfrage_dubletten"><omgdc:Bounds x="156" y="80" width="150" height="90"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="sp_einladung_di" bpmnElement="sp_einladung"><omgdc:Bounds x="386" y="80" width="150" height="90"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="sp_azubi_anmeldung_di" bpmnElement="sp_azubi_anmeldung"><omgdc:Bounds x="616" y="80" width="150" height="90"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="sp_ebz_bestaetigung_di" bpmnElement="sp_ebz_bestaetigung"><omgdc:Bounds x="846" y="80" width="150" height="90"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="sp_vertrag_di" bpmnElement="sp_vertrag"><omgdc:Bounds x="1076" y="80" width="150" height="90"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="sp_rechnungslauf_di" bpmnElement="sp_rechnungslauf"><omgdc:Bounds x="1306" y="80" width="150" height="90"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="of_end_di" bpmnElement="of_end"><omgdc:Bounds x="1536" y="107" width="36" height="36"/></bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="oflow_0_di" bpmnElement="oflow_0"><omgdi:waypoint x="76" y="125"/><omgdi:waypoint x="116" y="125"/><omgdi:waypoint x="116" y="125"/><omgdi:waypoint x="156" y="125"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="oflow_1_di" bpmnElement="oflow_1"><omgdi:waypoint x="306" y="125"/><omgdi:waypoint x="346" y="125"/><omgdi:waypoint x="346" y="125"/><omgdi:waypoint x="386" y="125"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="oflow_2_di" bpmnElement="oflow_2"><omgdi:waypoint x="536" y="125"/><omgdi:waypoint x="576" y="125"/><omgdi:waypoint x="576" y="125"/><omgdi:waypoint x="616" y="125"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="oflow_3_di" bpmnElement="oflow_3"><omgdi:waypoint x="766" y="125"/><omgdi:waypoint x="806" y="125"/><omgdi:waypoint x="806" y="125"/><omgdi:waypoint x="846" y="125"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="oflow_4_di" bpmnElement="oflow_4"><omgdi:waypoint x="996" y="125"/><omgdi:waypoint x="1036" y="125"/><omgdi:waypoint x="1036" y="125"/><omgdi:waypoint x="1076" y="125"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="oflow_5_di" bpmnElement="oflow_5"><omgdi:waypoint x="1226" y="125"/><omgdi:waypoint x="1266" y="125"/><omgdi:waypoint x="1266" y="125"/><omgdi:waypoint x="1306" y="125"/></bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="oflow_6_di" bpmnElement="oflow_6"><omgdi:waypoint x="1456" y="125"/><omgdi:waypoint x="1496" y="125"/><omgdi:waypoint x="1496" y="125"/><omgdi:waypoint x="1536" y="125"/></bpmndi:BPMNEdge>
+  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="diagram_anfrage_dubletten"><bpmndi:BPMNPlane id="plane_anfrage_dubletten" bpmnElement="sp_anfrage_dubletten">
+<bpmndi:BPMNShape id="lane_anfrage_dubletten_interessent_anonym_di" bpmnElement="lane_anfrage_dubletten_interessent_anonym" isHorizontal="true"><omgdc:Bounds x="24" y="0" width="1160" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="lane_anfrage_dubletten_ebz_sachbearbeitung_di" bpmnElement="lane_anfrage_dubletten_ebz_sachbearbeitung" isHorizontal="true"><omgdc:Bounds x="24" y="110" width="1160" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="lane_anfrage_dubletten_system_di" bpmnElement="lane_anfrage_dubletten_system" isHorizontal="true"><omgdc:Bounds x="24" y="220" width="1160" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="anfrage_dubletten__task_neuanlage_bestaetigen_di" bpmnElement="anfrage_dubletten__task_neuanlage_bestaetigen"><omgdc:Bounds x="554" y="125" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="anfrage_dubletten__task_dubletten_merge_bestaetigen_di" bpmnElement="anfrage_dubletten__task_dubletten_merge_bestaetigen"><omgdc:Bounds x="724" y="125" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="anfrage_dubletten__start_di" bpmnElement="anfrage_dubletten__start"><omgdc:Bounds x="44" y="37" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="anfrage_dubletten__end_di" bpmnElement="anfrage_dubletten__end"><omgdc:Bounds x="1064" y="147" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="anfrage_dubletten__task_ki_dublettenbewertung_di" bpmnElement="anfrage_dubletten__task_ki_dublettenbewertung"><omgdc:Bounds x="554" y="235" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="anfrage_dubletten__exclusivegateway_x_di" bpmnElement="anfrage_dubletten__exclusivegateway_x"><omgdc:Bounds x="384" y="30" width="50" height="50"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="anfrage_dubletten__exclusivegateway_x_2_di" bpmnElement="anfrage_dubletten__exclusivegateway_x_2"><omgdc:Bounds x="894" y="140" width="50" height="50"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="anfrage_dubletten__task_ausbildungsbetrieb_anfrage_stellen_di" bpmnElement="anfrage_dubletten__task_ausbildungsbetrieb_anfrage_stellen"><omgdc:Bounds x="214" y="15" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="anfrage_dubletten__flow_exclusivegateway_x_2__end_di" bpmnElement="anfrage_dubletten__flow_exclusivegateway_x_2__end"><omgdi:waypoint x="944" y="165"/><omgdi:waypoint x="1004" y="165"/><omgdi:waypoint x="1004" y="165"/><omgdi:waypoint x="1064" y="165"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="anfrage_dubletten__flow_task_dubletten_merge_bestaetigen__exclusivegateway_x_2_di" bpmnElement="anfrage_dubletten__flow_task_dubletten_merge_bestaetigen__exclusivegateway_x_2"><omgdi:waypoint x="824" y="165"/><omgdi:waypoint x="859" y="165"/><omgdi:waypoint x="859" y="165"/><omgdi:waypoint x="894" y="165"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="anfrage_dubletten__flow_exclusivegateway_x__task_neuanlage_bestaetigen_di" bpmnElement="anfrage_dubletten__flow_exclusivegateway_x__task_neuanlage_bestaetigen"><omgdi:waypoint x="434" y="55"/><omgdi:waypoint x="494" y="55"/><omgdi:waypoint x="494" y="165"/><omgdi:waypoint x="554" y="165"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="anfrage_dubletten__flow_task_ki_dublettenbewertung__task_dubletten_merge_bestaetigen_di" bpmnElement="anfrage_dubletten__flow_task_ki_dublettenbewertung__task_dubletten_merge_bestaetigen"><omgdi:waypoint x="654" y="275"/><omgdi:waypoint x="689" y="275"/><omgdi:waypoint x="689" y="165"/><omgdi:waypoint x="724" y="165"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="anfrage_dubletten__flow_exclusivegateway_x__task_ki_dublettenbewertung_di" bpmnElement="anfrage_dubletten__flow_exclusivegateway_x__task_ki_dublettenbewertung"><omgdi:waypoint x="434" y="55"/><omgdi:waypoint x="494" y="55"/><omgdi:waypoint x="494" y="275"/><omgdi:waypoint x="554" y="275"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="anfrage_dubletten__flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x_di" bpmnElement="anfrage_dubletten__flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x"><omgdi:waypoint x="314" y="55"/><omgdi:waypoint x="349" y="55"/><omgdi:waypoint x="349" y="55"/><omgdi:waypoint x="384" y="55"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="anfrage_dubletten__flow_task_neuanlage_bestaetigen__exclusivegateway_x_2_di" bpmnElement="anfrage_dubletten__flow_task_neuanlage_bestaetigen__exclusivegateway_x_2"><omgdi:waypoint x="654" y="165"/><omgdi:waypoint x="774" y="165"/><omgdi:waypoint x="774" y="165"/><omgdi:waypoint x="894" y="165"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="anfrage_dubletten__flow_start__task_ausbildungsbetrieb_anfrage_stellen_di" bpmnElement="anfrage_dubletten__flow_start__task_ausbildungsbetrieb_anfrage_stellen"><omgdi:waypoint x="80" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="214" y="55"/></bpmndi:BPMNEdge>
+  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="diagram_einladung"><bpmndi:BPMNPlane id="plane_einladung" bpmnElement="sp_einladung">
+<bpmndi:BPMNShape id="lane_einladung_firma_ansprechpartner_di" bpmnElement="lane_einladung_firma_ansprechpartner" isHorizontal="true"><omgdc:Bounds x="24" y="0" width="990" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="lane_einladung_ebz_sachbearbeitung_di" bpmnElement="lane_einladung_ebz_sachbearbeitung" isHorizontal="true"><omgdc:Bounds x="24" y="110" width="990" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="lane_einladung_system_di" bpmnElement="lane_einladung_system" isHorizontal="true"><omgdc:Bounds x="24" y="220" width="990" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="einladung__task_login_einladung_ausloesen_di" bpmnElement="einladung__task_login_einladung_ausloesen"><omgdc:Bounds x="214" y="125" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="einladung__start_di" bpmnElement="einladung__start"><omgdc:Bounds x="44" y="147" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="einladung__task_login_und_konto_claim_di" bpmnElement="einladung__task_login_und_konto_claim"><omgdc:Bounds x="724" y="15" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="einladung__task_login_provisionieren_di" bpmnElement="einladung__task_login_provisionieren"><omgdc:Bounds x="384" y="235" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="einladung__task_einladungsmail_senden_di" bpmnElement="einladung__task_einladungsmail_senden"><omgdc:Bounds x="554" y="235" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="einladung__end_di" bpmnElement="einladung__end"><omgdc:Bounds x="894" y="37" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="einladung__flow_task_login_und_konto_claim__end_di" bpmnElement="einladung__flow_task_login_und_konto_claim__end"><omgdi:waypoint x="824" y="55"/><omgdi:waypoint x="859" y="55"/><omgdi:waypoint x="859" y="55"/><omgdi:waypoint x="894" y="55"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="einladung__flow_task_einladungsmail_senden__task_login_und_konto_claim_di" bpmnElement="einladung__flow_task_einladungsmail_senden__task_login_und_konto_claim"><omgdi:waypoint x="654" y="275"/><omgdi:waypoint x="689" y="275"/><omgdi:waypoint x="689" y="55"/><omgdi:waypoint x="724" y="55"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="einladung__flow_start__task_login_einladung_ausloesen_di" bpmnElement="einladung__flow_start__task_login_einladung_ausloesen"><omgdi:waypoint x="80" y="165"/><omgdi:waypoint x="147" y="165"/><omgdi:waypoint x="147" y="165"/><omgdi:waypoint x="214" y="165"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="einladung__flow_task_login_provisionieren__task_einladungsmail_senden_di" bpmnElement="einladung__flow_task_login_provisionieren__task_einladungsmail_senden"><omgdi:waypoint x="484" y="275"/><omgdi:waypoint x="519" y="275"/><omgdi:waypoint x="519" y="275"/><omgdi:waypoint x="554" y="275"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="einladung__flow_task_login_einladung_ausloesen__task_login_provisionieren_di" bpmnElement="einladung__flow_task_login_einladung_ausloesen__task_login_provisionieren"><omgdi:waypoint x="314" y="165"/><omgdi:waypoint x="349" y="165"/><omgdi:waypoint x="349" y="275"/><omgdi:waypoint x="384" y="275"/></bpmndi:BPMNEdge>
+  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="diagram_azubi_anmeldung"><bpmndi:BPMNPlane id="plane_azubi_anmeldung" bpmnElement="sp_azubi_anmeldung">
+<bpmndi:BPMNShape id="lane_azubi_anmeldung_firma_ansprechpartner_di" bpmnElement="lane_azubi_anmeldung_firma_ansprechpartner" isHorizontal="true"><omgdc:Bounds x="24" y="0" width="650" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="lane_azubi_anmeldung_system_di" bpmnElement="lane_azubi_anmeldung_system" isHorizontal="true"><omgdc:Bounds x="24" y="110" width="650" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="azubi_anmeldung__start_di" bpmnElement="azubi_anmeldung__start"><omgdc:Bounds x="44" y="37" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="azubi_anmeldung__task_azubi_anmelden_di" bpmnElement="azubi_anmeldung__task_azubi_anmelden"><omgdc:Bounds x="214" y="15" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="azubi_anmeldung__task_anmeldung_anlegen_angefragt_di" bpmnElement="azubi_anmeldung__task_anmeldung_anlegen_angefragt"><omgdc:Bounds x="384" y="125" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="azubi_anmeldung__end_di" bpmnElement="azubi_anmeldung__end"><omgdc:Bounds x="554" y="147" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="azubi_anmeldung__flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt_di" bpmnElement="azubi_anmeldung__flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt"><omgdi:waypoint x="314" y="55"/><omgdi:waypoint x="349" y="55"/><omgdi:waypoint x="349" y="165"/><omgdi:waypoint x="384" y="165"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="azubi_anmeldung__flow_start__task_azubi_anmelden_di" bpmnElement="azubi_anmeldung__flow_start__task_azubi_anmelden"><omgdi:waypoint x="80" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="214" y="55"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="azubi_anmeldung__flow_task_anmeldung_anlegen_angefragt__end_di" bpmnElement="azubi_anmeldung__flow_task_anmeldung_anlegen_angefragt__end"><omgdi:waypoint x="484" y="165"/><omgdi:waypoint x="519" y="165"/><omgdi:waypoint x="519" y="165"/><omgdi:waypoint x="554" y="165"/></bpmndi:BPMNEdge>
+  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="diagram_ebz_bestaetigung"><bpmndi:BPMNPlane id="plane_ebz_bestaetigung" bpmnElement="sp_ebz_bestaetigung">
+<bpmndi:BPMNShape id="lane_ebz_bestaetigung_ebz_sachbearbeitung_di" bpmnElement="lane_ebz_bestaetigung_ebz_sachbearbeitung" isHorizontal="true"><omgdc:Bounds x="24" y="0" width="820" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="lane_ebz_bestaetigung_system_di" bpmnElement="lane_ebz_bestaetigung_system" isHorizontal="true"><omgdc:Bounds x="24" y="110" width="820" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="ebz_bestaetigung__task_bestaetigungsmail_an_firma_di" bpmnElement="ebz_bestaetigung__task_bestaetigungsmail_an_firma"><omgdc:Bounds x="554" y="125" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="ebz_bestaetigung__task_bestaetigungsmail_an_azubi_di" bpmnElement="ebz_bestaetigung__task_bestaetigungsmail_an_azubi"><omgdc:Bounds x="384" y="125" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="ebz_bestaetigung__start_di" bpmnElement="ebz_bestaetigung__start"><omgdc:Bounds x="44" y="37" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="ebz_bestaetigung__task_anmeldung_pruefen_und_bestaetigen_di" bpmnElement="ebz_bestaetigung__task_anmeldung_pruefen_und_bestaetigen"><omgdc:Bounds x="214" y="15" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="ebz_bestaetigung__end_di" bpmnElement="ebz_bestaetigung__end"><omgdc:Bounds x="724" y="147" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="ebz_bestaetigung__flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma_di" bpmnElement="ebz_bestaetigung__flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma"><omgdi:waypoint x="484" y="165"/><omgdi:waypoint x="519" y="165"/><omgdi:waypoint x="519" y="165"/><omgdi:waypoint x="554" y="165"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="ebz_bestaetigung__flow_start__task_anmeldung_pruefen_und_bestaetigen_di" bpmnElement="ebz_bestaetigung__flow_start__task_anmeldung_pruefen_und_bestaetigen"><omgdi:waypoint x="80" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="214" y="55"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="ebz_bestaetigung__flow_task_bestaetigungsmail_an_firma__end_di" bpmnElement="ebz_bestaetigung__flow_task_bestaetigungsmail_an_firma__end"><omgdi:waypoint x="654" y="165"/><omgdi:waypoint x="689" y="165"/><omgdi:waypoint x="689" y="165"/><omgdi:waypoint x="724" y="165"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="ebz_bestaetigung__flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi_di" bpmnElement="ebz_bestaetigung__flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi"><omgdi:waypoint x="314" y="55"/><omgdi:waypoint x="349" y="55"/><omgdi:waypoint x="349" y="165"/><omgdi:waypoint x="384" y="165"/></bpmndi:BPMNEdge>
+  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="diagram_vertrag"><bpmndi:BPMNPlane id="plane_vertrag" bpmnElement="sp_vertrag">
+<bpmndi:BPMNShape id="lane_vertrag_firma_ansprechpartner_di" bpmnElement="lane_vertrag_firma_ansprechpartner" isHorizontal="true"><omgdc:Bounds x="24" y="0" width="480" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="vertrag__start_di" bpmnElement="vertrag__start"><omgdc:Bounds x="44" y="37" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="vertrag__task_ausbildungsvertrag_bestaetigen_di" bpmnElement="vertrag__task_ausbildungsvertrag_bestaetigen"><omgdc:Bounds x="214" y="15" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="vertrag__end_di" bpmnElement="vertrag__end"><omgdc:Bounds x="384" y="37" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="vertrag__flow_task_ausbildungsvertrag_bestaetigen__end_di" bpmnElement="vertrag__flow_task_ausbildungsvertrag_bestaetigen__end"><omgdi:waypoint x="314" y="55"/><omgdi:waypoint x="349" y="55"/><omgdi:waypoint x="349" y="55"/><omgdi:waypoint x="384" y="55"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="vertrag__flow_start__task_ausbildungsvertrag_bestaetigen_di" bpmnElement="vertrag__flow_start__task_ausbildungsvertrag_bestaetigen"><omgdi:waypoint x="80" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="214" y="55"/></bpmndi:BPMNEdge>
+  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
+  <bpmndi:BPMNDiagram id="diagram_rechnungslauf"><bpmndi:BPMNPlane id="plane_rechnungslauf" bpmnElement="sp_rechnungslauf">
+<bpmndi:BPMNShape id="lane_rechnungslauf_system_di" bpmnElement="lane_rechnungslauf_system" isHorizontal="true"><omgdc:Bounds x="24" y="0" width="480" height="110"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="rechnungslauf__end_di" bpmnElement="rechnungslauf__end"><omgdc:Bounds x="384" y="37" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="rechnungslauf__start_di" bpmnElement="rechnungslauf__start"><omgdc:Bounds x="44" y="37" width="36" height="36"/></bpmndi:BPMNShape>
+<bpmndi:BPMNShape id="rechnungslauf__task_rechnungslauf_bucht_anmeldung_di" bpmnElement="rechnungslauf__task_rechnungslauf_bucht_anmeldung"><omgdc:Bounds x="214" y="15" width="100" height="80"/></bpmndi:BPMNShape>
+<bpmndi:BPMNEdge id="rechnungslauf__flow_task_rechnungslauf_bucht_anmeldung__end_di" bpmnElement="rechnungslauf__flow_task_rechnungslauf_bucht_anmeldung__end"><omgdi:waypoint x="314" y="55"/><omgdi:waypoint x="349" y="55"/><omgdi:waypoint x="349" y="55"/><omgdi:waypoint x="384" y="55"/></bpmndi:BPMNEdge>
+<bpmndi:BPMNEdge id="rechnungslauf__flow_start__task_rechnungslauf_bucht_anmeldung_di" bpmnElement="rechnungslauf__flow_start__task_rechnungslauf_bucht_anmeldung"><omgdi:waypoint x="80" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="147" y="55"/><omgdi:waypoint x="214" y="55"/></bpmndi:BPMNEdge>
+  </bpmndi:BPMNPlane></bpmndi:BPMNDiagram>
 </bpmn:definitions>

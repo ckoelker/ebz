@@ -18,14 +18,16 @@ E2E-Test (rest-assured)                Prod
 - Mehrere Test-Szenarien (Fälle) → der Inductive Miner erzeugt **Gateways/Verzweigungen**.
 
 ## Ausgabe (`../docs/bpmn/`)
-- `gesamt.bpmn` — **eine** Datei: Phasen als **eingebettete, aufklappbare Subprozesse** (`isExpanded`),
-  inkl. der entdeckten Gateways. Im Camunda Modeler je Phase im Canvas auf-/zuklappen.
-- `uebersicht.bpmn` — Phasen-Ablauf (Gateways aus den Varianten); Phasen sind **Call-Activities**
-  (`calledElement = process_sub-<phase>`) → Klick-Navigation in die Subprozess-Dateien.
-- `sub-<phase>.bpmn` — je Phase die Schritte als **Swimlanes** (Lane = Akteur/„Person"; System am Task-Label).
+Alle drei Sichten sind **eine** Datei (Camunda Modeler stitcht getrennte Dateien nicht zusammen):
+- `gesamt.bpmn` — alle Phasen **aufgeklappt inline**, jede Phase mit **Swimlanes** (Lane = Person) →
+  „alles auf einen Blick".
+- `uebersicht.bpmn` — alle Phasen als **eingeklappte** Subprozess-Kästen in einer Reihe; im Camunda
+  Modeler je Phase per **Drilldown** (kleines Icon unten am Kasten) aufklappbar — eigene DI-Plane je
+  Phase, drinnen die Swimlanes.
+- `sub-<phase>.bpmn` — je Phase einzeln als **Swimlanes** (Lane = Person; System am Task-Label),
+  inkl. der entdeckten Gateways.
 
-Öffnen in **Camunda Modeler**, **draw.io** oder jedem BPMN-Viewer. Hinweis: Camunda Modeler fügt
-*separate* Dateien nicht zusammen — die „alles in einer Ansicht"-Sicht ist `gesamt.bpmn`.
+Öffnen in **Camunda Modeler**, **draw.io** oder jedem BPMN-Viewer.
 
 ## Lokal erzeugen
 ```bash
