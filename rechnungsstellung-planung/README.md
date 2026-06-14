@@ -47,3 +47,18 @@ fehlen in der BI. **GEBAUT (2026-06-14):** dbt liest `rechnung` direkt als Sourc
 Netto-Erlös je Monat × Bereich; Storno/Gutschrift sind negativ gespeichert und netten automatisch).
 Damit zeigt Lightdash den Umsatz aus dem **Billing-SoR über alle Bereiche** (Schule/Hochschule/
 Akademie/Shop), nicht nur den Shop-Strom.
+
+## Optionale Erweiterung — Anmeldungen als „contracted" (vor der Rechnung)
+**Offen, NICHT gebaut.** Heute landet Billing erst **mit der Festschreibung** in Lightdash
+(`fct_revenue_billed` = nur AUSGESTELLT/BEZAHLT/STORNIERT). Eine **Anmeldung** ist aber bereits
+gesicherter Zukunftsumsatz, oft lange **vor** dem Rechnungslauf — diese Lücke (Einschreibung →
+Festschreibung) ist in der BI unsichtbar. Das schul-/hochschulseitige Pendant zum Vendure-
+`contracted`-Bucket fehlt also.
+- Skizze: PII-minimierte Source `stg_rechnung_anmeldungen` (Schema `rechnung.anmeldung`; nur
+  `bereich`/`typ`/`status`/Beträge/`schuljahr`/`halbjahr`/`semester`/`firma_anteil_cent`, **keine**
+  `teilnehmer_name`/`teilnehmer_email`) → Mart `fct_revenue_contracted_enrollment` (AKTIVe
+  Anmeldungen je Bereich/Periode) → in den **`contracted`-Bucket** des Forecasts einhängen.
+- **Knackpunkt (L1 Doppelzählung):** „abzüglich bereits fakturiert" — Anmeldung↔Rechnung ist heute
+  **nicht** explizit verknüpft (der Lauf gruppiert je Debitor/Zeitraum). Sauber bräuchte es einen
+  Bezug Anmeldung→Rechnung; pragmatisch: contracted = AKTIVe Anmeldung ohne festgeschriebenen Beleg
+  im selben Zeitraum/Debitor.
