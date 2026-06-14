@@ -1,13 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.signavio.com/bpmn20">
   <bpmn:process id="process_sub-azubi_anmeldung" processType="None" isClosed="false" isExecutable="false">
-    <bpmn:task id="task_anmeldung_anlegen_angefragt" name="Anmeldung anlegen (ANGEFRAGT) — System · integration-Backend">
-      <bpmn:incoming>flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt</bpmn:incoming>
-      <bpmn:outgoing>flow_task_anmeldung_anlegen_angefragt__end</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:endEvent id="end" name="end">
-      <bpmn:incoming>flow_task_anmeldung_anlegen_angefragt__end</bpmn:incoming>
-    </bpmn:endEvent>
     <bpmn:task id="task_azubi_anmelden" name="Azubi anmelden — Firma (Ansprechpartner) · Portal-SPA">
       <bpmn:incoming>flow_start__task_azubi_anmelden</bpmn:incoming>
       <bpmn:outgoing>flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt</bpmn:outgoing>
@@ -15,9 +8,16 @@
     <bpmn:startEvent id="start" name="start">
       <bpmn:outgoing>flow_start__task_azubi_anmelden</bpmn:outgoing>
     </bpmn:startEvent>
+    <bpmn:endEvent id="end" name="end">
+      <bpmn:incoming>flow_task_anmeldung_anlegen_angefragt__end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="task_anmeldung_anlegen_angefragt" name="Anmeldung anlegen (ANGEFRAGT) — System · integration-Backend">
+      <bpmn:incoming>flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt</bpmn:incoming>
+      <bpmn:outgoing>flow_task_anmeldung_anlegen_angefragt__end</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="flow_task_anmeldung_anlegen_angefragt__end" name="" sourceRef="task_anmeldung_anlegen_angefragt" targetRef="end" />
     <bpmn:sequenceFlow id="flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt" name="" sourceRef="task_azubi_anmelden" targetRef="task_anmeldung_anlegen_angefragt" />
     <bpmn:sequenceFlow id="flow_start__task_azubi_anmelden" name="" sourceRef="start" targetRef="task_azubi_anmelden" />
-    <bpmn:sequenceFlow id="flow_task_anmeldung_anlegen_angefragt__end" name="" sourceRef="task_anmeldung_anlegen_angefragt" targetRef="end" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_process_sub-azubi_anmeldung">
     <bpmndi:BPMNPlane id="BPMNPlane_process_sub-azubi_anmeldung" bpmnElement="process_sub-azubi_anmeldung">

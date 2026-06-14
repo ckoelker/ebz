@@ -1,43 +1,56 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.signavio.com/bpmn20">
   <bpmn:process id="process_uebersicht" processType="None" isClosed="false" isExecutable="false">
-    <bpmn:task id="task_azubi_anmeldung" name="Azubi-Anmeldung">
-      <bpmn:incoming>flow_task_login_einladung__task_azubi_anmeldung</bpmn:incoming>
-      <bpmn:outgoing>flow_task_azubi_anmeldung__task_ebz_bestaetigung</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:task id="task_anfrage_und_dublettenpruefung" name="Anfrage &#38; Dublettenprüfung">
-      <bpmn:incoming>flow_start__task_anfrage_und_dublettenpruefung</bpmn:incoming>
-      <bpmn:outgoing>flow_task_anfrage_und_dublettenpruefung__task_login_einladung</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:task id="task_rechnungslauf" name="Rechnungslauf">
-      <bpmn:incoming>flow_task_vertragsbestaetigung__task_rechnungslauf</bpmn:incoming>
-      <bpmn:outgoing>flow_task_rechnungslauf__end</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:task id="task_login_einladung" name="Login-Einladung">
-      <bpmn:incoming>flow_task_anfrage_und_dublettenpruefung__task_login_einladung</bpmn:incoming>
-      <bpmn:outgoing>flow_task_login_einladung__task_azubi_anmeldung</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:startEvent id="start" name="start">
-      <bpmn:outgoing>flow_start__task_anfrage_und_dublettenpruefung</bpmn:outgoing>
-    </bpmn:startEvent>
-    <bpmn:endEvent id="end" name="end">
-      <bpmn:incoming>flow_task_rechnungslauf__end</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:task id="task_vertragsbestaetigung" name="Vertragsbestätigung">
-      <bpmn:incoming>flow_task_ebz_bestaetigung__task_vertragsbestaetigung</bpmn:incoming>
-      <bpmn:outgoing>flow_task_vertragsbestaetigung__task_rechnungslauf</bpmn:outgoing>
-    </bpmn:task>
     <bpmn:task id="task_ebz_bestaetigung" name="EBZ-Bestätigung">
       <bpmn:incoming>flow_task_azubi_anmeldung__task_ebz_bestaetigung</bpmn:incoming>
       <bpmn:outgoing>flow_task_ebz_bestaetigung__task_vertragsbestaetigung</bpmn:outgoing>
     </bpmn:task>
+    <bpmn:exclusiveGateway id="exclusivegateway_x" name="" gatewayDirection="Converging">
+      <bpmn:incoming>flow_task_login_einladung__exclusivegateway_x</bpmn:incoming>
+      <bpmn:incoming>flow_exclusivegateway_x_2__exclusivegateway_x</bpmn:incoming>
+      <bpmn:outgoing>flow_exclusivegateway_x__task_azubi_anmeldung</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="task_anfrage_und_dublettenpruefung" name="Anfrage &#38; Dublettenprüfung">
+      <bpmn:incoming>flow_start__task_anfrage_und_dublettenpruefung</bpmn:incoming>
+      <bpmn:outgoing>flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:startEvent id="start" name="start">
+      <bpmn:outgoing>flow_start__task_anfrage_und_dublettenpruefung</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:task id="task_rechnungslauf" name="Rechnungslauf">
+      <bpmn:incoming>flow_task_vertragsbestaetigung__task_rechnungslauf</bpmn:incoming>
+      <bpmn:outgoing>flow_task_rechnungslauf__end</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:exclusiveGateway id="exclusivegateway_x_2" name="" gatewayDirection="Diverging">
+      <bpmn:incoming>flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2</bpmn:incoming>
+      <bpmn:outgoing>flow_exclusivegateway_x_2__task_login_einladung</bpmn:outgoing>
+      <bpmn:outgoing>flow_exclusivegateway_x_2__exclusivegateway_x</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:task id="task_login_einladung" name="Login-Einladung">
+      <bpmn:incoming>flow_exclusivegateway_x_2__task_login_einladung</bpmn:incoming>
+      <bpmn:outgoing>flow_task_login_einladung__exclusivegateway_x</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:task id="task_vertragsbestaetigung" name="Vertragsbestätigung">
+      <bpmn:incoming>flow_task_ebz_bestaetigung__task_vertragsbestaetigung</bpmn:incoming>
+      <bpmn:outgoing>flow_task_vertragsbestaetigung__task_rechnungslauf</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:endEvent id="end" name="end">
+      <bpmn:incoming>flow_task_rechnungslauf__end</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:task id="task_azubi_anmeldung" name="Azubi-Anmeldung">
+      <bpmn:incoming>flow_exclusivegateway_x__task_azubi_anmeldung</bpmn:incoming>
+      <bpmn:outgoing>flow_task_azubi_anmeldung__task_ebz_bestaetigung</bpmn:outgoing>
+    </bpmn:task>
+    <bpmn:sequenceFlow id="flow_task_login_einladung__exclusivegateway_x" name="" sourceRef="task_login_einladung" targetRef="exclusivegateway_x" />
     <bpmn:sequenceFlow id="flow_start__task_anfrage_und_dublettenpruefung" name="" sourceRef="start" targetRef="task_anfrage_und_dublettenpruefung" />
+    <bpmn:sequenceFlow id="flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2" name="" sourceRef="task_anfrage_und_dublettenpruefung" targetRef="exclusivegateway_x_2" />
+    <bpmn:sequenceFlow id="flow_task_rechnungslauf__end" name="" sourceRef="task_rechnungslauf" targetRef="end" />
+    <bpmn:sequenceFlow id="flow_task_azubi_anmeldung__task_ebz_bestaetigung" name="" sourceRef="task_azubi_anmeldung" targetRef="task_ebz_bestaetigung" />
+    <bpmn:sequenceFlow id="flow_exclusivegateway_x_2__task_login_einladung" name="" sourceRef="exclusivegateway_x_2" targetRef="task_login_einladung" />
     <bpmn:sequenceFlow id="flow_task_ebz_bestaetigung__task_vertragsbestaetigung" name="" sourceRef="task_ebz_bestaetigung" targetRef="task_vertragsbestaetigung" />
     <bpmn:sequenceFlow id="flow_task_vertragsbestaetigung__task_rechnungslauf" name="" sourceRef="task_vertragsbestaetigung" targetRef="task_rechnungslauf" />
-    <bpmn:sequenceFlow id="flow_task_rechnungslauf__end" name="" sourceRef="task_rechnungslauf" targetRef="end" />
-    <bpmn:sequenceFlow id="flow_task_login_einladung__task_azubi_anmeldung" name="" sourceRef="task_login_einladung" targetRef="task_azubi_anmeldung" />
-    <bpmn:sequenceFlow id="flow_task_azubi_anmeldung__task_ebz_bestaetigung" name="" sourceRef="task_azubi_anmeldung" targetRef="task_ebz_bestaetigung" />
-    <bpmn:sequenceFlow id="flow_task_anfrage_und_dublettenpruefung__task_login_einladung" name="" sourceRef="task_anfrage_und_dublettenpruefung" targetRef="task_login_einladung" />
+    <bpmn:sequenceFlow id="flow_exclusivegateway_x__task_azubi_anmeldung" name="" sourceRef="exclusivegateway_x" targetRef="task_azubi_anmeldung" />
+    <bpmn:sequenceFlow id="flow_exclusivegateway_x_2__exclusivegateway_x" name="" sourceRef="exclusivegateway_x_2" targetRef="exclusivegateway_x" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_process_uebersicht">
     <bpmndi:BPMNPlane id="BPMNPlane_process_uebersicht" bpmnElement="process_uebersicht">
@@ -47,51 +60,71 @@
       <bpmndi:BPMNShape id="task_anfrage_und_dublettenpruefung_di" bpmnElement="task_anfrage_und_dublettenpruefung">
         <omgdc:Bounds x="175" y="30" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_login_einladung_di" bpmnElement="task_login_einladung">
-        <omgdc:Bounds x="325" y="30" width="100" height="80" />
+      <bpmndi:BPMNShape id="exclusivegateway_x_2_di" bpmnElement="exclusivegateway_x_2" isMarkerVisible="true">
+        <omgdc:Bounds x="350" y="45" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_azubi_anmeldung_di" bpmnElement="task_azubi_anmeldung">
+      <bpmndi:BPMNShape id="task_login_einladung_di" bpmnElement="task_login_einladung">
         <omgdc:Bounds x="475" y="30" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_ebz_bestaetigung_di" bpmnElement="task_ebz_bestaetigung">
-        <omgdc:Bounds x="625" y="30" width="100" height="80" />
+      <bpmndi:BPMNShape id="exclusivegateway_x_di" bpmnElement="exclusivegateway_x" isMarkerVisible="true">
+        <omgdc:Bounds x="650" y="45" width="50" height="50" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_vertragsbestaetigung_di" bpmnElement="task_vertragsbestaetigung">
+      <bpmndi:BPMNShape id="task_azubi_anmeldung_di" bpmnElement="task_azubi_anmeldung">
         <omgdc:Bounds x="775" y="30" width="100" height="80" />
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_rechnungslauf_di" bpmnElement="task_rechnungslauf">
+      <bpmndi:BPMNShape id="task_ebz_bestaetigung_di" bpmnElement="task_ebz_bestaetigung">
         <omgdc:Bounds x="925" y="30" width="100" height="80" />
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="task_vertragsbestaetigung_di" bpmnElement="task_vertragsbestaetigung">
+        <omgdc:Bounds x="1075" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="task_rechnungslauf_di" bpmnElement="task_rechnungslauf">
+        <omgdc:Bounds x="1225" y="30" width="100" height="80" />
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="end_di" bpmnElement="end">
-        <omgdc:Bounds x="1107" y="52" width="36" height="36" />
+        <omgdc:Bounds x="1407" y="52" width="36" height="36" />
       </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="flow_start__task_anfrage_und_dublettenpruefung_di" bpmnElement="flow_start__task_anfrage_und_dublettenpruefung">
         <omgdi:waypoint x="93" y="70" />
         <omgdi:waypoint x="175" y="70" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_anfrage_und_dublettenpruefung__task_login_einladung_di" bpmnElement="flow_task_anfrage_und_dublettenpruefung__task_login_einladung">
+      <bpmndi:BPMNEdge id="flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2_di" bpmnElement="flow_task_anfrage_und_dublettenpruefung__exclusivegateway_x_2">
         <omgdi:waypoint x="275" y="70" />
-        <omgdi:waypoint x="325" y="70" />
+        <omgdi:waypoint x="350" y="70" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_login_einladung__task_azubi_anmeldung_di" bpmnElement="flow_task_login_einladung__task_azubi_anmeldung">
-        <omgdi:waypoint x="425" y="70" />
+      <bpmndi:BPMNEdge id="flow_exclusivegateway_x_2__task_login_einladung_di" bpmnElement="flow_exclusivegateway_x_2__task_login_einladung">
+        <omgdi:waypoint x="400" y="70" />
         <omgdi:waypoint x="475" y="70" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_azubi_anmeldung__task_ebz_bestaetigung_di" bpmnElement="flow_task_azubi_anmeldung__task_ebz_bestaetigung">
-        <omgdi:waypoint x="575" y="70" />
-        <omgdi:waypoint x="625" y="70" />
+      <bpmndi:BPMNEdge id="flow_exclusivegateway_x_2__exclusivegateway_x_di" bpmnElement="flow_exclusivegateway_x_2__exclusivegateway_x">
+        <omgdi:waypoint x="375" y="95" />
+        <omgdi:waypoint x="375" y="140" />
+        <omgdi:waypoint x="675" y="140" />
+        <omgdi:waypoint x="675" y="95" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_ebz_bestaetigung__task_vertragsbestaetigung_di" bpmnElement="flow_task_ebz_bestaetigung__task_vertragsbestaetigung">
-        <omgdi:waypoint x="725" y="70" />
+      <bpmndi:BPMNEdge id="flow_task_login_einladung__exclusivegateway_x_di" bpmnElement="flow_task_login_einladung__exclusivegateway_x">
+        <omgdi:waypoint x="575" y="70" />
+        <omgdi:waypoint x="650" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_exclusivegateway_x__task_azubi_anmeldung_di" bpmnElement="flow_exclusivegateway_x__task_azubi_anmeldung">
+        <omgdi:waypoint x="700" y="70" />
         <omgdi:waypoint x="775" y="70" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_vertragsbestaetigung__task_rechnungslauf_di" bpmnElement="flow_task_vertragsbestaetigung__task_rechnungslauf">
+      <bpmndi:BPMNEdge id="flow_task_azubi_anmeldung__task_ebz_bestaetigung_di" bpmnElement="flow_task_azubi_anmeldung__task_ebz_bestaetigung">
         <omgdi:waypoint x="875" y="70" />
         <omgdi:waypoint x="925" y="70" />
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_rechnungslauf__end_di" bpmnElement="flow_task_rechnungslauf__end">
+      <bpmndi:BPMNEdge id="flow_task_ebz_bestaetigung__task_vertragsbestaetigung_di" bpmnElement="flow_task_ebz_bestaetigung__task_vertragsbestaetigung">
         <omgdi:waypoint x="1025" y="70" />
-        <omgdi:waypoint x="1107" y="70" />
+        <omgdi:waypoint x="1075" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_task_vertragsbestaetigung__task_rechnungslauf_di" bpmnElement="flow_task_vertragsbestaetigung__task_rechnungslauf">
+        <omgdi:waypoint x="1175" y="70" />
+        <omgdi:waypoint x="1225" y="70" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_task_rechnungslauf__end_di" bpmnElement="flow_task_rechnungslauf__end">
+        <omgdi:waypoint x="1325" y="70" />
+        <omgdi:waypoint x="1407" y="70" />
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

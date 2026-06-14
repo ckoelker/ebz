@@ -7,12 +7,14 @@ import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 
 import org.junit.jupiter.api.Test;
 
+import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusMock;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
 import io.restassured.specification.RequestSpecification;
 
+import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.service.KeycloakLoginProvisionierung;
 
 /**
@@ -29,7 +31,6 @@ import de.netzfactor.ebz.controlling.integration.party.service.KeycloakLoginProv
  * Test den jeweiligen REST-Endpunkt direkt aufruft.
  */
 @QuarkusTest
-@TestSecurity(user = "kc-e2e-happy", roles = "rechnung-pflege")
 class AnmeldungBerufsschuleE2ETest {
 
     private static long uniq() {
@@ -39,6 +40,14 @@ class AnmeldungBerufsschuleE2ETest {
     /** Eindeutige Test-IP je Lauf (öffentlicher Lead-Rate-Limit, 5/min/IP). */
     private static String testIp(long n) {
         return "198.51." + (int) ((n / 251) % 251) + "." + (int) (n % 251);
+    }
+
+    /**
+     * Löst eine evtl. bestehende Keycloak-sub-Bindung (persistente DB über Läufe hinweg) → der Claim
+     * im Szenario kann den festen Test-sub erneut binden, ohne den Unique-Constraint zu verletzen.
+     */
+    private static void loginFreigeben(String sub) {
+        QuarkusTransaction.requiringNew().run(() -> Person.update("keycloakSub = null where keycloakSub = ?1", sub));
     }
 
     /** rest-assured-Spezifikation mit Fall-Korrelation über den W3C-baggage-Header. */
@@ -58,8 +67,10 @@ class AnmeldungBerufsschuleE2ETest {
     }
 
     @Test
+    @TestSecurity(user = "kc-e2e-happy", roles = "rechnung-pflege")
     void happyPath_neueFirma_neuerAzubi() {
         QuarkusMock.installMockForType(new FakeProvisionierung(), KeycloakLoginProvisionierung.class);
+        loginFreigeben("kc-e2e-happy");
 
         String fall = "happy-path";
         long n = uniq();
@@ -122,6 +133,87 @@ class AnmeldungBerufsschuleE2ETest {
                 .body("status", equalTo("AKTIV"));
 
         // 8) Rechnungslauf bucht die nun aktive Anmeldung
+        gegeben(fall, n)
+                .body("{\"schuljahr\":\"%s\",\"halbjahr\":1}".formatted(schuljahr))
+                .when().post("/rechnung/laeufe").then().statusCode(200)
+                .body("size()", greaterThanOrEqualTo(1));
+    }
+
+    /**
+     * Variante: die anfragende Firma ist eine <b>Dublette</b> einer bereits aktiven Firma mit
+     * eingeloggtem Ansprechpartner. Das EBZ erkennt sie (KI-Bewertung) und <b>merged</b> statt neu
+     * anzulegen; die Login-Einladung entfällt. → zweiter Trace ⇒ der Inductive Miner erzeugt Gateways
+     * (Neuanlage- vs. Merge-Pfad in der Dubletten-Phase; Einladungs-Phase optional).
+     */
+    @Test
+    @TestSecurity(user = "kc-e2e-dub", roles = "rechnung-pflege")
+    void variante_firmaDublette_merge() {
+        loginFreigeben("kc-e2e-dub");
+        String fall = "firma-dublette";
+        long n = uniq();
+        int sjy = 7000 + (int) (n % 900);
+        String schuljahr = sjy + "/" + (sjy + 1);
+        String ust = "DE" + (n % 100000000L);
+        String apExist = "e2e-dub-exist+" + n + "@lehrbetrieb.de";
+        String azubiEmail = "e2e-dub-azubi+" + n + "@lehrbetrieb.de";
+
+        // Setup OHNE Fall-Baggage (Spans landen als „unbekannt" und werden vom Generator ignoriert):
+        // eine bereits aktive Bestandsfirma mit eingeloggtem Ansprechpartner.
+        long orgExist = given().contentType(ContentType.JSON)
+                .body("""
+                        {"name":"E2E Dublett GmbH %d","strasse":"Werkstr. 1","plz":"45657","ort":"Recklinghausen","land":"DE","ustId":"%s"}"""
+                        .formatted(n, ust))
+                .when().post("/party/organisationen").then().statusCode(201).extract().jsonPath().getLong("id");
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"email":"%s","anzeigeName":"Egon Existing","rolle":"AUSBILDER","buchungsberechtigt":true}"""
+                        .formatted(apExist))
+                .when().post("/party/organisationen/" + orgExist + "/teilnehmer").then().statusCode(201);
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"keycloakSub":"kc-e2e-dub","email":"%s","anzeigeName":"Egon Existing"}""".formatted(apExist))
+                .when().post("/party/personen/selbstregistrieren").then()
+                .statusCode(anyOf(equalTo(200), equalTo(201)));
+
+        // 1) Neue (doppelte) Anfrage für dieselbe Firma (gleiche USt/Name/PLZ) → ANGEFRAGT
+        long orgNeu = gegeben(fall, n)
+                .body("""
+                        {"name":"E2E Dublett GmbH %d","strasse":"Werkstr. 1","plz":"45657","ort":"Recklinghausen",
+                         "land":"DE","ustId":"%s","ansprechpartnerEmail":"e2e-dub-neu+%d@lehrbetrieb.de","ansprechpartnerName":"Nina Neu"}"""
+                        .formatted(n, ust, n))
+                .when().post("/party/anfragen/ausbildungsbetrieb").then().statusCode(201)
+                .extract().jsonPath().getLong("organisationId");
+
+        // 2) EBZ erkennt die Dublette (KI-Bewertung) und führt die neue Anfrage in die Bestandsfirma zusammen
+        gegeben(fall, n)
+                .body("""
+                        {"art":"FIRMA","kandidatId":%d,"entscheidung":"GEMERGT","zielId":%d}"""
+                        .formatted(orgNeu, orgExist))
+                .when().post("/party/reviews/entscheidung").then().statusCode(200);
+
+        // (keine Login-Einladung: die Bestandsfirma hat bereits einen eingeloggten Ansprechpartner)
+
+        // 3) Ansprechpartner meldet einen Azubi an (Bestandsfirma) → ANGEFRAGT
+        int anmeldungId = gegeben(fall, n)
+                .body("""
+                        {"organisationId":%d,"azubiEmail":"%s","azubiName":"Dora Azubi",
+                         "schuljahr":"%s","halbjahr":1,"zimmerart":"KEINE","unterrichtBetragCent":150000}"""
+                        .formatted(orgExist, azubiEmail, schuljahr))
+                .when().post("/party/portal/azubi-anmeldung").then().statusCode(201)
+                .body("status", equalTo("ANGEFRAGT"))
+                .extract().jsonPath().getInt("anmeldungId");
+
+        // 4) EBZ bestätigt → BESTAETIGT_EBZ
+        gegeben(fall, n)
+                .when().post("/party/anmeldungen/" + anmeldungId + "/bestaetigung").then().statusCode(200)
+                .body("status", equalTo("BESTAETIGT_EBZ"));
+
+        // 5) Firma bestätigt Vertrag → AKTIV
+        gegeben(fall, n)
+                .when().post("/party/portal/anmeldungen/" + anmeldungId + "/vertrag-bestaetigen").then()
+                .statusCode(200).body("status", equalTo("AKTIV"));
+
+        // 6) Rechnungslauf bucht die nun aktive Anmeldung
         gegeben(fall, n)
                 .body("{\"schuljahr\":\"%s\",\"halbjahr\":1}".formatted(schuljahr))
                 .when().post("/rechnung/laeufe").then().statusCode(200)

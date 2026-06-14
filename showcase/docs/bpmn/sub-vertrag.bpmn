@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.signavio.com/bpmn20">
   <bpmn:process id="process_sub-vertrag" processType="None" isClosed="false" isExecutable="false">
-    <bpmn:task id="task_ausbildungsvertrag_bestaetigen" name="Ausbildungsvertrag bestätigen — Firma (Ansprechpartner) · Portal-SPA">
-      <bpmn:incoming>flow_start__task_ausbildungsvertrag_bestaetigen</bpmn:incoming>
-      <bpmn:outgoing>flow_task_ausbildungsvertrag_bestaetigen__end</bpmn:outgoing>
-    </bpmn:task>
     <bpmn:endEvent id="end" name="end">
       <bpmn:incoming>flow_task_ausbildungsvertrag_bestaetigen__end</bpmn:incoming>
     </bpmn:endEvent>
     <bpmn:startEvent id="start" name="start">
       <bpmn:outgoing>flow_start__task_ausbildungsvertrag_bestaetigen</bpmn:outgoing>
     </bpmn:startEvent>
-    <bpmn:sequenceFlow id="flow_task_ausbildungsvertrag_bestaetigen__end" name="" sourceRef="task_ausbildungsvertrag_bestaetigen" targetRef="end" />
+    <bpmn:task id="task_ausbildungsvertrag_bestaetigen" name="Ausbildungsvertrag bestätigen — Firma (Ansprechpartner) · Portal-SPA">
+      <bpmn:incoming>flow_start__task_ausbildungsvertrag_bestaetigen</bpmn:incoming>
+      <bpmn:outgoing>flow_task_ausbildungsvertrag_bestaetigen__end</bpmn:outgoing>
+    </bpmn:task>
     <bpmn:sequenceFlow id="flow_start__task_ausbildungsvertrag_bestaetigen" name="" sourceRef="start" targetRef="task_ausbildungsvertrag_bestaetigen" />
+    <bpmn:sequenceFlow id="flow_task_ausbildungsvertrag_bestaetigen__end" name="" sourceRef="task_ausbildungsvertrag_bestaetigen" targetRef="end" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_process_sub-vertrag">
     <bpmndi:BPMNPlane id="BPMNPlane_process_sub-vertrag" bpmnElement="process_sub-vertrag">

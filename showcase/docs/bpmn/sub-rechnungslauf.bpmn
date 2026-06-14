@@ -1,6 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.signavio.com/bpmn20">
   <bpmn:process id="process_sub-rechnungslauf" processType="None" isClosed="false" isExecutable="false">
+    <bpmn:startEvent id="start" name="start">
+      <bpmn:outgoing>flow_start__task_rechnungslauf_bucht_anmeldung</bpmn:outgoing>
+    </bpmn:startEvent>
     <bpmn:endEvent id="end" name="end">
       <bpmn:incoming>flow_task_rechnungslauf_bucht_anmeldung__end</bpmn:incoming>
     </bpmn:endEvent>
@@ -8,9 +11,6 @@
       <bpmn:incoming>flow_start__task_rechnungslauf_bucht_anmeldung</bpmn:incoming>
       <bpmn:outgoing>flow_task_rechnungslauf_bucht_anmeldung__end</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:startEvent id="start" name="start">
-      <bpmn:outgoing>flow_start__task_rechnungslauf_bucht_anmeldung</bpmn:outgoing>
-    </bpmn:startEvent>
     <bpmn:sequenceFlow id="flow_task_rechnungslauf_bucht_anmeldung__end" name="" sourceRef="task_rechnungslauf_bucht_anmeldung" targetRef="end" />
     <bpmn:sequenceFlow id="flow_start__task_rechnungslauf_bucht_anmeldung" name="" sourceRef="start" targetRef="task_rechnungslauf_bucht_anmeldung" />
   </bpmn:process>

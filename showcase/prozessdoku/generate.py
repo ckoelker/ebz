@@ -48,6 +48,10 @@ def lade_log() -> pd.DataFrame:
     if not zeilen:
         sys.exit(f"Span-Log ist leer: {SPANS}")
     df = pd.DataFrame(zeilen)
+    # Unkorrelierte Spans (kein Szenario-Baggage, z. B. aus Test-Setup) ignorieren.
+    df = df[df["fall"] != "unbekannt"]
+    if df.empty:
+        sys.exit("Keine korrelierten Prozess-Spans (prozess.fall) im Log.")
     df["timestamp"] = pd.to_datetime(df["startEpochNanos"], unit="ns", utc=True)
     return df.sort_values(["fall", "startEpochNanos"]).reset_index(drop=True)
 

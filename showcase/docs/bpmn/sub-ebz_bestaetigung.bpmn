@@ -1,9 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.signavio.com/bpmn20">
   <bpmn:process id="process_sub-ebz_bestaetigung" processType="None" isClosed="false" isExecutable="false">
+    <bpmn:task id="task_bestaetigungsmail_an_azubi" name="Bestätigungsmail an Azubi — System · Mail">
+      <bpmn:incoming>flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi</bpmn:incoming>
+      <bpmn:outgoing>flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:outgoing>
+    </bpmn:task>
     <bpmn:startEvent id="start" name="start">
       <bpmn:outgoing>flow_start__task_anmeldung_pruefen_und_bestaetigen</bpmn:outgoing>
     </bpmn:startEvent>
+    <bpmn:task id="task_bestaetigungsmail_an_firma" name="Bestätigungsmail an Firma — System · Mail">
+      <bpmn:incoming>flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:incoming>
+      <bpmn:outgoing>flow_task_bestaetigungsmail_an_firma__end</bpmn:outgoing>
+    </bpmn:task>
     <bpmn:endEvent id="end" name="end">
       <bpmn:incoming>flow_task_bestaetigungsmail_an_firma__end</bpmn:incoming>
     </bpmn:endEvent>
@@ -11,18 +19,10 @@
       <bpmn:incoming>flow_start__task_anmeldung_pruefen_und_bestaetigen</bpmn:incoming>
       <bpmn:outgoing>flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi</bpmn:outgoing>
     </bpmn:task>
-    <bpmn:task id="task_bestaetigungsmail_an_azubi" name="Bestätigungsmail an Azubi — System · Mail">
-      <bpmn:incoming>flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi</bpmn:incoming>
-      <bpmn:outgoing>flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:task id="task_bestaetigungsmail_an_firma" name="Bestätigungsmail an Firma — System · Mail">
-      <bpmn:incoming>flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:incoming>
-      <bpmn:outgoing>flow_task_bestaetigungsmail_an_firma__end</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma" name="" sourceRef="task_bestaetigungsmail_an_azubi" targetRef="task_bestaetigungsmail_an_firma" />
-    <bpmn:sequenceFlow id="flow_start__task_anmeldung_pruefen_und_bestaetigen" name="" sourceRef="start" targetRef="task_anmeldung_pruefen_und_bestaetigen" />
     <bpmn:sequenceFlow id="flow_task_bestaetigungsmail_an_firma__end" name="" sourceRef="task_bestaetigungsmail_an_firma" targetRef="end" />
     <bpmn:sequenceFlow id="flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi" name="" sourceRef="task_anmeldung_pruefen_und_bestaetigen" targetRef="task_bestaetigungsmail_an_azubi" />
+    <bpmn:sequenceFlow id="flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma" name="" sourceRef="task_bestaetigungsmail_an_azubi" targetRef="task_bestaetigungsmail_an_firma" />
+    <bpmn:sequenceFlow id="flow_start__task_anmeldung_pruefen_und_bestaetigen" name="" sourceRef="start" targetRef="task_anmeldung_pruefen_und_bestaetigen" />
   </bpmn:process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_process_sub-ebz_bestaetigung">
     <bpmndi:BPMNPlane id="BPMNPlane_process_sub-ebz_bestaetigung" bpmnElement="process_sub-ebz_bestaetigung">
