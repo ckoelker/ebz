@@ -95,6 +95,12 @@ public class PartyHoheitService {
         return Mitgliedschaft.count("personId = ?1 and organisationId = ?2", personId, organisationId) > 0;
     }
 
+    /** Darf die Person im Auftrag der Organisation bestellen? (Scope-Prüfung für das Self-Service-Portal.) */
+    public boolean istBuchungsberechtigt(Long personId, Long organisationId) {
+        return Mitgliedschaft.count("personId = ?1 and organisationId = ?2 and buchungsberechtigt = true",
+                personId, organisationId) > 0;
+    }
+
     /**
      * Firmenseitige Vor-Anlage eines Teilnehmers/Ansprechpartners per E-Mail: findet die Person über die
      * Adresse oder legt sie <b>provisorisch</b> an (noch kein Login), und verknüpft sie idempotent per

@@ -4,6 +4,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
@@ -66,6 +67,43 @@ public class BuchungService {
         a.kontextOrganisationId = b.kontextOrganisationId();
         a.zahlungspflichtigerDebitorId = debitor.id;
         a.status = AnmeldungStatus.AKTIV;
+        a.schuljahr = b.schuljahr();
+        a.halbjahr = b.halbjahr();
+        a.zimmerart = b.zimmerart();
+        a.unterrichtBetragCent = b.unterrichtBetragCent();
+        a.uebernachtungBetragCent = b.uebernachtungBetragCent();
+        a.persist();
+        return a;
+    }
+
+    /** Self-Service-Anmeldung eines Azubis durch den Firmen-Ansprechpartner (Portal, Schritt D). */
+    public record AzubiAnmeldung(Long bestellerPersonId, Long organisationId, String azubiEmail,
+            String azubiName, String schuljahr, int halbjahr, Zimmerart zimmerart,
+            int unterrichtBetragCent, Integer uebernachtungBetragCent) {
+    }
+
+    /**
+     * Schritt D: der buchungsberechtigte Ansprechpartner meldet einen Azubi an. Der Azubi wird (idempotent)
+     * als provisorische Person mit {@code AZUBI}-Mitgliedschaft angelegt; die Anmeldung entsteht im
+     * Firmenkontext mit dem projizierten Firmen-Debitor und Status <b>{@code ANGEFRAGT}</b> — also
+     * <i>nicht</i> abrechenbar. Erst die EBZ-Bestätigung (E) und die Vertragsbestätigung der Firma (F)
+     * führen sie auf {@code AKTIV}, das der bestehende Rechnungslauf bucht.
+     */
+    @Transactional
+    public Anmeldung meldeAzubiAn(AzubiAnmeldung b) {
+        Person azubi = party.registriereTeilnehmer(b.organisationId(), b.azubiEmail(), b.azubiName(),
+                Mitgliedschaft.Rolle.AZUBI, false);
+        Debitor debitor = party.ermittleDebitor(b.bestellerPersonId(), b.organisationId(), Bereich.BERUFSSCHULE);
+
+        Anmeldung a = new Anmeldung();
+        a.typ = AnmeldungTyp.BERUFSSCHULE;
+        a.teilnehmerName = azubi.anzeigeName;
+        a.teilnehmerEmail = primaerEmail(azubi.id);
+        a.teilnehmerPersonId = azubi.id;
+        a.bestellerPersonId = b.bestellerPersonId();
+        a.kontextOrganisationId = b.organisationId();
+        a.zahlungspflichtigerDebitorId = debitor.id;
+        a.status = AnmeldungStatus.ANGEFRAGT; // noch nicht abrechenbar (erst nach Vertragsbestätigung → AKTIV)
         a.schuljahr = b.schuljahr();
         a.halbjahr = b.halbjahr();
         a.zimmerart = b.zimmerart();
