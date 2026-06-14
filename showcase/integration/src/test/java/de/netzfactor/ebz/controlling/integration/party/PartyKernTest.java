@@ -142,6 +142,58 @@ class PartyKernTest {
     }
 
     @Test
+    @TestSecurity(user = "sb", roles = "rechnung-pflege")
+    void buchungImFirmenkontext_landetBeimFirmenDebitor_undImRechnungslauf() {
+        long n = uniq();
+        int sjy = 5000 + (int) (n % 900);
+        String schuljahr = sjy + "/" + (sjy + 1);
+
+        // Organisation + buchungsberechtigter Ausbilder (Besteller) + Azubi (Teilnehmer)
+        long orgId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"name":"Bau Lehr GmbH %d","plz":"45657","ort":"Recklinghausen","land":"DE","ustId":"DE%d"}"""
+                        .formatted(n, n % 100000000L))
+                .when().post("/party/organisationen").then().statusCode(201)
+                .extract().jsonPath().getLong("id");
+        int bestellerId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"email":"ausbilder+%d@firma.de","anzeigeName":"Bernd Ausbilder","rolle":"AUSBILDER",
+                         "buchungsberechtigt":true}""".formatted(n))
+                .when().post("/party/organisationen/" + orgId + "/teilnehmer").then().statusCode(201)
+                .extract().jsonPath().getInt("id");
+        int azubiId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"email":"azubi+%d@firma.de","anzeigeName":"Anna Azubi","rolle":"AZUBI",
+                         "buchungsberechtigt":false}""".formatted(n))
+                .when().post("/party/organisationen/" + orgId + "/teilnehmer").then().statusCode(201)
+                .extract().jsonPath().getInt("id");
+
+        // Ausbilder bucht im Firmenkontext für den Azubi → zahlungspflichtiger Debitor wird projiziert
+        int debitorId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"teilnehmerPersonId":%d,"bestellerPersonId":%d,"kontextOrganisationId":%d,
+                         "schuljahr":"%s","halbjahr":1,"zimmerart":"DOPPEL",
+                         "unterrichtBetragCent":150000,"uebernachtungBetragCent":130000}"""
+                        .formatted(azubiId, bestellerId, orgId, schuljahr))
+                .when().post("/party/buchungen/berufsschule").then().statusCode(201)
+                .body("teilnehmerName", equalTo("Anna Azubi"))
+                .body("teilnehmerPersonId", equalTo(azubiId))
+                .extract().jsonPath().getInt("zahlungspflichtigerDebitorId");
+
+        // Der projizierte Debitor ist der FIRMEN-Debitor der Organisation (BS-Nummer)
+        given().when().get("/rechnung/debitoren/" + debitorId).then().statusCode(200)
+                .body("rolle", equalTo("FIRMA"))
+                .body("debitorNr", startsWith("BS-"))
+                .body("name", startsWith("Bau Lehr GmbH"));
+
+        // Bestehender Rechnungslauf (R1) verarbeitet die Buchung → Rechnung an genau diesen Debitor
+        given().contentType(ContentType.JSON)
+                .body("{\"schuljahr\":\"%s\",\"halbjahr\":1}".formatted(schuljahr))
+                .when().post("/rechnung/laeufe").then().statusCode(200)
+                .body("findAll { it.debitorId == " + debitorId + " }.size()", greaterThanOrEqualTo(1));
+    }
+
+    @Test
     void schreibenOhneRolle_istVerboten() {
         given().contentType(ContentType.JSON)
                 .body("{\"name\":\"X\"}")

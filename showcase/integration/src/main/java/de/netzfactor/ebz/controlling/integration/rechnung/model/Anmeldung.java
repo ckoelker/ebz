@@ -38,6 +38,19 @@ public class Anmeldung extends PanacheEntity {
     @Column(name = "teilnehmer_email", length = 200)
     public String teilnehmerEmail;
 
+    // ── Party-Kern-Provenienz (lose über ID ins Schema {@code party}; null bei Alt-/Direktanlage) ──
+    /** Teilnehmer als {@code party.person} (Identität); {@code teilnehmerName/email} bleiben Anzeige-Snapshot. */
+    @Column(name = "teilnehmer_person_id")
+    public Long teilnehmerPersonId;
+
+    /** Wer gebucht hat ({@code party.person}); aus dessen Kontext leitet sich der zahlungspflichtige Debitor ab. */
+    @Column(name = "besteller_person_id")
+    public Long bestellerPersonId;
+
+    /** Gewählter Bestellkontext: {@code party.organisation} (im Auftrag von …) bzw. {@code null} = privat. */
+    @Column(name = "kontext_organisation_id")
+    public Long kontextOrganisationId;
+
     /** Bezug ins Bildungsangebot-MDM (Schema {@code bildung}); lose über ID. */
     @Column(name = "bildungsangebot_id")
     public Long bildungsangebotId;

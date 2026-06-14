@@ -24,9 +24,12 @@ import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
+import de.netzfactor.ebz.controlling.integration.party.service.BuchungService;
 import de.netzfactor.ebz.controlling.integration.party.service.PartyHoheitService;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Zimmerart;
 
 /**
  * Party-Kern-API (Schema {@code party}): Identität (Person + E-Mails), N:M-Verknüpfung zu
@@ -42,6 +45,9 @@ public class PartyResource {
 
     @Inject
     PartyHoheitService party;
+
+    @Inject
+    BuchungService buchung;
 
     // ───────────────────────── DTOs (gebündelt) ─────────────────────────
 
@@ -72,6 +78,15 @@ public class PartyResource {
     }
 
     public record DebitorView(Long id, String debitorNr, String bereich, String rolle, String name) {
+    }
+
+    public record Berufsschulbuchung(@NotNull Long teilnehmerPersonId, Long bestellerPersonId,
+            Long kontextOrganisationId, @NotBlank String schuljahr, int halbjahr,
+            @NotNull Zimmerart zimmerart, int unterrichtBetragCent, Integer uebernachtungBetragCent) {
+    }
+
+    public record BuchungView(Long anmeldungId, Long teilnehmerPersonId, Long bestellerPersonId,
+            Long kontextOrganisationId, Long zahlungspflichtigerDebitorId, String teilnehmerName) {
     }
 
     // ───────────────────────── Identität ─────────────────────────
@@ -168,6 +183,27 @@ public class PartyResource {
             @QueryParam("bereich") Bereich bereich) {
         Debitor d = party.ermittleDebitor(id, organisationId, bereich);
         return new DebitorView(d.id, d.debitorNr, d.bereich.name(), d.rolle.name(), d.name);
+    }
+
+    // ───────────────────────── Buchung im Kontext (Naht zur Abrechnung) ─────────────────────────
+
+    /**
+     * Bucht eine Berufsschul-Anmeldung <i>im gewählten Kontext</i>: der zahlungspflichtige Debitor wird
+     * aus Identität + Kontext projiziert (privat vs. im Auftrag der Organisation), nicht übergeben. Die
+     * entstehende Anmeldung verarbeitet der bestehende Rechnungslauf (R1) unverändert weiter.
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/buchungen/berufsschule")
+    @Transactional
+    public Response bucheBerufsschule(@Valid Berufsschulbuchung req) {
+        Anmeldung a = buchung.bucheBerufsschule(new BuchungService.Berufsschulbuchung(
+                req.teilnehmerPersonId(), req.bestellerPersonId(), req.kontextOrganisationId(),
+                req.schuljahr(), req.halbjahr(), req.zimmerart(),
+                req.unterrichtBetragCent(), req.uebernachtungBetragCent()));
+        BuchungView view = new BuchungView(a.id, a.teilnehmerPersonId, a.bestellerPersonId,
+                a.kontextOrganisationId, a.zahlungspflichtigerDebitorId, a.teilnehmerName);
+        return Response.status(Response.Status.CREATED).entity(view).build();
     }
 
     // ───────────────────────── Helfer ─────────────────────────
