@@ -290,7 +290,16 @@ E `228315a`, F `f04b19a`.
   Zusatz: `GET /party/anmeldungen?status=…`. Verifiziert: `pnpm build` (vue-tsc) + Backend-Regression grün.
   *Live-Betrieb: das laufende `showcase-integration`-Image ist älter (ohne `/party`) → Container neu
   bauen: `docker compose --profile controlling up -d --build integration`.*
-- **H — Außenportal: OFFEN.** Eigene neue SPA `showcase/portal/` (`ebz-customers`) = allgemeines
-  Self-Service-Portal für **Firmen UND Teilnehmer** (künftig alle selbst implementierten Außen-
-  funktionen, nicht nur BS-Anmeldung): Anfrage → Login → Azubis erfassen → Vertrag bestätigen. Der
-  Shop (`showcase/frontend/`) bleibt eigenständig. Backend-Endpunkte stehen bereit.
+- **H — Außenportal: GEBAUT, Stufe 1 (2026-06-14, Commit `305431c`)** als eigene neue SPA
+  `showcase/portal/` (`ebz-customers`, Client `ebz-portal`, :5175) = allgemeines Self-Service-Portal
+  für **Firmen UND Teilnehmer** (künftig alle selbst implementierten Außenfunktionen, nicht nur
+  BS-Anmeldung). Views: `Anfrage.vue` (öffentlich, Honeypot) + `MeineAzubis.vue` (Login: party-Login-
+  Claim → Firmenwahl → Firmensicht-Liste → Azubi anmelden → Vertrag bestätigen, Org-Scope).
+  Dockerfile + nginx + compose-Service `portal`. Backend-Zusatz: `BuchungZeile.status` (Firmensicht).
+  Verifiziert: `pnpm build` (vue-tsc) grün. Der Shop (`showcase/frontend/`) bleibt eigenständig.
+  *Live-Bring-up: (1) `ebz-customers`-Realm neu importieren (Client `ebz-portal`), (2) integration-
+  Container neu bauen (`BuchungZeile.status`), (3) `docker compose --profile controlling up -d --build
+  integration portal`.* Weitere Außenfunktionen (Teilnehmer-Self-Service etc.) = Folgestufen.
+
+> **Anmeldung Berufsschule: Durchstich A–I komplett** (Backend + beide Frontends). Pnpm-Hinweis:
+> `portal/pnpm-workspace.yaml` lockert lokal die globale Supply-Chain-Policy (Deps identisch zu `mdm`).
