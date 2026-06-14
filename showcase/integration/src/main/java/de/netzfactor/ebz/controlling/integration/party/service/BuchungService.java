@@ -75,6 +75,53 @@ public class BuchungService {
         return a;
     }
 
+    /** Hochschul-Buchung (R6): Studierende:r + Besteller + optionaler Firmenkontext (duales Studium). */
+    public record Hochschulbuchung(Long teilnehmerPersonId, Long bestellerPersonId,
+            Long kontextOrganisationId, String semester, int semesterbetragCent,
+            Integer firmaAnteilCent, Integer ratenAnzahl) {
+    }
+
+    /**
+     * R6 über den Party-Kern: Einschreibung Studierende:r → {@link Anmeldung} (HOCHSCHULE). Der
+     * Eigenanteil geht an den privaten Debitor der/des Studierenden; bei dualem Studium
+     * ({@code kontextOrganisationId} + {@code firmaAnteilCent}) trägt die Organisation ihren Anteil
+     * über ihren Firmen-Debitor (zwei getrennte Forderungen, vom bestehenden Hochschul-Rechnungslauf
+     * R6 erzeugt). Der Firmen-Debitor wird im Kontext des Bestellers (buchungsberechtigt) projiziert.
+     */
+    @Transactional
+    public Anmeldung bucheHochschule(Hochschulbuchung b) {
+        Person student = Person.findById(b.teilnehmerPersonId());
+        if (student == null) {
+            throw RegelVerletzung.nichtGefunden("Teilnehmer-Person nicht gefunden: " + b.teilnehmerPersonId());
+        }
+        Long bestellerId = b.bestellerPersonId() == null ? b.teilnehmerPersonId() : b.bestellerPersonId();
+
+        // Eigenanteil → privater Debitor der/des Studierenden
+        Debitor eigen = party.ermittleDebitor(student.id, null, Bereich.HOCHSCHULE);
+
+        Anmeldung a = new Anmeldung();
+        a.typ = AnmeldungTyp.HOCHSCHULE;
+        a.teilnehmerName = student.anzeigeName;
+        a.teilnehmerEmail = primaerEmail(student.id);
+        a.teilnehmerPersonId = student.id;
+        a.bestellerPersonId = bestellerId;
+        a.kontextOrganisationId = b.kontextOrganisationId();
+        a.zahlungspflichtigerDebitorId = eigen.id;
+        a.status = AnmeldungStatus.AKTIV;
+        a.semester = b.semester();
+        a.semesterbetragCent = b.semesterbetragCent();
+        a.ratenAnzahl = b.ratenAnzahl();
+
+        // Duales Studium: Firmenanteil über den Firmen-Debitor (Kontext des Bestellers)
+        if (b.kontextOrganisationId() != null && b.firmaAnteilCent() != null) {
+            Debitor firma = party.ermittleDebitor(bestellerId, b.kontextOrganisationId(), Bereich.HOCHSCHULE);
+            a.firmaDebitorId = firma.id;
+            a.firmaAnteilCent = b.firmaAnteilCent();
+        }
+        a.persist();
+        return a;
+    }
+
     /** Externe Shop-Bestellung (R7) im gewählten Kontext: Käufer + Kontext + Bereich + Positionen. */
     public record Shopbestellung(String quelle, String externeId, Zahlungsart zahlungsart, Bereich bereich,
             String kaeuferEmail, String kaeuferName, Long kontextOrganisationId,

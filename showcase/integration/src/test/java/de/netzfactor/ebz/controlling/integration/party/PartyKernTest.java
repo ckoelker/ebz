@@ -292,6 +292,61 @@ class PartyKernTest {
 
     @Test
     @TestSecurity(user = "sb", roles = "rechnung-pflege")
+    void hochschulBuchung_dualesStudium_splittetEigen_undFirmenanteil() {
+        long n = uniq();
+        String semester = "WS" + (7000 + (int) (n % 900));
+
+        // Firma + buchungsberechtigter HR-Besteller + dual Studierende:r (Teilnehmer)
+        long orgId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"name":"Dual Bau GmbH %d","plz":"45657","ort":"Recklinghausen","land":"DE","ustId":"DE%d"}"""
+                        .formatted(n, n % 100000000L))
+                .when().post("/party/organisationen").then().statusCode(201).extract().jsonPath().getLong("id");
+        int hrId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"email":"hr+%d@firma.de","anzeigeName":"Heike HR","rolle":"ANSPRECHPARTNER_STUDIUM",
+                         "buchungsberechtigt":true}""".formatted(n))
+                .when().post("/party/organisationen/" + orgId + "/teilnehmer").then().statusCode(201)
+                .extract().jsonPath().getInt("id");
+        int studentId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"email":"student+%d@firma.de","anzeigeName":"Stefan Student","rolle":"STUDENT",
+                         "buchungsberechtigt":false}""".formatted(n))
+                .when().post("/party/organisationen/" + orgId + "/teilnehmer").then().statusCode(201)
+                .extract().jsonPath().getInt("id");
+
+        // HR bucht duales Studium: Firmenanteil 240.000, Semesterbetrag 360.000 → Eigenanteil 120.000
+        io.restassured.path.json.JsonPath bu = given().contentType(ContentType.JSON)
+                .body("""
+                        {"teilnehmerPersonId":%d,"bestellerPersonId":%d,"kontextOrganisationId":%d,
+                         "semester":"%s","semesterbetragCent":360000,"firmaAnteilCent":240000}"""
+                        .formatted(studentId, hrId, orgId, semester))
+                .when().post("/party/buchungen/hochschule").then().statusCode(201)
+                .body("teilnehmerPersonId", equalTo(studentId))
+                .extract().jsonPath();
+        int eigenDebitor = bu.getInt("zahlungspflichtigerDebitorId");
+        int firmaDebitor = bu.getInt("firmaDebitorId");
+
+        // Eigenanteil → PRIVAT-Debitor (HS-) der/des Studierenden; Firmenanteil → FIRMA-Debitor (HS-)
+        given().when().get("/rechnung/debitoren/" + eigenDebitor).then().statusCode(200)
+                .body("rolle", equalTo("PRIVAT")).body("debitorNr", startsWith("HS-"))
+                .body("name", equalTo("Stefan Student"));
+        given().when().get("/rechnung/debitoren/" + firmaDebitor).then().statusCode(200)
+                .body("rolle", equalTo("FIRMA")).body("debitorNr", startsWith("HS-"))
+                .body("name", startsWith("Dual Bau GmbH"));
+
+        // Hochschul-Rechnungslauf (R6) → zwei getrennte Forderungen (Firmen- + Eigenanteil)
+        var lauf = given().contentType(ContentType.JSON)
+                .body("{\"semester\":\"%s\"}".formatted(semester))
+                .when().post("/rechnung/laeufe/hochschule").then().statusCode(200).extract().jsonPath();
+        org.junit.jupiter.api.Assertions.assertTrue(
+                lauf.getList("findAll { it.debitorId == " + firmaDebitor + " }").size() >= 1, "Firmenanteil-Rechnung");
+        org.junit.jupiter.api.Assertions.assertTrue(
+                lauf.getList("findAll { it.debitorId == " + eigenDebitor + " }").size() >= 1, "Eigenanteil-Rechnung");
+    }
+
+    @Test
+    @TestSecurity(user = "sb", roles = "rechnung-pflege")
     void shopBestellung_folgtDemKontext_privatVsFirma_undIstIdempotent() {
         long n = uniq();
         String email = "shopper+" + n + "@example.com";

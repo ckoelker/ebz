@@ -102,6 +102,15 @@ public class PartyResource {
             Long kontextOrganisationId, Long zahlungspflichtigerDebitorId, String teilnehmerName) {
     }
 
+    public record Hochschulbuchung(@NotNull Long teilnehmerPersonId, Long bestellerPersonId,
+            Long kontextOrganisationId, @NotBlank String semester, int semesterbetragCent,
+            Integer firmaAnteilCent, Integer ratenAnzahl) {
+    }
+
+    public record HochschulView(Long anmeldungId, Long teilnehmerPersonId, Long kontextOrganisationId,
+            Long zahlungspflichtigerDebitorId, Long firmaDebitorId, Integer firmaAnteilCent, String teilnehmerName) {
+    }
+
     public record BuchungZeile(Long anmeldungId, String teilnehmerName, Long teilnehmerPersonId,
             Long kontextOrganisationId, Long zahlungspflichtigerDebitorId, String schuljahr, Integer halbjahr) {
     }
@@ -270,6 +279,24 @@ public class PartyResource {
         boolean neu = Rechnung.count() > vorher;
         ShopBelegView view = new ShopBelegView(r.id, r.debitorId, r.bereich.name(), req.quelle(), req.externeId());
         return Response.status(neu ? Response.Status.CREATED : Response.Status.OK).entity(view).build();
+    }
+
+    /**
+     * Bucht eine Hochschul-Einschreibung im Kontext (R6): Eigenanteil → privater Debitor der/des
+     * Studierenden; bei dualem Studium ({@code kontextOrganisationId} + {@code firmaAnteilCent}) trägt
+     * die Organisation ihren Anteil. Der bestehende Hochschul-Rechnungslauf erzeugt die Forderung(en).
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/buchungen/hochschule")
+    @Transactional
+    public Response bucheHochschule(@Valid Hochschulbuchung req) {
+        Anmeldung a = buchung.bucheHochschule(new BuchungService.Hochschulbuchung(
+                req.teilnehmerPersonId(), req.bestellerPersonId(), req.kontextOrganisationId(),
+                req.semester(), req.semesterbetragCent(), req.firmaAnteilCent(), req.ratenAnzahl()));
+        HochschulView view = new HochschulView(a.id, a.teilnehmerPersonId, a.kontextOrganisationId,
+                a.zahlungspflichtigerDebitorId, a.firmaDebitorId, a.firmaAnteilCent, a.teilnehmerName);
+        return Response.status(Response.Status.CREATED).entity(view).build();
     }
 
     // ───────────────────────── DSGVO: kontext-skopierte Sichten ─────────────────────────
