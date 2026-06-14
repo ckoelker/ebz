@@ -155,6 +155,36 @@ models:
         meta:
           dimension: { type: date, label: "Monat" }
 
+  - name: fct_revenue_billed
+    description: "Fakturierter Netto-Erlös aus dem Billing-SoR je Monat × Bereich (alle Bereiche)."
+    meta:
+      label: "Fakturierter Erlös (Billing)"
+    columns:
+      - name: month
+        description: "Monat des Ausstellungsdatums"
+        data_tests: [not_null]
+        meta:
+          dimension: { type: date, label: "Monat" }
+      - name: bereich
+        description: "Erlösbereich (BERUFSSCHULE/HOCHSCHULE/AKADEMIE/SHOP)"
+        data_tests: [not_null]
+        meta:
+          dimension: { type: string, label: "Bereich" }
+      - name: amount_net_eur
+        description: "Fakturierter Netto-Erlös (€)"
+        meta:
+          metrics:
+            sum_billed_revenue:
+              type: sum
+              label: "Fakturierter Erlös (netto, €)"
+      - name: belege
+        description: "Anzahl festgeschriebener Belege"
+        meta:
+          metrics:
+            sum_belege:
+              type: sum
+              label: "Belege"
+
 unit_tests:
   - name: seminar_break_even_worked_example
     description: "Rechenbeispiel des Plans: 600 €/TN, Fix 1.800 €, var. 25 €/TN, Umlage 800 € → Break-even 5 TN."

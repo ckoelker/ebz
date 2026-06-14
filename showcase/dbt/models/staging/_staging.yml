@@ -23,6 +23,14 @@ models:
     columns:
       - name: cost_id
         data_tests: [unique, not_null]
+  - name: stg_rechnung_belege
+    columns:
+      - name: rechnung_id
+        data_tests: [unique, not_null]
+  - name: stg_rechnung_positionen
+    columns:
+      - name: position_id
+        data_tests: [unique, not_null]
   - name: stg_hubspot_deals
     columns:
       - name: deal_id

@@ -17,3 +17,12 @@ sources:
     description: "HubSpot-Deals, angereichert (KI-Klassifikation), idempotenter Upsert."
     tables:
       - name: stg_hubspot_deal
+
+  # Billing-SoR (Rechnungsstellung R1+) im selben controlling-DB; dbt liest direkt (kein dlt nötig).
+  # PII-Minimierung erfolgt im Staging (keine Teilnehmer-/Zeitraum-Klartexte projizieren).
+  - name: rechnung
+    schema: rechnung
+    description: "Ausgestellte Belege + Positionen aus dem Billing-Service (alle Bereiche)."
+    tables:
+      - name: rechnung
+      - name: rechnung_position
