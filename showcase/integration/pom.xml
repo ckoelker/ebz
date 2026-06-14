@@ -193,6 +193,15 @@
       <artifactId>quarkus-keycloak-admin-rest-client</artifactId>
     </dependency>
 
+    <!-- ── Prozessdoku (Living Documentation): OpenTelemetry-Business-Spans ──
+         Jeder fachliche Prozess-Schritt = ein Span (Attribute prozess.akteur/system/typ/phase, Korrelation
+         prozess.fall). Dual-Use: in Prod Export an Jaeger (OTLP), im E2E-Test abgegriffen → PM4py → BPMN
+         (showcase/prozessdoku/, Plan prozessdoku-planung/). Version via quarkus-bom (importiert opentelemetry-bom). -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-opentelemetry</artifactId>
+    </dependency>
+
     <!-- Test -->
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -209,6 +218,13 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-test-security</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- Prozessdoku: In-Memory-Span-Exporter als Fallback fürs Abgreifen der Business-Spans im E2E-Test
+         (Version via opentelemetry-bom aus dem quarkus-bom). -->
+    <dependency>
+      <groupId>io.opentelemetry</groupId>
+      <artifactId>opentelemetry-sdk-testing</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>

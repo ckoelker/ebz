@@ -6,8 +6,14 @@ import java.util.List;
 import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Typ;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungTyp;
@@ -36,6 +42,9 @@ import de.netzfactor.ebz.controlling.integration.rechnung.model.Zimmerart;
 public class RechnungslaufService {
 
     private static final String BEFREIUNGSGRUND = "Umsatzsteuerbefreit nach § 4 UStG (Bildungsleistung)";
+
+    @Inject
+    Prozessspur prozess;
 
     @Transactional
     public List<Rechnung> erzeugeBerufsschulEntwuerfe(String schuljahr, int halbjahr) {
@@ -78,6 +87,10 @@ public class RechnungslaufService {
                 }
             }
             ergebnis.add(r);
+        }
+        if (!anmeldungen.isEmpty()) {
+            prozess.schritt("Rechnungslauf bucht Anmeldung", Akteur.SYSTEM, Prozess.System.RECHNUNGSLAUF,
+                    Typ.BUSINESS_RULE, Phase.RECHNUNGSLAUF);
         }
         return ergebnis;
     }

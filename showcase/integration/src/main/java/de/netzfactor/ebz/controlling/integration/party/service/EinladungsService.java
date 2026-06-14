@@ -11,6 +11,11 @@ import io.quarkus.mailer.Mailer;
 
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Typ;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
 
 /**
@@ -28,6 +33,9 @@ public class EinladungsService {
 
     @Inject
     Mailer mailer;
+
+    @Inject
+    Prozessspur prozess;
 
     @ConfigProperty(name = "anmeldung.portal.url", defaultValue = "http://localhost:5174")
     String portalUrl;
@@ -47,7 +55,14 @@ public class EinladungsService {
             throw new RegelVerletzung("Person " + personId + " hat keine E-Mail für die Einladung.");
         }
 
+        prozess.schritt("Login-Einladung auslösen", Akteur.EBZ, Prozess.System.COCKPIT, Typ.USER_TASK,
+                Phase.EINLADUNG);
+
         LoginProvisionierung.Ergebnis erg = provisionierung.anlegen(email, p.anzeigeName);
+        if (erg.provisioniert()) {
+            prozess.schritt("Login provisionieren", Akteur.SYSTEM, Prozess.System.KEYCLOAK,
+                    Typ.SERVICE_TASK, Phase.EINLADUNG);
+        }
 
         mailer.send(Mail.withText(email,
                 "Ihr Zugang zum EBZ-Ausbildungsportal",
@@ -64,6 +79,8 @@ public class EinladungsService {
                 Viele Grüße
                 Ihr EBZ-Team
                 """.formatted(p.anzeigeName, portalUrl)));
+        prozess.schritt("Einladungsmail senden", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
+                Phase.EINLADUNG);
 
         return new Einladung(p.id, email, erg.keycloakUserId(), erg.provisioniert(), true);
     }

@@ -1,0 +1,4 @@
+# Prozessdoku-Generator (Living Documentation): Event-Log (OTel-Spans) → Prozessmodell → BPMN.
+# Verifiziert mit pm4py 2.7.22.4 auf Python 3.13.3.
+pm4py>=2.7,<3
+pandas>=2,<3

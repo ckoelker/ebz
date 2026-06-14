@@ -12,6 +12,11 @@ import de.netzfactor.ebz.controlling.integration.party.model.DublettenReview;
 import de.netzfactor.ebz.controlling.integration.party.model.DublettenUrteil;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Typ;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
 
 /**
@@ -32,6 +37,9 @@ public class DublettenReviewService {
 
     @Inject
     PartyHoheitService party;
+
+    @Inject
+    Prozessspur prozess;
 
     public enum Art {
         FIRMA, PERSON
@@ -100,6 +108,8 @@ public class DublettenReviewService {
             urteil = art == Art.FIRMA
                     ? berater.bewerteFirma(orgMuss(kandidatId), orgMuss(zielId))
                     : berater.bewertePerson(personMuss(kandidatId), personMuss(zielId));
+            prozess.schritt("KI-Dublettenbewertung", Akteur.SYSTEM, Prozess.System.BACKEND,
+                    Typ.BUSINESS_RULE, Phase.ANFRAGE_DUBLETTEN);
         }
 
         if (entscheidung == Entscheidung.GEMERGT) {
@@ -130,6 +140,9 @@ public class DublettenReviewService {
         r.entschiedenVon = entscheider;
         r.entschiedenAm = Instant.now();
         r.persist();
+        prozess.schritt(entscheidung == Entscheidung.GEMERGT
+                ? "Dubletten-Merge bestätigen" : "Neuanlage bestätigen",
+                Akteur.EBZ, Prozess.System.COCKPIT, Typ.USER_TASK, Phase.ANFRAGE_DUBLETTEN);
         return r;
     }
 

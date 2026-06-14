@@ -20,6 +20,11 @@ import de.netzfactor.ebz.controlling.integration.rechnung.model.Zahlungsart;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Zimmerart;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.BestellungBillingService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Typ;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 
 /**
  * Buchung im Kontext — der Naht-Punkt, der den Party-Kern an die Abrechnung andockt: Eingang ist
@@ -40,6 +45,9 @@ public class BuchungService {
 
     @Inject
     BestellungBillingService bestellungBilling;
+
+    @Inject
+    Prozessspur prozess;
 
     /** Buchungsauftrag: Teilnehmer + Besteller (Identitäten) + gewählter Kontext + Berufsschul-Daten. */
     public record Berufsschulbuchung(Long teilnehmerPersonId, Long bestellerPersonId,
@@ -91,6 +99,8 @@ public class BuchungService {
      */
     @Transactional
     public Anmeldung meldeAzubiAn(AzubiAnmeldung b) {
+        prozess.schritt("Azubi anmelden", Akteur.FIRMA, Prozess.System.PORTAL, Typ.USER_TASK,
+                Phase.AZUBI_ANMELDUNG);
         Person azubi = party.registriereTeilnehmer(b.organisationId(), b.azubiEmail(), b.azubiName(),
                 Mitgliedschaft.Rolle.AZUBI, false);
         Debitor debitor = party.ermittleDebitor(b.bestellerPersonId(), b.organisationId(), Bereich.BERUFSSCHULE);
@@ -110,6 +120,8 @@ public class BuchungService {
         a.unterrichtBetragCent = b.unterrichtBetragCent();
         a.uebernachtungBetragCent = b.uebernachtungBetragCent();
         a.persist();
+        prozess.schritt("Anmeldung anlegen (ANGEFRAGT)", Akteur.SYSTEM, Prozess.System.BACKEND,
+                Typ.SERVICE_TASK, Phase.AZUBI_ANMELDUNG);
         return a;
     }
 

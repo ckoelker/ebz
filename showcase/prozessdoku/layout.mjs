@@ -1,0 +1,25 @@
+// Ergänzt die von generate.py erzeugten (semantischen) BPMN-Dateien um ein Auto-Layout (DI-
+// Koordinaten) via bpmn.io's bpmn-auto-layout und legt die fertigen, in Camunda Modeler/draw.io
+// sauber öffnenden .bpmn nach showcase/docs/bpmn/ (committet).
+import { readdir, readFile, writeFile, mkdir } from 'node:fs/promises';
+import { dirname, join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { layoutProcess } from 'bpmn-auto-layout';
+
+const root = dirname(fileURLToPath(import.meta.url));
+const inDir = join(root, 'out');
+const outDir = join(root, '..', 'docs', 'bpmn');
+
+await mkdir(outDir, { recursive: true });
+const dateien = (await readdir(inDir)).filter((f) => f.endsWith('.bpmn')).sort();
+if (dateien.length === 0) {
+  console.error('Keine .bpmn in', inDir, '- bitte zuerst generate.py laufen lassen.');
+  process.exit(1);
+}
+for (const f of dateien) {
+  const xml = await readFile(join(inDir, f), 'utf8');
+  const layoutet = await layoutProcess(xml);
+  await writeFile(join(outDir, f), layoutet, 'utf8');
+  console.log('  layoutet', f);
+}
+console.log(`OK: ${dateien.length} BPMN -> ${outDir}`);

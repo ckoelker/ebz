@@ -17,6 +17,11 @@ import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.DebitorRolle;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Typ;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 
 /**
  * Party-Kern (Identitäts-Hoheit): das „eine Gehirn" für Personen-Identität und Bestellkontexte — der
@@ -41,6 +46,9 @@ public class PartyHoheitService {
     @Inject
     DebitorHoheitService debitorHoheit;
 
+    @Inject
+    Prozessspur prozess;
+
     /** Ein wählbarer Bestellkontext einer Person. {@code organisationId == null} ⇒ PRIVAT. */
     public record Kontext(Art art, Long organisationId, String bezeichnung, List<Mitgliedschaft.Rolle> rollen) {
         public enum Art { PRIVAT, FIRMA }
@@ -59,6 +67,8 @@ public class PartyHoheitService {
      */
     @Transactional
     public Person selbstRegistrieren(String keycloakSub, String email, String anzeigeName) {
+        prozess.schritt("Login & Konto-Claim", Akteur.FIRMA, Prozess.System.KEYCLOAK, Typ.USER_TASK,
+                Phase.EINLADUNG);
         // 1) Adresse bekannt → diese Person claimen (Login binden, Adresse verifizieren).
         PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
         if (vorhanden != null) {
@@ -208,6 +218,8 @@ public class PartyHoheitService {
     @Transactional
     public AnfrageErgebnis anfrageAusbildungsbetrieb(String name, String strasse, String plz, String ort,
             String land, String ustId, String ansprechpartnerEmail, String ansprechpartnerName) {
+        prozess.schritt("Ausbildungsbetrieb-Anfrage stellen", Akteur.ANONYM, Prozess.System.PORTAL,
+                Typ.USER_TASK, Phase.ANFRAGE_DUBLETTEN);
         Organisation o = legeOrganisationAn(name, strasse, plz, ort, land, ustId, Organisation.Status.ANGEFRAGT);
         Person ap = registriereTeilnehmer(o.id, ansprechpartnerEmail, ansprechpartnerName,
                 Mitgliedschaft.Rolle.AUSBILDER, true);

@@ -10,6 +10,11 @@ import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Typ;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
@@ -24,6 +29,9 @@ public class AnmeldungWorkflowService {
 
     @Inject
     Mailer mailer;
+
+    @Inject
+    Prozessspur prozess;
 
     /**
      * EBZ bestätigt eine angefragte Anmeldung ({@code ANGEFRAGT → BESTAETIGT_EBZ}) und benachrichtigt
@@ -41,6 +49,8 @@ public class AnmeldungWorkflowService {
                     + a.status + ").");
         }
         a.status = AnmeldungStatus.BESTAETIGT_EBZ;
+        prozess.schritt("Anmeldung prüfen & bestätigen", Akteur.EBZ, Prozess.System.COCKPIT,
+                Typ.USER_TASK, Phase.EBZ_BESTAETIGUNG);
 
         String azubiMail = a.teilnehmerEmail;
         if (azubiMail != null && !azubiMail.isBlank()) {
@@ -55,6 +65,8 @@ public class AnmeldungWorkflowService {
                     Viele Grüße
                     Dein EBZ-Team
                     """.formatted(a.teilnehmerName, schuljahrHalbjahr(a))));
+            prozess.schritt("Bestätigungsmail an Azubi", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
+                    Phase.EBZ_BESTAETIGUNG);
         }
 
         String firmaMail = bestellerEmail(a.bestellerPersonId);
@@ -70,6 +82,8 @@ public class AnmeldungWorkflowService {
                     Viele Grüße
                     Ihr EBZ-Team
                     """.formatted(a.teilnehmerName, schuljahrHalbjahr(a))));
+            prozess.schritt("Bestätigungsmail an Firma", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
+                    Phase.EBZ_BESTAETIGUNG);
         }
         return a;
     }
@@ -91,6 +105,8 @@ public class AnmeldungWorkflowService {
         a.status = AnmeldungStatus.AKTIV;
         a.vertragBestaetigtAm = Instant.now();
         a.vertragBestaetigtVon = bestaetigerPersonId;
+        prozess.schritt("Ausbildungsvertrag bestätigen", Akteur.FIRMA, Prozess.System.PORTAL,
+                Typ.USER_TASK, Phase.VERTRAG);
         return a;
     }
 

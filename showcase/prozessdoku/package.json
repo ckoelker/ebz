@@ -1,0 +1,12 @@
+{
+  "name": "ebz-prozessdoku",
+  "private": true,
+  "type": "module",
+  "description": "BPMN-Layout der generierten Prozessdoku (bpmn.io bpmn-auto-layout).",
+  "scripts": {
+    "layout": "node layout.mjs"
+  },
+  "dependencies": {
+    "bpmn-auto-layout": "^1.3.0"
+  }
+}
