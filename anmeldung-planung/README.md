@@ -281,6 +281,16 @@ E `228315a`, F `f04b19a`.
   Audit); Azubi-Selbst-Aktivierung = Claim.
 - **G** Rechnungslauf unverändert — verifiziert: bucht `AKTIV`, ignoriert `ANGEFRAGT`/`BESTAETIGT_EBZ`.
 
-> **Offen: H + I (Frontends).** H = SPA „Firmenportal" (`ebz-customers`): Anfrage → Login →
-> Azubis erfassen → Vertrag bestätigen. I = HITL-Cockpit-Modul in `mdm/` (`ebz-staff`): Review-Queue
-> + Entscheidung + EBZ-Bestätigung. Backend-Endpunkte stehen alle bereit.
+## Frontends
+
+- **I — HITL-Cockpit: GEBAUT (2026-06-14, Commit `123404b`)** als Modul im bestehenden
+  `showcase/mdm/` (`ebz-staff`, Rolle `rechnung-pflege`). Views `DublettenReview.vue` (Queue + KI-
+  Vorschlag → Merge/Neuanlage) + `AnmeldungenBestaetigung.vue` (offene Anmeldungen → EBZ-Bestätigung);
+  Routen `/reviews` + `/anmeldungen`; Client aus `/q/openapi` neu generiert (inkl. `/party`). Backend-
+  Zusatz: `GET /party/anmeldungen?status=…`. Verifiziert: `pnpm build` (vue-tsc) + Backend-Regression grün.
+  *Live-Betrieb: das laufende `showcase-integration`-Image ist älter (ohne `/party`) → Container neu
+  bauen: `docker compose --profile controlling up -d --build integration`.*
+- **H — Außenportal: OFFEN.** Eigene neue SPA `showcase/portal/` (`ebz-customers`) = allgemeines
+  Self-Service-Portal für **Firmen UND Teilnehmer** (künftig alle selbst implementierten Außen-
+  funktionen, nicht nur BS-Anmeldung): Anfrage → Login → Azubis erfassen → Vertrag bestätigen. Der
+  Shop (`showcase/frontend/`) bleibt eigenständig. Backend-Endpunkte stehen bereit.
