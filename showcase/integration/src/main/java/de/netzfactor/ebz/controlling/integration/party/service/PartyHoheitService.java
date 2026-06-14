@@ -46,6 +46,10 @@ public class PartyHoheitService {
         public enum Art { PRIVAT, FIRMA }
     }
 
+    /** Ergebnis einer Self-Service-Anfrage: die (provisorische) Organisation + ihr Ansprechpartner. */
+    public record AnfrageErgebnis(Organisation organisation, Person ansprechpartner) {
+    }
+
     // ───────────────────────── Identität: anlegen / claimen / mergen ─────────────────────────
 
     /**
@@ -166,6 +170,72 @@ public class PartyHoheitService {
         return ziel;
     }
 
+    // ───────────────────────── Organisation: anlegen / Dubletten / mergen ─────────────────────────
+
+    /**
+     * Legt eine Organisation an und setzt den {@link Organisation#matchSchluessel} mit <i>derselben</i>
+     * Normalisierung wie der Debitor ({@link DebitorHoheitService#matchSchluessel}) — so ist die spätere
+     * Auflösung Debitor↔Organisation ein exakter Schlüssel-Join, kein Raten.
+     */
+    @Transactional
+    public Organisation legeOrganisationAn(String name, String strasse, String plz, String ort,
+            String land, String ustId, Organisation.Status status) {
+        Organisation o = new Organisation();
+        o.name = name;
+        o.strasse = strasse;
+        o.plz = plz;
+        o.ort = ort;
+        o.land = land;
+        o.ustId = ustId;
+        o.status = status == null ? Organisation.Status.AKTIV : status;
+        o.matchSchluessel = DebitorHoheitService.matchSchluessel(name, plz, ustId);
+        o.persist();
+        return o;
+    }
+
+    /**
+     * Self-Service-Anfrage eines Ausbildungsbetriebs: legt die Organisation <b>provisorisch</b>
+     * ({@code ANGEFRAGT}) an und verknüpft den Ansprechpartner als buchungsberechtigte
+     * {@code AUSBILDER}-{@link Mitgliedschaft} (Person provisorisch, claimbar beim späteren Login).
+     * Kein Login wird hier erzeugt — der entsteht erst nach der HITL-/KI-Dublettenprüfung.
+     */
+    @Transactional
+    public AnfrageErgebnis anfrageAusbildungsbetrieb(String name, String strasse, String plz, String ort,
+            String land, String ustId, String ansprechpartnerEmail, String ansprechpartnerName) {
+        Organisation o = legeOrganisationAn(name, strasse, plz, ort, land, ustId, Organisation.Status.ANGEFRAGT);
+        Person ap = registriereTeilnehmer(o.id, ansprechpartnerEmail, ansprechpartnerName,
+                Mitgliedschaft.Rolle.AUSBILDER, true);
+        return new AnfrageErgebnis(o, ap);
+    }
+
+    /** Dubletten-Kandidaten einer Organisation: andere, nicht zusammengeführte Firmen mit gleichem Schlüssel. */
+    public List<Organisation> organisationKandidaten(Long organisationId) {
+        Organisation o = Organisation.findById(organisationId);
+        if (o == null || o.matchSchluessel == null) {
+            return List.of();
+        }
+        return Organisation.list("status <> ?1 and matchSchluessel = ?2 and id <> ?3",
+                Organisation.Status.ZUSAMMENGEFUEHRT, o.matchSchluessel, o.id);
+    }
+
+    /**
+     * Führt die Quell-Organisation in die Ziel-Organisation zusammen (HITL-Entscheidung): Mitgliedschaften
+     * werden umgehängt, die unterlegene Firma wird {@code ZUSAMMENGEFUEHRT} und zeigt per
+     * {@link Organisation#goldenOrganisationId} auf das Ziel.
+     */
+    @Transactional
+    public Organisation mergeOrganisation(Long quellId, Long zielId) {
+        if (quellId.equals(zielId)) {
+            throw new RegelVerletzung("Quell- und Ziel-Organisation sind identisch.");
+        }
+        Organisation quell = mussOrganisationAktiv(quellId);
+        Organisation ziel = mussOrganisationAktiv(zielId);
+        Mitgliedschaft.update("organisationId = ?1 where organisationId = ?2", ziel.id, quell.id);
+        quell.status = Organisation.Status.ZUSAMMENGEFUEHRT;
+        quell.goldenOrganisationId = ziel.id;
+        return ziel;
+    }
+
     // ───────────────────────── Kontexte & Abrechnungs-Projektion ─────────────────────────
 
     /** Wählbare Bestellkontexte: PRIVAT + jede Organisation mit aktiver, buchungsberechtigter Mitgliedschaft. */
@@ -277,6 +347,14 @@ public class PartyHoheitService {
         Organisation o = Organisation.findById(orgId);
         if (o == null) {
             throw RegelVerletzung.nichtGefunden("Organisation nicht gefunden: " + orgId);
+        }
+        return o;
+    }
+
+    private static Organisation mussOrganisationAktiv(Long orgId) {
+        Organisation o = mussOrganisation(orgId);
+        if (o.status == Organisation.Status.ZUSAMMENGEFUEHRT) {
+            throw new RegelVerletzung("Organisation " + orgId + " ist bereits zusammengeführt.");
         }
         return o;
     }

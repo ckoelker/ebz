@@ -4,6 +4,7 @@ import java.net.URI;
 import java.util.List;
 
 import io.quarkus.security.Authenticated;
+import io.vertx.core.http.HttpServerRequest;
 
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
@@ -31,6 +32,7 @@ import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.party.service.BuchungService;
 import de.netzfactor.ebz.controlling.integration.party.service.PartyHoheitService;
+import de.netzfactor.ebz.controlling.integration.party.service.RateLimiter;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.ExterneBestellung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
@@ -57,6 +59,9 @@ public class PartyResource {
     @Inject
     BuchungService buchung;
 
+    @Inject
+    RateLimiter rateLimiter;
+
     // ───────────────────────── DTOs (gebündelt) ─────────────────────────
 
     /** Admin-/Migrations-Anlage mit bekanntem externen {@code sub} (Bulk-Provisionierung). */
@@ -70,6 +75,26 @@ public class PartyResource {
 
     public record OrganisationDto(@NotBlank String name, String strasse, String plz, String ort,
             String land, String ustId) {
+    }
+
+    /**
+     * Öffentliche Self-Service-Anfrage eines Ausbildungsbetriebs (kein Login). {@code website} ist ein
+     * <b>Honeypot</b> — von echten Nutzern leer gelassen, von Bots oft befüllt; ein gefülltes Feld wird
+     * still abgelehnt.
+     */
+    public record AusbildungsbetriebAnfrage(@NotBlank String name, String strasse, String plz, String ort,
+            String land, String ustId, @NotBlank @Email String ansprechpartnerEmail,
+            @NotBlank String ansprechpartnerName, String website) {
+    }
+
+    public record AnfrageView(Long organisationId, String organisationStatus, PersonView ansprechpartner) {
+    }
+
+    public record OrganisationView(Long id, String name, String plz, String ort, String ustId,
+            String status, Long goldenOrganisationId) {
+    }
+
+    public record OrgMergeRequest(@NotNull Long quellId, @NotNull Long zielId) {
     }
 
     public record TeilnehmerAnlage(@NotBlank @Email String email, @NotBlank String anzeigeName,
@@ -192,16 +217,61 @@ public class PartyResource {
     @Path("/organisationen")
     @Transactional
     public Response createOrganisation(@Valid OrganisationDto dto) {
-        Organisation o = new Organisation();
-        o.name = dto.name();
-        o.strasse = dto.strasse();
-        o.plz = dto.plz();
-        o.ort = dto.ort();
-        o.land = dto.land();
-        o.ustId = dto.ustId();
-        o.persist();
+        // Admin-Anlage = vertrauenswürdig → direkt AKTIV (matchSchluessel wird gesetzt).
+        Organisation o = party.legeOrganisationAn(dto.name(), dto.strasse(), dto.plz(), dto.ort(),
+                dto.land(), dto.ustId(), Organisation.Status.AKTIV);
         return Response.created(URI.create("/party/organisationen/" + o.id))
                 .entity(o).build();
+    }
+
+    /**
+     * <b>Öffentlicher</b> Self-Service-Lead (unauthentifiziert, §9.1): ein Ausbildungsbetrieb meldet sich
+     * mit Firmendaten + Ansprechpartner an. Bot-/Spam-Schutz = Honeypot ({@code website}) + Rate-Limit
+     * je Client-IP. Es entsteht eine <b>provisorische</b> Organisation ({@code ANGEFRAGT}) + provisorischer
+     * Ansprechpartner; <i>kein Login</i> — der wird erst nach der HITL-/KI-Dublettenprüfung provisioniert.
+     */
+    @POST
+    @Path("/anfragen/ausbildungsbetrieb")
+    @Transactional
+    public Response anfrageAusbildungsbetrieb(@Valid AusbildungsbetriebAnfrage req,
+            @Context HttpServerRequest http) {
+        if (req.website() != null && !req.website().isBlank()) {
+            return Response.status(Response.Status.BAD_REQUEST).build(); // Honeypot ausgelöst (Bot)
+        }
+        if (!rateLimiter.erlaube("anfrage:" + clientIp(http), 5, 60_000)) {
+            return Response.status(429).build();
+        }
+        PartyHoheitService.AnfrageErgebnis erg = party.anfrageAusbildungsbetrieb(
+                req.name(), req.strasse(), req.plz(), req.ort(), req.land(), req.ustId(),
+                req.ansprechpartnerEmail(), req.ansprechpartnerName());
+        AnfrageView view = new AnfrageView(erg.organisation().id, erg.organisation().status.name(),
+                toView(erg.ansprechpartner()));
+        return Response.status(Response.Status.CREATED).entity(view).build();
+    }
+
+    @GET
+    @Path("/organisationen/{id}")
+    @Transactional
+    public Response getOrganisation(@PathParam("id") Long id) {
+        Organisation o = Organisation.findById(id);
+        return o == null ? notFound() : Response.ok(toOrgView(o)).build();
+    }
+
+    /** Organisations-Dubletten-Kandidaten (gleicher Schlüssel) zur HITL-Auflösung. */
+    @GET
+    @Path("/organisationen/{id}/kandidaten")
+    @Transactional
+    public List<OrganisationView> organisationKandidaten(@PathParam("id") Long id) {
+        return party.organisationKandidaten(id).stream().map(PartyResource::toOrgView).toList();
+    }
+
+    /** Führt eine Firmen-Dublette ({@code quellId}) in die Ziel-Organisation zusammen (HITL-Entscheidung). */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/organisationen/merge")
+    @Transactional
+    public OrganisationView mergeOrganisation(@Valid OrgMergeRequest req) {
+        return toOrgView(party.mergeOrganisation(req.quellId(), req.zielId()));
     }
 
     /** Firmenseitige Vor-Anlage eines Teilnehmers/Ansprechpartners per E-Mail (provisorisch + Mitgliedschaft). */
@@ -338,6 +408,19 @@ public class PartyResource {
 
     private static Response notFound() {
         return Response.status(Response.Status.NOT_FOUND).build();
+    }
+
+    /** Client-IP für das Rate-Limit: bevorzugt {@code X-Forwarded-For} (Reverse-Proxy), sonst Remote-Adresse. */
+    private static String clientIp(HttpServerRequest http) {
+        String fwd = http.getHeader("X-Forwarded-For");
+        if (fwd != null && !fwd.isBlank()) {
+            return fwd.split(",")[0].trim();
+        }
+        return http.remoteAddress() == null ? "unbekannt" : http.remoteAddress().host();
+    }
+
+    private static OrganisationView toOrgView(Organisation o) {
+        return new OrganisationView(o.id, o.name, o.plz, o.ort, o.ustId, o.status.name(), o.goldenOrganisationId);
     }
 
     private static PersonView toView(Person p) {
