@@ -72,7 +72,7 @@ public class PartyHoheitService {
         // 1) Adresse bekannt → diese Person claimen (Login binden, Adresse verifizieren).
         PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
         if (vorhanden != null) {
-            Person p = golden(Person.findById(vorhanden.personId));
+            Person p = golden(Person.findById(vorhanden.personId()));
             bindeSub(p, keycloakSub);
             vorhanden.verifiziert = true;
             return p;
@@ -81,14 +81,14 @@ public class PartyHoheitService {
         Person bySub = keycloakSub == null ? null : Person.find("keycloakSub", keycloakSub).firstResult();
         if (bySub != null) {
             Person p = golden(bySub);
-            legeEmailAn(p.id, email, true, false);
+            legeEmailAn(p, email, true, false);
             return p;
         }
         // 3) Beides neu → neue, sofort aktive Identität.
         Person p = neuePerson(anzeigeName, Person.Status.AKTIV);
         p.keycloakSub = keycloakSub;
         p.persist();
-        legeEmailAn(p.id, email, true, true);
+        legeEmailAn(p, email, true, true);
         return p;
     }
 
@@ -102,12 +102,12 @@ public class PartyHoheitService {
 
     /** Hat die Person (irgend)eine Mitgliedschaft in der Organisation? (Basis der Firmenportal-Scope-Prüfung.) */
     public boolean istMitglied(Long personId, Long organisationId) {
-        return Mitgliedschaft.count("personId = ?1 and organisationId = ?2", personId, organisationId) > 0;
+        return Mitgliedschaft.count("person.id = ?1 and organisation.id = ?2", personId, organisationId) > 0;
     }
 
     /** Darf die Person im Auftrag der Organisation bestellen? (Scope-Prüfung für das Self-Service-Portal.) */
     public boolean istBuchungsberechtigt(Long personId, Long organisationId) {
-        return Mitgliedschaft.count("personId = ?1 and organisationId = ?2 and buchungsberechtigt = true",
+        return Mitgliedschaft.count("person.id = ?1 and organisation.id = ?2 and buchungsberechtigt = true",
                 personId, organisationId) > 0;
     }
 
@@ -120,17 +120,17 @@ public class PartyHoheitService {
     @Transactional
     public Person registriereTeilnehmer(Long organisationId, String email, String anzeigeName,
             Mitgliedschaft.Rolle rolle, boolean buchungsberechtigt) {
-        mussOrganisation(organisationId);
+        Organisation o = mussOrganisation(organisationId);
         PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
         Person p;
         if (vorhanden != null) {
-            p = golden(Person.findById(vorhanden.personId));
+            p = golden(Person.findById(vorhanden.personId()));
         } else {
             p = neuePerson(anzeigeName, Person.Status.PROVISORISCH);
             p.persist();
-            legeEmailAn(p.id, email, false, true);
+            legeEmailAn(p, email, false, true);
         }
-        legeMitgliedschaftAn(p.id, organisationId, rolle, buchungsberechtigt);
+        legeMitgliedschaftAn(p, o, rolle, buchungsberechtigt);
         return p;
     }
 
@@ -143,11 +143,11 @@ public class PartyHoheitService {
     public Person findeOderLegePerson(String email, String anzeigeName) {
         PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
         if (vorhanden != null) {
-            return golden(Person.findById(vorhanden.personId));
+            return golden(Person.findById(vorhanden.personId()));
         }
         Person p = neuePerson(anzeigeName, Person.Status.PROVISORISCH);
         p.persist();
-        legeEmailAn(p.id, email, false, true);
+        legeEmailAn(p, email, false, true);
         return p;
     }
 
@@ -175,8 +175,8 @@ public class PartyHoheitService {
         }
         Person quell = mussAktiv(quellId);
         Person ziel = mussAktiv(zielId);
-        PersonEmail.update("personId = ?1 where personId = ?2", ziel.id, quell.id);
-        Mitgliedschaft.update("personId = ?1 where personId = ?2", ziel.id, quell.id);
+        PersonEmail.update("person = ?1 where person.id = ?2", ziel, quell.id);
+        Mitgliedschaft.update("person = ?1 where person.id = ?2", ziel, quell.id);
         if (ziel.keycloakSub == null && quell.keycloakSub != null) {
             ziel.keycloakSub = quell.keycloakSub;
             quell.keycloakSub = null; // Unique-Constraint: sub darf nur einmal existieren
@@ -248,7 +248,7 @@ public class PartyHoheitService {
         }
         Organisation quell = mussOrganisationAktiv(quellId);
         Organisation ziel = mussOrganisationAktiv(zielId);
-        Mitgliedschaft.update("organisationId = ?1 where organisationId = ?2", ziel.id, quell.id);
+        Mitgliedschaft.update("organisation = ?1 where organisation.id = ?2", ziel, quell.id);
         quell.status = Organisation.Status.ZUSAMMENGEFUEHRT;
         quell.goldenOrganisationId = ziel.id;
         return ziel;
@@ -265,16 +265,16 @@ public class PartyHoheitService {
         List<Kontext> ergebnis = new ArrayList<>();
         ergebnis.add(new Kontext(Kontext.Art.PRIVAT, null, "Privat", List.of()));
         LocalDate heute = LocalDate.now();
-        List<Mitgliedschaft> mitgliedschaften = Mitgliedschaft.list("personId", p.id);
+        List<Mitgliedschaft> mitgliedschaften = Mitgliedschaft.list("person.id", p.id);
         // Pro Organisation einen FIRMA-Kontext, wenn mindestens eine aktive buchungsberechtigte Rolle besteht.
         mitgliedschaften.stream()
                 .filter(m -> m.buchungsberechtigt && aktiv(m, heute))
-                .map(m -> m.organisationId)
+                .map(Mitgliedschaft::organisationId)
                 .distinct()
                 .forEach(orgId -> {
                     Organisation o = Organisation.findById(orgId);
                     List<Mitgliedschaft.Rolle> rollen = mitgliedschaften.stream()
-                            .filter(m -> m.organisationId.equals(orgId) && m.buchungsberechtigt && aktiv(m, heute))
+                            .filter(m -> m.organisationId().equals(orgId) && m.buchungsberechtigt && aktiv(m, heute))
                             .map(m -> m.rolle).toList();
                     ergebnis.add(new Kontext(Kontext.Art.FIRMA, orgId,
                             o == null ? ("Organisation " + orgId) : o.name, rollen));
@@ -328,24 +328,25 @@ public class PartyHoheitService {
         }
     }
 
-    private void legeEmailAn(Long personId, String email, boolean verifiziert, boolean primaer) {
+    private void legeEmailAn(Person person, String email, boolean verifiziert, boolean primaer) {
         PersonEmail e = new PersonEmail();
-        e.personId = personId;
+        e.person = person;
         e.email = normEmail(email);
         e.verifiziert = verifiziert;
         e.primaer = primaer;
         e.persist();
     }
 
-    private void legeMitgliedschaftAn(Long personId, Long orgId, Mitgliedschaft.Rolle rolle, boolean buchungsberechtigt) {
-        long vorhanden = Mitgliedschaft.count("personId = ?1 and organisationId = ?2 and rolle = ?3",
-                personId, orgId, rolle);
+    private void legeMitgliedschaftAn(Person person, Organisation organisation, Mitgliedschaft.Rolle rolle,
+            boolean buchungsberechtigt) {
+        long vorhanden = Mitgliedschaft.count("person.id = ?1 and organisation.id = ?2 and rolle = ?3",
+                person.id, organisation.id, rolle);
         if (vorhanden > 0) {
             return; // idempotent
         }
         Mitgliedschaft m = new Mitgliedschaft();
-        m.personId = personId;
-        m.organisationId = orgId;
+        m.person = person;
+        m.organisation = organisation;
         m.rolle = rolle;
         m.buchungsberechtigt = buchungsberechtigt;
         m.gueltigVon = LocalDate.now();
@@ -353,7 +354,7 @@ public class PartyHoheitService {
     }
 
     private void mussBuchungsberechtigt(Long personId, Long orgId) {
-        long ok = Mitgliedschaft.count("personId = ?1 and organisationId = ?2 and buchungsberechtigt = true",
+        long ok = Mitgliedschaft.count("person.id = ?1 and organisation.id = ?2 and buchungsberechtigt = true",
                 personId, orgId);
         if (ok == 0) {
             throw new RegelVerletzung("Person " + personId + " darf nicht im Auftrag von Organisation "
@@ -378,9 +379,9 @@ public class PartyHoheitService {
     }
 
     private static String primaerEmail(Long personId) {
-        PersonEmail e = PersonEmail.find("personId = ?1 and primaer = true", personId).firstResult();
+        PersonEmail e = PersonEmail.find("person.id = ?1 and primaer = true", personId).firstResult();
         if (e == null) {
-            e = PersonEmail.find("personId", personId).firstResult();
+            e = PersonEmail.find("person.id", personId).firstResult();
         }
         return e == null ? null : e.email;
     }

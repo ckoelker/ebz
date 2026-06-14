@@ -50,19 +50,11 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}"
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${LIGHTDASH_DB}" \
   -c "ALTER SCHEMA public OWNER TO \"${LIGHTDASH_USER}\";"
 
-# Formularverwaltung P1.0: Schema `bildung` (Bildungsangebote-MDM) in DB `controlling`, dem
-# controlling-User gehörend (Hibernate-update legt nur Tabellen an, nicht das Schema selbst).
+# MDM (Stammdaten-Kern): EIN Schema `mdm` in DB `controlling` bündelt Bildungsangebote
+# (Formularverwaltung P1.0), Billing/Beleg-SoR (Rechnungsstellung R1) und den Party-Kern
+# (Person/Organisation/Mitgliedschaft) — so können echte Fremdschlüssel schema-intern gesetzt werden
+# (Hibernate-update legt nur die Tabellen + FKs an, nicht das Schema selbst).
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
-  -c "CREATE SCHEMA IF NOT EXISTS bildung AUTHORIZATION \"${CONTROLLING_USER}\";"
+  -c "CREATE SCHEMA IF NOT EXISTS mdm AUTHORIZATION \"${CONTROLLING_USER}\";"
 
-# Rechnungsstellung R1: Schema `rechnung` (Billing/Beleg-SoR) in DB `controlling`, analog `bildung`
-# (Hibernate-update legt nur die Tabellen an, nicht das Schema selbst).
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
-  -c "CREATE SCHEMA IF NOT EXISTS rechnung AUTHORIZATION \"${CONTROLLING_USER}\";"
-
-# Party-Kern (CRM-Identität): Schema `party` (Person/Organisation/Mitgliedschaft) in DB `controlling`,
-# analog `bildung`/`rechnung` (Hibernate-update legt nur die Tabellen an, nicht das Schema selbst).
-psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
-  -c "CREATE SCHEMA IF NOT EXISTS party AUTHORIZATION \"${CONTROLLING_USER}\";"
-
-echo "initdb: DBs 'controlling' + 'lightdash', Schemata 'bildung'+'rechnung'+'party' und User (controlling/lightdash/${READER_USER}) sichergestellt."
+echo "initdb: DBs 'controlling' + 'lightdash', Schema 'mdm' und User (controlling/lightdash/${READER_USER}) sichergestellt."

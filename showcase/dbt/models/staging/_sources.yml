@@ -18,11 +18,11 @@ sources:
     tables:
       - name: stg_hubspot_deal
 
-  # Billing-SoR (Rechnungsstellung R1+) im selben controlling-DB; dbt liest direkt (kein dlt nötig).
+  # MDM-Kern (Bildung + Billing + Party) im selben controlling-DB; dbt liest direkt (kein dlt nötig).
   # PII-Minimierung erfolgt im Staging (keine Teilnehmer-/Zeitraum-Klartexte projizieren).
-  - name: rechnung
-    schema: rechnung
-    description: "Ausgestellte Belege + Positionen aus dem Billing-Service (alle Bereiche)."
+  - name: mdm
+    schema: mdm
+    description: "Stammdaten-Kern: ausgestellte Belege + Positionen aus dem Billing-Service (alle Bereiche)."
     tables:
       - name: rechnung
       - name: rechnung_position

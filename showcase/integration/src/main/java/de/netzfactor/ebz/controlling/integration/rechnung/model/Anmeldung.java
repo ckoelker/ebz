@@ -6,25 +6,32 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.Version;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
+
+import de.netzfactor.ebz.controlling.integration.bildung.model.Bildungsangebot;
+import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
+import de.netzfactor.ebz.controlling.integration.party.model.Person;
 
 /**
  * Abrechnungsbasis der Vertrags-Ströme (R1: Berufsschule; Hochschule-Felder vorbereitet, Logik R6).
  * Der Rechnungslauf zieht die {@code AKTIV}en Anmeldungen eines Zeitraums, gruppiert sie je
  * {@code zahlungspflichtigerDebitor} (Sammelrechnung) und befüllt daraus die Positionen.
  * <p>
- * Lose Kopplung über IDs (kein JPA-Cross-Schema-Mapping): {@code bildungsangebotId} →
- * {@code bildung.bildungsangebot}, {@code zahlungspflichtigerDebitorId} → {@code rechnung.debitor}.
+ * Echte FK-Kopplung im gemeinsamen Schema {@code mdm}: {@code bildungsangebot} → {@code mdm.bildungsangebot},
+ * {@code zahlungspflichtigerDebitor} → {@code mdm.debitor} (Golden-/Merge-Zeiger bleiben FK-frei).
  * <p>
  * <b>Berufsschule:</b> Eine Rechnung besteht aus 1–2 Positionen. Die Beträge sind variable Werte je
  * Anmeldung ({@code unterrichtBetragCent} immer, {@code uebernachtungBetragCent} nur wenn
  * {@code zimmerart} ≠ KEINE) — Quelle der Positionsbeträge (Entscheidung a), keine Tarif-Tabelle.
  */
 @Entity
-@Table(name = "anmeldung", schema = "rechnung")
+@Table(name = "anmeldung", schema = "mdm")
 public class Anmeldung extends PanacheEntity {
 
     @Version
@@ -40,26 +47,31 @@ public class Anmeldung extends PanacheEntity {
     @Column(name = "teilnehmer_email", length = 200)
     public String teilnehmerEmail;
 
-    // ── Party-Kern-Provenienz (lose über ID ins Schema {@code party}; null bei Alt-/Direktanlage) ──
-    /** Teilnehmer als {@code party.person} (Identität); {@code teilnehmerName/email} bleiben Anzeige-Snapshot. */
-    @Column(name = "teilnehmer_person_id")
-    public Long teilnehmerPersonId;
+    // ── Party-Kern-Provenienz (FK ins MDM-Schema; null bei Alt-/Direktanlage) ──
+    /** Teilnehmer als {@code mdm.person} (Identität); {@code teilnehmerName/email} bleiben Anzeige-Snapshot. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "teilnehmer_person_id")
+    public Person teilnehmerPerson;
 
-    /** Wer gebucht hat ({@code party.person}); aus dessen Kontext leitet sich der zahlungspflichtige Debitor ab. */
-    @Column(name = "besteller_person_id")
-    public Long bestellerPersonId;
+    /** Wer gebucht hat ({@code mdm.person}); aus dessen Kontext leitet sich der zahlungspflichtige Debitor ab. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "besteller_person_id")
+    public Person bestellerPerson;
 
-    /** Gewählter Bestellkontext: {@code party.organisation} (im Auftrag von …) bzw. {@code null} = privat. */
-    @Column(name = "kontext_organisation_id")
-    public Long kontextOrganisationId;
+    /** Gewählter Bestellkontext: {@code mdm.organisation} (im Auftrag von …) bzw. {@code null} = privat. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "kontext_organisation_id")
+    public Organisation kontextOrganisation;
 
-    /** Bezug ins Bildungsangebot-MDM (Schema {@code bildung}); lose über ID. */
-    @Column(name = "bildungsangebot_id")
-    public Long bildungsangebotId;
+    /** Bezug ins Bildungsangebot-MDM ({@code mdm.bildungsangebot}). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "bildungsangebot_id")
+    public Bildungsangebot bildungsangebot;
 
     /** Wer die Rechnung erhält (Gruppierungs-Schlüssel der Sammelrechnung). */
-    @Column(name = "zahlungspflichtiger_debitor_id", nullable = false)
-    public Long zahlungspflichtigerDebitorId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "zahlungspflichtiger_debitor_id", nullable = false)
+    public Debitor zahlungspflichtigerDebitor;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 16)
@@ -98,8 +110,9 @@ public class Anmeldung extends PanacheEntity {
      * entstehen ZWEI getrennte Rechnungen (Firma + Studierende:r) als unabhängige Forderungen ohne
      * Restschuld-Haftung. {@code null} = die ganze Gebühr geht an {@code zahlungspflichtigerDebitorId}.
      */
-    @Column(name = "firma_debitor_id")
-    public Long firmaDebitorId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "firma_debitor_id")
+    public Debitor firmaDebitor;
 
     @Column(name = "firma_anteil_cent")
     public Integer firmaAnteilCent;
@@ -113,7 +126,37 @@ public class Anmeldung extends PanacheEntity {
     @Column(name = "vertrag_bestaetigt_am")
     public Instant vertragBestaetigtAm;
 
-    /** {@code party.person} der bestätigenden Firmen-Ansprechperson (Audit). */
-    @Column(name = "vertrag_bestaetigt_von")
-    public Long vertragBestaetigtVon;
+    /** {@code mdm.person} der bestätigenden Firmen-Ansprechperson (Audit). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "vertrag_bestaetigt_von")
+    public Person vertragBestaetiger;
+
+    // ── Abgeleitete FK-IDs (View-/Mapping-Komfort; greifen nur die {@code id} ab, kein Proxy-Init) ──
+    public Long teilnehmerPersonId() {
+        return teilnehmerPerson == null ? null : teilnehmerPerson.id;
+    }
+
+    public Long bestellerPersonId() {
+        return bestellerPerson == null ? null : bestellerPerson.id;
+    }
+
+    public Long kontextOrganisationId() {
+        return kontextOrganisation == null ? null : kontextOrganisation.id;
+    }
+
+    public Long bildungsangebotId() {
+        return bildungsangebot == null ? null : bildungsangebot.id;
+    }
+
+    public Long zahlungspflichtigerDebitorId() {
+        return zahlungspflichtigerDebitor == null ? null : zahlungspflichtigerDebitor.id;
+    }
+
+    public Long firmaDebitorId() {
+        return firmaDebitor == null ? null : firmaDebitor.id;
+    }
+
+    public Long vertragBestaetigtVon() {
+        return vertragBestaetiger == null ? null : vertragBestaetiger.id;
+    }
 }

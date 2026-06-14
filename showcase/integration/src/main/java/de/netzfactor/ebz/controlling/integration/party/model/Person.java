@@ -23,7 +23,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * {@link #goldenPersonId}. Schema {@code party} explizit am {@code @Table}.
  */
 @Entity
-@Table(name = "person", schema = "party")
+@Table(name = "person", schema = "mdm")
 public class Person extends PanacheEntity {
 
     /** AKTIV = Golden-Record mit Login; PROVISORISCH = von einer Firma vor-angelegt, noch nicht

@@ -24,7 +24,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * zöge es {@code stg_hubspot_deal} mit um).
  */
 @Entity
-@Table(name = "bildungsangebot", schema = "bildung")
+@Table(name = "bildungsangebot", schema = "mdm")
 public class Bildungsangebot extends PanacheEntity {
 
     /** Optimistic Locking (§11.9-C2). */

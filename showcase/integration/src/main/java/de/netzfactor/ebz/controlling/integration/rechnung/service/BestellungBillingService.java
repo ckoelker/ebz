@@ -58,7 +58,7 @@ public class BestellungBillingService {
         Rechnung r = new Rechnung();
         r.belegart = Belegart.RECHNUNG;
         r.bereich = bereich;
-        r.debitorId = debitorId;
+        r.debitor = Debitor.findById(debitorId);
         r.zeitraumBezeichnung = "%s-Bestellung %s (%s)".formatted(quelle, externeId, zahlungsart);
         r.laufSchluessel = schluessel;
         r.status = RechnungStatus.ENTWURF;

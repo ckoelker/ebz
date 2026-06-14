@@ -16,7 +16,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * {@code leistungsart} wird vorgehalten, damit R4 das DATEV-Erlöskonto ableiten kann.
  */
 @Entity
-@Table(name = "rechnung_position", schema = "rechnung")
+@Table(name = "rechnung_position", schema = "mdm")
 public class RechnungPosition extends PanacheEntity {
 
     @ManyToOne(optional = false)

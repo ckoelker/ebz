@@ -197,8 +197,9 @@ jeder Schritt endet mit `-Dtest=…`-gezielten Tests, nicht der ganzen Suite.
 - `Mitgliedschaft.Rolle` ggf. += `ANSPRECHPARTNER` (falls nicht über `AUSBILDER` abgedeckt).
 - **Audit** (leichtgewichtig): wer/wann hat Review entschieden, Vertrag bestätigt, mit KI-Score
   (Nachvollziehbarkeit der HITL-Entscheidung).
-- Hibernate `schema-management.strategy=update` legt **Tabellen** an; **Schema** `party` existiert
-  bereits (initdb). Keine neuen Schemata nötig.
+- Hibernate `schema-management.strategy=update` legt **Tabellen + FKs** an; **Schema** `mdm` existiert
+  bereits (initdb). Keine neuen Schemata nötig. (Seit 2026-06-14: `party`/`rechnung`/`bildung` zu
+  einem Schema `mdm` zusammengeführt, echte `@ManyToOne`-FKs.)
 
 ---
 

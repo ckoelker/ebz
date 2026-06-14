@@ -32,9 +32,9 @@ public class RechnungZugferdMapper {
     EbzVerkaeufer verkaeufer;
 
     public RechnungZugferdDaten baue(Rechnung r) {
-        Debitor d = Debitor.findById(r.debitorId);
+        Debitor d = Debitor.findById(r.debitorId());
         if (d == null) {
-            throw new IllegalStateException("Debitor zur Rechnung fehlt: " + r.debitorId);
+            throw new IllegalStateException("Debitor zur Rechnung fehlt: " + r.debitorId());
         }
         var empf = new RechnungZugferdDaten.Empfaenger(d.debitorNr, d.name, d.strasse, d.plz, d.ort,
                 d.land, d.ustId, d.email);
@@ -53,8 +53,8 @@ public class RechnungZugferdMapper {
 
         String originalNummer = null;
         LocalDate originalDatum = null;
-        if (r.originalRechnungId != null) {
-            Rechnung orig = Rechnung.findById(r.originalRechnungId);
+        if (r.originalRechnung != null) {
+            Rechnung orig = Rechnung.findById(r.originalRechnungId());
             if (orig != null) {
                 originalNummer = orig.nummer;
                 originalDatum = orig.ausstellungsdatum;

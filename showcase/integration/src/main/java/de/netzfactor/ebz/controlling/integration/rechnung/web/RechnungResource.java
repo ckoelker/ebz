@@ -38,6 +38,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungPositionDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.HochschulLaufRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungslaufRequest;
+import de.netzfactor.ebz.controlling.integration.bildung.model.Bildungsangebot;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
@@ -515,15 +516,16 @@ public class RechnungResource {
     }
 
     private static DebitorAliasDto toAlias(DebitorAlias a) {
-        return new DebitorAliasDto(a.id, a.debitorId, a.quelle, a.externeNr);
+        return new DebitorAliasDto(a.id, a.debitorId(), a.quelle, a.externeNr);
     }
 
     private static void applyAnmeldung(AnmeldungDto dto, Anmeldung a) {
         a.typ = dto.typ();
         a.teilnehmerName = dto.teilnehmerName();
         a.teilnehmerEmail = dto.teilnehmerEmail();
-        a.bildungsangebotId = dto.bildungsangebotId();
-        a.zahlungspflichtigerDebitorId = dto.zahlungspflichtigerDebitorId();
+        a.bildungsangebot = dto.bildungsangebotId() == null ? null : Bildungsangebot.findById(dto.bildungsangebotId());
+        a.zahlungspflichtigerDebitor = dto.zahlungspflichtigerDebitorId() == null
+                ? null : Debitor.findById(dto.zahlungspflichtigerDebitorId());
         a.status = dto.status();
         a.schuljahr = dto.schuljahr();
         a.halbjahr = dto.halbjahr();
@@ -532,23 +534,23 @@ public class RechnungResource {
         a.uebernachtungBetragCent = dto.uebernachtungBetragCent();
         a.semester = dto.semester();
         a.semesterbetragCent = dto.semesterbetragCent();
-        a.firmaDebitorId = dto.firmaDebitorId();
+        a.firmaDebitor = dto.firmaDebitorId() == null ? null : Debitor.findById(dto.firmaDebitorId());
         a.firmaAnteilCent = dto.firmaAnteilCent();
         a.ratenAnzahl = dto.ratenAnzahl();
     }
 
     private static AnmeldungDto toAnmeldung(Anmeldung a) {
         return new AnmeldungDto(a.id, a.version, a.typ, a.teilnehmerName, a.teilnehmerEmail,
-                a.bildungsangebotId, a.zahlungspflichtigerDebitorId, a.status,
+                a.bildungsangebotId(), a.zahlungspflichtigerDebitorId(), a.status,
                 a.schuljahr, a.halbjahr, a.zimmerart, a.unterrichtBetragCent, a.uebernachtungBetragCent,
-                a.semester, a.semesterbetragCent, a.firmaDebitorId, a.firmaAnteilCent, a.ratenAnzahl);
+                a.semester, a.semesterbetragCent, a.firmaDebitorId(), a.firmaAnteilCent, a.ratenAnzahl);
     }
 
     private static RechnungDto toRechnung(Rechnung r) {
         List<RechnungPositionDto> pos = r.positionen.stream().map(RechnungResource::toPosition).toList();
-        return new RechnungDto(r.id, r.version, r.belegart, r.bereich, r.nummer, r.debitorId,
+        return new RechnungDto(r.id, r.version, r.belegart, r.bereich, r.nummer, r.debitorId(),
                 r.zeitraumBezeichnung, r.ausstellungsdatum, r.zahlungszielTage, r.status,
-                r.originalRechnungId, r.summeCent(), pos);
+                r.originalRechnungId(), r.summeCent(), pos);
     }
 
     private static RechnungPositionDto toPosition(RechnungPosition p) {

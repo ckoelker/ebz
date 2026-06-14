@@ -78,7 +78,7 @@ public class DebitorHoheitService {
         if (alias == null) {
             return null;
         }
-        return golden(Debitor.findById(alias.debitorId));
+        return golden(Debitor.findById(alias.debitorId()));
     }
 
     /** Dublettenkandidaten: andere aktive Debitoren im Bereich mit gleichem Dublettenschlüssel. */
@@ -93,7 +93,7 @@ public class DebitorHoheitService {
 
     /** Aliase eines Debitors (zur Anzeige/Audit). */
     public List<DebitorAlias> aliase(Long debitorId) {
-        return DebitorAlias.list("debitorId", debitorId);
+        return DebitorAlias.list("debitor.id", debitorId);
     }
 
     /**
@@ -111,9 +111,9 @@ public class DebitorHoheitService {
         if (quell.bereich != ziel.bereich) {
             throw new RegelVerletzung("Zusammenführen nur innerhalb desselben Bereichs möglich.");
         }
-        Rechnung.update("debitorId = ?1 where debitorId = ?2", ziel.id, quell.id);
-        Anmeldung.update("zahlungspflichtigerDebitorId = ?1 where zahlungspflichtigerDebitorId = ?2", ziel.id, quell.id);
-        DebitorAlias.update("debitorId = ?1 where debitorId = ?2", ziel.id, quell.id);
+        Rechnung.update("debitor = ?1 where debitor.id = ?2", ziel, quell.id);
+        Anmeldung.update("zahlungspflichtigerDebitor = ?1 where zahlungspflichtigerDebitor.id = ?2", ziel, quell.id);
+        DebitorAlias.update("debitor = ?1 where debitor.id = ?2", ziel, quell.id);
         legeAliasAn(ziel.id, "MERGE", quell.debitorNr);
         quell.status = DebitorStatus.ZUSAMMENGEFUEHRT;
         quell.goldenDebitorId = ziel.id;
@@ -129,7 +129,7 @@ public class DebitorHoheitService {
         long vorhanden = DebitorAlias.count("quelle = ?1 and externeNr = ?2", quelle, externeNr);
         if (vorhanden == 0) {
             DebitorAlias a = new DebitorAlias();
-            a.debitorId = debitorId;
+            a.debitor = Debitor.findById(debitorId);
             a.quelle = quelle;
             a.externeNr = externeNr;
             a.persist();

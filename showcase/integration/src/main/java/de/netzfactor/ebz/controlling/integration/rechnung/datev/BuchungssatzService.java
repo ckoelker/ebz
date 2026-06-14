@@ -31,8 +31,8 @@ public class BuchungssatzService {
         if (r.nummer == null) {
             return List.of(); // nur festgeschriebene Belege
         }
-        Debitor d = Debitor.findById(r.debitorId);
-        String personenkonto = personenkonto(d, r.debitorId);
+        Debitor d = Debitor.findById(r.debitorId());
+        String personenkonto = personenkonto(d, r.debitorId());
         boolean haben = r.belegart == Belegart.GUTSCHRIFT || r.belegart == Belegart.STORNO;
         String sollHaben = haben ? "H" : "S";
         String text = buchungstext(r);

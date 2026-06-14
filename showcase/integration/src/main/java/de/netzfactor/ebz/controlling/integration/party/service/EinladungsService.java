@@ -86,9 +86,9 @@ public class EinladungsService {
     }
 
     private static String primaerEmail(Long personId) {
-        PersonEmail e = PersonEmail.find("personId = ?1 and primaer = true", personId).firstResult();
+        PersonEmail e = PersonEmail.find("person.id = ?1 and primaer = true", personId).firstResult();
         if (e == null) {
-            e = PersonEmail.find("personId", personId).firstResult();
+            e = PersonEmail.find("person.id", personId).firstResult();
         }
         return e == null ? null : e.email;
     }

@@ -51,8 +51,8 @@ public class AnmeldungWorkflowResource {
                         List.of(AnmeldungStatus.ANGEFRAGT, AnmeldungStatus.BESTAETIGT_EBZ)).page(0, 200).list()
                 : Anmeldung.find("status = ?1 order by id desc", status).page(0, 200).list();
         return anmeldungen.stream()
-                .map(a -> new OffeneAnmeldungView(a.id, a.teilnehmerName, a.kontextOrganisationId,
-                        a.zahlungspflichtigerDebitorId, a.schuljahr, a.halbjahr, a.status.name()))
+                .map(a -> new OffeneAnmeldungView(a.id, a.teilnehmerName, a.kontextOrganisationId(),
+                        a.zahlungspflichtigerDebitorId(), a.schuljahr, a.halbjahr, a.status.name()))
                 .toList();
     }
 
@@ -63,6 +63,6 @@ public class AnmeldungWorkflowResource {
     @Transactional
     public AnmeldungStatusView bestaetigen(@PathParam("id") Long id) {
         Anmeldung a = workflow.bestaetigeDurchEbz(id);
-        return new AnmeldungStatusView(a.id, a.status.name(), a.teilnehmerName, a.kontextOrganisationId);
+        return new AnmeldungStatusView(a.id, a.status.name(), a.teilnehmerName, a.kontextOrganisationId());
     }
 }

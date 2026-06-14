@@ -5,7 +5,8 @@
 > R3, DATEV = R4, Hochschule = R6, Vendure-Quelle = R7.** Stand 2026-06-13.
 >
 > **STATUS: GEBAUT + VERIFIZIERT (2026-06-13).** Package `…integration.rechnung` (model/dto/
-> validation/service/web), Schema `rechnung` (5 Tabellen), Nummernkreis-Seeding beim Start, RBAC-Rolle
+> validation/service/web), Schema **`mdm`** (5 Tabellen; 2026-06-14 aus `rechnung` konsolidiert),
+> Nummernkreis-Seeding beim Start, RBAC-Rolle
 > `rechnung-pflege` (Keycloak-Realm + live). Tests: 11 grün (4 OpenAPI-Spec, 5 Lebenszyklus rest-
 > assured, 2 Nummernkreis-Unit inkl. nebenläufig-lückenlos). Live gegen den Stack end-to-end geprüft
 > (Token `staff2`: 401 ohne Token, Sammelrechnung 3 Pos./430.000 Cent, Ausstellen `RE-BS-00004`,
@@ -18,7 +19,8 @@
 
 ## Verortung
 - Package `de.netzfactor.ebz.controlling.integration.rechnung` (+ Unterpakete `model`/`web`/`service`).
-- **Eigenes DB-Schema `rechnung`** in DB `controlling` (analog `bildung`; explizit `@Table(schema="rechnung")`).
+- **DB-Schema `mdm`** in DB `controlling` (explizit `@Table(schema="mdm")`; 2026-06-14 mit `party`+`bildung`
+  zu einem `mdm`-Schema zusammengeführt, echte `@ManyToOne`-FKs).
 - Reuse vorhandener Bausteine: Bean-Validation→smallrye-openapi (Stack B), `quarkus-oidc` RBAC,
   Panache. **R1 fügt keine neuen Maven-Deps hinzu** (Mustang/PDFBox erst R2).
 

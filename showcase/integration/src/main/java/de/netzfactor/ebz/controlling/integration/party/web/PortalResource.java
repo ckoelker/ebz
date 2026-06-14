@@ -73,8 +73,8 @@ public class PortalResource {
                 aufrufer.id, dto.organisationId(), dto.azubiEmail(), dto.azubiName(),
                 dto.schuljahr(), dto.halbjahr(), dto.zimmerart(),
                 dto.unterrichtBetragCent(), dto.uebernachtungBetragCent()));
-        AzubiAnmeldungView view = new AzubiAnmeldungView(a.id, a.teilnehmerPersonId, a.kontextOrganisationId,
-                a.zahlungspflichtigerDebitorId, a.status.name(), a.teilnehmerName);
+        AzubiAnmeldungView view = new AzubiAnmeldungView(a.id, a.teilnehmerPersonId(), a.kontextOrganisationId(),
+                a.zahlungspflichtigerDebitorId(), a.status.name(), a.teilnehmerName);
         return Response.status(Response.Status.CREATED).entity(view).build();
     }
 
@@ -93,13 +93,13 @@ public class PortalResource {
         if (a == null) {
             return Response.status(Response.Status.NOT_FOUND).build();
         }
-        Long orgId = a.kontextOrganisationId;
+        Long orgId = a.kontextOrganisationId();
         if (aufrufer == null || orgId == null || !party.istBuchungsberechtigt(aufrufer.id, orgId)) {
             return Response.status(Response.Status.FORBIDDEN).build();
         }
         Anmeldung b = workflow.bestaetigeVertrag(id, aufrufer.id);
-        AzubiAnmeldungView view = new AzubiAnmeldungView(b.id, b.teilnehmerPersonId, b.kontextOrganisationId,
-                b.zahlungspflichtigerDebitorId, b.status.name(), b.teilnehmerName);
+        AzubiAnmeldungView view = new AzubiAnmeldungView(b.id, b.teilnehmerPersonId(), b.kontextOrganisationId(),
+                b.zahlungspflichtigerDebitorId(), b.status.name(), b.teilnehmerName);
         return Response.ok(view).build();
     }
 }

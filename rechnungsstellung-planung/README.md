@@ -17,8 +17,14 @@ Planungs-/Konzept-Doku, **kein Code**.
   für die Code-Planung (Antworten Gruppe 1–8): Abrechnungsquelle, Debitoren-Strategie, Berufsschul-/
   Hochschul-Regeln, Storno/Gutschrift, Belegfluss/Festschreibung + Architektur-Rollen (Vendure bleibt).
 - **[R1-Code-Plan-Rechnungsstellung.md](R1-Code-Plan-Rechnungsstellung.md)** — konkreter
-  Implementierungsplan im `integration`-Service (Schema `rechnung`, Datenmodell, Lebenszyklus/
+  Implementierungsplan im `integration`-Service (Schema `mdm`, Datenmodell, Lebenszyklus/
   Festschreibung, Services, REST-Endpunkte, Teststrategie); R1-Slice = Berufsschule end-to-end.
+
+> **Schema-Update 2026-06-14:** Die DB-Schemas `rechnung`, `party` und `bildung` sind zu **einem
+> Schema `mdm`** zusammengeführt (Java-Packages unverändert). Die weichen `*Id`-Long-Spalten sind
+> echte **`@ManyToOne`-Fremdschlüssel** (z. B. `anmeldung`→`debitor`/`person`/`bildungsangebot`,
+> `rechnung`→`debitor` + Self-FK, `debitor_alias`→`debitor`). FK-frei bleiben Golden-Record/Merge
+> (`golden_*`) und die polymorphen `dubletten_review.kandidat_id/ziel_id`. dbt-Source heißt jetzt `mdm`.
   **STATUS: GEBAUT + VERIFIZIERT (2026-06-13)** — 11 Tests grün + live end-to-end gegen den Stack.
 
 ## Kurzfassung
@@ -35,14 +41,14 @@ Planungs-/Konzept-Doku, **kein Code**.
   Regeln, E-Rechnungs-Pflicht-Timeline.
 
 > Status: **R1 (Berufsschule end-to-end) GEBAUT + VERIFIZIERT** (Backend im `integration`-Service,
-> Schema `rechnung`). Die nächsten Milestones (R2 ZUGFeRD, R3 Debitoren-Match/Merge, R4 DATEV …)
+> Schema `mdm`). Die nächsten Milestones (R2 ZUGFeRD, R3 Debitoren-Match/Merge, R4 DATEV …)
 > bleiben Konzept; der DATEV-Weg ist weiter beim Kunden zu klären.
 
 ## Optionale Erweiterung — Billing-Erlös ins Controlling/Lightdash
 Heute speist nur der **Vendure-Shop** (per dlt) und HubSpot die Analytics-Marts; die ausgestellten
-**Rechnungen (`rechnung.*`) sind in Lightdash unsichtbar** — d. h. Berufsschul-/Hochschul-Erlöse
-fehlen in der BI. **GEBAUT (2026-06-14):** dbt liest `rechnung` direkt als Source (gleicher
-`controlling`-DB-Owner), **PII-minimiert im Staging** (keine Teilnehmer-/Zeitraum-Klartexte):
+**Rechnungen (`mdm.*`) sind in Lightdash unsichtbar** — d. h. Berufsschul-/Hochschul-Erlöse
+fehlen in der BI. **GEBAUT (2026-06-14):** dbt liest die Belege direkt als Source (Schema `mdm`,
+gleicher `controlling`-DB-Owner), **PII-minimiert im Staging** (keine Teilnehmer-/Zeitraum-Klartexte):
 `stg_rechnung_belege` + `stg_rechnung_positionen` → Mart **`fct_revenue_billed`** (fakturierter
 Netto-Erlös je Monat × Bereich; Storno/Gutschrift sind negativ gespeichert und netten automatisch).
 Damit zeigt Lightdash den Umsatz aus dem **Billing-SoR über alle Bereiche** (Schule/Hochschule/
@@ -54,7 +60,7 @@ Akademie/Shop), nicht nur den Shop-Strom.
 gesicherter Zukunftsumsatz, oft lange **vor** dem Rechnungslauf — diese Lücke (Einschreibung →
 Festschreibung) ist in der BI unsichtbar. Das schul-/hochschulseitige Pendant zum Vendure-
 `contracted`-Bucket fehlt also.
-- Skizze: PII-minimierte Source `stg_rechnung_anmeldungen` (Schema `rechnung.anmeldung`; nur
+- Skizze: PII-minimierte Source `stg_rechnung_anmeldungen` (Tabelle `mdm.anmeldung`; nur
   `bereich`/`typ`/`status`/Beträge/`schuljahr`/`halbjahr`/`semester`/`firma_anteil_cent`, **keine**
   `teilnehmer_name`/`teilnehmer_email`) → Mart `fct_revenue_contracted_enrollment` (AKTIVe
   Anmeldungen je Bereich/Periode) → in den **`contracted`-Bucket** des Forecasts einhängen.

@@ -18,7 +18,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * {@code rechnung} explizit am {@code @Table} (analog {@code bildung}).
  */
 @Entity
-@Table(name = "debitor", schema = "rechnung")
+@Table(name = "debitor", schema = "mdm")
 public class Debitor extends PanacheEntity {
 
     @Version

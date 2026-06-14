@@ -10,4 +10,4 @@ select
     steuerfall,
     steuersatz,
     leistungsart
-from {{ source('rechnung', 'rechnung_position') }}
+from {{ source('mdm', 'rechnung_position') }}

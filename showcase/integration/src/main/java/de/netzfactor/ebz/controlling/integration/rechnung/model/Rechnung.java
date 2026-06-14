@@ -9,6 +9,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
@@ -23,7 +26,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * ({@code GUTSCHRIFT}/{@code STORNO}/{@code NACHBERECHNUNG}) mit {@code originalRechnungId}.
  */
 @Entity
-@Table(name = "rechnung", schema = "rechnung")
+@Table(name = "rechnung", schema = "mdm")
 public class Rechnung extends PanacheEntity {
 
     @Version
@@ -41,8 +44,9 @@ public class Rechnung extends PanacheEntity {
     @Column(name = "nummer", unique = true, length = 32)
     public String nummer;
 
-    @Column(name = "debitor_id", nullable = false)
-    public Long debitorId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "debitor_id", nullable = false)
+    public Debitor debitor;
 
     /** Klartext-Abrechnungszeitraum, z. B. "Schuljahr 2025/2026, 2. Halbjahr". */
     @Column(name = "zeitraum_bezeichnung", length = 120)
@@ -62,13 +66,23 @@ public class Rechnung extends PanacheEntity {
     @Column(name = "status", nullable = false, length = 16)
     public RechnungStatus status;
 
-    /** Pflicht bei GUTSCHRIFT/STORNO/NACHBERECHNUNG — Bezug auf die Originalrechnung. */
-    @Column(name = "original_rechnung_id")
-    public Long originalRechnungId;
+    /** Pflicht bei GUTSCHRIFT/STORNO/NACHBERECHNUNG — Bezug auf die Originalrechnung (Self-FK). */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "original_rechnung_id")
+    public Rechnung originalRechnung;
 
     @OneToMany(mappedBy = "rechnung", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
     public List<RechnungPosition> positionen = new ArrayList<>();
+
+    /** Abgeleitete FK-IDs (View-/Mapping-Komfort). */
+    public Long debitorId() {
+        return debitor == null ? null : debitor.id;
+    }
+
+    public Long originalRechnungId() {
+        return originalRechnung == null ? null : originalRechnung.id;
+    }
 
     /** Summe aller Positionsbeträge in Cent (Gesamtbetrag des Belegs). */
     public long summeCent() {

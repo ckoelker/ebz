@@ -6,6 +6,9 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
 import jakarta.persistence.Version;
@@ -19,7 +22,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * Auftrag</i> dieser Organisation bestellen darf — das speist die wählbaren Bestellkontexte.
  */
 @Entity
-@Table(name = "mitgliedschaft", schema = "party",
+@Table(name = "mitgliedschaft", schema = "mdm",
         uniqueConstraints = @UniqueConstraint(columnNames = {"person_id", "organisation_id", "rolle"}))
 public class Mitgliedschaft extends PanacheEntity {
 
@@ -32,11 +35,13 @@ public class Mitgliedschaft extends PanacheEntity {
     @Version
     public long version;
 
-    @Column(name = "person_id", nullable = false)
-    public Long personId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "person_id", nullable = false)
+    public Person person;
 
-    @Column(name = "organisation_id", nullable = false)
-    public Long organisationId;
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "organisation_id", nullable = false)
+    public Organisation organisation;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "rolle", nullable = false, length = 32)
@@ -52,4 +57,13 @@ public class Mitgliedschaft extends PanacheEntity {
     /** {@code null} = offen/unbefristet. */
     @Column(name = "gueltig_bis")
     public LocalDate gueltigBis;
+
+    /** Abgeleitete FK-IDs (View-/Mapping-Komfort; greifen ohne Proxy-Init nur die {@code id} ab). */
+    public Long personId() {
+        return person == null ? null : person.id;
+    }
+
+    public Long organisationId() {
+        return organisation == null ? null : organisation.id;
+    }
 }

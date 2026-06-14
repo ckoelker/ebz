@@ -9,6 +9,7 @@ import jakarta.transaction.Transactional;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 
+import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
@@ -69,7 +70,7 @@ public class AnmeldungWorkflowService {
                     Phase.EBZ_BESTAETIGUNG);
         }
 
-        String firmaMail = bestellerEmail(a.bestellerPersonId);
+        String firmaMail = bestellerEmail(a.bestellerPersonId());
         if (firmaMail != null && !firmaMail.isBlank()) {
             mailer.send(Mail.withText(firmaMail,
                     "Anmeldebestätigung: " + a.teilnehmerName,
@@ -104,7 +105,7 @@ public class AnmeldungWorkflowService {
         }
         a.status = AnmeldungStatus.AKTIV;
         a.vertragBestaetigtAm = Instant.now();
-        a.vertragBestaetigtVon = bestaetigerPersonId;
+        a.vertragBestaetiger = bestaetigerPersonId == null ? null : Person.findById(bestaetigerPersonId);
         prozess.schritt("Ausbildungsvertrag bestätigen", Akteur.FIRMA, Prozess.System.PORTAL,
                 Typ.USER_TASK, Phase.VERTRAG);
         return a;
@@ -118,9 +119,9 @@ public class AnmeldungWorkflowService {
         if (bestellerPersonId == null) {
             return null;
         }
-        PersonEmail e = PersonEmail.find("personId = ?1 and primaer = true", bestellerPersonId).firstResult();
+        PersonEmail e = PersonEmail.find("person.id = ?1 and primaer = true", bestellerPersonId).firstResult();
         if (e == null) {
-            e = PersonEmail.find("personId", bestellerPersonId).firstResult();
+            e = PersonEmail.find("person.id", bestellerPersonId).firstResult();
         }
         return e == null ? null : e.email;
     }

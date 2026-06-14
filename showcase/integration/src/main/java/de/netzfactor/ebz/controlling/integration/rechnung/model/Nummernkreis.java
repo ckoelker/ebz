@@ -15,7 +15,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * {@code NummernkreisService}.
  */
 @Entity
-@Table(name = "nummernkreis", schema = "rechnung",
+@Table(name = "nummernkreis", schema = "mdm",
         uniqueConstraints = @UniqueConstraint(columnNames = {"bereich", "belegart"}))
 public class Nummernkreis extends PanacheEntity {
 

@@ -121,9 +121,9 @@ public class RechnungService {
         Rechnung k = new Rechnung();
         k.belegart = art;
         k.bereich = orig.bereich;
-        k.debitorId = orig.debitorId;
+        k.debitor = orig.debitor;
         k.zeitraumBezeichnung = orig.zeitraumBezeichnung;
-        k.originalRechnungId = orig.id;
+        k.originalRechnung = orig;
         k.status = RechnungStatus.ENTWURF;
         k.persist();
         return k;

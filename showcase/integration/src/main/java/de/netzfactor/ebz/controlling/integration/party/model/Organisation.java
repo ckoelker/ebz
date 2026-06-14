@@ -21,7 +21,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * erst nach der HITL-/KI-Dublettenprüfung produktiv ({@code AKTIV}).
  */
 @Entity
-@Table(name = "organisation", schema = "party")
+@Table(name = "organisation", schema = "mdm")
 public class Organisation extends PanacheEntity {
 
     /** Lebenszyklus der Firmen-Identität: self-service erfasst → geprüft/produktiv → in Golden-Record geführt. */

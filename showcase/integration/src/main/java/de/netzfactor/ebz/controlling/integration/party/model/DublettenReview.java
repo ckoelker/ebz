@@ -14,7 +14,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * auf dessen Basis entschieden wurde. Macht die menschliche Entscheidung nachvollziehbar (Governance).
  */
 @Entity
-@Table(name = "dubletten_review", schema = "party")
+@Table(name = "dubletten_review", schema = "mdm")
 public class DublettenReview extends PanacheEntity {
 
     /** {@code FIRMA} | {@code PERSON} — auf welche Party-Art sich die Entscheidung bezieht. */

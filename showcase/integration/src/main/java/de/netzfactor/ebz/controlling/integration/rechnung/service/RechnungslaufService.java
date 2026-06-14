@@ -19,6 +19,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungTyp;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Belegart;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungPosition;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungStatus;
@@ -55,7 +56,7 @@ public class RechnungslaufService {
         // Gruppierung je zahlungspflichtigem Debitor → eine Sammelrechnung
         Map<Long, List<Anmeldung>> jeDebitor = new LinkedHashMap<>();
         for (Anmeldung a : anmeldungen) {
-            jeDebitor.computeIfAbsent(a.zahlungspflichtigerDebitorId, k -> new ArrayList<>()).add(a);
+            jeDebitor.computeIfAbsent(a.zahlungspflichtigerDebitorId(), k -> new ArrayList<>()).add(a);
         }
 
         String zeitraum = "Schuljahr %s, %d. Halbjahr".formatted(schuljahr, halbjahr);
@@ -74,7 +75,7 @@ public class RechnungslaufService {
             r = new Rechnung();
             r.belegart = Belegart.RECHNUNG;
             r.bereich = Bereich.BERUFSSCHULE;
-            r.debitorId = debitorId;
+            r.debitor = Debitor.findById(debitorId);
             r.zeitraumBezeichnung = zeitraum;
             r.laufSchluessel = schluessel;
             r.status = RechnungStatus.ENTWURF;
@@ -118,7 +119,7 @@ public class RechnungslaufService {
                 for (int i = 1; i <= n; i++) {
                     long rate = i < n ? basis : teil.betragCent - basis * (n - 1);
                     String schluessel = "HOCHSCHULE|%s|%d|%d|%s|r%d"
-                            .formatted(semester, a.id, teil.debitorId, teil.label, i);
+                            .formatted(semester, a.id, teil.debitor.id, teil.label, i);
                     Rechnung vorhanden = Rechnung.find("laufSchluessel", schluessel).firstResult();
                     if (vorhanden != null) {
                         ergebnis.add(vorhanden);
@@ -130,7 +131,7 @@ public class RechnungslaufService {
                     Rechnung r = new Rechnung();
                     r.belegart = Belegart.RECHNUNG;
                     r.bereich = Bereich.HOCHSCHULE;
-                    r.debitorId = teil.debitorId;
+                    r.debitor = teil.debitor;
                     r.zeitraumBezeichnung = zeitraum;
                     r.laufSchluessel = schluessel;
                     r.status = RechnungStatus.ENTWURF;
@@ -152,16 +153,16 @@ public class RechnungslaufService {
 
     private static List<Forderungsteil> forderungsteile(Anmeldung a) {
         long voll = a.semesterbetragCent == null ? 0 : a.semesterbetragCent;
-        if (a.firmaDebitorId != null && a.firmaAnteilCent != null) {
+        if (a.firmaDebitor != null && a.firmaAnteilCent != null) {
             return List.of(
-                    new Forderungsteil(a.firmaDebitorId, a.firmaAnteilCent, "Firmenanteil"),
-                    new Forderungsteil(a.zahlungspflichtigerDebitorId, voll - a.firmaAnteilCent, "Eigenanteil"));
+                    new Forderungsteil(a.firmaDebitor, a.firmaAnteilCent, "Firmenanteil"),
+                    new Forderungsteil(a.zahlungspflichtigerDebitor, voll - a.firmaAnteilCent, "Eigenanteil"));
         }
-        return List.of(new Forderungsteil(a.zahlungspflichtigerDebitorId, voll, "Studiengebühr"));
+        return List.of(new Forderungsteil(a.zahlungspflichtigerDebitor, voll, "Studiengebühr"));
     }
 
     /** Ein Forderungsanteil einer Hochschul-Anmeldung (Debitor + Betrag + Bezeichnung). */
-    private record Forderungsteil(Long debitorId, long betragCent, String label) {
+    private record Forderungsteil(Debitor debitor, long betragCent, String label) {
     }
 
     private static RechnungPosition unterrichtsposition(Rechnung r, Anmeldung a, String zeitraum) {

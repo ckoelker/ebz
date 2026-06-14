@@ -5,6 +5,7 @@ import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
+import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
@@ -70,10 +71,10 @@ public class BuchungService {
         a.typ = AnmeldungTyp.BERUFSSCHULE;
         a.teilnehmerName = teilnehmer.anzeigeName;
         a.teilnehmerEmail = primaerEmail(teilnehmer.id);
-        a.teilnehmerPersonId = teilnehmer.id;
-        a.bestellerPersonId = bestellerId;
-        a.kontextOrganisationId = b.kontextOrganisationId();
-        a.zahlungspflichtigerDebitorId = debitor.id;
+        a.teilnehmerPerson = teilnehmer;
+        a.bestellerPerson = person(bestellerId);
+        a.kontextOrganisation = org(b.kontextOrganisationId());
+        a.zahlungspflichtigerDebitor = debitor;
         a.status = AnmeldungStatus.AKTIV;
         a.schuljahr = b.schuljahr();
         a.halbjahr = b.halbjahr();
@@ -109,10 +110,10 @@ public class BuchungService {
         a.typ = AnmeldungTyp.BERUFSSCHULE;
         a.teilnehmerName = azubi.anzeigeName;
         a.teilnehmerEmail = primaerEmail(azubi.id);
-        a.teilnehmerPersonId = azubi.id;
-        a.bestellerPersonId = b.bestellerPersonId();
-        a.kontextOrganisationId = b.organisationId();
-        a.zahlungspflichtigerDebitorId = debitor.id;
+        a.teilnehmerPerson = azubi;
+        a.bestellerPerson = person(b.bestellerPersonId());
+        a.kontextOrganisation = org(b.organisationId());
+        a.zahlungspflichtigerDebitor = debitor;
         a.status = AnmeldungStatus.ANGEFRAGT; // noch nicht abrechenbar (erst nach Vertragsbestätigung → AKTIV)
         a.schuljahr = b.schuljahr();
         a.halbjahr = b.halbjahr();
@@ -153,10 +154,10 @@ public class BuchungService {
         a.typ = AnmeldungTyp.HOCHSCHULE;
         a.teilnehmerName = student.anzeigeName;
         a.teilnehmerEmail = primaerEmail(student.id);
-        a.teilnehmerPersonId = student.id;
-        a.bestellerPersonId = bestellerId;
-        a.kontextOrganisationId = b.kontextOrganisationId();
-        a.zahlungspflichtigerDebitorId = eigen.id;
+        a.teilnehmerPerson = student;
+        a.bestellerPerson = person(bestellerId);
+        a.kontextOrganisation = org(b.kontextOrganisationId());
+        a.zahlungspflichtigerDebitor = eigen;
         a.status = AnmeldungStatus.AKTIV;
         a.semester = b.semester();
         a.semesterbetragCent = b.semesterbetragCent();
@@ -165,7 +166,7 @@ public class BuchungService {
         // Duales Studium: Firmenanteil über den Firmen-Debitor (Kontext des Bestellers)
         if (b.kontextOrganisationId() != null && b.firmaAnteilCent() != null) {
             Debitor firma = party.ermittleDebitor(bestellerId, b.kontextOrganisationId(), Bereich.HOCHSCHULE);
-            a.firmaDebitorId = firma.id;
+            a.firmaDebitor = firma;
             a.firmaAnteilCent = b.firmaAnteilCent();
         }
         a.persist();
@@ -200,19 +201,28 @@ public class BuchungService {
      * Organisationen sind hier strukturell ausgeschlossen — das Firmenportal sieht keine Privatbuchungen.
      */
     public java.util.List<Anmeldung> firmensicht(Long organisationId) {
-        return Anmeldung.list("kontextOrganisationId", organisationId);
+        return Anmeldung.list("kontextOrganisation.id", organisationId);
     }
 
     /** 360°-Sicht auf eine Identität: alle Anmeldungen, in denen die Person Teilnehmer ist (intern/Selbst). */
     public java.util.List<Anmeldung> personensicht(Long personId) {
-        return Anmeldung.list("teilnehmerPersonId", personId);
+        return Anmeldung.list("teilnehmerPerson.id", personId);
     }
 
     private static String primaerEmail(Long personId) {
-        PersonEmail e = PersonEmail.find("personId = ?1 and primaer = true", personId).firstResult();
+        PersonEmail e = PersonEmail.find("person.id = ?1 and primaer = true", personId).firstResult();
         if (e == null) {
-            e = PersonEmail.find("personId", personId).firstResult();
+            e = PersonEmail.find("person.id", personId).firstResult();
         }
         return e == null ? null : e.email;
+    }
+
+    /** Lädt eine Person/Organisation per ID (FK-Ziel) bzw. {@code null} — für die Assoziations-Zuweisung. */
+    private static Person person(Long id) {
+        return id == null ? null : Person.findById(id);
+    }
+
+    private static Organisation org(Long id) {
+        return id == null ? null : Organisation.findById(id);
     }
 }

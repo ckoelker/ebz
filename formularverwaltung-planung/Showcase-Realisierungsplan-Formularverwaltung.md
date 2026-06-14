@@ -219,7 +219,7 @@ STI-Registry (1 Tabelle) ── je konkretem Subtyp eine rest-data-panache-Resou
 - **Controlling:** `Bildungsangebot` wird Profitabilitäts-Dimension (knüpft an `seminar_cost`/Durchführung).
 
 ### 11.7 Milestones (klein, testbar)
-- **P1.0** Service + Schema `bildung`, Supertyp + **1 Subtyp (Seminar)** → Stack-B-Kette grün (2 Spec-Tests §5).
+- **P1.0** Service + Schema `bildung` (seit 2026-06-14 in **`mdm`** aufgegangen, mit `party`+`rechnung` zusammengeführt; `bildungsangebot` ist FK-Ziel von `anmeldung.bildungsangebot`), Supertyp + **1 Subtyp (Seminar)** → Stack-B-Kette grün (2 Spec-Tests §5).
 - **P1.1** **Polymorphie als per-Typ-Endpoints:** Subtypen Tagung/Berufsschuljahr/Studiengang als eigene Resources über der STI-Registry; je Typ saubere Typen+zod+Maske; Registry-Liste. **Kernbeweis** (kein `oneOf`/`discriminatedUnion`).
 - **P1.2** Liste/Filter + RBAC + Cross-Field-400.
 - **P1.3** Naht: eine Typ-Projektion nach Vendure (`shopVerkauf`).

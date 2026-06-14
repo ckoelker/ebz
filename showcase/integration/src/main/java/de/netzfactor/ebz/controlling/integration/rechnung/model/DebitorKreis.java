@@ -15,7 +15,7 @@ import io.quarkus.hibernate.orm.panache.PanacheEntity;
  * Anlagen nie dieselbe Nummer ziehen — das ist die Wurzel gegen künftige Doppel-Debitoren.
  */
 @Entity
-@Table(name = "debitor_kreis", schema = "rechnung",
+@Table(name = "debitor_kreis", schema = "mdm",
         uniqueConstraints = @UniqueConstraint(columnNames = {"bereich"}))
 public class DebitorKreis extends PanacheEntity {
 

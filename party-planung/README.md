@@ -22,7 +22,13 @@ Lösung:
   bestehende Debitoren-Hoheit (Rechnungsstellung R3) statt einer übergebenen Debitor-ID.
 
 ## Status — GEBAUT + VERIFIZIERT (2026-06-14)
-Backend im `integration`-Service, Package `party`, Schema `party`; `PartyKernTest` 7/7 grün.
+Backend im `integration`-Service, Package `party`, Schema **`mdm`**; `PartyKernTest` 7/7 grün.
+
+> **Schema-Update 2026-06-14:** Die DB-Schemas `party`, `rechnung` und `bildung` wurden zu **einem
+> Schema `mdm`** zusammengeführt (Java-Package `party` bleibt). Die zuvor weichen `*Id`-Long-Spalten
+> sind echte **`@ManyToOne`-Fremdschlüssel** (Hibernate erzeugt die FKs) — Ausnahmen FK-frei:
+> Golden-Record/Merge (`golden_*`) und die polymorphen `dubletten_review.kandidat_id/ziel_id`.
+> Damit ist Erweiterung #3 (Provenienz im DTO) teilweise erfüllt: die Provenienz ist jetzt FK-modelliert.
 
 - **Identitätskern** (Commit `1818378`): Person/PersonEmail/Organisation/Mitgliedschaft,
   `PartyHoheitService` (selbstRegistrieren/Claim, registriereTeilnehmer, kontexte,

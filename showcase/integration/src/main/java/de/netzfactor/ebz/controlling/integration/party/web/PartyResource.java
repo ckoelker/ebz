@@ -350,8 +350,8 @@ public class PartyResource {
                 req.teilnehmerPersonId(), req.bestellerPersonId(), req.kontextOrganisationId(),
                 req.schuljahr(), req.halbjahr(), req.zimmerart(),
                 req.unterrichtBetragCent(), req.uebernachtungBetragCent()));
-        BuchungView view = new BuchungView(a.id, a.teilnehmerPersonId, a.bestellerPersonId,
-                a.kontextOrganisationId, a.zahlungspflichtigerDebitorId, a.teilnehmerName);
+        BuchungView view = new BuchungView(a.id, a.teilnehmerPersonId(), a.bestellerPersonId(),
+                a.kontextOrganisationId(), a.zahlungspflichtigerDebitorId(), a.teilnehmerName);
         return Response.status(Response.Status.CREATED).entity(view).build();
     }
 
@@ -370,7 +370,7 @@ public class PartyResource {
                 req.quelle(), req.externeId(), req.zahlungsart(), req.bereich(),
                 req.kaeuferEmail(), req.kaeuferName(), req.kontextOrganisationId(), req.positionen()));
         boolean neu = Rechnung.count() > vorher;
-        ShopBelegView view = new ShopBelegView(r.id, r.debitorId, r.bereich.name(), req.quelle(), req.externeId());
+        ShopBelegView view = new ShopBelegView(r.id, r.debitorId(), r.bereich.name(), req.quelle(), req.externeId());
         return Response.status(neu ? Response.Status.CREATED : Response.Status.OK).entity(view).build();
     }
 
@@ -387,8 +387,8 @@ public class PartyResource {
         Anmeldung a = buchung.bucheHochschule(new BuchungService.Hochschulbuchung(
                 req.teilnehmerPersonId(), req.bestellerPersonId(), req.kontextOrganisationId(),
                 req.semester(), req.semesterbetragCent(), req.firmaAnteilCent(), req.ratenAnzahl()));
-        HochschulView view = new HochschulView(a.id, a.teilnehmerPersonId, a.kontextOrganisationId,
-                a.zahlungspflichtigerDebitorId, a.firmaDebitorId, a.firmaAnteilCent, a.teilnehmerName);
+        HochschulView view = new HochschulView(a.id, a.teilnehmerPersonId(), a.kontextOrganisationId(),
+                a.zahlungspflichtigerDebitorId(), a.firmaDebitorId(), a.firmaAnteilCent, a.teilnehmerName);
         return Response.status(Response.Status.CREATED).entity(view).build();
     }
 
@@ -423,8 +423,8 @@ public class PartyResource {
     }
 
     private static BuchungZeile toZeile(Anmeldung a) {
-        return new BuchungZeile(a.id, a.teilnehmerName, a.teilnehmerPersonId, a.kontextOrganisationId,
-                a.zahlungspflichtigerDebitorId, a.schuljahr, a.halbjahr, a.status.name());
+        return new BuchungZeile(a.id, a.teilnehmerName, a.teilnehmerPersonId(), a.kontextOrganisationId(),
+                a.zahlungspflichtigerDebitorId(), a.schuljahr, a.halbjahr, a.status.name());
     }
 
     // ───────────────────────── Helfer ─────────────────────────
@@ -447,12 +447,12 @@ public class PartyResource {
     }
 
     private static PersonView toView(Person p) {
-        List<String> emails = PersonEmail.<PersonEmail>list("personId", p.id).stream()
+        List<String> emails = PersonEmail.<PersonEmail>list("person.id", p.id).stream()
                 .map(e -> e.email).toList();
-        List<MitgliedschaftView> ms = Mitgliedschaft.<Mitgliedschaft>list("personId", p.id).stream()
+        List<MitgliedschaftView> ms = Mitgliedschaft.<Mitgliedschaft>list("person.id", p.id).stream()
                 .map(m -> {
-                    Organisation o = Organisation.findById(m.organisationId);
-                    return new MitgliedschaftView(m.organisationId, o == null ? null : o.name,
+                    Organisation o = Organisation.findById(m.organisationId());
+                    return new MitgliedschaftView(m.organisationId(), o == null ? null : o.name,
                             m.rolle, m.buchungsberechtigt);
                 }).toList();
         return new PersonView(p.id, p.keycloakSub, p.anzeigeName, p.plz, p.ort, p.status.name(),

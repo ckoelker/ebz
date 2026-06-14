@@ -46,7 +46,7 @@ EOL-Ablösungen).
 
 | # | Fähigkeit | Planung (Soll-Empfehlung) | Im Showcase realisiert | Urteil |
 |---|---|---|---|---|
-| 1 | **MDM / Single Point of Truth** | Dataverse (alt. EspoCRM/Salesforce); **N:M + Mehr-Debitoren** | `bildung`-MDM (Angebote) + `rechnung.debitor` mit Golden-Record/Match/Merge/Alias + zentraler Nummernhoheit (R3); **Mehr-Debitoren je Person rollenabhängig** | 🟡 **teilweise** — Debitoren-Dedup ja, **N:M Person↔Company fehlt** |
+| 1 | **MDM / Single Point of Truth** | Dataverse (alt. EspoCRM/Salesforce); **N:M + Mehr-Debitoren** | MDM-Schema `mdm` (Angebote + `mdm.debitor`) mit Golden-Record/Match/Merge/Alias + zentraler Nummernhoheit (R3); **Mehr-Debitoren je Person rollenabhängig** | 🟡 **teilweise** — Debitoren-Dedup ja, **N:M Person↔Company fehlt** |
 | 2 | Controlling/BI | Power BI (alt. Metabase/Superset) | **Lightdash** auf dbt-Marts (Break-even, Drei-Bucket-Forecast) | 🟢 validiert (andere OSS-BI als genannt) |
 | 3 | Marketing + Sales-Pipeline | **HubSpot** 🔒, Sync via Airbyte+n8n (S14) | HubSpot-Ingestion via **Camel Quarkus + LangChain4j** (Controlling M1) | 🟢 Quelle wie gesetzt; **Sync-Technik divergiert** (JVM statt Airbyte/n8n) |
 | 4 | SSO / Identity | **Entra ID (vorhanden)** | **Keycloak** (2 Realms: Kunde/Staff; mdm-cockpit, lightdash, rechnung-pflege) | 🟢 Muster validiert; **Keycloak statt Entra** (Showcase kann reale Entra nicht nutzen) |
