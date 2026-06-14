@@ -185,6 +185,14 @@
       <artifactId>quarkus-mailer</artifactId>
     </dependency>
 
+    <!-- ── Anmeldung Berufsschule C: Keycloak-Login-Provisionierung ──
+         Legt nach der HITL-Prüfung den Customer-Login (Realm ebz-customers) an; REST-Variante,
+         passt zu quarkus-rest. Nur genutzt, wenn anmeldung.provisionierung.enabled=true (Test: aus). -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-keycloak-admin-rest-client</artifactId>
+    </dependency>
+
     <!-- Test -->
     <dependency>
       <groupId>io.quarkus</groupId>

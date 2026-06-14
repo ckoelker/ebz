@@ -29,6 +29,11 @@ class DublettenReviewTest {
         return System.nanoTime();
     }
 
+    /** Eindeutige Test-IP je Lauf, damit der Lead-Rate-Limit (5/min/IP) Tests nicht koppelt. */
+    private static String testIp(long n) {
+        return "198.51." + (int) ((n / 251) % 251) + "." + (int) (n % 251);
+    }
+
     @Test
     void firmaDublette_erscheintInQueue_wirdGemergt_undAuditiert() {
         long n = uniq();
@@ -43,7 +48,7 @@ class DublettenReviewTest {
                 .extract().jsonPath().getInt("id");
 
         // Self-Service-Anfrage derselben Firma (gleiche USt-Id) → ANGEFRAGT, Dubletten-Kandidat
-        int kandidat = given().contentType(ContentType.JSON)
+        int kandidat = given().contentType(ContentType.JSON).header("X-Forwarded-For", testIp(n))
                 .body("""
                         {"name":"Review-Bau GesmbH %d","plz":"45657","ort":"Recklinghausen","land":"DE","ustId":"%s",
                          "ansprechpartnerEmail":"rev+%d@bau.de","ansprechpartnerName":"Rita Review"}"""

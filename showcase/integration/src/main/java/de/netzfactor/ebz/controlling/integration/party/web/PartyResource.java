@@ -31,6 +31,7 @@ import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.party.service.BuchungService;
+import de.netzfactor.ebz.controlling.integration.party.service.EinladungsService;
 import de.netzfactor.ebz.controlling.integration.party.service.PartyHoheitService;
 import de.netzfactor.ebz.controlling.integration.party.service.RateLimiter;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.ExterneBestellung;
@@ -61,6 +62,9 @@ public class PartyResource {
 
     @Inject
     RateLimiter rateLimiter;
+
+    @Inject
+    EinladungsService einladungsService;
 
     // ───────────────────────── DTOs (gebündelt) ─────────────────────────
 
@@ -116,6 +120,10 @@ public class PartyResource {
     }
 
     public record DebitorView(Long id, String debitorNr, String bereich, String rolle, String name) {
+    }
+
+    public record EinladungView(Long personId, String email, String keycloakUserId, boolean provisioniert,
+            boolean eingeladen) {
     }
 
     public record Berufsschulbuchung(@NotNull Long teilnehmerPersonId, Long bestellerPersonId,
@@ -208,6 +216,20 @@ public class PartyResource {
     @Transactional
     public PersonView merge(@Valid MergeRequest req) {
         return toView(party.merge(req.quellId(), req.zielId()));
+    }
+
+    /**
+     * Schritt C: lädt einen geprüften Ansprechpartner ins Ausbildungsportal ein — provisioniert (sofern
+     * aktiv) den Customer-Login (Keycloak) und sendet die Einladungsmail. Der erste Login mit derselben
+     * E-Mail claimt anschließend die provisorische Person (→ AKTIV).
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/personen/{id}/einladung")
+    @Transactional
+    public EinladungView einladung(@PathParam("id") Long id) {
+        EinladungsService.Einladung e = einladungsService.ladeEin(id);
+        return new EinladungView(e.personId(), e.email(), e.keycloakUserId(), e.provisioniert(), e.eingeladen());
     }
 
     // ───────────────────────── Organisation & Mitgliedschaft ─────────────────────────

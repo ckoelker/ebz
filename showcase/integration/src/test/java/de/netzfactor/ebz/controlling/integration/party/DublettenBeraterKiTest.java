@@ -59,6 +59,7 @@ class DublettenBeraterKiTest {
                 .extract().jsonPath().getInt("id");
 
         int kandidat = given().contentType(ContentType.JSON)
+                .header("X-Forwarded-For", "198.51." + (int) ((n / 251) % 251) + "." + (int) (n % 251))
                 .body("""
                         {"name":"KI-Bau GesmbH %d","plz":"45657","ort":"RE","land":"DE","ustId":"%s",
                          "ansprechpartnerEmail":"ki+%d@bau.de","ansprechpartnerName":"Kai KI"}"""

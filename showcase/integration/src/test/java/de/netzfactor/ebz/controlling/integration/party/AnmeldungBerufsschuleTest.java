@@ -30,12 +30,17 @@ class AnmeldungBerufsschuleTest {
         return System.nanoTime();
     }
 
+    /** Eindeutige Test-IP je Lauf, damit der Lead-Rate-Limit (5/min/IP) Tests nicht koppelt. */
+    private static String testIp(long n) {
+        return "198.51." + (int) ((n / 251) % 251) + "." + (int) (n % 251);
+    }
+
     @Test
     void anfrage_legtProvisorischeFirmaUndAnsprechpartnerAn_ohneLogin() {
         long n = uniq();
         String email = "ansprech+" + n + "@ausbildung.de";
 
-        given().contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON).header("X-Forwarded-For", testIp(n))
                 .body("""
                         {"name":"Lehrbau GmbH %d","strasse":"Werkstr. 1","plz":"45657","ort":"Recklinghausen",
                          "land":"DE","ustId":"DE%d","ansprechpartnerEmail":"%s","ansprechpartnerName":"Berta Bilden"}"""
@@ -123,7 +128,7 @@ class AnmeldungBerufsschuleTest {
     void anfrageEndpunkt_istOeffentlich_keinLoginNoetig() {
         long n = uniq();
         // Ohne @TestSecurity: der Lead-Endpunkt ist absichtlich öffentlich (kein 401).
-        given().contentType(ContentType.JSON)
+        given().contentType(ContentType.JSON).header("X-Forwarded-For", testIp(n))
                 .body("""
                         {"name":"Offen GmbH %d","plz":"45657","ort":"RE","land":"DE",
                          "ansprechpartnerEmail":"offen+%d@x.de","ansprechpartnerName":"O"}""".formatted(n, n))
