@@ -26,9 +26,9 @@ ROOT = Path(__file__).resolve().parent
 SPANS = ROOT.parent / "integration" / "target" / "prozess-log" / "spans.jsonl"
 OUT = ROOT / "out"
 
-# Lanes je Akteur in die Subprozesse injizieren? Aktuell aus: bpmn-auto-layout layoutet Lanes/Pools
-# noch nicht (würde ohne DI rendern). Erst aktivieren, wenn ein lane-fähiges Layout vorliegt.
-LANES_AKTIV = False
+# Echte Swimlanes (Lane = Akteur) in den Subprozessen? True → eigener Swimlane-Layouter (_swimlane,
+# komplettes DI); False → „Person · System" nur im Task-Label, Layout via bpmn-auto-layout.
+LANES_AKTIV = True
 
 # Reihenfolge + Klartext der Phasen (Übersicht/Dateinamen).
 PHASE_LABEL = {
@@ -158,58 +158,133 @@ AKTEUR_ORDER = [
 DI_NS = "http://www.omg.org/spec/BPMN/20100524/DI"
 
 
-def _mit_lanes(xml_text: str, name_zu_akteur: dict, titel: str, stamm: str) -> str:
+def _xml_attr(s: str) -> str:
+    return (s or "").replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def _swimlane(xml_text: str, name_zu_akteur: dict, name_zu_system: dict, titel: str, stamm: str) -> str:
     """
-    Hüllt den Prozess in eine Collaboration mit einem Pool + Lanes je Akteur (= „von welcher Person").
-    Jeder Knoten wird der Lane seines Akteurs zugeordnet; Start/Ende/Gateways erben vom Nachbarn.
-    Das Layout (inkl. Lane-Boxen) erzeugt anschließend bpmn-auto-layout.
+    Eigener **Swimlane-Layouter** (bpmn-auto-layout kann keine Lanes): erzeugt eine Collaboration mit
+    Pool + einer Lane je Akteur. Spalte = Reihenfolge (Longest-Path), Zeile = Akteur-Lane; Knoten,
+    Lane-Boxen und orthogonale Kanten bekommen eigenes DI. Start/Ende/Gateways erben die Lane vom
+    Nachbarn. Eingabe ist das semantische BPMN mit reinen Aktivitätsnamen; das System wird ans Label
+    gehängt (die Person zeigt die Lane). Marker `swimlane-laidout` → layout.mjs überspringt die Datei.
     """
-    for praefix, uri in (("bpmn", BPMN_NS), ("bpmndi", DI_NS),
-                         ("omgdc", "http://www.omg.org/spec/DD/20100524/DC"),
-                         ("omgdi", "http://www.omg.org/spec/DD/20100524/DI"),
-                         ("xsi", "http://www.w3.org/2001/XMLSchema-instance")):
-        ET.register_namespace(praefix, uri)
     root = ET.fromstring(xml_text)
     proc = root.find(f"{{{BPMN_NS}}}process")
+    procid = proc.get("id")
 
-    nach, von, knoten = {}, {}, {}
+    nodes, order, flows, adj, radj = {}, [], [], {}, {}
     for el in list(proc):
         tag = el.tag.split("}", 1)[1]
+        eid = el.get("id")
         if tag == "sequenceFlow":
-            nach[el.get("sourceRef")] = el.get("targetRef")
-            von[el.get("targetRef")] = el.get("sourceRef")
+            s, t = el.get("sourceRef"), el.get("targetRef")
+            flows.append((eid, s, t))
+            adj.setdefault(s, []).append(t)
+            radj.setdefault(t, []).append(s)
         else:
-            knoten[el.get("id")] = (tag, el.get("name"))
+            nodes[eid] = {"tag": tag, "name": el.get("name") or ""}
+            order.append(eid)
+    for info in nodes.values():
+        t = info["tag"]
+        info["w"], info["h"] = (36, 36) if t.endswith("Event") else (50, 50) if "Gateway" in t else (100, 80)
 
-    def akteur(nid: str, tiefe: int = 0) -> str:
-        tag, name = knoten[nid]
-        if name in name_zu_akteur:
-            return name_zu_akteur[name]
-        if tiefe > 20:
+    # Spalten via Longest-Path (Kahn-Topologie; azyklische Modelle aus den Traces).
+    from collections import deque
+    indeg = {n: len(radj.get(n, [])) for n in nodes}
+    spalte = {n: 0 for n in nodes}
+    q = deque([n for n in nodes if indeg[n] == 0])
+    while q:
+        u = q.popleft()
+        for v in adj.get(u, []):
+            spalte[v] = max(spalte[v], spalte[u] + 1)
+            indeg[v] -= 1
+            if indeg[v] == 0:
+                q.append(v)
+
+    def akteur(nid, seen=None):
+        seen = seen or set()
+        if nid in seen:
             return AKTEUR_ORDER[0]
-        nachbar = von.get(nid) if tag == "endEvent" else nach.get(nid, von.get(nid))
-        return akteur(nachbar, tiefe + 1) if nachbar in knoten else AKTEUR_ORDER[0]
+        seen.add(nid)
+        if nodes[nid]["name"] in name_zu_akteur:
+            return name_zu_akteur[nodes[nid]["name"]]
+        nb = (radj.get(nid) or adj.get(nid) or [None])[0]
+        return akteur(nb, seen) if nb in nodes else AKTEUR_ORDER[0]
 
-    mitglieder: dict[str, list[str]] = {}
-    for nid in knoten:
-        mitglieder.setdefault(akteur(nid), []).append(nid)
+    lane_of = {n: akteur(n) for n in nodes}
+    lanes = [a for a in AKTEUR_ORDER if a in set(lane_of.values())]
 
-    laneset = ET.Element(f"{{{BPMN_NS}}}laneSet", {"id": f"laneset_{stamm}"})
-    for a in AKTEUR_ORDER:
-        if a not in mitglieder:
-            continue
-        lane = ET.SubElement(laneset, f"{{{BPMN_NS}}}lane",
-                             {"id": f"lane_{stamm}_{_slug(a)}", "name": a})
-        for nid in mitglieder[a]:
-            ET.SubElement(lane, f"{{{BPMN_NS}}}flowNodeRef").text = nid
-    proc.insert(0, laneset)
+    LANE_H, COL_W, POOL_LBL, LANE_LBL, PAD = 110, 180, 30, 30, 40
+    maxspalte = max(spalte.values()) if spalte else 0
+    x0 = POOL_LBL + LANE_LBL + PAD
+    total_w = x0 + maxspalte * COL_W + 140
+    lane_y = {a: i * LANE_H for i, a in enumerate(lanes)}
+    pool_h = len(lanes) * LANE_H
+    pos = {}
+    for n in nodes:
+        w, h = nodes[n]["w"], nodes[n]["h"]
+        pos[n] = (x0 + spalte[n] * COL_W, lane_y[lane_of[n]] + (LANE_H - h) / 2, w, h)
 
-    collab = ET.Element(f"{{{BPMN_NS}}}collaboration", {"id": f"collab_{stamm}"})
-    ET.SubElement(collab, f"{{{BPMN_NS}}}participant",
-                  {"id": f"participant_{stamm}", "name": titel, "processRef": proc.get("id")})
-    root.insert(list(root).index(proc), collab)
+    # laneSet
+    lane_xml = [f'    <bpmn:laneSet id="laneset_{stamm}">']
+    for a in lanes:
+        lane_xml.append(f'      <bpmn:lane id="lane_{stamm}_{_slug(a)}" name="{_xml_attr(a)}">')
+        lane_xml += [f"        <bpmn:flowNodeRef>{n}</bpmn:flowNodeRef>" for n in order if lane_of[n] == a]
+        lane_xml.append("      </bpmn:lane>")
+    lane_xml.append("    </bpmn:laneSet>")
 
-    return ET.tostring(root, encoding="unicode")
+    # Prozess-Innenleben übernehmen; System ans Task-Label hängen (Person = Lane).
+    inner = re.search(r"<bpmn:process\b[^>]*>(.*)</bpmn:process>", xml_text, re.S).group(1).strip()
+
+    def system_suffix(m):
+        tid, nm = m.group(1), m.group(2)
+        sysn = name_zu_system.get(ET.fromstring(f"<x a=\"{nm}\"/>").get("a"))
+        return f'<bpmn:task id="{tid}" name="{nm} · {sysn}"' if sysn else m.group(0)
+
+    inner = re.sub(r'<bpmn:task id="([^"]+)" name="([^"]+)"', system_suffix, inner)
+
+    # DI: Pool, Lanes, Knoten, orthogonale Kanten
+    di = [f'      <bpmndi:BPMNShape id="participant_{stamm}_di" bpmnElement="participant_{stamm}" isHorizontal="true">',
+          f'        <omgdc:Bounds x="0" y="0" width="{total_w}" height="{pool_h}"/>',
+          "      </bpmndi:BPMNShape>"]
+    for a in lanes:
+        di += [f'      <bpmndi:BPMNShape id="lane_{stamm}_{_slug(a)}_di" bpmnElement="lane_{stamm}_{_slug(a)}" isHorizontal="true">',
+               f'        <omgdc:Bounds x="{POOL_LBL}" y="{lane_y[a]}" width="{total_w - POOL_LBL}" height="{LANE_H}"/>',
+               "      </bpmndi:BPMNShape>"]
+    for n in order:
+        x, y, w, h = pos[n]
+        di += [f'      <bpmndi:BPMNShape id="{n}_di" bpmnElement="{n}">',
+               f'        <omgdc:Bounds x="{x:.0f}" y="{y:.0f}" width="{w}" height="{h}"/>',
+               "      </bpmndi:BPMNShape>"]
+    for fid, s, t in flows:
+        sx, sy, sw, sh = pos[s]
+        tx, ty, tw, th = pos[t]
+        x1, y1, x2, y2 = sx + sw, sy + sh / 2, tx, ty + th / 2
+        mx = (x1 + x2) / 2
+        di += [f'      <bpmndi:BPMNEdge id="{fid}_di" bpmnElement="{fid}">',
+               f'        <omgdi:waypoint x="{x1:.0f}" y="{y1:.0f}"/>',
+               f'        <omgdi:waypoint x="{mx:.0f}" y="{y1:.0f}"/>',
+               f'        <omgdi:waypoint x="{mx:.0f}" y="{y2:.0f}"/>',
+               f'        <omgdi:waypoint x="{x2:.0f}" y="{y2:.0f}"/>',
+               "      </bpmndi:BPMNEdge>"]
+
+    nl = "\n"
+    return (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<!-- swimlane-laidout: eigener Layouter (showcase/prozessdoku/generate.py) -->\n'
+            f'<bpmn:definitions xmlns:bpmn="{BPMN_NS}" xmlns:bpmndi="{DI_NS}"'
+            f' xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"'
+            f' xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://ebz/prozessdoku">\n'
+            f'  <bpmn:collaboration id="collab_{stamm}">\n'
+            f'    <bpmn:participant id="participant_{stamm}" name="{_xml_attr(titel)}" processRef="{procid}"/>\n'
+            f'  </bpmn:collaboration>\n'
+            f'  <bpmn:process id="{procid}" isExecutable="false">\n'
+            f'{nl.join(lane_xml)}\n    {inner}\n  </bpmn:process>\n'
+            f'  <bpmndi:BPMNDiagram id="diagram_{stamm}">\n'
+            f'    <bpmndi:BPMNPlane id="plane_{stamm}" bpmnElement="collab_{stamm}">\n'
+            f'{nl.join(di)}\n'
+            f'    </bpmndi:BPMNPlane>\n  </bpmndi:BPMNDiagram>\n</bpmn:definitions>\n')
 
 
 def main() -> None:
@@ -224,16 +299,16 @@ def main() -> None:
             continue
         pfad = OUT / f"sub-{phase.lower()}.bpmn"
         schreibe_bpmn(entdecke(teil, "name"), pfad)
-        # „von welcher Person, in welchem System" je Schritt ins Task-Label (robust in jedem Viewer).
         name_zu_akteur = dict(zip(teil["name"], teil["akteur"]))
         name_zu_system = dict(zip(teil["name"], teil["system"]))
-        pfad.write_text(_label_anreichern(pfad.read_text(encoding="utf-8"), name_zu_akteur, name_zu_system),
-                        encoding="utf-8")
-        # Optional echte Swimlanes (bpmn-auto-layout layoutet sie noch nicht; siehe LANES_AKTIV).
+        roh = pfad.read_text(encoding="utf-8")
         if LANES_AKTIV:
-            pfad.write_text(
-                _mit_lanes(pfad.read_text(encoding="utf-8"), name_zu_akteur, PHASE_LABEL[phase], pfad.stem),
-                encoding="utf-8")
+            # echte Swimlanes (Lane = Person), System im Task-Label — fertiges Layout, layout.mjs überspringt es.
+            pfad.write_text(_swimlane(roh, name_zu_akteur, name_zu_system, PHASE_LABEL[phase], pfad.stem),
+                            encoding="utf-8")
+        else:
+            # Fallback: „Person · System" je Schritt ins Task-Label, Layout via bpmn-auto-layout.
+            pfad.write_text(_label_anreichern(roh, name_zu_akteur, name_zu_system), encoding="utf-8")
         erzeugt.append(pfad.name)
 
     # 2) Übersicht: je Fall die Phasen-Sequenz (konsekutive Duplikate je Fall zusammenfassen)

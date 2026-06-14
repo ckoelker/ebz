@@ -18,6 +18,12 @@ if (dateien.length === 0) {
 }
 for (const f of dateien) {
   const xml = await readFile(join(inDir, f), 'utf8');
+  if (xml.includes('swimlane-laidout')) {
+    // Bereits vom eigenen Swimlane-Layouter (generate.py) layoutet → unverändert übernehmen.
+    await writeFile(join(outDir, f), xml, 'utf8');
+    console.log('  übernommen (swimlane)', f);
+    continue;
+  }
   const layoutet = await layoutProcess(xml);
   await writeFile(join(outDir, f), layoutet, 'utf8');
   console.log('  layoutet', f);

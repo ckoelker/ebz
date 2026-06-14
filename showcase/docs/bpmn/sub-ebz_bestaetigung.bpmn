@@ -1,61 +1,93 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.signavio.com/bpmn20">
-  <bpmn:process id="process_sub-ebz_bestaetigung" processType="None" isClosed="false" isExecutable="false">
-    <bpmn:task id="task_bestaetigungsmail_an_azubi" name="Bestätigungsmail an Azubi — System · Mail">
-      <bpmn:incoming>flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi</bpmn:incoming>
-      <bpmn:outgoing>flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:startEvent id="start" name="start">
-      <bpmn:outgoing>flow_start__task_anmeldung_pruefen_und_bestaetigen</bpmn:outgoing>
-    </bpmn:startEvent>
-    <bpmn:task id="task_bestaetigungsmail_an_firma" name="Bestätigungsmail an Firma — System · Mail">
-      <bpmn:incoming>flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:incoming>
-      <bpmn:outgoing>flow_task_bestaetigungsmail_an_firma__end</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:endEvent id="end" name="end">
-      <bpmn:incoming>flow_task_bestaetigungsmail_an_firma__end</bpmn:incoming>
-    </bpmn:endEvent>
-    <bpmn:task id="task_anmeldung_pruefen_und_bestaetigen" name="Anmeldung prüfen &#38; bestätigen">
-      <bpmn:incoming>flow_start__task_anmeldung_pruefen_und_bestaetigen</bpmn:incoming>
-      <bpmn:outgoing>flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi</bpmn:outgoing>
-    </bpmn:task>
-    <bpmn:sequenceFlow id="flow_task_bestaetigungsmail_an_firma__end" name="" sourceRef="task_bestaetigungsmail_an_firma" targetRef="end" />
-    <bpmn:sequenceFlow id="flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi" name="" sourceRef="task_anmeldung_pruefen_und_bestaetigen" targetRef="task_bestaetigungsmail_an_azubi" />
-    <bpmn:sequenceFlow id="flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma" name="" sourceRef="task_bestaetigungsmail_an_azubi" targetRef="task_bestaetigungsmail_an_firma" />
-    <bpmn:sequenceFlow id="flow_start__task_anmeldung_pruefen_und_bestaetigen" name="" sourceRef="start" targetRef="task_anmeldung_pruefen_und_bestaetigen" />
+<!-- swimlane-laidout: eigener Layouter (showcase/prozessdoku/generate.py) -->
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://ebz/prozessdoku">
+  <bpmn:collaboration id="collab_sub-ebz_bestaetigung">
+    <bpmn:participant id="participant_sub-ebz_bestaetigung" name="EBZ-Bestätigung" processRef="process_sub-ebz_bestaetigung"/>
+  </bpmn:collaboration>
+  <bpmn:process id="process_sub-ebz_bestaetigung" isExecutable="false">
+    <bpmn:laneSet id="laneset_sub-ebz_bestaetigung">
+      <bpmn:lane id="lane_sub-ebz_bestaetigung_ebz_sachbearbeitung" name="EBZ-Sachbearbeitung">
+        <bpmn:flowNodeRef>start</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_anmeldung_pruefen_und_bestaetigen</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="lane_sub-ebz_bestaetigung_system" name="System">
+        <bpmn:flowNodeRef>task_bestaetigungsmail_an_firma</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>task_bestaetigungsmail_an_azubi</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>end</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:task id="task_bestaetigungsmail_an_firma" name="Bestätigungsmail an Firma · Mail">
+			<bpmn:incoming>flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:incoming>
+			<bpmn:outgoing>flow_task_bestaetigungsmail_an_firma__end</bpmn:outgoing>
+		</bpmn:task>
+		<bpmn:startEvent id="start" isInterrupting="true" name="start" parallelMultiple="false">
+			<bpmn:outgoing>flow_start__task_anmeldung_pruefen_und_bestaetigen</bpmn:outgoing>
+		</bpmn:startEvent>
+		<bpmn:task id="task_bestaetigungsmail_an_azubi" name="Bestätigungsmail an Azubi · Mail">
+			<bpmn:incoming>flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi</bpmn:incoming>
+			<bpmn:outgoing>flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma</bpmn:outgoing>
+		</bpmn:task>
+		<bpmn:endEvent id="end" name="end">
+			<bpmn:incoming>flow_task_bestaetigungsmail_an_firma__end</bpmn:incoming>
+		</bpmn:endEvent>
+		<bpmn:task id="task_anmeldung_pruefen_und_bestaetigen" name="Anmeldung prüfen &amp; bestätigen · MDM-Cockpit">
+			<bpmn:incoming>flow_start__task_anmeldung_pruefen_und_bestaetigen</bpmn:incoming>
+			<bpmn:outgoing>flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi</bpmn:outgoing>
+		</bpmn:task>
+		<bpmn:sequenceFlow id="flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi" name="" sourceRef="task_anmeldung_pruefen_und_bestaetigen" targetRef="task_bestaetigungsmail_an_azubi"/>
+		<bpmn:sequenceFlow id="flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma" name="" sourceRef="task_bestaetigungsmail_an_azubi" targetRef="task_bestaetigungsmail_an_firma"/>
+		<bpmn:sequenceFlow id="flow_start__task_anmeldung_pruefen_und_bestaetigen" name="" sourceRef="start" targetRef="task_anmeldung_pruefen_und_bestaetigen"/>
+		<bpmn:sequenceFlow id="flow_task_bestaetigungsmail_an_firma__end" name="" sourceRef="task_bestaetigungsmail_an_firma" targetRef="end"/>
   </bpmn:process>
-  <bpmndi:BPMNDiagram id="BPMNDiagram_process_sub-ebz_bestaetigung">
-    <bpmndi:BPMNPlane id="BPMNPlane_process_sub-ebz_bestaetigung" bpmnElement="process_sub-ebz_bestaetigung">
-      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
-        <omgdc:Bounds x="57" y="52" width="36" height="36" />
+  <bpmndi:BPMNDiagram id="diagram_sub-ebz_bestaetigung">
+    <bpmndi:BPMNPlane id="plane_sub-ebz_bestaetigung" bpmnElement="collab_sub-ebz_bestaetigung">
+      <bpmndi:BPMNShape id="participant_sub-ebz_bestaetigung_di" bpmnElement="participant_sub-ebz_bestaetigung" isHorizontal="true">
+        <omgdc:Bounds x="0" y="0" width="960" height="220"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_anmeldung_pruefen_und_bestaetigen_di" bpmnElement="task_anmeldung_pruefen_und_bestaetigen">
-        <omgdc:Bounds x="175" y="30" width="100" height="80" />
+      <bpmndi:BPMNShape id="lane_sub-ebz_bestaetigung_ebz_sachbearbeitung_di" bpmnElement="lane_sub-ebz_bestaetigung_ebz_sachbearbeitung" isHorizontal="true">
+        <omgdc:Bounds x="30" y="0" width="930" height="110"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_bestaetigungsmail_an_azubi_di" bpmnElement="task_bestaetigungsmail_an_azubi">
-        <omgdc:Bounds x="325" y="30" width="100" height="80" />
+      <bpmndi:BPMNShape id="lane_sub-ebz_bestaetigung_system_di" bpmnElement="lane_sub-ebz_bestaetigung_system" isHorizontal="true">
+        <omgdc:Bounds x="30" y="110" width="930" height="110"/>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="task_bestaetigungsmail_an_firma_di" bpmnElement="task_bestaetigungsmail_an_firma">
-        <omgdc:Bounds x="475" y="30" width="100" height="80" />
+        <omgdc:Bounds x="640" y="125" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
+        <omgdc:Bounds x="100" y="37" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="task_bestaetigungsmail_an_azubi_di" bpmnElement="task_bestaetigungsmail_an_azubi">
+        <omgdc:Bounds x="460" y="125" width="100" height="80"/>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="end_di" bpmnElement="end">
-        <omgdc:Bounds x="657" y="52" width="36" height="36" />
+        <omgdc:Bounds x="820" y="147" width="36" height="36"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="flow_start__task_anmeldung_pruefen_und_bestaetigen_di" bpmnElement="flow_start__task_anmeldung_pruefen_und_bestaetigen">
-        <omgdi:waypoint x="93" y="70" />
-        <omgdi:waypoint x="175" y="70" />
-      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNShape id="task_anmeldung_pruefen_und_bestaetigen_di" bpmnElement="task_anmeldung_pruefen_und_bestaetigen">
+        <omgdc:Bounds x="280" y="15" width="100" height="80"/>
+      </bpmndi:BPMNShape>
       <bpmndi:BPMNEdge id="flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi_di" bpmnElement="flow_task_anmeldung_pruefen_und_bestaetigen__task_bestaetigungsmail_an_azubi">
-        <omgdi:waypoint x="275" y="70" />
-        <omgdi:waypoint x="325" y="70" />
+        <omgdi:waypoint x="380" y="55"/>
+        <omgdi:waypoint x="420" y="55"/>
+        <omgdi:waypoint x="420" y="165"/>
+        <omgdi:waypoint x="460" y="165"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma_di" bpmnElement="flow_task_bestaetigungsmail_an_azubi__task_bestaetigungsmail_an_firma">
-        <omgdi:waypoint x="425" y="70" />
-        <omgdi:waypoint x="475" y="70" />
+        <omgdi:waypoint x="560" y="165"/>
+        <omgdi:waypoint x="600" y="165"/>
+        <omgdi:waypoint x="600" y="165"/>
+        <omgdi:waypoint x="640" y="165"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_start__task_anmeldung_pruefen_und_bestaetigen_di" bpmnElement="flow_start__task_anmeldung_pruefen_und_bestaetigen">
+        <omgdi:waypoint x="136" y="55"/>
+        <omgdi:waypoint x="208" y="55"/>
+        <omgdi:waypoint x="208" y="55"/>
+        <omgdi:waypoint x="280" y="55"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_task_bestaetigungsmail_an_firma__end_di" bpmnElement="flow_task_bestaetigungsmail_an_firma__end">
-        <omgdi:waypoint x="575" y="70" />
-        <omgdi:waypoint x="657" y="70" />
+        <omgdi:waypoint x="740" y="165"/>
+        <omgdi:waypoint x="780" y="165"/>
+        <omgdi:waypoint x="780" y="165"/>
+        <omgdi:waypoint x="820" y="165"/>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

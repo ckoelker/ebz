@@ -18,8 +18,8 @@ E2E-Test (rest-assured)                Prod
 - Mehrere Test-Szenarien (Fälle) → der Inductive Miner erzeugt **Gateways/Verzweigungen**.
 
 ## Ausgabe (`../docs/bpmn/`)
-- `uebersicht.bpmn` — Phasen-Ablauf (Grobsicht).
-- `sub-<phase>.bpmn` — je Phase die Schritte; jeder Task trägt „— <Akteur> · <System>".
+- `uebersicht.bpmn` — Phasen-Ablauf (Grobsicht, mit Gateways aus den Varianten).
+- `sub-<phase>.bpmn` — je Phase die Schritte als **Swimlanes** (Lane = Akteur/„Person"; System am Task-Label).
 
 Öffnen in **Camunda Modeler**, **draw.io** oder jedem BPMN-Viewer.
 
@@ -43,7 +43,10 @@ docker compose --profile controlling up -d jaeger integration
 # nach einem Durchlauf: Jaeger UI → http://localhost:16686 (Service „ebz-integration")
 ```
 
-## Bekannte Grenze: Swimlanes
-`bpmn-auto-layout` layoutet (noch) **keine** Pools/Lanes — daher steht „wer/wo" aktuell **im Task-Label**.
-Eine Lane-Injektion ist in `generate.py` vorbereitet (`LANES_AKTIV`, `_mit_lanes`), wartet aber auf ein
-lane-fähiges Layout (geplant: eigener Swimlane-Layouter, Spalte = Reihenfolge, Zeile = Akteur).
+## Swimlanes
+`bpmn-auto-layout` kann **keine** Pools/Lanes. Die Subprozesse layoutet daher ein **eigener
+Swimlane-Layouter** in `generate.py` (`_swimlane`, `LANES_AKTIV=True`): Spalte = Reihenfolge
+(Longest-Path), Zeile = Akteur-Lane, mit eigenem DI (Pool/Lane-Boxen + orthogonale Kanten). `layout.mjs`
+erkennt diese fertig layouteten Dateien am Marker `swimlane-laidout` und übernimmt sie unverändert; nur
+die `uebersicht.bpmn` (ohne Lanes) geht durch bpmn-auto-layout. Auf `LANES_AKTIV=False` umschaltbar
+(dann „Person · System" nur im Task-Label, Layout komplett über bpmn-auto-layout).

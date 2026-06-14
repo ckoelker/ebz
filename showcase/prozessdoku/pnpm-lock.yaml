@@ -11,6 +11,10 @@ importers:
       bpmn-auto-layout:
         specifier: ^1.3.0
         version: 1.3.0
+    devDependencies:
+      bpmn-moddle:
+        specifier: ^10.0.0
+        version: 10.0.0
 
 packages:
 
