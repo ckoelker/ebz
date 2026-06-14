@@ -114,6 +114,23 @@ public class PartyHoheitService {
         return p;
     }
 
+    /**
+     * Idempotente Identitäts-Auflösung allein über die E-Mail (ohne Login/Org) — der Anker für
+     * Quellsysteme ohne Keycloak-Kontext, z. B. ein Shop-Gast (R7). Existiert die Adresse, wird die
+     * Person wiederverwendet; sonst entsteht eine provisorische Person (claimbar beim späteren Login).
+     */
+    @Transactional
+    public Person findeOderLegePerson(String email, String anzeigeName) {
+        PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
+        if (vorhanden != null) {
+            return golden(Person.findById(vorhanden.personId));
+        }
+        Person p = neuePerson(anzeigeName, Person.Status.PROVISORISCH);
+        p.persist();
+        legeEmailAn(p.id, email, false, true);
+        return p;
+    }
+
     /** Merge-Kandidaten: andere aktive Personen mit gleichem (schwachem) Namensschlüssel. */
     public List<Person> kandidaten(Long personId) {
         Person p = Person.findById(personId);

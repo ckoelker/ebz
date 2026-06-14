@@ -291,6 +291,61 @@ class PartyKernTest {
     }
 
     @Test
+    @TestSecurity(user = "sb", roles = "rechnung-pflege")
+    void shopBestellung_folgtDemKontext_privatVsFirma_undIstIdempotent() {
+        long n = uniq();
+        String email = "shopper+" + n + "@example.com";
+        String pos = """
+                "positionen":[{"beschreibung":"Seminarunterlage Immobilienrecht","betragCent":4990,
+                 "steuerfall":"STANDARD","steuersatz":19}]""";
+
+        // Privat-Bestellung (kein Kontext) → PRIVAT-Debitor im SHOP-Nummernkreis (SH-)
+        int privatDebitor = given().contentType(ContentType.JSON)
+                .body("""
+                        {"quelle":"VENDURE","externeId":"ORD-%d","zahlungsart":"KARTE","bereich":"SHOP",
+                         "kaeuferEmail":"%s","kaeuferName":"Sandra Shopper",%s}""".formatted(n, email, pos))
+                .when().post("/party/quellen/shop-bestellung").then().statusCode(201)
+                .body("bereich", equalTo("SHOP"))
+                .extract().jsonPath().getInt("debitorId");
+        given().when().get("/rechnung/debitoren/" + privatDebitor).then().statusCode(200)
+                .body("rolle", equalTo("PRIVAT"))
+                .body("debitorNr", startsWith("SH-"))
+                .body("name", equalTo("Sandra Shopper"));
+
+        // Erneuter Push derselben externeId → idempotent (200, kein zweiter Beleg)
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"quelle":"VENDURE","externeId":"ORD-%d","zahlungsart":"KARTE","bereich":"SHOP",
+                         "kaeuferEmail":"%s","kaeuferName":"Sandra Shopper",%s}""".formatted(n, email, pos))
+                .when().post("/party/quellen/shop-bestellung").then().statusCode(200)
+                .body("debitorId", equalTo(privatDebitor));
+
+        // Dieselbe Person als buchungsberechtigtes Mitglied einer Firma → Bestellung im Firmenkontext
+        long orgId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"name":"Shop Firma GmbH %d","plz":"45657","ort":"Recklinghausen","land":"DE","ustId":"DE%d"}"""
+                        .formatted(n, n % 100000000L))
+                .when().post("/party/organisationen").then().statusCode(201).extract().jsonPath().getLong("id");
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"email":"%s","anzeigeName":"Sandra Shopper","rolle":"SEMINAR_BUCHER","buchungsberechtigt":true}"""
+                        .formatted(email))
+                .when().post("/party/organisationen/" + orgId + "/teilnehmer").then().statusCode(201);
+
+        int firmaDebitor = given().contentType(ContentType.JSON)
+                .body("""
+                        {"quelle":"VENDURE","externeId":"ORD-B-%d","zahlungsart":"RECHNUNG","bereich":"SHOP",
+                         "kaeuferEmail":"%s","kaeuferName":"Sandra Shopper","kontextOrganisationId":%d,%s}"""
+                        .formatted(n, email, orgId, pos))
+                .when().post("/party/quellen/shop-bestellung").then().statusCode(201)
+                .extract().jsonPath().getInt("debitorId");
+        given().when().get("/rechnung/debitoren/" + firmaDebitor).then().statusCode(200)
+                .body("rolle", equalTo("FIRMA"))
+                .body("debitorNr", startsWith("SH-"))
+                .body("name", startsWith("Shop Firma GmbH"));
+    }
+
+    @Test
     void schreibenOhneRolle_istVerboten() {
         given().contentType(ContentType.JSON)
                 .body("{\"name\":\"X\"}")

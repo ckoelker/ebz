@@ -4,15 +4,19 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import java.util.List;
+
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.DebitorAnlageDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.ExterneBestellung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Belegart;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Leistungsart;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungPosition;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Steuerfall;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Zahlungsart;
 
 /**
  * Überführt eine externe Bestellung (R7, z. B. bezahlte Vendure-Order) <b>quellen-agnostisch</b> in
@@ -29,27 +33,38 @@ public class BestellungBillingService {
 
     @Transactional
     public Rechnung ausBestellung(ExterneBestellung b) {
-        String schluessel = b.quelle() + "|" + b.externeId();
+        DebitorAnlageDto d = b.debitor();
+        Debitor debitor = debitorHoheit.findeOderLege(new DebitorHoheitService.Stammdaten(
+                d.bereich(), d.rolle(), d.name(), d.strasse(), d.plz(), d.ort(), d.land(),
+                d.ustId(), d.iban(), d.email()));
+        return belegAusBestellung(b.quelle(), b.externeId(), b.zahlungsart(), d.bereich(),
+                debitor.id, b.positionen());
+    }
+
+    /**
+     * Beleg-Erzeugung mit <b>bereits aufgelöstem</b> Debitor — die gemeinsame Naht für beide R7-Wege:
+     * den quellen-agnostischen Debitor-Stammdaten-Push ({@link #ausBestellung}) und den
+     * identitäts-/kontextgeführten Shop-Weg (Party-Kern). Idempotent über {@code quelle|externeId}.
+     */
+    @Transactional
+    public Rechnung belegAusBestellung(String quelle, String externeId, Zahlungsart zahlungsart,
+            Bereich bereich, Long debitorId, List<ExterneBestellung.Position> positionen) {
+        String schluessel = quelle + "|" + externeId;
         Rechnung vorhanden = Rechnung.find("laufSchluessel", schluessel).firstResult();
         if (vorhanden != null) {
             return vorhanden; // idempotent: pro externer Bestellung genau ein Beleg
         }
 
-        DebitorAnlageDto d = b.debitor();
-        Debitor debitor = debitorHoheit.findeOderLege(new DebitorHoheitService.Stammdaten(
-                d.bereich(), d.rolle(), d.name(), d.strasse(), d.plz(), d.ort(), d.land(),
-                d.ustId(), d.iban(), d.email()));
-
         Rechnung r = new Rechnung();
         r.belegart = Belegart.RECHNUNG;
-        r.bereich = d.bereich();
-        r.debitorId = debitor.id;
-        r.zeitraumBezeichnung = "%s-Bestellung %s (%s)".formatted(b.quelle(), b.externeId(), b.zahlungsart());
+        r.bereich = bereich;
+        r.debitorId = debitorId;
+        r.zeitraumBezeichnung = "%s-Bestellung %s (%s)".formatted(quelle, externeId, zahlungsart);
         r.laufSchluessel = schluessel;
         r.status = RechnungStatus.ENTWURF;
         r.persist();
 
-        for (ExterneBestellung.Position pos : b.positionen()) {
+        for (ExterneBestellung.Position pos : positionen) {
             RechnungPosition p = new RechnungPosition();
             p.rechnung = r;
             p.beschreibung = pos.beschreibung();

@@ -9,9 +9,15 @@ import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungTyp;
+import java.util.List;
+
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.ExterneBestellung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Zahlungsart;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Zimmerart;
+import de.netzfactor.ebz.controlling.integration.rechnung.service.BestellungBillingService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
 
 /**
@@ -30,6 +36,9 @@ public class BuchungService {
 
     @Inject
     PartyHoheitService party;
+
+    @Inject
+    BestellungBillingService bestellungBilling;
 
     /** Buchungsauftrag: Teilnehmer + Besteller (Identitäten) + gewählter Kontext + Berufsschul-Daten. */
     public record Berufsschulbuchung(Long teilnehmerPersonId, Long bestellerPersonId,
@@ -64,6 +73,28 @@ public class BuchungService {
         a.uebernachtungBetragCent = b.uebernachtungBetragCent();
         a.persist();
         return a;
+    }
+
+    /** Externe Shop-Bestellung (R7) im gewählten Kontext: Käufer + Kontext + Bereich + Positionen. */
+    public record Shopbestellung(String quelle, String externeId, Zahlungsart zahlungsart, Bereich bereich,
+            String kaeuferEmail, String kaeuferName, Long kontextOrganisationId,
+            List<ExterneBestellung.Position> positionen) {
+    }
+
+    /**
+     * R7 über den Party-Kern: eine externe Bestellung (z. B. bezahlte Vendure-Order) wird identitäts-
+     * und kontextgeführt abgerechnet. Der Käufer wird über die E-Mail zur {@link Person} aufgelöst
+     * (Shop-Gast = provisorisch, später claimbar); der zahlungspflichtige Debitor folgt dem Kontext
+     * (privat vs. im Auftrag der Organisation) statt einer mitgelieferten Debitor-DTO. Idempotent über
+     * {@code quelle|externeId} (gemeinsamer Beleg-Bauer mit dem klassischen R7-Weg).
+     */
+    @Transactional
+    public Rechnung ausShopBestellung(Shopbestellung b) {
+        Bereich bereich = b.bereich() == null ? Bereich.SHOP : b.bereich();
+        Person kaeufer = party.findeOderLegePerson(b.kaeuferEmail(), b.kaeuferName());
+        Debitor debitor = party.ermittleDebitor(kaeufer.id, b.kontextOrganisationId(), bereich);
+        return bestellungBilling.belegAusBestellung(b.quelle(), b.externeId(), b.zahlungsart(),
+                bereich, debitor.id, b.positionen());
     }
 
     /**

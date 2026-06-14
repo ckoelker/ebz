@@ -11,6 +11,7 @@ import jakarta.transaction.Transactional;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.ws.rs.Consumes;
 import jakarta.ws.rs.GET;
@@ -30,9 +31,12 @@ import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.party.service.BuchungService;
 import de.netzfactor.ebz.controlling.integration.party.service.PartyHoheitService;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.ExterneBestellung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Zahlungsart;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Zimmerart;
 
 /**
@@ -100,6 +104,15 @@ public class PartyResource {
 
     public record BuchungZeile(Long anmeldungId, String teilnehmerName, Long teilnehmerPersonId,
             Long kontextOrganisationId, Long zahlungspflichtigerDebitorId, String schuljahr, Integer halbjahr) {
+    }
+
+    public record ShopBestellung(@NotBlank String quelle, @NotBlank String externeId,
+            @NotNull Zahlungsart zahlungsart, Bereich bereich,
+            @NotBlank @Email String kaeuferEmail, @NotBlank String kaeuferName,
+            Long kontextOrganisationId, @Valid @NotEmpty List<ExterneBestellung.Position> positionen) {
+    }
+
+    public record ShopBelegView(Long rechnungId, Long debitorId, String bereich, String quelle, String externeId) {
     }
 
     // ───────────────────────── Identität ─────────────────────────
@@ -238,6 +251,25 @@ public class PartyResource {
         BuchungView view = new BuchungView(a.id, a.teilnehmerPersonId, a.bestellerPersonId,
                 a.kontextOrganisationId, a.zahlungspflichtigerDebitorId, a.teilnehmerName);
         return Response.status(Response.Status.CREATED).entity(view).build();
+    }
+
+    /**
+     * R7 über den Party-Kern: eine externe Bestellung (z. B. bezahlte Vendure-Order) wird identitäts-/
+     * kontextgeführt abgerechnet — Käufer per E-Mail aufgelöst, zahlungspflichtiger Debitor aus dem
+     * Kontext projiziert (privat vs. im Auftrag der Organisation). Idempotent über {@code quelle|externeId}.
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/quellen/shop-bestellung")
+    @Transactional
+    public Response shopBestellung(@Valid ShopBestellung req) {
+        long vorher = Rechnung.count();
+        Rechnung r = buchung.ausShopBestellung(new BuchungService.Shopbestellung(
+                req.quelle(), req.externeId(), req.zahlungsart(), req.bereich(),
+                req.kaeuferEmail(), req.kaeuferName(), req.kontextOrganisationId(), req.positionen()));
+        boolean neu = Rechnung.count() > vorher;
+        ShopBelegView view = new ShopBelegView(r.id, r.debitorId, r.bereich.name(), req.quelle(), req.externeId());
+        return Response.status(neu ? Response.Status.CREATED : Response.Status.OK).entity(view).build();
     }
 
     // ───────────────────────── DSGVO: kontext-skopierte Sichten ─────────────────────────
