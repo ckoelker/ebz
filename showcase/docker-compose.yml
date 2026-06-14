@@ -130,6 +130,16 @@ services:
     ports:
       - "${ADMINER_PORT:-8082}:8080"
 
+  # ── Mailpit (Dev-SMTP-Senke) — Anmeldung-Berufsschule A0 ──
+  # Fängt alle ausgehenden E-Mails (Einladung an Ansprechpartner, Anmeldebestätigung) ab; nichts
+  # verlässt die Maschine. UI :8025, SMTP :1025. Der integration-Service sendet dorthin (%dev).
+  mailpit:
+    image: axllent/mailpit:v1.21.8
+    restart: unless-stopped
+    ports:
+      - "${MAILPIT_UI_PORT:-8025}:8025"
+      - "${MAILPIT_SMTP_PORT:-1025}:1025"
+
   # ── Controlling (M1+) — nur mit Profil `controlling` gestartet ──
   #   docker compose --profile controlling up -d --build
   # So bleibt der Shop-Stack schlank; die Integration wird nur bei Bedarf gebaut.

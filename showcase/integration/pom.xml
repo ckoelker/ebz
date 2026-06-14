@@ -177,6 +177,14 @@
       <version>${minio.version}</version>
     </dependency>
 
+    <!-- ── Anmeldung Berufsschule A0: E-Mail-Versand ──
+         Einladung an den Ansprechpartner (Login-Provisionierung, Schritt C) + Anmeldebestätigung
+         an Azubi/Firma (Schritt E). Dev → Mailpit (docker-compose); Test → Quarkus MockMailbox. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-mailer</artifactId>
+    </dependency>
+
     <!-- Test -->
     <dependency>
       <groupId>io.quarkus</groupId>
