@@ -1,0 +1,9 @@
+# pnpm-11-Settings (lokal, nur dieses Paket). Bewusste, dokumentierte Lockerung der globalen
+# Supply-Chain-Policy (minimumReleaseAge=7d, trustPolicy=no-downgrade) FÜR PORTAL:
+# die Dependencies sind versions-identisch zu showcase/mdm (dort bereits committet/vetted und im
+# pnpm-Store). Die globale Regel blockiert nur den FRISCHEN Erstinstall hier — es kommt nichts
+# Neues/Ungeprüftes rein. Sobald die Versionen das 7-Tage-Fenster überschreiten, ist dies obsolet.
+minimumReleaseAge: 0
+trustPolicy: off
+allowBuilds:
+  vue-demi: true

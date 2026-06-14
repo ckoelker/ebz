@@ -193,6 +193,18 @@ services:
     ports:
       - "${MDM_PORT:-5174}:80"
 
+  # Außenportal (Anmeldung Berufsschule H) — Vue-3-SPA (PrimeVue), per nginx ausgeliefert.
+  # Self-Service für Firmen & Teilnehmer (Realm ebz-customers, Client ebz-portal); spricht den
+  # integration-Service (/party, /q) über den nginx-Proxy an. Shop bleibt eigenständig. Profil `controlling`.
+  portal:
+    build: ./portal
+    profiles: ["controlling"]
+    restart: unless-stopped
+    depends_on:
+      - integration
+    ports:
+      - "${PORTAL_PORT:-5175}:80"
+
   # MinIO — S3-kompatibler Objektspeicher (self-host). Lightdash 0.3059 ERZWINGT S3
   # (Pre-Aggregate-Results); ohne S3-Env bricht der Start schon beim Config-Parsing ab.
   # Nur die S3-API (:9000) wird benötigt. Profil `controlling`.

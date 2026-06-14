@@ -145,7 +145,8 @@ public class PartyResource {
     }
 
     public record BuchungZeile(Long anmeldungId, String teilnehmerName, Long teilnehmerPersonId,
-            Long kontextOrganisationId, Long zahlungspflichtigerDebitorId, String schuljahr, Integer halbjahr) {
+            Long kontextOrganisationId, Long zahlungspflichtigerDebitorId, String schuljahr, Integer halbjahr,
+            String status) {
     }
 
     public record ShopBestellung(@NotBlank String quelle, @NotBlank String externeId,
@@ -423,7 +424,7 @@ public class PartyResource {
 
     private static BuchungZeile toZeile(Anmeldung a) {
         return new BuchungZeile(a.id, a.teilnehmerName, a.teilnehmerPersonId, a.kontextOrganisationId,
-                a.zahlungspflichtigerDebitorId, a.schuljahr, a.halbjahr);
+                a.zahlungspflichtigerDebitorId, a.schuljahr, a.halbjahr, a.status.name());
     }
 
     // ───────────────────────── Helfer ─────────────────────────

@@ -20,6 +20,21 @@
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:5173/*"
       }
+    },
+    {
+      "clientId": "ebz-portal",
+      "enabled": true,
+      "publicClient": true,
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "rootUrl": "http://localhost:5175",
+      "redirectUris": ["http://localhost:5175/*"],
+      "webOrigins": ["http://localhost:5175", "+"],
+      "protocol": "openid-connect",
+      "attributes": {
+        "pkce.code.challenge.method": "S256",
+        "post.logout.redirect.uris": "http://localhost:5175/*"
+      }
     }
   ],
   "users": [
