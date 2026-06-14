@@ -1,0 +1,285 @@
+package de.netzfactor.ebz.controlling.integration.party.service;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+
+import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
+
+import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
+import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
+import de.netzfactor.ebz.controlling.integration.party.model.Person;
+import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.DebitorRolle;
+import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
+import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
+
+/**
+ * Party-Kern (Identitäts-Hoheit): das „eine Gehirn" für Personen-Identität und Bestellkontexte — der
+ * Differenzierer, der bewusst <b>selbst gebaut</b> wird (HubSpot bleibt reines Marketing).
+ *
+ * <p>Löst die Leitfrage <i>„eine Identität, n Bestellkontexte (privat / Hauptfirma / Nebenbeschäftigung)"</i>:
+ * <ul>
+ *   <li><b>Identität = {@link Person}</b>, eindeutig über die globale {@link PersonEmail}-Unique —
+ *       <i>nicht</i> die E-Mail ist die Identität, sondern die Person; E-Mail ist Auflösungsschlüssel.</li>
+ *   <li><b>Kontext = pro Vorgang gewählt</b> aus {@code {PRIVAT} ∪ {Organisationen mit aktiver,
+ *       buchungsberechtigter Mitgliedschaft}} — Haupt- und Nebenfirma sind schlicht zwei FIRMA-Kontexte.</li>
+ *   <li><b>Abrechnung folgt dem Kontext</b>: {@link #ermittleDebitor} projiziert den passenden Debitor
+ *       (privat → eigener; Firma → Org-Debitor) über die bestehende {@link DebitorHoheitService}.</li>
+ * </ul>
+ * Die „selbe E-Mail privat und als Firmen-Azubi"-Kollision verschwindet so: firmenseitige Vor-Anlage
+ * und private Selbstregistrierung konvergieren idempotent auf <i>eine</i> Person ({@link #selbstRegistrieren}
+ * = Account-Claiming). Match/Merge auf Personenebene räumt Zweit-Adressen/Dubletten zusammen.
+ */
+@ApplicationScoped
+public class PartyHoheitService {
+
+    @Inject
+    DebitorHoheitService debitorHoheit;
+
+    /** Ein wählbarer Bestellkontext einer Person. {@code organisationId == null} ⇒ PRIVAT. */
+    public record Kontext(Art art, Long organisationId, String bezeichnung, List<Mitgliedschaft.Rolle> rollen) {
+        public enum Art { PRIVAT, FIRMA }
+    }
+
+    // ───────────────────────── Identität: anlegen / claimen / mergen ─────────────────────────
+
+    /**
+     * Selbstregistrierung/Login eines Menschen mit seiner E-Mail. Existiert die Adresse bereits (z. B.
+     * von der Firma als Azubi vor-angelegt), wird <b>dieselbe Person geclaimt</b>: Keycloak-{@code sub}
+     * gebunden, Adresse verifiziert, Status → AKTIV. Sonst entsteht eine neue, sofort aktive Person.
+     */
+    @Transactional
+    public Person selbstRegistrieren(String keycloakSub, String email, String anzeigeName) {
+        PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
+        Person p;
+        if (vorhanden != null) {
+            p = golden(Person.findById(vorhanden.personId));
+            bindeSub(p, keycloakSub);
+            vorhanden.verifiziert = true;
+        } else {
+            p = neuePerson(anzeigeName, Person.Status.AKTIV);
+            p.keycloakSub = keycloakSub;
+            p.persist();
+            legeEmailAn(p.id, email, true, true);
+        }
+        return p;
+    }
+
+    /**
+     * Firmenseitige Vor-Anlage eines Teilnehmers/Ansprechpartners per E-Mail: findet die Person über die
+     * Adresse oder legt sie <b>provisorisch</b> an (noch kein Login), und verknüpft sie idempotent per
+     * {@link Mitgliedschaft} mit der Organisation. Loggt der Mensch sich später selbst ein, greift
+     * {@link #selbstRegistrieren} auf genau diese Person.
+     */
+    @Transactional
+    public Person registriereTeilnehmer(Long organisationId, String email, String anzeigeName,
+            Mitgliedschaft.Rolle rolle, boolean buchungsberechtigt) {
+        mussOrganisation(organisationId);
+        PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
+        Person p;
+        if (vorhanden != null) {
+            p = golden(Person.findById(vorhanden.personId));
+        } else {
+            p = neuePerson(anzeigeName, Person.Status.PROVISORISCH);
+            p.persist();
+            legeEmailAn(p.id, email, false, true);
+        }
+        legeMitgliedschaftAn(p.id, organisationId, rolle, buchungsberechtigt);
+        return p;
+    }
+
+    /** Merge-Kandidaten: andere aktive Personen mit gleichem (schwachem) Namensschlüssel. */
+    public List<Person> kandidaten(Long personId) {
+        Person p = Person.findById(personId);
+        if (p == null || p.matchSchluessel == null) {
+            return List.of();
+        }
+        return Person.list("status = ?1 and matchSchluessel = ?2 and id <> ?3",
+                Person.Status.AKTIV, p.matchSchluessel, p.id);
+    }
+
+    /**
+     * Führt {@code quell} in {@code ziel} zusammen: E-Mails und Mitgliedschaften werden umgehängt, der
+     * Login-{@code sub} ggf. übernommen, die unterlegene Person wird ZUSAMMENGEFUEHRT (zeigt per
+     * {@link Person#goldenPersonId} auf {@code ziel}). Same-Email-Dubletten über zwei Adressen lösen
+     * sich so zu einer Identität auf.
+     */
+    @Transactional
+    public Person merge(Long quellId, Long zielId) {
+        if (quellId.equals(zielId)) {
+            throw new RegelVerletzung("Quell- und Ziel-Person sind identisch.");
+        }
+        Person quell = mussAktiv(quellId);
+        Person ziel = mussAktiv(zielId);
+        PersonEmail.update("personId = ?1 where personId = ?2", ziel.id, quell.id);
+        Mitgliedschaft.update("personId = ?1 where personId = ?2", ziel.id, quell.id);
+        if (ziel.keycloakSub == null && quell.keycloakSub != null) {
+            ziel.keycloakSub = quell.keycloakSub;
+            quell.keycloakSub = null; // Unique-Constraint: sub darf nur einmal existieren
+        }
+        quell.status = Person.Status.ZUSAMMENGEFUEHRT;
+        quell.goldenPersonId = ziel.id;
+        return ziel;
+    }
+
+    // ───────────────────────── Kontexte & Abrechnungs-Projektion ─────────────────────────
+
+    /** Wählbare Bestellkontexte: PRIVAT + jede Organisation mit aktiver, buchungsberechtigter Mitgliedschaft. */
+    public List<Kontext> kontexte(Long personId) {
+        Person p = golden(Person.findById(personId));
+        if (p == null) {
+            throw RegelVerletzung.nichtGefunden("Person nicht gefunden: " + personId);
+        }
+        List<Kontext> ergebnis = new ArrayList<>();
+        ergebnis.add(new Kontext(Kontext.Art.PRIVAT, null, "Privat", List.of()));
+        LocalDate heute = LocalDate.now();
+        List<Mitgliedschaft> mitgliedschaften = Mitgliedschaft.list("personId", p.id);
+        // Pro Organisation einen FIRMA-Kontext, wenn mindestens eine aktive buchungsberechtigte Rolle besteht.
+        mitgliedschaften.stream()
+                .filter(m -> m.buchungsberechtigt && aktiv(m, heute))
+                .map(m -> m.organisationId)
+                .distinct()
+                .forEach(orgId -> {
+                    Organisation o = Organisation.findById(orgId);
+                    List<Mitgliedschaft.Rolle> rollen = mitgliedschaften.stream()
+                            .filter(m -> m.organisationId.equals(orgId) && m.buchungsberechtigt && aktiv(m, heute))
+                            .map(m -> m.rolle).toList();
+                    ergebnis.add(new Kontext(Kontext.Art.FIRMA, orgId,
+                            o == null ? ("Organisation " + orgId) : o.name, rollen));
+                });
+        return ergebnis;
+    }
+
+    /**
+     * Projiziert den Abrechnungs-Debitor für einen gewählten Kontext und Bereich — der Naht-Punkt zur
+     * Billing-Hoheit: {@code organisationId == null} ⇒ privater Debitor der Person, sonst der
+     * Org-Debitor (Bestellberechtigung wird geprüft). Idempotent via {@link DebitorHoheitService}.
+     */
+    @Transactional
+    public Debitor ermittleDebitor(Long personId, Long organisationId, Bereich bereich) {
+        Person p = golden(Person.findById(personId));
+        if (p == null) {
+            throw RegelVerletzung.nichtGefunden("Person nicht gefunden: " + personId);
+        }
+        if (organisationId == null) {
+            return debitorHoheit.findeOderLege(new DebitorHoheitService.Stammdaten(
+                    bereich, DebitorRolle.PRIVAT, p.anzeigeName, null, p.plz, p.ort, "DE",
+                    null, null, primaerEmail(p.id)));
+        }
+        mussBuchungsberechtigt(p.id, organisationId);
+        Organisation o = mussOrganisation(organisationId);
+        return debitorHoheit.findeOderLege(new DebitorHoheitService.Stammdaten(
+                bereich, DebitorRolle.FIRMA, o.name, o.strasse, o.plz, o.ort,
+                o.land == null ? "DE" : o.land, o.ustId, null, null));
+    }
+
+    // ───────────────────────── intern ─────────────────────────
+
+    private static Person neuePerson(String anzeigeName, Person.Status status) {
+        Person p = new Person();
+        p.anzeigeName = anzeigeName;
+        p.status = status;
+        p.matchSchluessel = normalisiere(anzeigeName);
+        return p;
+    }
+
+    private static void bindeSub(Person p, String keycloakSub) {
+        if (keycloakSub == null || keycloakSub.isBlank()) {
+            return;
+        }
+        if (p.keycloakSub != null && !p.keycloakSub.equals(keycloakSub)) {
+            throw new RegelVerletzung("Person " + p.id + " ist bereits an einen anderen Login gebunden.");
+        }
+        p.keycloakSub = keycloakSub;
+        if (p.status == Person.Status.PROVISORISCH) {
+            p.status = Person.Status.AKTIV; // Account-Claiming
+        }
+    }
+
+    private void legeEmailAn(Long personId, String email, boolean verifiziert, boolean primaer) {
+        PersonEmail e = new PersonEmail();
+        e.personId = personId;
+        e.email = normEmail(email);
+        e.verifiziert = verifiziert;
+        e.primaer = primaer;
+        e.persist();
+    }
+
+    private void legeMitgliedschaftAn(Long personId, Long orgId, Mitgliedschaft.Rolle rolle, boolean buchungsberechtigt) {
+        long vorhanden = Mitgliedschaft.count("personId = ?1 and organisationId = ?2 and rolle = ?3",
+                personId, orgId, rolle);
+        if (vorhanden > 0) {
+            return; // idempotent
+        }
+        Mitgliedschaft m = new Mitgliedschaft();
+        m.personId = personId;
+        m.organisationId = orgId;
+        m.rolle = rolle;
+        m.buchungsberechtigt = buchungsberechtigt;
+        m.gueltigVon = LocalDate.now();
+        m.persist();
+    }
+
+    private void mussBuchungsberechtigt(Long personId, Long orgId) {
+        long ok = Mitgliedschaft.count("personId = ?1 and organisationId = ?2 and buchungsberechtigt = true",
+                personId, orgId);
+        if (ok == 0) {
+            throw new RegelVerletzung("Person " + personId + " darf nicht im Auftrag von Organisation "
+                    + orgId + " bestellen.");
+        }
+    }
+
+    private static Organisation mussOrganisation(Long orgId) {
+        Organisation o = Organisation.findById(orgId);
+        if (o == null) {
+            throw RegelVerletzung.nichtGefunden("Organisation nicht gefunden: " + orgId);
+        }
+        return o;
+    }
+
+    private static String primaerEmail(Long personId) {
+        PersonEmail e = PersonEmail.find("personId = ?1 and primaer = true", personId).firstResult();
+        if (e == null) {
+            e = PersonEmail.find("personId", personId).firstResult();
+        }
+        return e == null ? null : e.email;
+    }
+
+    private static boolean aktiv(Mitgliedschaft m, LocalDate heute) {
+        return (m.gueltigVon == null || !m.gueltigVon.isAfter(heute))
+                && (m.gueltigBis == null || !m.gueltigBis.isBefore(heute));
+    }
+
+    private static Person golden(Person p) {
+        if (p == null) {
+            return null;
+        }
+        return p.status == Person.Status.ZUSAMMENGEFUEHRT && p.goldenPersonId != null
+                ? Person.findById(p.goldenPersonId)
+                : p;
+    }
+
+    private static Person mussAktiv(Long id) {
+        Person p = Person.findById(id);
+        if (p == null) {
+            throw RegelVerletzung.nichtGefunden("Person nicht gefunden: " + id);
+        }
+        if (p.status == Person.Status.ZUSAMMENGEFUEHRT) {
+            throw new RegelVerletzung("Person " + id + " ist bereits zusammengeführt.");
+        }
+        return p;
+    }
+
+    private static String normEmail(String email) {
+        return email == null ? null : email.trim().toLowerCase();
+    }
+
+    private static String normalisiere(String s) {
+        return s == null ? "" : s.toLowerCase().replaceAll("[^a-z0-9]", "");
+    }
+}

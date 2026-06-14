@@ -60,4 +60,9 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}"
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
   -c "CREATE SCHEMA IF NOT EXISTS rechnung AUTHORIZATION \"${CONTROLLING_USER}\";"
 
-echo "initdb: DBs 'controlling' + 'lightdash', Schemata 'bildung'+'rechnung' und User (controlling/lightdash/${READER_USER}) sichergestellt."
+# Party-Kern (CRM-Identität): Schema `party` (Person/Organisation/Mitgliedschaft) in DB `controlling`,
+# analog `bildung`/`rechnung` (Hibernate-update legt nur die Tabellen an, nicht das Schema selbst).
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
+  -c "CREATE SCHEMA IF NOT EXISTS party AUTHORIZATION \"${CONTROLLING_USER}\";"
+
+echo "initdb: DBs 'controlling' + 'lightdash', Schemata 'bildung'+'rechnung'+'party' und User (controlling/lightdash/${READER_USER}) sichergestellt."
