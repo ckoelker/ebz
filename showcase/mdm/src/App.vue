@@ -7,8 +7,12 @@ import { auth, login, logout } from './auth';
 
 <template>
   <header class="topbar">
-    <RouterLink to="/" class="marke">EBZ MDM · Bildungsangebote</RouterLink>
-    <span class="hint">Formularverwaltung-Showcase · Stack B</span>
+    <RouterLink to="/" class="marke">EBZ MDM</RouterLink>
+    <nav class="nav">
+      <RouterLink to="/">Bildungsangebote</RouterLink>
+      <RouterLink to="/reviews">Dubletten-Review</RouterLink>
+      <RouterLink to="/anmeldungen">Anmeldungen</RouterLink>
+    </nav>
     <span class="spacer" />
     <template v-if="auth.bereit">
       <span v-if="auth.angemeldet" class="user"><i class="pi pi-user" /> {{ auth.benutzer }}</span>
@@ -44,6 +48,22 @@ body {
 .hint {
   font-size: 0.8rem;
   opacity: 0.85;
+}
+.nav {
+  display: flex;
+  gap: 1rem;
+  margin-left: 1rem;
+}
+.nav a {
+  color: #fff;
+  text-decoration: none;
+  opacity: 0.85;
+  font-size: 0.95rem;
+}
+.nav a.router-link-active {
+  opacity: 1;
+  font-weight: 700;
+  border-bottom: 2px solid #fff;
 }
 .spacer {
   flex: 1;

@@ -2,7 +2,7 @@
 
 import type { Client, ClientMeta, Options as Options2, RequestResult, TDataShape } from './client';
 import { client } from './client.gen';
-import type { DeleteBildungBerufsschuljahreByIdData, DeleteBildungBerufsschuljahreByIdErrors, DeleteBildungBerufsschuljahreByIdResponses, DeleteBildungSeminareByIdData, DeleteBildungSeminareByIdErrors, DeleteBildungSeminareByIdResponses, DeleteBildungStudiengaengeByIdData, DeleteBildungStudiengaengeByIdErrors, DeleteBildungStudiengaengeByIdResponses, DeleteBildungTagungenByIdData, DeleteBildungTagungenByIdErrors, DeleteBildungTagungenByIdResponses, GetBildungAngeboteData, GetBildungAngeboteResponses, GetBildungBerufsschuljahreByIdData, GetBildungBerufsschuljahreByIdResponses, GetBildungBerufsschuljahreData, GetBildungBerufsschuljahreResponses, GetBildungSeminareByIdData, GetBildungSeminareByIdResponses, GetBildungSeminareData, GetBildungSeminareResponses, GetBildungStudiengaengeByIdData, GetBildungStudiengaengeByIdResponses, GetBildungStudiengaengeData, GetBildungStudiengaengeResponses, GetBildungTagungenByIdData, GetBildungTagungenByIdResponses, GetBildungTagungenData, GetBildungTagungenResponses, GetIngestReviewData, GetIngestReviewResponses, GetIngestStatsData, GetIngestStatsResponses, PostBildungAngeboteByIdShopProjektionData, PostBildungAngeboteByIdShopProjektionErrors, PostBildungAngeboteByIdShopProjektionResponses, PostBildungBerufsschuljahreData, PostBildungBerufsschuljahreErrors, PostBildungBerufsschuljahreResponses, PostBildungSeminareData, PostBildungSeminareErrors, PostBildungSeminareResponses, PostBildungStudiengaengeData, PostBildungStudiengaengeErrors, PostBildungStudiengaengeResponses, PostBildungTagungenData, PostBildungTagungenErrors, PostBildungTagungenResponses, PostIngestRunData, PostIngestRunResponses, PutBildungBerufsschuljahreByIdData, PutBildungBerufsschuljahreByIdErrors, PutBildungBerufsschuljahreByIdResponses, PutBildungSeminareByIdData, PutBildungSeminareByIdErrors, PutBildungSeminareByIdResponses, PutBildungStudiengaengeByIdData, PutBildungStudiengaengeByIdErrors, PutBildungStudiengaengeByIdResponses, PutBildungTagungenByIdData, PutBildungTagungenByIdErrors, PutBildungTagungenByIdResponses } from './types.gen';
+import type { DeleteBildungBerufsschuljahreByIdData, DeleteBildungBerufsschuljahreByIdErrors, DeleteBildungBerufsschuljahreByIdResponses, DeleteBildungSeminareByIdData, DeleteBildungSeminareByIdErrors, DeleteBildungSeminareByIdResponses, DeleteBildungStudiengaengeByIdData, DeleteBildungStudiengaengeByIdErrors, DeleteBildungStudiengaengeByIdResponses, DeleteBildungTagungenByIdData, DeleteBildungTagungenByIdErrors, DeleteBildungTagungenByIdResponses, DeleteRechnungAnmeldungenByIdData, DeleteRechnungAnmeldungenByIdErrors, DeleteRechnungAnmeldungenByIdResponses, GetBildungAngeboteData, GetBildungAngeboteResponses, GetBildungBerufsschuljahreByIdData, GetBildungBerufsschuljahreByIdResponses, GetBildungBerufsschuljahreData, GetBildungBerufsschuljahreResponses, GetBildungSeminareByIdData, GetBildungSeminareByIdResponses, GetBildungSeminareData, GetBildungSeminareResponses, GetBildungStudiengaengeByIdData, GetBildungStudiengaengeByIdResponses, GetBildungStudiengaengeData, GetBildungStudiengaengeResponses, GetBildungTagungenByIdData, GetBildungTagungenByIdResponses, GetBildungTagungenData, GetBildungTagungenResponses, GetIngestReviewData, GetIngestReviewResponses, GetIngestStatsData, GetIngestStatsResponses, GetPartyAnmeldungenData, GetPartyAnmeldungenErrors, GetPartyAnmeldungenResponses, GetPartyFirmensichtByOrganisationIdData, GetPartyFirmensichtByOrganisationIdErrors, GetPartyFirmensichtByOrganisationIdResponses, GetPartyOrganisationenByIdData, GetPartyOrganisationenByIdKandidatenData, GetPartyOrganisationenByIdKandidatenResponses, GetPartyOrganisationenByIdResponses, GetPartyPersonenByIdBuchungenData, GetPartyPersonenByIdBuchungenErrors, GetPartyPersonenByIdBuchungenResponses, GetPartyPersonenByIdData, GetPartyPersonenByIdDebitorData, GetPartyPersonenByIdDebitorErrors, GetPartyPersonenByIdDebitorResponses, GetPartyPersonenByIdKandidatenData, GetPartyPersonenByIdKandidatenResponses, GetPartyPersonenByIdKontexteData, GetPartyPersonenByIdKontexteResponses, GetPartyPersonenByIdResponses, GetPartyReviewsQueueData, GetPartyReviewsQueueErrors, GetPartyReviewsQueueResponses, GetRechnungAnmeldungenByIdData, GetRechnungAnmeldungenByIdResponses, GetRechnungAnmeldungenData, GetRechnungAnmeldungenResponses, GetRechnungDatevBuchungssaetzeData, GetRechnungDatevBuchungssaetzeErrors, GetRechnungDatevBuchungssaetzeResponses, GetRechnungDatevBuchungsstapelData, GetRechnungDatevBuchungsstapelErrors, GetRechnungDatevBuchungsstapelResponses, GetRechnungDebitorenAufloesenData, GetRechnungDebitorenAufloesenResponses, GetRechnungDebitorenByIdAliaseData, GetRechnungDebitorenByIdAliaseResponses, GetRechnungDebitorenByIdData, GetRechnungDebitorenByIdKandidatenData, GetRechnungDebitorenByIdKandidatenResponses, GetRechnungDebitorenByIdResponses, GetRechnungDebitorenData, GetRechnungDebitorenResponses, GetRechnungRechnungenByIdData, GetRechnungRechnungenByIdResponses, GetRechnungRechnungenByIdZugferdData, GetRechnungRechnungenByIdZugferdErrors, GetRechnungRechnungenByIdZugferdResponses, GetRechnungRechnungenData, GetRechnungRechnungenResponses, PostBildungAngeboteByIdShopProjektionData, PostBildungAngeboteByIdShopProjektionErrors, PostBildungAngeboteByIdShopProjektionResponses, PostBildungBerufsschuljahreData, PostBildungBerufsschuljahreErrors, PostBildungBerufsschuljahreResponses, PostBildungSeminareData, PostBildungSeminareErrors, PostBildungSeminareResponses, PostBildungStudiengaengeData, PostBildungStudiengaengeErrors, PostBildungStudiengaengeResponses, PostBildungTagungenData, PostBildungTagungenErrors, PostBildungTagungenResponses, PostIngestRunData, PostIngestRunResponses, PostPartyAnfragenAusbildungsbetriebData, PostPartyAnfragenAusbildungsbetriebErrors, PostPartyAnfragenAusbildungsbetriebResponses, PostPartyAnmeldungenByIdBestaetigungData, PostPartyAnmeldungenByIdBestaetigungErrors, PostPartyAnmeldungenByIdBestaetigungResponses, PostPartyBuchungenBerufsschuleData, PostPartyBuchungenBerufsschuleErrors, PostPartyBuchungenBerufsschuleResponses, PostPartyBuchungenHochschuleData, PostPartyBuchungenHochschuleErrors, PostPartyBuchungenHochschuleResponses, PostPartyOrganisationenByIdTeilnehmerData, PostPartyOrganisationenByIdTeilnehmerErrors, PostPartyOrganisationenByIdTeilnehmerResponses, PostPartyOrganisationenData, PostPartyOrganisationenErrors, PostPartyOrganisationenMergeData, PostPartyOrganisationenMergeErrors, PostPartyOrganisationenMergeResponses, PostPartyOrganisationenResponses, PostPartyPersonenByIdEinladungData, PostPartyPersonenByIdEinladungErrors, PostPartyPersonenByIdEinladungResponses, PostPartyPersonenLoginData, PostPartyPersonenLoginErrors, PostPartyPersonenLoginResponses, PostPartyPersonenMergeData, PostPartyPersonenMergeErrors, PostPartyPersonenMergeResponses, PostPartyPersonenSelbstregistrierenData, PostPartyPersonenSelbstregistrierenErrors, PostPartyPersonenSelbstregistrierenResponses, PostPartyPortalAnmeldungenByIdVertragBestaetigenData, PostPartyPortalAnmeldungenByIdVertragBestaetigenErrors, PostPartyPortalAnmeldungenByIdVertragBestaetigenResponses, PostPartyPortalAzubiAnmeldungData, PostPartyPortalAzubiAnmeldungErrors, PostPartyPortalAzubiAnmeldungResponses, PostPartyQuellenShopBestellungData, PostPartyQuellenShopBestellungErrors, PostPartyQuellenShopBestellungResponses, PostPartyReviewsEntscheidungData, PostPartyReviewsEntscheidungErrors, PostPartyReviewsEntscheidungResponses, PostRechnungAnmeldungenData, PostRechnungAnmeldungenErrors, PostRechnungAnmeldungenResponses, PostRechnungDatevUebergabeData, PostRechnungDatevUebergabeErrors, PostRechnungDatevUebergabeResponses, PostRechnungDebitorenAnlegenData, PostRechnungDebitorenAnlegenErrors, PostRechnungDebitorenAnlegenResponses, PostRechnungDebitorenData, PostRechnungDebitorenErrors, PostRechnungDebitorenImportData, PostRechnungDebitorenImportErrors, PostRechnungDebitorenImportResponses, PostRechnungDebitorenMergeData, PostRechnungDebitorenMergeErrors, PostRechnungDebitorenMergeResponses, PostRechnungDebitorenResponses, PostRechnungLaeufeData, PostRechnungLaeufeErrors, PostRechnungLaeufeHochschuleData, PostRechnungLaeufeHochschuleErrors, PostRechnungLaeufeHochschuleResponses, PostRechnungLaeufeResponses, PostRechnungQuellenBestellungData, PostRechnungQuellenBestellungErrors, PostRechnungQuellenBestellungResponses, PostRechnungRechnungenByIdAusstellenData, PostRechnungRechnungenByIdAusstellenErrors, PostRechnungRechnungenByIdAusstellenResponses, PostRechnungRechnungenByIdGutschriftData, PostRechnungRechnungenByIdGutschriftErrors, PostRechnungRechnungenByIdGutschriftResponses, PostRechnungRechnungenByIdNachberechnungData, PostRechnungRechnungenByIdNachberechnungErrors, PostRechnungRechnungenByIdNachberechnungResponses, PostRechnungRechnungenByIdPositionenData, PostRechnungRechnungenByIdPositionenErrors, PostRechnungRechnungenByIdPositionenResponses, PostRechnungRechnungenByIdStornoData, PostRechnungRechnungenByIdStornoErrors, PostRechnungRechnungenByIdStornoResponses, PutBildungBerufsschuljahreByIdData, PutBildungBerufsschuljahreByIdErrors, PutBildungBerufsschuljahreByIdResponses, PutBildungSeminareByIdData, PutBildungSeminareByIdErrors, PutBildungSeminareByIdResponses, PutBildungStudiengaengeByIdData, PutBildungStudiengaengeByIdErrors, PutBildungStudiengaengeByIdResponses, PutBildungTagungenByIdData, PutBildungTagungenByIdErrors, PutBildungTagungenByIdResponses, PutRechnungAnmeldungenByIdData, PutRechnungAnmeldungenByIdErrors, PutRechnungAnmeldungenByIdResponses, PutRechnungDebitorenByIdData, PutRechnungDebitorenByIdErrors, PutRechnungDebitorenByIdResponses } from './types.gen';
 
 export type Options<TData extends TDataShape = TDataShape, ThrowOnError extends boolean = boolean, TResponse = unknown> = Options2<TData, ThrowOnError, TResponse> & {
     /**
@@ -226,3 +226,532 @@ export const postIngestRun = <ThrowOnError extends boolean = false>(options?: Op
  * Stats
  */
 export const getIngestStats = <ThrowOnError extends boolean = false>(options?: Options<GetIngestStatsData, ThrowOnError>): RequestResult<GetIngestStatsResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetIngestStatsResponses, unknown, ThrowOnError>({ url: '/ingest/stats', ...options });
+
+/**
+ * Anfrage Ausbildungsbetrieb
+ */
+export const postPartyAnfragenAusbildungsbetrieb = <ThrowOnError extends boolean = false>(options: Options<PostPartyAnfragenAusbildungsbetriebData, ThrowOnError>): RequestResult<PostPartyAnfragenAusbildungsbetriebResponses, PostPartyAnfragenAusbildungsbetriebErrors, ThrowOnError> => (options.client ?? client).post<PostPartyAnfragenAusbildungsbetriebResponses, PostPartyAnfragenAusbildungsbetriebErrors, ThrowOnError>({
+    url: '/party/anfragen/ausbildungsbetrieb',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Offene
+ */
+export const getPartyAnmeldungen = <ThrowOnError extends boolean = false>(options?: Options<GetPartyAnmeldungenData, ThrowOnError>): RequestResult<GetPartyAnmeldungenResponses, GetPartyAnmeldungenErrors, ThrowOnError> => (options?.client ?? client).get<GetPartyAnmeldungenResponses, GetPartyAnmeldungenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/anmeldungen',
+    ...options
+});
+
+/**
+ * Bestaetigen
+ */
+export const postPartyAnmeldungenByIdBestaetigung = <ThrowOnError extends boolean = false>(options: Options<PostPartyAnmeldungenByIdBestaetigungData, ThrowOnError>): RequestResult<PostPartyAnmeldungenByIdBestaetigungResponses, PostPartyAnmeldungenByIdBestaetigungErrors, ThrowOnError> => (options.client ?? client).post<PostPartyAnmeldungenByIdBestaetigungResponses, PostPartyAnmeldungenByIdBestaetigungErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/anmeldungen/{id}/bestaetigung',
+    ...options
+});
+
+/**
+ * Buche Berufsschule
+ */
+export const postPartyBuchungenBerufsschule = <ThrowOnError extends boolean = false>(options: Options<PostPartyBuchungenBerufsschuleData, ThrowOnError>): RequestResult<PostPartyBuchungenBerufsschuleResponses, PostPartyBuchungenBerufsschuleErrors, ThrowOnError> => (options.client ?? client).post<PostPartyBuchungenBerufsschuleResponses, PostPartyBuchungenBerufsschuleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/buchungen/berufsschule',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Buche Hochschule
+ */
+export const postPartyBuchungenHochschule = <ThrowOnError extends boolean = false>(options: Options<PostPartyBuchungenHochschuleData, ThrowOnError>): RequestResult<PostPartyBuchungenHochschuleResponses, PostPartyBuchungenHochschuleErrors, ThrowOnError> => (options.client ?? client).post<PostPartyBuchungenHochschuleResponses, PostPartyBuchungenHochschuleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/buchungen/hochschule',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Firmensicht
+ */
+export const getPartyFirmensichtByOrganisationId = <ThrowOnError extends boolean = false>(options: Options<GetPartyFirmensichtByOrganisationIdData, ThrowOnError>): RequestResult<GetPartyFirmensichtByOrganisationIdResponses, GetPartyFirmensichtByOrganisationIdErrors, ThrowOnError> => (options.client ?? client).get<GetPartyFirmensichtByOrganisationIdResponses, GetPartyFirmensichtByOrganisationIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/firmensicht/{organisationId}',
+    ...options
+});
+
+/**
+ * Create Organisation
+ */
+export const postPartyOrganisationen = <ThrowOnError extends boolean = false>(options: Options<PostPartyOrganisationenData, ThrowOnError>): RequestResult<PostPartyOrganisationenResponses, PostPartyOrganisationenErrors, ThrowOnError> => (options.client ?? client).post<PostPartyOrganisationenResponses, PostPartyOrganisationenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/organisationen',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Merge Organisation
+ */
+export const postPartyOrganisationenMerge = <ThrowOnError extends boolean = false>(options: Options<PostPartyOrganisationenMergeData, ThrowOnError>): RequestResult<PostPartyOrganisationenMergeResponses, PostPartyOrganisationenMergeErrors, ThrowOnError> => (options.client ?? client).post<PostPartyOrganisationenMergeResponses, PostPartyOrganisationenMergeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/organisationen/merge',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Organisation
+ */
+export const getPartyOrganisationenById = <ThrowOnError extends boolean = false>(options: Options<GetPartyOrganisationenByIdData, ThrowOnError>): RequestResult<GetPartyOrganisationenByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetPartyOrganisationenByIdResponses, unknown, ThrowOnError>({ url: '/party/organisationen/{id}', ...options });
+
+/**
+ * Organisation Kandidaten
+ */
+export const getPartyOrganisationenByIdKandidaten = <ThrowOnError extends boolean = false>(options: Options<GetPartyOrganisationenByIdKandidatenData, ThrowOnError>): RequestResult<GetPartyOrganisationenByIdKandidatenResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetPartyOrganisationenByIdKandidatenResponses, unknown, ThrowOnError>({ url: '/party/organisationen/{id}/kandidaten', ...options });
+
+/**
+ * Teilnehmer Anlegen
+ */
+export const postPartyOrganisationenByIdTeilnehmer = <ThrowOnError extends boolean = false>(options: Options<PostPartyOrganisationenByIdTeilnehmerData, ThrowOnError>): RequestResult<PostPartyOrganisationenByIdTeilnehmerResponses, PostPartyOrganisationenByIdTeilnehmerErrors, ThrowOnError> => (options.client ?? client).post<PostPartyOrganisationenByIdTeilnehmerResponses, PostPartyOrganisationenByIdTeilnehmerErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/organisationen/{id}/teilnehmer',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Login
+ */
+export const postPartyPersonenLogin = <ThrowOnError extends boolean = false>(options: Options<PostPartyPersonenLoginData, ThrowOnError>): RequestResult<PostPartyPersonenLoginResponses, PostPartyPersonenLoginErrors, ThrowOnError> => (options.client ?? client).post<PostPartyPersonenLoginResponses, PostPartyPersonenLoginErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/personen/login',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Merge
+ */
+export const postPartyPersonenMerge = <ThrowOnError extends boolean = false>(options: Options<PostPartyPersonenMergeData, ThrowOnError>): RequestResult<PostPartyPersonenMergeResponses, PostPartyPersonenMergeErrors, ThrowOnError> => (options.client ?? client).post<PostPartyPersonenMergeResponses, PostPartyPersonenMergeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/personen/merge',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Selbst Registrieren
+ */
+export const postPartyPersonenSelbstregistrieren = <ThrowOnError extends boolean = false>(options: Options<PostPartyPersonenSelbstregistrierenData, ThrowOnError>): RequestResult<PostPartyPersonenSelbstregistrierenResponses, PostPartyPersonenSelbstregistrierenErrors, ThrowOnError> => (options.client ?? client).post<PostPartyPersonenSelbstregistrierenResponses, PostPartyPersonenSelbstregistrierenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/personen/selbstregistrieren',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Person
+ */
+export const getPartyPersonenById = <ThrowOnError extends boolean = false>(options: Options<GetPartyPersonenByIdData, ThrowOnError>): RequestResult<GetPartyPersonenByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetPartyPersonenByIdResponses, unknown, ThrowOnError>({ url: '/party/personen/{id}', ...options });
+
+/**
+ * Personen Buchungen
+ */
+export const getPartyPersonenByIdBuchungen = <ThrowOnError extends boolean = false>(options: Options<GetPartyPersonenByIdBuchungenData, ThrowOnError>): RequestResult<GetPartyPersonenByIdBuchungenResponses, GetPartyPersonenByIdBuchungenErrors, ThrowOnError> => (options.client ?? client).get<GetPartyPersonenByIdBuchungenResponses, GetPartyPersonenByIdBuchungenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/personen/{id}/buchungen',
+    ...options
+});
+
+/**
+ * Debitor
+ */
+export const getPartyPersonenByIdDebitor = <ThrowOnError extends boolean = false>(options: Options<GetPartyPersonenByIdDebitorData, ThrowOnError>): RequestResult<GetPartyPersonenByIdDebitorResponses, GetPartyPersonenByIdDebitorErrors, ThrowOnError> => (options.client ?? client).get<GetPartyPersonenByIdDebitorResponses, GetPartyPersonenByIdDebitorErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/personen/{id}/debitor',
+    ...options
+});
+
+/**
+ * Einladung
+ */
+export const postPartyPersonenByIdEinladung = <ThrowOnError extends boolean = false>(options: Options<PostPartyPersonenByIdEinladungData, ThrowOnError>): RequestResult<PostPartyPersonenByIdEinladungResponses, PostPartyPersonenByIdEinladungErrors, ThrowOnError> => (options.client ?? client).post<PostPartyPersonenByIdEinladungResponses, PostPartyPersonenByIdEinladungErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/personen/{id}/einladung',
+    ...options
+});
+
+/**
+ * Kandidaten
+ */
+export const getPartyPersonenByIdKandidaten = <ThrowOnError extends boolean = false>(options: Options<GetPartyPersonenByIdKandidatenData, ThrowOnError>): RequestResult<GetPartyPersonenByIdKandidatenResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetPartyPersonenByIdKandidatenResponses, unknown, ThrowOnError>({ url: '/party/personen/{id}/kandidaten', ...options });
+
+/**
+ * Kontexte
+ */
+export const getPartyPersonenByIdKontexte = <ThrowOnError extends boolean = false>(options: Options<GetPartyPersonenByIdKontexteData, ThrowOnError>): RequestResult<GetPartyPersonenByIdKontexteResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetPartyPersonenByIdKontexteResponses, unknown, ThrowOnError>({ url: '/party/personen/{id}/kontexte', ...options });
+
+/**
+ * Vertrag Bestaetigen
+ */
+export const postPartyPortalAnmeldungenByIdVertragBestaetigen = <ThrowOnError extends boolean = false>(options: Options<PostPartyPortalAnmeldungenByIdVertragBestaetigenData, ThrowOnError>): RequestResult<PostPartyPortalAnmeldungenByIdVertragBestaetigenResponses, PostPartyPortalAnmeldungenByIdVertragBestaetigenErrors, ThrowOnError> => (options.client ?? client).post<PostPartyPortalAnmeldungenByIdVertragBestaetigenResponses, PostPartyPortalAnmeldungenByIdVertragBestaetigenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/portal/anmeldungen/{id}/vertrag-bestaetigen',
+    ...options
+});
+
+/**
+ * Azubi Anmelden
+ */
+export const postPartyPortalAzubiAnmeldung = <ThrowOnError extends boolean = false>(options: Options<PostPartyPortalAzubiAnmeldungData, ThrowOnError>): RequestResult<PostPartyPortalAzubiAnmeldungResponses, PostPartyPortalAzubiAnmeldungErrors, ThrowOnError> => (options.client ?? client).post<PostPartyPortalAzubiAnmeldungResponses, PostPartyPortalAzubiAnmeldungErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/portal/azubi-anmeldung',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Shop Bestellung
+ */
+export const postPartyQuellenShopBestellung = <ThrowOnError extends boolean = false>(options: Options<PostPartyQuellenShopBestellungData, ThrowOnError>): RequestResult<PostPartyQuellenShopBestellungResponses, PostPartyQuellenShopBestellungErrors, ThrowOnError> => (options.client ?? client).post<PostPartyQuellenShopBestellungResponses, PostPartyQuellenShopBestellungErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/quellen/shop-bestellung',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Entscheide
+ */
+export const postPartyReviewsEntscheidung = <ThrowOnError extends boolean = false>(options: Options<PostPartyReviewsEntscheidungData, ThrowOnError>): RequestResult<PostPartyReviewsEntscheidungResponses, PostPartyReviewsEntscheidungErrors, ThrowOnError> => (options.client ?? client).post<PostPartyReviewsEntscheidungResponses, PostPartyReviewsEntscheidungErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/reviews/entscheidung',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Queue
+ */
+export const getPartyReviewsQueue = <ThrowOnError extends boolean = false>(options?: Options<GetPartyReviewsQueueData, ThrowOnError>): RequestResult<GetPartyReviewsQueueResponses, GetPartyReviewsQueueErrors, ThrowOnError> => (options?.client ?? client).get<GetPartyReviewsQueueResponses, GetPartyReviewsQueueErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/party/reviews/queue',
+    ...options
+});
+
+/**
+ * List Anmeldungen
+ */
+export const getRechnungAnmeldungen = <ThrowOnError extends boolean = false>(options?: Options<GetRechnungAnmeldungenData, ThrowOnError>): RequestResult<GetRechnungAnmeldungenResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetRechnungAnmeldungenResponses, unknown, ThrowOnError>({ url: '/rechnung/anmeldungen', ...options });
+
+/**
+ * Create Anmeldung
+ */
+export const postRechnungAnmeldungen = <ThrowOnError extends boolean = false>(options: Options<PostRechnungAnmeldungenData, ThrowOnError>): RequestResult<PostRechnungAnmeldungenResponses, PostRechnungAnmeldungenErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungAnmeldungenResponses, PostRechnungAnmeldungenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/anmeldungen',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Abbrechen Anmeldung
+ */
+export const deleteRechnungAnmeldungenById = <ThrowOnError extends boolean = false>(options: Options<DeleteRechnungAnmeldungenByIdData, ThrowOnError>): RequestResult<DeleteRechnungAnmeldungenByIdResponses, DeleteRechnungAnmeldungenByIdErrors, ThrowOnError> => (options.client ?? client).delete<DeleteRechnungAnmeldungenByIdResponses, DeleteRechnungAnmeldungenByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/anmeldungen/{id}',
+    ...options
+});
+
+/**
+ * Get Anmeldung
+ */
+export const getRechnungAnmeldungenById = <ThrowOnError extends boolean = false>(options: Options<GetRechnungAnmeldungenByIdData, ThrowOnError>): RequestResult<GetRechnungAnmeldungenByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetRechnungAnmeldungenByIdResponses, unknown, ThrowOnError>({ url: '/rechnung/anmeldungen/{id}', ...options });
+
+/**
+ * Update Anmeldung
+ */
+export const putRechnungAnmeldungenById = <ThrowOnError extends boolean = false>(options: Options<PutRechnungAnmeldungenByIdData, ThrowOnError>): RequestResult<PutRechnungAnmeldungenByIdResponses, PutRechnungAnmeldungenByIdErrors, ThrowOnError> => (options.client ?? client).put<PutRechnungAnmeldungenByIdResponses, PutRechnungAnmeldungenByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/anmeldungen/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Datev Buchungssaetze
+ */
+export const getRechnungDatevBuchungssaetze = <ThrowOnError extends boolean = false>(options?: Options<GetRechnungDatevBuchungssaetzeData, ThrowOnError>): RequestResult<GetRechnungDatevBuchungssaetzeResponses, GetRechnungDatevBuchungssaetzeErrors, ThrowOnError> => (options?.client ?? client).get<GetRechnungDatevBuchungssaetzeResponses, GetRechnungDatevBuchungssaetzeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/datev/buchungssaetze',
+    ...options
+});
+
+/**
+ * Datev Buchungsstapel
+ */
+export const getRechnungDatevBuchungsstapel = <ThrowOnError extends boolean = false>(options?: Options<GetRechnungDatevBuchungsstapelData, ThrowOnError>): RequestResult<GetRechnungDatevBuchungsstapelResponses, GetRechnungDatevBuchungsstapelErrors, ThrowOnError> => (options?.client ?? client).get<GetRechnungDatevBuchungsstapelResponses, GetRechnungDatevBuchungsstapelErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/datev/buchungsstapel',
+    ...options
+});
+
+/**
+ * Datev Uebergeben
+ */
+export const postRechnungDatevUebergabe = <ThrowOnError extends boolean = false>(options?: Options<PostRechnungDatevUebergabeData, ThrowOnError>): RequestResult<PostRechnungDatevUebergabeResponses, PostRechnungDatevUebergabeErrors, ThrowOnError> => (options?.client ?? client).post<PostRechnungDatevUebergabeResponses, PostRechnungDatevUebergabeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/datev/uebergabe',
+    ...options
+});
+
+/**
+ * List Debitoren
+ */
+export const getRechnungDebitoren = <ThrowOnError extends boolean = false>(options?: Options<GetRechnungDebitorenData, ThrowOnError>): RequestResult<GetRechnungDebitorenResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetRechnungDebitorenResponses, unknown, ThrowOnError>({ url: '/rechnung/debitoren', ...options });
+
+/**
+ * Create Debitor
+ */
+export const postRechnungDebitoren = <ThrowOnError extends boolean = false>(options: Options<PostRechnungDebitorenData, ThrowOnError>): RequestResult<PostRechnungDebitorenResponses, PostRechnungDebitorenErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungDebitorenResponses, PostRechnungDebitorenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/debitoren',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Anlegen Debitor
+ */
+export const postRechnungDebitorenAnlegen = <ThrowOnError extends boolean = false>(options: Options<PostRechnungDebitorenAnlegenData, ThrowOnError>): RequestResult<PostRechnungDebitorenAnlegenResponses, PostRechnungDebitorenAnlegenErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungDebitorenAnlegenResponses, PostRechnungDebitorenAnlegenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/debitoren/anlegen',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Aufloesen Debitor
+ */
+export const getRechnungDebitorenAufloesen = <ThrowOnError extends boolean = false>(options?: Options<GetRechnungDebitorenAufloesenData, ThrowOnError>): RequestResult<GetRechnungDebitorenAufloesenResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetRechnungDebitorenAufloesenResponses, unknown, ThrowOnError>({ url: '/rechnung/debitoren/aufloesen', ...options });
+
+/**
+ * Import Debitor
+ */
+export const postRechnungDebitorenImport = <ThrowOnError extends boolean = false>(options: Options<PostRechnungDebitorenImportData, ThrowOnError>): RequestResult<PostRechnungDebitorenImportResponses, PostRechnungDebitorenImportErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungDebitorenImportResponses, PostRechnungDebitorenImportErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/debitoren/import',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Merge Debitoren
+ */
+export const postRechnungDebitorenMerge = <ThrowOnError extends boolean = false>(options: Options<PostRechnungDebitorenMergeData, ThrowOnError>): RequestResult<PostRechnungDebitorenMergeResponses, PostRechnungDebitorenMergeErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungDebitorenMergeResponses, PostRechnungDebitorenMergeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/debitoren/merge',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Get Debitor
+ */
+export const getRechnungDebitorenById = <ThrowOnError extends boolean = false>(options: Options<GetRechnungDebitorenByIdData, ThrowOnError>): RequestResult<GetRechnungDebitorenByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetRechnungDebitorenByIdResponses, unknown, ThrowOnError>({ url: '/rechnung/debitoren/{id}', ...options });
+
+/**
+ * Update Debitor
+ */
+export const putRechnungDebitorenById = <ThrowOnError extends boolean = false>(options: Options<PutRechnungDebitorenByIdData, ThrowOnError>): RequestResult<PutRechnungDebitorenByIdResponses, PutRechnungDebitorenByIdErrors, ThrowOnError> => (options.client ?? client).put<PutRechnungDebitorenByIdResponses, PutRechnungDebitorenByIdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/debitoren/{id}',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Aliase
+ */
+export const getRechnungDebitorenByIdAliase = <ThrowOnError extends boolean = false>(options: Options<GetRechnungDebitorenByIdAliaseData, ThrowOnError>): RequestResult<GetRechnungDebitorenByIdAliaseResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetRechnungDebitorenByIdAliaseResponses, unknown, ThrowOnError>({ url: '/rechnung/debitoren/{id}/aliase', ...options });
+
+/**
+ * Kandidaten
+ */
+export const getRechnungDebitorenByIdKandidaten = <ThrowOnError extends boolean = false>(options: Options<GetRechnungDebitorenByIdKandidatenData, ThrowOnError>): RequestResult<GetRechnungDebitorenByIdKandidatenResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetRechnungDebitorenByIdKandidatenResponses, unknown, ThrowOnError>({ url: '/rechnung/debitoren/{id}/kandidaten', ...options });
+
+/**
+ * Rechnungslauf
+ */
+export const postRechnungLaeufe = <ThrowOnError extends boolean = false>(options: Options<PostRechnungLaeufeData, ThrowOnError>): RequestResult<PostRechnungLaeufeResponses, PostRechnungLaeufeErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungLaeufeResponses, PostRechnungLaeufeErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/laeufe',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Hochschul Lauf
+ */
+export const postRechnungLaeufeHochschule = <ThrowOnError extends boolean = false>(options: Options<PostRechnungLaeufeHochschuleData, ThrowOnError>): RequestResult<PostRechnungLaeufeHochschuleResponses, PostRechnungLaeufeHochschuleErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungLaeufeHochschuleResponses, PostRechnungLaeufeHochschuleErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/laeufe/hochschule',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Bestellung Uebernehmen
+ */
+export const postRechnungQuellenBestellung = <ThrowOnError extends boolean = false>(options: Options<PostRechnungQuellenBestellungData, ThrowOnError>): RequestResult<PostRechnungQuellenBestellungResponses, PostRechnungQuellenBestellungErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungQuellenBestellungResponses, PostRechnungQuellenBestellungErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/quellen/bestellung',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * List Rechnungen
+ */
+export const getRechnungRechnungen = <ThrowOnError extends boolean = false>(options?: Options<GetRechnungRechnungenData, ThrowOnError>): RequestResult<GetRechnungRechnungenResponses, unknown, ThrowOnError> => (options?.client ?? client).get<GetRechnungRechnungenResponses, unknown, ThrowOnError>({ url: '/rechnung/rechnungen', ...options });
+
+/**
+ * Get Rechnung
+ */
+export const getRechnungRechnungenById = <ThrowOnError extends boolean = false>(options: Options<GetRechnungRechnungenByIdData, ThrowOnError>): RequestResult<GetRechnungRechnungenByIdResponses, unknown, ThrowOnError> => (options.client ?? client).get<GetRechnungRechnungenByIdResponses, unknown, ThrowOnError>({ url: '/rechnung/rechnungen/{id}', ...options });
+
+/**
+ * Ausstellen
+ */
+export const postRechnungRechnungenByIdAusstellen = <ThrowOnError extends boolean = false>(options: Options<PostRechnungRechnungenByIdAusstellenData, ThrowOnError>): RequestResult<PostRechnungRechnungenByIdAusstellenResponses, PostRechnungRechnungenByIdAusstellenErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungRechnungenByIdAusstellenResponses, PostRechnungRechnungenByIdAusstellenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/rechnungen/{id}/ausstellen',
+    ...options
+});
+
+/**
+ * Gutschrift
+ */
+export const postRechnungRechnungenByIdGutschrift = <ThrowOnError extends boolean = false>(options: Options<PostRechnungRechnungenByIdGutschriftData, ThrowOnError>): RequestResult<PostRechnungRechnungenByIdGutschriftResponses, PostRechnungRechnungenByIdGutschriftErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungRechnungenByIdGutschriftResponses, PostRechnungRechnungenByIdGutschriftErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/rechnungen/{id}/gutschrift',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Nachberechnung
+ */
+export const postRechnungRechnungenByIdNachberechnung = <ThrowOnError extends boolean = false>(options: Options<PostRechnungRechnungenByIdNachberechnungData, ThrowOnError>): RequestResult<PostRechnungRechnungenByIdNachberechnungResponses, PostRechnungRechnungenByIdNachberechnungErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungRechnungenByIdNachberechnungResponses, PostRechnungRechnungenByIdNachberechnungErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/rechnungen/{id}/nachberechnung',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Add Position
+ */
+export const postRechnungRechnungenByIdPositionen = <ThrowOnError extends boolean = false>(options: Options<PostRechnungRechnungenByIdPositionenData, ThrowOnError>): RequestResult<PostRechnungRechnungenByIdPositionenResponses, PostRechnungRechnungenByIdPositionenErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungRechnungenByIdPositionenResponses, PostRechnungRechnungenByIdPositionenErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/rechnungen/{id}/positionen',
+    ...options,
+    headers: {
+        'Content-Type': 'application/json',
+        ...options.headers
+    }
+});
+
+/**
+ * Storno
+ */
+export const postRechnungRechnungenByIdStorno = <ThrowOnError extends boolean = false>(options: Options<PostRechnungRechnungenByIdStornoData, ThrowOnError>): RequestResult<PostRechnungRechnungenByIdStornoResponses, PostRechnungRechnungenByIdStornoErrors, ThrowOnError> => (options.client ?? client).post<PostRechnungRechnungenByIdStornoResponses, PostRechnungRechnungenByIdStornoErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/rechnungen/{id}/storno',
+    ...options
+});
+
+/**
+ * Zugferd
+ */
+export const getRechnungRechnungenByIdZugferd = <ThrowOnError extends boolean = false>(options: Options<GetRechnungRechnungenByIdZugferdData, ThrowOnError>): RequestResult<GetRechnungRechnungenByIdZugferdResponses, GetRechnungRechnungenByIdZugferdErrors, ThrowOnError> => (options.client ?? client).get<GetRechnungRechnungenByIdZugferdResponses, GetRechnungRechnungenByIdZugferdErrors, ThrowOnError>({
+    security: [{ scheme: 'bearer', type: 'http' }],
+    url: '/rechnung/rechnungen/{id}/zugferd',
+    ...options
+});

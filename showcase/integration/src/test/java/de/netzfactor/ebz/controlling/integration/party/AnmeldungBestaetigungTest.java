@@ -73,6 +73,10 @@ class AnmeldungBestaetigungTest {
                 .body("status", equalTo("ANGEFRAGT"))
                 .extract().jsonPath().getInt("anmeldungId");
 
+        // Cockpit-Liste (Schritt I): die ANGEFRAGTe Anmeldung erscheint unter den offenen
+        given().when().get("/party/anmeldungen?status=ANGEFRAGT").then().statusCode(200)
+                .body("find { it.anmeldungId == " + anmeldungId + " }.status", equalTo("ANGEFRAGT"));
+
         mailbox.clear(); // nur die Bestätigungsmails zählen
 
         // EBZ bestätigt → BESTAETIGT_EBZ
