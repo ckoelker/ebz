@@ -152,7 +152,13 @@ Fall-Korrelation via W3C-`baggage` statt Custom-Filter; Lanes via **eigenem Swim
       „Einladung nötig?"); Start/Ende sprechend benennen statt „start"/„end".
 - [ ] **Label-Überlauf:** lange „Name · System"-Labels überschreiten die Task-Box → kürzen/umbrechen.
 - [ ] **Loop-Sicherheit:** `_swimlane` nimmt Azyklie an; bei Miner-Schleifen Spalten-Ranking absichern.
-- [ ] **Übersicht-Lanes/Call-Activities:** Phasen als aufrufbare Subprozesse verlinken; ggf. Pool je System.
+- [x] **Übersicht aufklappbar:** Phasen als eingebettete Subprozesse (Drilldown) + `gesamt.bpmn` mit
+      Swimlanes (erledigt `92a6d97`).
+- [ ] **Overview-Gateways in den eingebetteten Sichten:** `gesamt.bpmn`/`uebersicht.bpmn` verketten die
+      Phasen aktuell **linear**; die im Mining entdeckten Phasen-Gateways (z. B. „Einladung optional" bei
+      der Firmen-Dublette) sind dort nicht abgebildet (stecken nur in `sub-anfrage_dubletten.bpmn`).
+      → Phasen-Flow mit Gateways statt linear (Phasen-Tasks des gemineten Overviews durch Subprozesse ersetzen).
+- [ ] **Pool je System** (zusätzlich/alternativ zu Lanes je Person) in der Übersicht.
 - [ ] **SVG/PNG-Rendering** (bpmn-to-image) fürs README/Kunden-Deck.
 - [ ] **CI-Job**, der `bash showcase/prozessdoku/build.sh --check` ausführt (Skript ist fertig).
 - [ ] **Weitere Varianten** (z. B. Abbruch → braucht `ABGEBROCHEN`-Endpoint; Azubi-Dublette-Merge).
