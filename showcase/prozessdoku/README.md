@@ -18,10 +18,14 @@ E2E-Test (rest-assured)                Prod
 - Mehrere Test-Szenarien (Fälle) → der Inductive Miner erzeugt **Gateways/Verzweigungen**.
 
 ## Ausgabe (`../docs/bpmn/`)
-- `uebersicht.bpmn` — Phasen-Ablauf (Grobsicht, mit Gateways aus den Varianten).
+- `gesamt.bpmn` — **eine** Datei: Phasen als **eingebettete, aufklappbare Subprozesse** (`isExpanded`),
+  inkl. der entdeckten Gateways. Im Camunda Modeler je Phase im Canvas auf-/zuklappen.
+- `uebersicht.bpmn` — Phasen-Ablauf (Gateways aus den Varianten); Phasen sind **Call-Activities**
+  (`calledElement = process_sub-<phase>`) → Klick-Navigation in die Subprozess-Dateien.
 - `sub-<phase>.bpmn` — je Phase die Schritte als **Swimlanes** (Lane = Akteur/„Person"; System am Task-Label).
 
-Öffnen in **Camunda Modeler**, **draw.io** oder jedem BPMN-Viewer.
+Öffnen in **Camunda Modeler**, **draw.io** oder jedem BPMN-Viewer. Hinweis: Camunda Modeler fügt
+*separate* Dateien nicht zusammen — die „alles in einer Ansicht"-Sicht ist `gesamt.bpmn`.
 
 ## Lokal erzeugen
 ```bash

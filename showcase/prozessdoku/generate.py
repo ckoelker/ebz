@@ -287,12 +287,167 @@ def _swimlane(xml_text: str, name_zu_akteur: dict, name_zu_system: dict, titel: 
             f'    </bpmndi:BPMNPlane>\n  </bpmndi:BPMNDiagram>\n</bpmn:definitions>\n')
 
 
+def _call_activities(xml_text: str) -> str:
+    """Übersicht (A): wandelt die Phasen-Tasks in Call-Activities um, die auf die Subprozess-Datei
+    verweisen (`calledElement = process_sub-<phase>`) → im Camunda Modeler navigierbar."""
+    label_zu_phase = {_xml_attr(v): k for k, v in PHASE_LABEL.items()}
+
+    def conv(m: re.Match) -> str:
+        attrs, inner = m.group(1), m.group(2)
+        nm = re.search(r'name="([^"]+)"', attrs)
+        phase = label_zu_phase.get(nm.group(1)) if nm else None
+        if not phase:
+            return m.group(0)
+        return (f'<bpmn:callActivity {attrs} calledElement="process_sub-{phase.lower()}">'
+                f'{inner}</bpmn:callActivity>')
+
+    return re.sub(r"<bpmn:task ([^>]*?)>(.*?)</bpmn:task>", conv, xml_text, flags=re.S)
+
+
+def _gesamt(sub_semantik: dict, name_akteur: dict, name_system: dict) -> str:
+    """
+    Gesamt-Sicht (B): EINE Datei, in der jede Phase ein **eingebetteter, aufklappbarer**
+    {@code bpmn:subProcess} (isExpanded) mit ihren entdeckten Schritten ist — im Camunda Modeler je
+    Phase im Canvas auf-/zuklappbar. Phasen werden linear in der fachlichen Reihenfolge verkettet.
+    """
+    from collections import deque
+    EVT, GW, TW, TH = 36, 50, 100, 80
+    COLW, PAD, BOX_H, GAP, HEAD = 170, 30, 200, 80, 24
+    phases = [p for p in PHASE_LABEL if p in sub_semantik]
+
+    sps = []
+    for phase in phases:
+        proc = ET.fromstring(sub_semantik[phase]).find(f"{{{BPMN_NS}}}process")
+        pref = phase.lower() + "__"
+        nodes, order, flows, adj, radj = {}, [], [], {}, {}
+        for el in list(proc):
+            tag = el.tag.split("}", 1)[1]
+            eid = pref + el.get("id")
+            if tag == "sequenceFlow":
+                s, t = pref + el.get("sourceRef"), pref + el.get("targetRef")
+                flows.append((eid, s, t))
+                adj.setdefault(s, []).append(t)
+                radj.setdefault(t, []).append(s)
+            else:
+                nodes[eid] = {"tag": tag, "name": el.get("name") or ""}
+                order.append(eid)
+        for info in nodes.values():
+            t = info["tag"]
+            info["w"], info["h"] = (EVT, EVT) if t.endswith("Event") else (GW, GW) if "Gateway" in t else (TW, TH)
+        indeg = {n: len(radj.get(n, [])) for n in nodes}
+        col = {n: 0 for n in nodes}
+        q = deque([n for n in nodes if indeg[n] == 0])
+        while q:
+            u = q.popleft()
+            for v in adj.get(u, []):
+                col[v] = max(col[v], col[u] + 1)
+                indeg[v] -= 1
+                if indeg[v] == 0:
+                    q.append(v)
+        maxcol = max(col.values()) if col else 0
+        box_w = PAD * 2 + maxcol * COLW + TW
+        rel = {n: (PAD + col[n] * COLW, HEAD + (BOX_H - HEAD - nodes[n]["h"]) / 2, nodes[n]["w"], nodes[n]["h"])
+               for n in nodes}
+        sps.append({"phase": phase, "id": f"sp_{phase.lower()}", "name": PHASE_LABEL[phase], "box_w": box_w,
+                    "nodes": nodes, "order": order, "flows": flows, "rel": rel})
+
+    # Äußeres Layout: start → [Phasen-Box]* → end (linear)
+    center_y = 40 + BOX_H / 2
+    cursor = 40
+    abspos = {}  # element-id -> (x,y,w,h) absolut
+    abspos["of_start"] = (cursor, center_y - EVT / 2, EVT, EVT)
+    cursor += EVT + GAP
+    for sp in sps:
+        sp["x"], sp["y"] = cursor, 40
+        abspos[sp["id"]] = (cursor, 40, sp["box_w"], BOX_H)
+        for n in sp["order"]:
+            rx, ry, w, h = sp["rel"][n]
+            abspos[n] = (cursor + rx, 40 + ry, w, h)
+        cursor += sp["box_w"] + GAP
+    abspos["of_end"] = (cursor, center_y - EVT / 2, EVT, EVT)
+
+    # Äußere Sequenzflüsse
+    kette = ["of_start"] + [sp["id"] for sp in sps] + ["of_end"]
+    outer_flows = [(f"oflow_{i}", kette[i], kette[i + 1]) for i in range(len(kette) - 1)]
+    outer_out = {s: [] for s in kette}
+    outer_in = {s: [] for s in kette}
+    for fid, s, t in outer_flows:
+        outer_out[s].append(fid)
+        outer_in[t].append(fid)
+
+    # Prozess-XML
+    pe = [f'    <bpmn:startEvent id="of_start" name="Start">'
+          + "".join(f"<bpmn:outgoing>{f}</bpmn:outgoing>" for f in outer_out["of_start"]) + "</bpmn:startEvent>"]
+    for sp in sps:
+        fe = []
+        for n in sp["order"]:
+            info = sp["nodes"][n]
+            tag, nm = info["tag"], info["name"]
+            label = nm
+            if tag == "task" and (name_akteur.get(nm) or name_system.get(nm)):
+                label = f"{nm} — {name_akteur.get(nm)} · {name_system.get(nm)}"
+            ins = "".join(f"<bpmn:incoming>{f[0]}</bpmn:incoming>" for f in sp["flows"] if f[2] == n)
+            outs = "".join(f"<bpmn:outgoing>{f[0]}</bpmn:outgoing>" for f in sp["flows"] if f[1] == n)
+            attr = f'id="{n}"' + (f' name="{_xml_attr(label)}"' if nm else "")
+            fe.append(f"<bpmn:{tag} {attr}>{ins}{outs}</bpmn:{tag}>")
+        for fid, s, t in sp["flows"]:
+            fe.append(f'<bpmn:sequenceFlow id="{fid}" sourceRef="{s}" targetRef="{t}"/>')
+        pe.append(f'    <bpmn:subProcess id="{sp["id"]}" name="{_xml_attr(sp["name"])}">'
+                  + "".join(f"<bpmn:incoming>{f}</bpmn:incoming>" for f in outer_in[sp["id"]])
+                  + "".join(f"<bpmn:outgoing>{f}</bpmn:outgoing>" for f in outer_out[sp["id"]])
+                  + "".join(fe) + "</bpmn:subProcess>")
+    pe.append('    <bpmn:endEvent id="of_end" name="Ende">'
+              + "".join(f"<bpmn:incoming>{f}</bpmn:incoming>" for f in outer_in["of_end"]) + "</bpmn:endEvent>")
+    for fid, s, t in outer_flows:
+        pe.append(f'    <bpmn:sequenceFlow id="{fid}" sourceRef="{s}" targetRef="{t}"/>')
+
+    # DI
+    def shape(eid, expanded=False):
+        x, y, w, h = abspos[eid]
+        ex = ' isExpanded="true"' if expanded else ""
+        return (f'      <bpmndi:BPMNShape id="{eid}_di" bpmnElement="{eid}"{ex}>'
+                f'<omgdc:Bounds x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" height="{h:.0f}"/></bpmndi:BPMNShape>')
+
+    def edge(fid, s, t):
+        sx, sy, sw, sh = abspos[s]
+        tx, ty, tw, th = abspos[t]
+        x1, y1, x2, y2 = sx + sw, sy + sh / 2, tx, ty + th / 2
+        mx = (x1 + x2) / 2
+        return (f'      <bpmndi:BPMNEdge id="{fid}_di" bpmnElement="{fid}">'
+                f'<omgdi:waypoint x="{x1:.0f}" y="{y1:.0f}"/><omgdi:waypoint x="{mx:.0f}" y="{y1:.0f}"/>'
+                f'<omgdi:waypoint x="{mx:.0f}" y="{y2:.0f}"/><omgdi:waypoint x="{x2:.0f}" y="{y2:.0f}"/>'
+                f"</bpmndi:BPMNEdge>")
+
+    di = [shape("of_start")]
+    for sp in sps:
+        di.append(shape(sp["id"], expanded=True))
+        di += [shape(n) for n in sp["order"]]
+        di += [edge(*f) for f in sp["flows"]]
+    di.append(shape("of_end"))
+    di += [edge(*f) for f in outer_flows]
+
+    nl = "\n"
+    return (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<!-- swimlane-laidout: Gesamt-Sicht mit eingebetteten Subprozessen (generate.py) -->\n'
+            f'<bpmn:definitions xmlns:bpmn="{BPMN_NS}" xmlns:bpmndi="{DI_NS}"'
+            f' xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"'
+            f' xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://ebz/prozessdoku">\n'
+            f'  <bpmn:process id="process_gesamt" isExecutable="false">\n{nl.join(pe)}\n  </bpmn:process>\n'
+            f'  <bpmndi:BPMNDiagram id="diagram_gesamt">\n'
+            f'    <bpmndi:BPMNPlane id="plane_gesamt" bpmnElement="process_gesamt">\n{nl.join(di)}\n'
+            f'    </bpmndi:BPMNPlane>\n  </bpmndi:BPMNDiagram>\n</bpmn:definitions>\n')
+
+
 def main() -> None:
     OUT.mkdir(exist_ok=True)
     df = lade_log()
 
+    name_akteur = dict(zip(df["name"], df["akteur"]))
+    name_system = dict(zip(df["name"], df["system"]))
+
     # 1) Subprozess je Phase (Detailsicht: die einzelnen Schritte)
     erzeugt = []
+    sub_semantik = {}  # phase -> semantisches BPMN (reine Ids/Namen) für die Gesamt-Sicht
     for phase in PHASE_LABEL:
         teil = df[df["phase"] == phase]
         if teil.empty:
@@ -302,6 +457,7 @@ def main() -> None:
         name_zu_akteur = dict(zip(teil["name"], teil["akteur"]))
         name_zu_system = dict(zip(teil["name"], teil["system"]))
         roh = pfad.read_text(encoding="utf-8")
+        sub_semantik[phase] = roh
         if LANES_AKTIV:
             # echte Swimlanes (Lane = Person), System im Task-Label — fertiges Layout, layout.mjs überspringt es.
             pfad.write_text(_swimlane(roh, name_zu_akteur, name_zu_system, PHASE_LABEL[phase], pfad.stem),
@@ -316,8 +472,15 @@ def main() -> None:
     ueb["phase_label"] = ueb["phase"].map(PHASE_LABEL)
     erster_der_phase = ueb["phase"].ne(ueb.groupby("fall")["phase"].shift())
     ueb = ueb[erster_der_phase]
-    schreibe_bpmn(entdecke(ueb, "phase_label"), OUT / "uebersicht.bpmn")
+    ueb_pfad = OUT / "uebersicht.bpmn"
+    schreibe_bpmn(entdecke(ueb, "phase_label"), ueb_pfad)
+    # (A) Phasen-Tasks → Call-Activities (Klick-Navigation in die Subprozess-Dateien)
+    ueb_pfad.write_text(_call_activities(ueb_pfad.read_text(encoding="utf-8")), encoding="utf-8")
     erzeugt.append("uebersicht.bpmn")
+
+    # 3) Gesamt-Sicht (B): eine Datei mit eingebetteten, aufklappbaren Phasen-Subprozessen
+    (OUT / "gesamt.bpmn").write_text(_gesamt(sub_semantik, name_akteur, name_system), encoding="utf-8")
+    erzeugt.append("gesamt.bpmn")
 
     print(f"OK: {len(erzeugt)} BPMN-Dateien in {OUT}")
     for name in erzeugt:

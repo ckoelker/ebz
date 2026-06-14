@@ -135,11 +135,24 @@ Neu: `showcase/prozessdoku/build.sh` (bash):
 4. Übersicht/Call-Activities + Lane-Injektion + Node-Layout/SVG.
 5. Varianten-E2E (Gateways) + `build.sh` + CI-Verify.
 
-## Status & Startpunkt
-**Sauberer Start:** Es ist noch **kein** Produktiv-/Testcode angelegt. Frühere Experiment-Reste
-(eine `quarkus-opentelemetry`-Zeile in der pom + eine veraltete CSV-Variante `Prozessprotokoll.java`)
-wurden bewusst **zurückgerollt**, damit `main` „geplant, nicht gestartet" bleibt.
+## Status
+**GEBAUT + GRÜN (Stage 1–5 + Swimlanes).** Commits `2ca2965` (Durchstich) → `8301ec5` (Varianten/build.sh)
+→ `72cf6be` (Swimlane-Layouter). Pipeline läuft end-to-end; 7 BPMN in `showcase/docs/bpmn/` (Übersicht
+mit Gateways + 6 Subprozesse als Swimlanes), alle sauber gegen bpmn-moddle. Abweichung vom Ur-Plan:
+Fall-Korrelation via W3C-`baggage` statt Custom-Filter; Lanes via **eigenem Swimlane-Layouter**
+(`generate.py:_swimlane`), da bpmn-auto-layout keine Lanes kann.
 
-Erster Schritt beim Wiederaufnehmen: **Stage 1** (siehe oben) — OTel-Setup (pom: `quarkus-opentelemetry`
-+ test-scope `opentelemetry-sdk-testing`; properties; Jaeger in docker-compose) und die Helfer
-`Prozess`/`Prozessspur`/`ProzessFallFilter`.
+## Optimierungs-Backlog (BPMN) — offen, nicht beauftragt
+- [ ] **Intra-Zellen-Kollision:** mehrere Knoten in gleicher Lane+Spalte überlappen aktuell (gleiche
+      Koordinaten). Bei Verzweigungen vertikal stapeln/sub-spuren statt überlagern.
+- [ ] **Kanten-Routing:** naive 4-Punkt-Orthogonale kann Knoten/Lanes kreuzen → besseres Routing
+      (Knoten umfahren, Lane-Wechsel sauber, Pfeilköpfe).
+- [ ] **Spalten-Kompaktierung:** Longest-Path lässt bei Verzweigungen Lücken; Spalten verdichten.
+- [ ] **Gateway-Beschriftung:** Bedingungen an den XOR-Kanten benennen (z. B. „Dublette" / „neu",
+      „Einladung nötig?"); Start/Ende sprechend benennen statt „start"/„end".
+- [ ] **Label-Überlauf:** lange „Name · System"-Labels überschreiten die Task-Box → kürzen/umbrechen.
+- [ ] **Loop-Sicherheit:** `_swimlane` nimmt Azyklie an; bei Miner-Schleifen Spalten-Ranking absichern.
+- [ ] **Übersicht-Lanes/Call-Activities:** Phasen als aufrufbare Subprozesse verlinken; ggf. Pool je System.
+- [ ] **SVG/PNG-Rendering** (bpmn-to-image) fürs README/Kunden-Deck.
+- [ ] **CI-Job**, der `bash showcase/prozessdoku/build.sh --check` ausführt (Skript ist fertig).
+- [ ] **Weitere Varianten** (z. B. Abbruch → braucht `ABGEBROCHEN`-Endpoint; Azubi-Dublette-Merge).

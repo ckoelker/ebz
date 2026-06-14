@@ -22,8 +22,8 @@
 		<bpmn:startEvent id="start" isInterrupting="true" name="start" parallelMultiple="false">
 			<bpmn:outgoing>flow_start__task_ausbildungsvertrag_bestaetigen</bpmn:outgoing>
 		</bpmn:startEvent>
-		<bpmn:sequenceFlow id="flow_start__task_ausbildungsvertrag_bestaetigen" name="" sourceRef="start" targetRef="task_ausbildungsvertrag_bestaetigen"/>
 		<bpmn:sequenceFlow id="flow_task_ausbildungsvertrag_bestaetigen__end" name="" sourceRef="task_ausbildungsvertrag_bestaetigen" targetRef="end"/>
+		<bpmn:sequenceFlow id="flow_start__task_ausbildungsvertrag_bestaetigen" name="" sourceRef="start" targetRef="task_ausbildungsvertrag_bestaetigen"/>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="diagram_sub-vertrag">
     <bpmndi:BPMNPlane id="plane_sub-vertrag" bpmnElement="collab_sub-vertrag">
@@ -42,17 +42,17 @@
       <bpmndi:BPMNShape id="start_di" bpmnElement="start">
         <omgdc:Bounds x="100" y="37" width="36" height="36"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNEdge id="flow_start__task_ausbildungsvertrag_bestaetigen_di" bpmnElement="flow_start__task_ausbildungsvertrag_bestaetigen">
-        <omgdi:waypoint x="136" y="55"/>
-        <omgdi:waypoint x="208" y="55"/>
-        <omgdi:waypoint x="208" y="55"/>
-        <omgdi:waypoint x="280" y="55"/>
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_task_ausbildungsvertrag_bestaetigen__end_di" bpmnElement="flow_task_ausbildungsvertrag_bestaetigen__end">
         <omgdi:waypoint x="380" y="55"/>
         <omgdi:waypoint x="420" y="55"/>
         <omgdi:waypoint x="420" y="55"/>
         <omgdi:waypoint x="460" y="55"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_start__task_ausbildungsvertrag_bestaetigen_di" bpmnElement="flow_start__task_ausbildungsvertrag_bestaetigen">
+        <omgdi:waypoint x="136" y="55"/>
+        <omgdi:waypoint x="208" y="55"/>
+        <omgdi:waypoint x="208" y="55"/>
+        <omgdi:waypoint x="280" y="55"/>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
