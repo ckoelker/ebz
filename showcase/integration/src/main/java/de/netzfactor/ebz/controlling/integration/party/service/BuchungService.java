@@ -66,6 +66,20 @@ public class BuchungService {
         return a;
     }
 
+    /**
+     * Firmensicht (DSGVO-Scope): <b>nur</b> Buchungen, die im Kontext dieser Organisation getätigt
+     * wurden. Privatbuchungen ({@code kontextOrganisationId == null}) und Buchungen im Kontext anderer
+     * Organisationen sind hier strukturell ausgeschlossen — das Firmenportal sieht keine Privatbuchungen.
+     */
+    public java.util.List<Anmeldung> firmensicht(Long organisationId) {
+        return Anmeldung.list("kontextOrganisationId", organisationId);
+    }
+
+    /** 360°-Sicht auf eine Identität: alle Anmeldungen, in denen die Person Teilnehmer ist (intern/Selbst). */
+    public java.util.List<Anmeldung> personensicht(Long personId) {
+        return Anmeldung.list("teilnehmerPersonId", personId);
+    }
+
     private static String primaerEmail(Long personId) {
         PersonEmail e = PersonEmail.find("personId = ?1 and primaer = true", personId).firstResult();
         if (e == null) {

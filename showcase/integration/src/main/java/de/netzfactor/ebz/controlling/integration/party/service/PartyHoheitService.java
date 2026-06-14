@@ -55,19 +55,40 @@ public class PartyHoheitService {
      */
     @Transactional
     public Person selbstRegistrieren(String keycloakSub, String email, String anzeigeName) {
+        // 1) Adresse bekannt → diese Person claimen (Login binden, Adresse verifizieren).
         PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
-        Person p;
         if (vorhanden != null) {
-            p = golden(Person.findById(vorhanden.personId));
+            Person p = golden(Person.findById(vorhanden.personId));
             bindeSub(p, keycloakSub);
             vorhanden.verifiziert = true;
-        } else {
-            p = neuePerson(anzeigeName, Person.Status.AKTIV);
-            p.keycloakSub = keycloakSub;
-            p.persist();
-            legeEmailAn(p.id, email, true, true);
+            return p;
         }
+        // 2) Adresse neu, aber Login schon bekannt (Folge-Login mit weiterer Adresse) → Adresse anhängen.
+        Person bySub = keycloakSub == null ? null : Person.find("keycloakSub", keycloakSub).firstResult();
+        if (bySub != null) {
+            Person p = golden(bySub);
+            legeEmailAn(p.id, email, true, false);
+            return p;
+        }
+        // 3) Beides neu → neue, sofort aktive Identität.
+        Person p = neuePerson(anzeigeName, Person.Status.AKTIV);
+        p.keycloakSub = keycloakSub;
+        p.persist();
+        legeEmailAn(p.id, email, true, true);
         return p;
+    }
+
+    /** Auflösung des Aufrufers über den Token-{@code sub} (für die Sicht-Autorisierung). */
+    public Person findeNachSub(String keycloakSub) {
+        if (keycloakSub == null || keycloakSub.isBlank()) {
+            return null;
+        }
+        return golden(Person.find("keycloakSub", keycloakSub).firstResult());
+    }
+
+    /** Hat die Person (irgend)eine Mitgliedschaft in der Organisation? (Basis der Firmenportal-Scope-Prüfung.) */
+    public boolean istMitglied(Long personId, Long organisationId) {
+        return Mitgliedschaft.count("personId = ?1 and organisationId = ?2", personId, organisationId) > 0;
     }
 
     /**
@@ -99,8 +120,9 @@ public class PartyHoheitService {
         if (p == null || p.matchSchluessel == null) {
             return List.of();
         }
-        return Person.list("status = ?1 and matchSchluessel = ?2 and id <> ?3",
-                Person.Status.AKTIV, p.matchSchluessel, p.id);
+        // Dubletten-Kandidaten schließen provisorische (firmenseitig vor-angelegte) Personen ein.
+        return Person.list("status <> ?1 and matchSchluessel = ?2 and id <> ?3",
+                Person.Status.ZUSAMMENGEFUEHRT, p.matchSchluessel, p.id);
     }
 
     /**

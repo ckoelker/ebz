@@ -1,8 +1,10 @@
 package de.netzfactor.ebz.controlling.integration.party;
 
 import static io.restassured.RestAssured.given;
+import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.contains;
 import static org.hamcrest.Matchers.equalTo;
+import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.hasItem;
 import static org.hamcrest.Matchers.startsWith;
@@ -191,6 +193,101 @@ class PartyKernTest {
                 .body("{\"schuljahr\":\"%s\",\"halbjahr\":1}".formatted(schuljahr))
                 .when().post("/rechnung/laeufe").then().statusCode(200)
                 .body("findAll { it.debitorId == " + debitorId + " }.size()", greaterThanOrEqualTo(1));
+    }
+
+    @Test
+    @TestSecurity(user = "kc-token-login")
+    void login_nimmtSubAusToken_undBuendeltMehrereAdressenAufEineIdentitaet() {
+        long n = uniq();
+        // Login mit erster Adresse: sub kommt NICHT aus dem Body, sondern aus dem Token (Principal)
+        int id1 = given().contentType(ContentType.JSON)
+                .body("""
+                        {"email":"tom+a+%d@example.com","anzeigeName":"Tom Token"}""".formatted(n))
+                .when().post("/party/personen/login").then()
+                .statusCode(anyOf(equalTo(200), equalTo(201)))
+                .body("keycloakSub", equalTo("kc-token-login"))
+                .body("status", equalTo("AKTIV"))
+                .extract().jsonPath().getInt("id");
+
+        // Folge-Login mit ZWEITER Adresse, gleiches Token → dieselbe Identität (sub-geführt)
+        int id2 = given().contentType(ContentType.JSON)
+                .body("""
+                        {"email":"tom+b+%d@example.com","anzeigeName":"Tom Token"}""".formatted(n))
+                .when().post("/party/personen/login").then()
+                .statusCode(200) // sub bereits bekannt → keine neue Person
+                .body("keycloakSub", equalTo("kc-token-login"))
+                .extract().jsonPath().getInt("id");
+
+        org.junit.jupiter.api.Assertions.assertEquals(id1, id2, "ein Token-sub = eine Identität");
+    }
+
+    @Test
+    void loginOhneAuth_istVerboten() {
+        given().contentType(ContentType.JSON)
+                .body("{\"email\":\"x@example.com\",\"anzeigeName\":\"X\"}")
+                .when().post("/party/personen/login").then().statusCode(greaterThanOrEqualTo(401));
+    }
+
+    @Test
+    @TestSecurity(user = "kc-portal-user", roles = "rechnung-pflege")
+    void firmenportal_siehtNurFirmenkontext_nichtPrivatbuchungen() {
+        long n = uniq();
+        int sjy = 6000 + (int) (n % 900);
+        String schuljahr = sjy + "/" + (sjy + 1);
+        String email = "portal+" + n + "@firma.de";
+
+        // Aufrufer-Identität an den Token-sub gebunden (Admin-Provisionierung mit sub = Principal)
+        int callerId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"keycloakSub":"kc-portal-user","email":"%s","anzeigeName":"Petra Portal"}""".formatted(email))
+                .when().post("/party/personen/selbstregistrieren").then()
+                .statusCode(anyOf(equalTo(200), equalTo(201)))
+                .extract().jsonPath().getInt("id");
+
+        // Firma A mit Aufrufer als buchungsberechtigtem Mitglied; Firma B ohne Mitgliedschaft
+        long orgA = given().contentType(ContentType.JSON)
+                .body("""
+                        {"name":"Portal A GmbH %d","plz":"45657","ort":"Recklinghausen","land":"DE"}""".formatted(n))
+                .when().post("/party/organisationen").then().statusCode(201).extract().jsonPath().getLong("id");
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"email":"%s","anzeigeName":"Petra Portal","rolle":"SEMINAR_BUCHER","buchungsberechtigt":true}"""
+                        .formatted(email))
+                .when().post("/party/organisationen/" + orgA + "/teilnehmer").then().statusCode(201)
+                .body("id", equalTo(callerId));
+        long orgB = given().contentType(ContentType.JSON)
+                .body("""
+                        {"name":"Portal B GmbH %d","plz":"44135","ort":"Dortmund","land":"DE"}""".formatted(n))
+                .when().post("/party/organisationen").then().statusCode(201).extract().jsonPath().getLong("id");
+
+        // Aufrufer bucht für sich im Firmenkontext A UND privat
+        int aOrg = given().contentType(ContentType.JSON)
+                .body("""
+                        {"teilnehmerPersonId":%d,"bestellerPersonId":%d,"kontextOrganisationId":%d,
+                         "schuljahr":"%s","halbjahr":1,"zimmerart":"KEINE","unterrichtBetragCent":150000}"""
+                        .formatted(callerId, callerId, orgA, schuljahr))
+                .when().post("/party/buchungen/berufsschule").then().statusCode(201)
+                .extract().jsonPath().getInt("anmeldungId");
+        int aPriv = given().contentType(ContentType.JSON)
+                .body("""
+                        {"teilnehmerPersonId":%d,"bestellerPersonId":%d,
+                         "schuljahr":"%s","halbjahr":1,"zimmerart":"KEINE","unterrichtBetragCent":90000}"""
+                        .formatted(callerId, callerId, schuljahr))
+                .when().post("/party/buchungen/berufsschule").then().statusCode(201)
+                .extract().jsonPath().getInt("anmeldungId");
+
+        // Firmenportal A: sieht NUR die Firmenkontext-Buchung, NICHT die Privatbuchung
+        given().when().get("/party/firmensicht/" + orgA).then().statusCode(200)
+                .body("anmeldungId", hasItem(aOrg))
+                .body("anmeldungId", not(hasItem(aPriv)));
+
+        // Firmenportal B: Aufrufer ist kein Mitglied → 403 (keine Quersicht in fremde Firmen)
+        given().when().get("/party/firmensicht/" + orgB).then().statusCode(403);
+
+        // 360°-Sicht (intern): sieht BEIDE Buchungen der Identität
+        given().when().get("/party/personen/" + callerId + "/buchungen").then().statusCode(200)
+                .body("anmeldungId", hasItem(aOrg))
+                .body("anmeldungId", hasItem(aPriv));
     }
 
     @Test

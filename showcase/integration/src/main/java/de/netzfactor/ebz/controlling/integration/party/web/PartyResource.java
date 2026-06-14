@@ -3,6 +3,8 @@ package de.netzfactor.ebz.controlling.integration.party.web;
 import java.net.URI;
 import java.util.List;
 
+import io.quarkus.security.Authenticated;
+
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
@@ -17,8 +19,10 @@ import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.SecurityContext;
 
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
@@ -51,8 +55,13 @@ public class PartyResource {
 
     // ───────────────────────── DTOs (gebündelt) ─────────────────────────
 
+    /** Admin-/Migrations-Anlage mit bekanntem externen {@code sub} (Bulk-Provisionierung). */
     public record SelbstRegistrierung(@NotBlank String keycloakSub, @NotBlank @Email String email,
             @NotBlank String anzeigeName) {
+    }
+
+    /** Selbst-Login des Endnutzers: der {@code sub} kommt aus dem Token (nicht aus dem Body). */
+    public record Login(@NotBlank @Email String email, @NotBlank String anzeigeName) {
     }
 
     public record OrganisationDto(@NotBlank String name, String strasse, String plz, String ort,
@@ -89,9 +98,16 @@ public class PartyResource {
             Long kontextOrganisationId, Long zahlungspflichtigerDebitorId, String teilnehmerName) {
     }
 
+    public record BuchungZeile(Long anmeldungId, String teilnehmerName, Long teilnehmerPersonId,
+            Long kontextOrganisationId, Long zahlungspflichtigerDebitorId, String schuljahr, Integer halbjahr) {
+    }
+
     // ───────────────────────── Identität ─────────────────────────
 
-    /** Selbstregistrierung/Login: legt eine neue aktive Person an (201) oder claimt eine vor-angelegte (200). */
+    /**
+     * Admin-/Migrations-Anlage einer Identität mit bekanntem externen {@code sub} (Bulk-Provisionierung).
+     * Der Endnutzer-Selbstlogin läuft über {@link #login} ({@code sub} aus dem Token).
+     */
     @RolesAllowed("rechnung-pflege")
     @POST
     @Path("/personen/selbstregistrieren")
@@ -99,6 +115,24 @@ public class PartyResource {
     public Response selbstRegistrieren(@Valid SelbstRegistrierung req) {
         long vorher = Person.count();
         Person p = party.selbstRegistrieren(req.keycloakSub(), req.email(), req.anzeigeName());
+        boolean neu = Person.count() > vorher;
+        return Response.status(neu ? Response.Status.CREATED : Response.Status.OK)
+                .entity(toView(p)).build();
+    }
+
+    /**
+     * Selbst-Login des Endnutzers: der Login-Anker ({@code sub}) wird <b>aus dem Token</b> gelesen (nicht
+     * aus dem Body — nicht fälschbar). Erstanmeldung legt eine neue aktive Person an (201) oder claimt
+     * eine firmenseitig vor-angelegte (200). E-Mail/Name kommen produktiv aus verifizierten Token-Claims.
+     */
+    @Authenticated
+    @POST
+    @Path("/personen/login")
+    @Transactional
+    public Response login(@Valid Login req, @Context SecurityContext ctx) {
+        String sub = ctx.getUserPrincipal().getName();
+        long vorher = Person.count();
+        Person p = party.selbstRegistrieren(sub, req.email(), req.anzeigeName());
         boolean neu = Person.count() > vorher;
         return Response.status(neu ? Response.Status.CREATED : Response.Status.OK)
                 .entity(toView(p)).build();
@@ -204,6 +238,41 @@ public class PartyResource {
         BuchungView view = new BuchungView(a.id, a.teilnehmerPersonId, a.bestellerPersonId,
                 a.kontextOrganisationId, a.zahlungspflichtigerDebitorId, a.teilnehmerName);
         return Response.status(Response.Status.CREATED).entity(view).build();
+    }
+
+    // ───────────────────────── DSGVO: kontext-skopierte Sichten ─────────────────────────
+
+    /**
+     * Firmenportal-Sicht: liefert <b>nur</b> die Buchungen im Kontext dieser Organisation. Der Aufrufer
+     * wird über den Token-{@code sub} aufgelöst und muss Mitglied der Organisation sein (sonst 403);
+     * Privatbuchungen der Personen bleiben strukturell unsichtbar (DSGVO-Trennung).
+     */
+    @Authenticated
+    @GET
+    @Path("/firmensicht/{organisationId}")
+    @Transactional
+    public Response firmensicht(@PathParam("organisationId") Long organisationId, @Context SecurityContext ctx) {
+        Person aufrufer = party.findeNachSub(ctx.getUserPrincipal().getName());
+        if (aufrufer == null || !party.istMitglied(aufrufer.id, organisationId)) {
+            return Response.status(Response.Status.FORBIDDEN).build();
+        }
+        List<BuchungZeile> zeilen = buchung.firmensicht(organisationId).stream()
+                .map(PartyResource::toZeile).toList();
+        return Response.ok(zeilen).build();
+    }
+
+    /** 360°-Sicht (intern/Selbst): alle Buchungen, in denen die Person Teilnehmer ist — privat wie über Firmen. */
+    @RolesAllowed("rechnung-pflege")
+    @GET
+    @Path("/personen/{id}/buchungen")
+    @Transactional
+    public List<BuchungZeile> personenBuchungen(@PathParam("id") Long id) {
+        return buchung.personensicht(id).stream().map(PartyResource::toZeile).toList();
+    }
+
+    private static BuchungZeile toZeile(Anmeldung a) {
+        return new BuchungZeile(a.id, a.teilnehmerName, a.teilnehmerPersonId, a.kontextOrganisationId,
+                a.zahlungspflichtigerDebitorId, a.schuljahr, a.halbjahr);
     }
 
     // ───────────────────────── Helfer ─────────────────────────
