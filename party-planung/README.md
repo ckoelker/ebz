@@ -38,9 +38,10 @@ Backend im `integration`-Service, Package `party`, Schema `party`; `PartyKernTes
 ## Optionale Erweiterungen (offen, nicht gebaut)
 Bewusst zurückgestellt; keine davon ist für den Kern-Showcase nötig.
 
-1. **Weitere Bereiche an die Buchung andocken** — Hochschul-Buchung (Raten/Firmen-Split, R6)
-   und die externe Bestellung/Vendure-Quelle (R7) analog zu `bucheBerufsschule` über den
-   Kontext-Mechanismus führen (heute nur Berufsschule/R1).
+1. **Weitere Bereiche an die Buchung andocken** — ~~externe Bestellung/Vendure-Quelle (R7)~~
+   **GEBAUT** (Commit `33880cf`): `POST /party/quellen/shop-bestellung` führt die Shop-Bestellung
+   identitäts-/kontextgeführt (Käufer per E-Mail, Debitor aus Kontext). **Offen:** Hochschul-
+   Buchung (Raten/Firmen-Split, R6) analog zu `bucheBerufsschule` über den Kontext-Mechanismus.
 2. **Echte JWT-Claims statt Body** — E-Mail/Name beim Login aus verifizierten Token-Claims
    ziehen (heute aus dem Request-Body; der `sub` kommt bereits aus dem Token).
 3. **Provenienz im Anmeldung-DTO lesbar machen** — `teilnehmerPersonId` /
