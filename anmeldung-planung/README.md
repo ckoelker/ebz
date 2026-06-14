@@ -259,6 +259,28 @@ jeder Schritt endet mit `-Dtest=…`-gezielten Tests, nicht der ganzen Suite.
 - **Frontend**: vitest (Komponenten/Validierung) + Playwright-SSO (Firmenportal-Flow, HITL-Cockpit-Flow).
 - **End-to-End**: ein Durchstich A→G gegen den laufenden Stack (eine Firma, ein Azubi, ein Lauf).
 
-> Status: **PLAN** (kein Code). Reihenfolge-Empfehlung für den Bau: **A0 → A → B → C → D → E → F →
-> G(verifizieren) → H → I**. Nächster sinnvoller Slice nach Freigabe: **A0 + A** (Infrastruktur-Nähte
-> + Firma/Ansprechpartner inkl. Org-Dubletten) als Fundament.
+## Status — Backend A–G GEBAUT + VERIFIZIERT (2026-06-14)
+
+Alle Backend-Schritte sind im `integration`-Service gebaut und getestet (8 Party-Testklassen grün;
+Camel im Test aus). Commits: A0 `f616619`, A `555c9d0`, B `dd4ff64`, C `d6984be`, D `8c6e697`,
+E `228315a`, F `f04b19a`.
+
+- **A0** Mail-Naht (quarkus-mailer + Mailpit). *KI-Provider-Abstraktion: OpenAI default, Ollama-
+  Umschaltung via langchain4j-Config; Keycloak-Admin-Client kam in C.*
+- **A** öffentlicher Lead `POST /party/anfragen/ausbildungsbetrieb` (Honeypot + Rate-Limit) +
+  Firmen-Dubletten (`Organisation` status/matchSchluessel/golden, Kandidaten/Merge).
+- **B** KI-Dubletten-Berater (`DublettenKlassifikator`/`DublettenBerater`, Fallback) + HITL-Review
+  (`/party/reviews/queue`, `/entscheidung`, Audit `DublettenReview`).
+- **C** Keycloak-Provisionierung (`LoginProvisionierung`) + Einladungsmail
+  (`POST /party/personen/{id}/einladung`); Claim aktiviert die Person.
+- **D** Customer-Portal `POST /party/portal/azubi-anmeldung` (Org-Scope) → Anmeldung `ANGEFRAGT`;
+  `AnmeldungStatus += ANGEFRAGT, BESTAETIGT_EBZ`.
+- **E** EBZ-Bestätigung `POST /party/anmeldungen/{id}/bestaetigung` (`→ BESTAETIGT_EBZ`) + Mails an
+  Azubi/Firma.
+- **F** Vertragsbestätigung `POST /party/portal/anmeldungen/{id}/vertrag-bestaetigen` (`→ AKTIV`,
+  Audit); Azubi-Selbst-Aktivierung = Claim.
+- **G** Rechnungslauf unverändert — verifiziert: bucht `AKTIV`, ignoriert `ANGEFRAGT`/`BESTAETIGT_EBZ`.
+
+> **Offen: H + I (Frontends).** H = SPA „Firmenportal" (`ebz-customers`): Anfrage → Login →
+> Azubis erfassen → Vertrag bestätigen. I = HITL-Cockpit-Modul in `mdm/` (`ebz-staff`): Review-Queue
+> + Entscheidung + EBZ-Bestätigung. Backend-Endpunkte stehen alle bereit.
