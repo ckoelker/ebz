@@ -5,11 +5,22 @@ import { defineConfig } from 'orval';
 //  (2) zod-Schemas (separater Output, .zod.ts) für die vee-validate-Formulare.
 // Same-origin-Aufrufe + Auth laufen über den Custom-Mutator src/api/http.ts.
 // `pnpm gen` regeneriert aus der laufenden Spec (Service muss oben sein) oder via OPENAPI_URL.
-const input = process.env.OPENAPI_URL || 'http://localhost:8090/q/openapi?format=json';
+const target = process.env.OPENAPI_URL || 'http://localhost:8090/q/openapi?format=json';
+
+// Nur die vom Cockpit GENUTZTEN Tags generieren (kleinere src/api + Bundle): Bildung (Pflege),
+// Dubletten-Review + Anmeldung-Workflow (HITL). Modelle/zod werden auf die referenzierten Schemas
+// gepruned. Andere SPAs/Endpunkte (party/rechnung/outbox/…) bleiben außen vor.
+const input = {
+  target,
+  filters: {
+    mode: 'include' as const,
+    tags: ['Bildung Resource', 'Dubletten Review Resource', 'Anmeldung Workflow Resource'],
+  },
+};
 
 export default defineConfig({
   bildung: {
-    input: { target: input },
+    input,
     output: {
       mode: 'tags-split',
       target: 'src/api/endpoints',
@@ -23,7 +34,7 @@ export default defineConfig({
     },
   },
   bildungZod: {
-    input: { target: input },
+    input,
     output: {
       mode: 'tags-split',
       target: 'src/api/zod',
