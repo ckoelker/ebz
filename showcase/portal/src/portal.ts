@@ -1,20 +1,21 @@
-// Bindung an die GENERIERTE party-Schicht (Typen + SDK aus /q/openapi). Same-origin über den
-// Vite-Proxy (/party) → baseUrl ''. Öffentliche Anfrage ohne Login; die übrigen Aufrufe verlangen
-// einen Login (Token via auth.ts-Interceptor).
-import { client } from './gen/client.gen';
-import * as sdk from './gen/sdk.gen';
+// Bindung an die per orval GENERIERTE party-Schicht (axios-Funktionen + TS-Modelle aus /q/openapi).
+// Same-origin (Vite-Proxy / nginx → /party + /q) + Auth über den orval-Mutator src/api/http.ts.
+// Öffentliche Anfrage ohne Login; die übrigen Aufrufe verlangen einen Login (Token im Mutator).
+import type { AxiosError } from 'axios';
+import {
+  postPartyAnfragenAusbildungsbetrieb, postPartyPersonenLogin,
+  getPartyPersonenIdKontexte, getPartyFirmensichtOrganisationId,
+} from '@/api/endpoints/party-resource/party-resource';
+import {
+  postPartyPortalAzubiAnmeldung, postPartyPortalAnmeldungenIdVertragBestaetigen,
+} from '@/api/endpoints/portal-resource/portal-resource';
+import {
+  getPartyPortalRechnungsKontexte, getPartyPortalRechnungen, getPartyPortalRechnungenIdZugferd,
+} from '@/api/endpoints/rechnung-portal-resource/rechnung-portal-resource';
 import type {
-  AusbildungsbetriebAnfrage,
-  AzubiAnmeldungDto,
-  BuchungZeile,
-  KontextView,
-  Login,
-  PersonView,
-  PortalRechnungView,
-  RechnungsKontextView,
-} from './gen/types.gen';
-
-client.setConfig({ baseUrl: '' });
+  AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, Login, PersonView,
+  PortalRechnungView, RechnungsKontextView,
+} from '@/api/model';
 
 export type {
   AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, PersonView,
@@ -28,46 +29,46 @@ export class ApiFehler extends Error {
   }
 }
 
-// data ist bei Response-Endpunkten (JAX-RS) als `unknown` generiert → Param entkoppelt, Rückgabe cast.
-function ergebnis<T>(r: { data?: unknown; error?: unknown; response?: Response }): T {
-  if (r.error || (r.response && !r.response.ok)) {
-    const status = r.response?.status;
-    const msg = (r.error as { message?: string } | undefined)?.message;
-    throw new ApiFehler(msg ?? `Anfrage fehlgeschlagen (HTTP ${status ?? '?'}).`, status);
+// orval-Funktionen werfen AxiosError bei non-2xx → in ApiFehler (mit Status) übersetzen.
+async function run<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    const ax = e as AxiosError<{ message?: string }>;
+    const status = ax.response?.status;
+    throw new ApiFehler(ax.response?.data?.message ?? `Anfrage fehlgeschlagen (HTTP ${status ?? '?'}).`, status);
   }
-  return r.data as T;
 }
 
 // ── Öffentlich: Ausbildungsbetrieb-Anfrage (Lead, kein Login) ──
 export const anfrageStellen = (body: AusbildungsbetriebAnfrage) =>
-  sdk.postPartyAnfragenAusbildungsbetrieb({ body }).then(ergebnis);
+  run(() => postPartyAnfragenAusbildungsbetrieb(body));
 
 // ── Login-gebunden ──
 /** Claimt/aktiviert die Person zum Token und liefert sie (mit id). */
 export const partyLogin = async (body: Login): Promise<PersonView> =>
-  ergebnis<PersonView>(await sdk.postPartyPersonenLogin({ body }));
+  (await run(() => postPartyPersonenLogin(body))) as PersonView;
 
 export const kontexte = async (personId: number): Promise<KontextView[]> =>
-  ergebnis<KontextView[]>(await sdk.getPartyPersonenByIdKontexte({ path: { id: personId } })) ?? [];
+  ((await run(() => getPartyPersonenIdKontexte(personId))) as KontextView[]) ?? [];
 
 export const firmensicht = async (organisationId: number): Promise<BuchungZeile[]> =>
-  ergebnis<BuchungZeile[]>(await sdk.getPartyFirmensichtByOrganisationId({ path: { organisationId } })) ?? [];
+  ((await run(() => getPartyFirmensichtOrganisationId(organisationId))) as BuchungZeile[]) ?? [];
 
 export const azubiAnmelden = (body: AzubiAnmeldungDto) =>
-  sdk.postPartyPortalAzubiAnmeldung({ body }).then(ergebnis);
+  run(() => postPartyPortalAzubiAnmeldung(body));
 
 export const vertragBestaetigen = (id: number) =>
-  sdk.postPartyPortalAnmeldungenByIdVertragBestaetigen({ path: { id } }).then(ergebnis);
+  run(() => postPartyPortalAnmeldungenIdVertragBestaetigen(id));
 
 // ── Rechnungsabruf (Self-Service): Kontexte wählen, Belege listen, ZUGFeRD-PDF laden ──
 export const rechnungsKontexte = async (): Promise<RechnungsKontextView[]> =>
-  ergebnis<RechnungsKontextView[]>(await sdk.getPartyPortalRechnungsKontexte()) ?? [];
+  ((await run(() => getPartyPortalRechnungsKontexte())) as RechnungsKontextView[]) ?? [];
 
 /** Festgeschriebene Belege eines Kontexts; ohne organisationId ⇒ privat (Selbstzahler). */
 export const meineRechnungen = async (organisationId?: number): Promise<PortalRechnungView[]> =>
-  ergebnis<PortalRechnungView[]>(await sdk.getPartyPortalRechnungen(
-    organisationId == null ? {} : { query: { organisationId } })) ?? [];
+  ((await run(() => getPartyPortalRechnungen(organisationId == null ? undefined : { organisationId }))) as PortalRechnungView[]) ?? [];
 
-/** ZUGFeRD-E-Rechnung als Blob (für den Download); Auth-Token hängt der Client-Interceptor an. */
-export const rechnungPdf = async (id: number): Promise<Blob> =>
-  ergebnis<Blob>(await sdk.getPartyPortalRechnungenByIdZugferd({ path: { id }, parseAs: 'blob' }));
+/** ZUGFeRD-E-Rechnung als Blob (für den Download); orval setzt responseType 'blob', Auth via Mutator. */
+export const rechnungPdf = (id: number): Promise<Blob> =>
+  run(() => getPartyPortalRechnungenIdZugferd(id));

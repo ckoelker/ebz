@@ -15,6 +15,7 @@ import {
   partyLogin, kontexte, firmensicht, azubiAnmelden, vertragBestaetigen, ApiFehler,
   type KontextView, type BuchungZeile,
 } from '@/portal';
+import type { Zimmerart } from '@/api/model';
 import { auth, login } from '@/auth';
 
 const laden = ref(false);
@@ -79,7 +80,7 @@ async function anmelden() {
       azubiName: neu.azubiName,
       schuljahr: neu.schuljahr,
       halbjahr: neu.halbjahr,
-      zimmerart: neu.zimmerart,
+      zimmerart: neu.zimmerart as Zimmerart,
       unterrichtBetragCent: neu.unterrichtBetragCent,
       uebernachtungBetragCent: neu.zimmerart === 'KEINE' ? undefined : neu.uebernachtungBetragCent,
     });

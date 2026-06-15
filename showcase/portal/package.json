@@ -10,13 +10,14 @@
     "build": "vue-tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "vue-tsc --noEmit",
-    "gen": "openapi-ts",
+    "gen": "orval",
     "test": "vitest run"
   },
   "dependencies": {
     "@primeuix/themes": "2.0.3",
     "@tanstack/vue-query": "5.101.0",
     "@vee-validate/zod": "4.15.1",
+    "axios": "^1.18.0",
     "oidc-client-ts": "3.5.0",
     "pinia": "3.0.4",
     "primeicons": "7.0.0",
@@ -27,9 +28,9 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
-    "@hey-api/openapi-ts": "0.98.2",
     "@types/node": "^22.19.21",
     "@vitejs/plugin-vue": "6.0.7",
+    "orval": "^8.17.0",
     "typescript": "6.0.3",
     "vite": "8.0.16",
     "vitest": "4.1.8",
