@@ -5,10 +5,15 @@
 > **`openolat`** in der bestehenden Instanz **freigegeben** · Katalog **sofort aus MDM veröffentlichen**
 > (Shop-Projektion-Muster) · dieses Dokument = **detaillierter Plan, kein Code**.
 >
-> **STATUS: PLANUNG — nichts gebaut.** An die Lemon-Kurse kommen wir **vorerst nicht** heran; der
-> Showcase-Durchstich nutzt deshalb **frei verfügbare SCORM-1.2-Seed-Kurse** aus `testdata/`
-> (§5a). Die echte Lemon-Migration der 100 Kurse bleibt gegated (L5b), blockiert aber den
-> Durchstich **nicht** mehr. Slice-Reihenfolge L0→L5 (§11).
+> **STATUS (2026-06-15):** **L0 + L1 GEBAUT & VERIFIZIERT.** OpenOLAT (Tomcat 10.1/JDK17) + DB
+> `openolat` laufen; Keycloak-OIDC-Login (JIT) live; REST-API aktiv; SCORM-1.2-Seed **importiert +
+> published** (`FileResource.SCORMCP`, idempotentes `lms-import-seed.sh`, §5a.1). **Backend-Katalog
+> gebaut** (Package `…/integration/lms`): `WbtKurs` (Schema `mdm`) + `WbtKursDto` (Stack B) +
+> `LmsResource` (`/lms/kurse` CRUD, RBAC `katalog-pflege`, Tag `LMS Resource`) + `WbtVendureProjektion`
+> (`/lms/kurse/{id}/veroeffentlichen`, `fulfillmentType=digital`); **6/6 rest-assured grün**,
+> Vendure-Mutationen live verifiziert. **Offen L1:** Portal „Meine Trainings" + SSO-Launch; orval-Client
+> regen (Tag ergänzt). An die Lemon-Kurse kommen wir **vorerst nicht** heran → Seed aus `testdata/`
+> (§5a); echte Lemon-Migration gegated (L5b). Slice-Reihenfolge L0→L5 (§11).
 
 ## §1 Architektur-Rollen
 - **OpenOLAT** = LMS/Delivery-SoR (Kurse, SCORM-1.2-Inhalte, Lern-Fortschritt). Eigenständig wie Vendure.

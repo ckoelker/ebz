@@ -14,7 +14,7 @@ const input = {
   target,
   filters: {
     mode: 'include' as const,
-    tags: ['Bildung Resource', 'Dubletten Review Resource', 'Anmeldung Workflow Resource'],
+    tags: ['Bildung Resource', 'Dubletten Review Resource', 'Anmeldung Workflow Resource', 'LMS Resource'],
   },
 };
 
