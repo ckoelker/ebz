@@ -82,7 +82,9 @@ async function pdfLaden(z: PortalRechnungView) {
 }
 
 function fehler(e: unknown) {
-  if (e instanceof ApiFehler && e.status === 401) return login();
+  // Nur neu anmelden, wenn KEINE Session besteht — sonst (Token gültig, aber 401 vom Backend) Fehler
+  // zeigen statt in eine Redirect-Schleife zu laufen.
+  if (e instanceof ApiFehler && e.status === 401 && !auth.angemeldet) return login();
   meldung.value = { text: (e as Error).message, severity: 'error' };
 }
 
