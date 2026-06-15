@@ -36,7 +36,8 @@ public final class Prozess {
         VENDURE("Vendure"),
         RECHNUNGSLAUF("Rechnungslauf"),
         WEBUNTIS("WebUntis"),
-        SUITE8("Suite8");
+        SUITE8("Suite8"),
+        OPENOLAT("OpenOLAT");
 
         public final String label;
 

@@ -5,15 +5,18 @@
 > **`openolat`** in der bestehenden Instanz **freigegeben** · Katalog **sofort aus MDM veröffentlichen**
 > (Shop-Projektion-Muster) · dieses Dokument = **detaillierter Plan, kein Code**.
 >
-> **STATUS (2026-06-15):** **L0 + L1 GEBAUT & VERIFIZIERT.** OpenOLAT (Tomcat 10.1/JDK17) + DB
+> **STATUS (2026-06-15):** **L0 + L1 + L2 GEBAUT & VERIFIZIERT.** OpenOLAT (Tomcat 10.1/JDK17) + DB
 > `openolat` laufen; Keycloak-OIDC-Login (JIT) live; REST-API aktiv; SCORM-1.2-Seed **importiert +
-> published** (`FileResource.SCORMCP`, idempotentes `lms-import-seed.sh`, §5a.1). **Backend-Katalog
-> gebaut** (Package `…/integration/lms`): `WbtKurs` (Schema `mdm`) + `WbtKursDto` (Stack B) +
-> `LmsResource` (`/lms/kurse` CRUD, RBAC `katalog-pflege`, Tag `LMS Resource`) + `WbtVendureProjektion`
-> (`/lms/kurse/{id}/veroeffentlichen`, `fulfillmentType=digital`); **6/6 rest-assured grün**,
-> Vendure-Mutationen live verifiziert. **Offen L1:** Portal „Meine Trainings" + SSO-Launch; orval-Client
-> regen (Tag ergänzt). An die Lemon-Kurse kommen wir **vorerst nicht** heran → Seed aus `testdata/`
-> (§5a); echte Lemon-Migration gegated (L5b). Slice-Reihenfolge L0→L5 (§11).
+> published** (`FileResource.SCORMCP`, idempotentes `lms-import-seed.sh`, §5a.1). **L1 Backend-Katalog**
+> (Package `…/integration/lms`): `WbtKurs` (Schema `mdm`) + `WbtKursDto` (Stack B) + `LmsResource`
+> (`/lms/kurse` CRUD, RBAC, Tag `LMS Resource`) + `WbtVendureProjektion` (`fulfillmentType=digital`,
+> Vendure live verifiziert). **L2 Einschreibungs-Naht**: `Kurseinschreibung` als **eigener Outbox-
+> Datensatz** (Begründung §6a) + `KurseinschreibungService` (anfordern/ausschreiben, Backoff/Dead-Letter)
+> + `EnrollmentDispatcher` (@Scheduled) + `OpenolatProvisioning`/`OpenolatApi` (ensureUser **per
+> `authProvider=KEYCLOAK`+sub**, enrol/unenrol — alle Endpunkte live gegen `/restapi/openapi.json`
+> verifiziert) + `EinschreibungResource` (`/lms/einschreibungen`). **15/15 rest-assured/Unit grün**
+> (OpenOLAT per `@io.quarkus.test.Mock`). **Offen:** L3 Order→Einschreibung-Naht; Portal „Meine
+> Trainings" + SSO-Launch; orval-Client regen (Tag ergänzt). Lemon-Migration gegated (L5b). Slices §11.
 
 ## §1 Architektur-Rollen
 - **OpenOLAT** = LMS/Delivery-SoR (Kurse, SCORM-1.2-Inhalte, Lern-Fortschritt). Eigenständig wie Vendure.
@@ -95,6 +98,19 @@ vergebene Keys (Verweis für `WbtKurs.openolatKey`): `golf-scorm12=884736`, `min
 Die OpenAPI-Spec der Instanz liegt unter **`/restapi/openapi.json`** (422 Pfade — maßgebliche Quelle
 für alle weiteren Pfade/Payloads statt Raten).
 
+### §5a.2 Einschreibungs-Pfad — VERIFIZIERT (REST, L2)
+Die User-/Enrol-Endpunkte sind live gegen die Instanz bewiesen (ensureUser-by-OAuth + Enrol):
+
+| Endpunkt | Zweck | Hinweis |
+|---|---|---|
+| `GET /restapi/users?authProvider=KEYCLOAK&authUsername={sub}` | OpenOLAT-Identität nach Keycloak-Sub finden (idempotenter ensureUser) | Match-Schlüssel ist der **OIDC-`sub`**, nicht E-Mail/Login |
+| `PUT /restapi/users` (UserVO) | User anlegen → `key` | + danach Auth anlegen |
+| `PUT /restapi/users/{key}/authentications` (`provider=KEYCLOAK`, `authUsername=<sub>`) | OAuth-Auth setzen → **späterer SSO-Login verschmilzt dublettenfrei** | kritisch bei Pre-Provisioning vor Erstlogin |
+| `PUT /restapi/repo/entries/{key}/participants/{identityKey}` | Einschreiben (idempotent, Re-PUT = no-op) | DELETE = Ausschreiben |
+
+> Der SSO-JIT-User trägt genau `provider=KEYCLOAK, authUsername=<sub>` — daraus abgeleitet, dass der
+> Dispatcher beim Vor-Provisionieren dieselbe Auth setzen muss (sonst Dublett beim ersten SSO-Login).
+
 ## §6 Services
 - **`WbtKatalogService`** — CRUD `WbtKurs`; `veroeffentliche(id)` = **MDM-Projektion** (s. §7).
 - **`KurseinschreibungService`** — `anfordern(personRef, wbtKursId, vendureOrderId, kontextRef?)`:
@@ -112,6 +128,16 @@ für alle weiteren Pfade/Payloads statt Raten).
   „für Remote-Management gebaut"; Completion-Read = offener Verifikationspunkt, §10).
 - **`PortalLmsService`** — liefert die `Kurseinschreibung`en des eingeloggten Kunden (kontext-skopiert
   wie die Rechnungen) für „Meine Trainings" + baut den **SSO-Launch-Deeplink** zur `openolatKey`.
+
+### §6a Umsetzungsentscheidung (L2): `Kurseinschreibung` = eigener Outbox-Datensatz
+Statt den bestehenden `OutboxAuftrag` zu nutzen, **trägt `Kurseinschreibung` selbst den Outbox-Zustand**
+(`status`/`versuche`/`naechsterVersuchAm`/`letzterFehler`/`erledigtAm`). Grund: `OutboxAuftrag` hat eine
+**Pflicht-FK auf `mdm.anmeldung`** (`anmeldung_id NOT NULL`); ihn für WBT zu öffnen hieße, ihn polymorph
+aufzuweichen — das widerspricht der FK-Disziplin (echte `@ManyToOne` bevorzugt). Die Zuverlässigkeit ist
+identisch (Anforderung in **einer** TX mit dem Outbox-Zustand geschrieben; `EnrollmentDispatcher`
+@Scheduled zieht fällige Zeilen mit Pessimistic-Lock, REQUIRES_NEW je Zeile, Backoff 30s→max 1h,
+Dead-Letter nach 5 Versuchen → HITL). `wbtKurs` bleibt echte FK; `keycloakSub` = externe IdP-Identität
+(bewusst Spalte, keine FK). Idempotenz: Unique `(wbt_kurs_id, keycloak_sub)`.
 
 ## §7 Katalog-Projektion aus MDM (Shop-Projektion-Muster)
 „Veröffentlichen" eines `WbtKurs` (analog bestehender Shop-Projektion `vendureProductId`):
@@ -147,9 +173,10 @@ für alle weiteren Pfade/Payloads statt Raten).
 ## §10 Offene Verifikations-/Config-Punkte (nicht L0-blockierend)
 - ~~**Import-Endpunkt**~~ ✅ **erledigt** — `PUT /restapi/repo/entries` (multipart), SCORM-1.2-Seed
   importiert+published (§5a.1); OpenAPI unter `/restapi/openapi.json`.
+- ~~**REST-Pfade/Payloads auth/user/enrol**~~ ✅ **erledigt** (L2, §5a.2): ensureUser-by-
+  `authProvider=KEYCLOAK`+sub, `PUT /users`, `PUT /users/{key}/authentications`, `PUT/DELETE
+  …/participants/{identityKey}` live verifiziert (Auth = HTTP Basic Admin).
 - **OpenOLAT-REST-Completion-Read** (für L4 Reporting/Zertifikate) in der OpenAPI-Spec bestätigen.
-- **Exakte REST-Pfade/Payloads** (auth/user/enrol) gegen die OpenOLAT-Version verifizieren
-  (Import bestätigt; User-/Enrol-Pfade als Nächstes für L2).
 - **Staff-SSO** (`ebz-staff` als zweiter OIDC-Provider) vs. lokale Author-Accounts — Config-Entscheidung.
 - **Lemon-Export** der 100 Kurse als SCORM 1.2 (alle vs. nur WBTs) — fachliches Gating.
 - **Zugang-bei-Storno** (sofort entziehen?) — Produktentscheidung.
@@ -157,10 +184,10 @@ für alle weiteren Pfade/Payloads statt Raten).
 ## §11 Phasen / Abgrenzung
 | Phase | Inhalt | Abgrenzung |
 |---|---|---|
-| **L0** | `openolat`-Service + DB `openolat` + Host/Proxy; Admin erreichbar | kein Fachcode |
-| **L1** | OIDC-Lernende (JIT), 1 SCORM-1.2-Kurs importiert, `WbtKurs` + Projektion nach Vendure, Portal-Launch | Provisionierung noch manuell |
-| **L2** | `KurseinschreibungService` + Outbox `KURS_EINSCHREIBUNG` + `OpenolatEnrollmentDispatcher` (idempotent, Retry/HITL) | Completion noch nicht |
-| **L3** | Provisionierungs-Naht Vendure-Order→Einschreibung; „Meine Trainings" produktiv | — |
+| **L0** ✅ | `openolat`-Service + DB `openolat` + Host/Proxy; Admin erreichbar | kein Fachcode |
+| **L1** ✅ | OIDC-Lernende (JIT), SCORM-1.2-Kurse importiert, `WbtKurs` + Projektion nach Vendure | Portal-Launch offen; Provisionierung manuell |
+| **L2** ✅ | `KurseinschreibungService` + Outbox (Entity-as-Outbox, §6a) + `EnrollmentDispatcher` + `OpenolatProvisioning` (idempotent, Retry/HITL) | Completion noch nicht |
+| **L3** | Provisionierungs-Naht Vendure-Order→`POST /lms/einschreibungen`; „Meine Trainings" produktiv | — |
 | **L4** | Completion-Read + Zertifikate (OpenOLAT-Zertifikatsmodul) | — |
 | **L5a** | **Seed-Import** der 3 SCORM-1.2-Kurse aus `testdata/` end-to-end (Import → `WbtKurs` → Projektion → Kauf → Einschreibung → Launch) | **jetzt machbar, kein Lemon nötig** |
 | **L5b** | Bulk-Migration der echten 100 Kurse (nach Lemon-Export) | **gegated** (Lemon-Zugang/Export) |
