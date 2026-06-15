@@ -55,3 +55,7 @@ showcase/prozessdoku/out/
 # LMS-Seed-/Testdaten — heruntergeladene SCORM-Pakete (nicht committen, nur lokal/dev)
 testdata/
 **/testdata/
+
+# OpenOLAT-Build-Artefakte (heruntergeladen via showcase/openolat/fetch-artifacts.sh; nicht committen)
+showcase/openolat/openolat_*.war
+showcase/openolat/postgresql.jar

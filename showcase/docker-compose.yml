@@ -30,6 +30,10 @@ services:
       LIGHTDASH_PASSWORD: ${LIGHTDASH_PASSWORD:-lightdash}
       READER_USER: ${READER_USER:-controlling_reader}
       READER_PASSWORD: ${READER_PASSWORD:-controlling_reader}
+      # OpenOLAT (LMS-Anbindung L0) — eigene DB + User im gemeinsamen Postgres (nur Erst-Init):
+      OPENOLAT_DB: ${OPENOLAT_DB:-openolat}
+      OPENOLAT_USER: ${OPENOLAT_USER:-openolat}
+      OPENOLAT_PASSWORD: ${OPENOLAT_PASSWORD:-openolat}
     ports:
       - "${POSTGRES_PORT:-6543}:5432"
     volumes:
@@ -335,6 +339,34 @@ services:
     ports:
       - "${LIGHTDASH_PORT:-8084}:8080"
 
+  # ── OpenOLAT (LMS-Anbindung L0) — eigenes Image (Build 2034 = OpenOLAT 20.1), Tomcat 10.1 + JDK 17.
+  # WAR/JDBC-Treiber via showcase/openolat/fetch-artifacts.sh (gitignored). Nutzt die gemeinsame
+  # Postgres-Instanz (DB `openolat`); das Schema legt OpenOLAT beim ERSTSTART selbst an.
+  # UI: http://localhost:${OPENOLAT_PORT:-8089}  (Erst-Login administrator/openolat). Profil `controlling`.
+  openolat:
+    build: ./openolat
+    profiles: ["controlling"]
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_NAME: ${OPENOLAT_DB:-openolat}
+      DB_USER: ${OPENOLAT_USER:-openolat}
+      DB_PASS: ${OPENOLAT_PASSWORD:-openolat}
+      OLAT_SERVER_DOMAIN: ${OPENOLAT_DOMAIN:-localhost}
+      OLAT_SERVER_PORT: "${OPENOLAT_PORT:-8089}"
+      SMTP_HOST: mailpit
+      SMTP_PORT: "1025"
+      JAVA_OPTS: "-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m -Duser.timezone=Europe/Berlin -Djava.awt.headless=true"
+    ports:
+      - "${OPENOLAT_PORT:-8089}:8080"
+    volumes:
+      - olat_data:/opt/openolat/olatdata
+
 volumes:
   postgres_data:
   minio_data:
+  olat_data:
