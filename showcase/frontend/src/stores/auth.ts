@@ -1,21 +1,22 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import Keycloak from 'keycloak-js';
+import { UserManager, WebStorageStateStore } from 'oidc-client-ts';
 import { shopClient } from '@/api/client';
 import { graphql, type DocumentType } from '@/gql';
 import { unwrap } from '@/api/result';
 
 // Showcase M5 — Authentifizierung (Leitplanke §8a-1/2/3/15).
 //
-// Zwei Token-Welten, bewusst getrennt:
-//   • Keycloak-Token  → NUR einmalig, um die Vendure-`authenticate`-Mutation zu
-//                       autorisieren (Strategy-Name "keycloak").
-//   • Vendure-Session → danach trägt die same-origin Cookie alle Shop-API-Calls
-//                       (siehe api/client.ts). Der Keycloak-Token wandert NICHT
-//                       an jeden Request.
+// Auth über STANDARD-OIDC (Authorization Code + PKCE) via oidc-client-ts — anbieter-neutral statt
+// des Keycloak-spezifischen keycloak-js. Provider per VITE_OIDC_*/VITE_KEYCLOAK_* konfigurierbar.
 //
-// Der Shop ist öffentlich: beim App-Start nur ein lautloses check-sso (kein
-// Zwang). Login wird erst am Checkout ausgelöst (§8a-3).
+// Zwei Token-Welten, bewusst getrennt:
+//   • OIDC-access_token → NUR einmalig, um die Vendure-`authenticate`-Mutation zu autorisieren
+//                         (Strategy-Name "keycloak", Realm ebz-customers).
+//   • Vendure-Session   → danach trägt die same-origin Cookie alle Shop-API-Calls (api/client.ts).
+//
+// Der Shop ist öffentlich: beim App-Start nur stiller Session-Load (kein Zwang); Login/Registrierung
+// erst am Checkout (§8a-3). Single-Logout: erst Vendure-, dann OIDC-Session (§8a-15).
 
 const Authenticate = graphql(`
   mutation Authenticate($token: String!) {
@@ -37,25 +38,34 @@ const Logout = graphql(`mutation Logout { logout { success } }`);
 
 export type ActiveCustomer = NonNullable<DocumentType<typeof ActiveCustomerQuery>['activeCustomer']>;
 
-const keycloak = new Keycloak({
-  url: import.meta.env.VITE_KEYCLOAK_URL,
-  realm: import.meta.env.VITE_KEYCLOAK_REALM,
-  clientId: import.meta.env.VITE_KEYCLOAK_CLIENT_ID,
+const AUTHORITY =
+  import.meta.env.VITE_OIDC_AUTHORITY ||
+  `${import.meta.env.VITE_KEYCLOAK_URL}/realms/${import.meta.env.VITE_KEYCLOAK_REALM}`;
+const CLIENT_ID = import.meta.env.VITE_OIDC_CLIENT_ID || import.meta.env.VITE_KEYCLOAK_CLIENT_ID;
+
+const userManager = new UserManager({
+  authority: AUTHORITY,
+  client_id: CLIENT_ID,
+  redirect_uri: `${location.origin}/auth/callback`,
+  post_logout_redirect_uri: `${location.origin}/`,
+  response_type: 'code',
+  scope: 'openid profile email',
+  automaticSilentRenew: true, // Renew via Refresh-Token (Public-Client) – kein Iframe
+  monitorSession: false,
+  userStore: new WebStorageStateStore({ store: localStorage }),
 });
 
 export const useAuthStore = defineStore('auth', () => {
   const ready = ref(false);
   const customer = ref<ActiveCustomer | null>(null);
   const isLoggedIn = computed(() => customer.value !== null);
-  // Geteiltes Init-Promise: main.ts UND der Router-Guard rufen init() auf — beide
-  // müssen DENSELBEN Lauf abwarten (sonst zweite keycloak.init() = Fehler, und der
-  // Guard entscheidet, bevor der Keycloak-Callback verarbeitet ist → Redirect-Loop).
+  // Geteiltes Init-Promise: main.ts UND der Router-Guard rufen init() auf — beide müssen DENSELBEN
+  // Lauf abwarten (sonst entscheidet der Guard, bevor der OIDC-Callback verarbeitet ist → Loop).
   let initPromise: Promise<void> | null = null;
 
-  /** Vendure-Session aus dem aktuellen Keycloak-Token herstellen (§8a-1). */
-  async function exchangeToken(): Promise<void> {
-    if (!keycloak.authenticated || !keycloak.token) return;
-    const res = await shopClient.mutation(Authenticate, { token: keycloak.token }).toPromise();
+  /** Vendure-Session aus einem OIDC-access_token herstellen (§8a-1). */
+  async function exchangeToken(accessToken: string): Promise<void> {
+    const res = await shopClient.mutation(Authenticate, { token: accessToken }).toPromise();
     if (res.error) throw res.error;
     unwrap(res.data!.authenticate); // ErrorResult → Exception (§8a-7)
     await loadCustomer();
@@ -69,9 +79,9 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * Bootstrap (idempotent): lautloses check-sso bzw. Verarbeitung des Keycloak-
-   * Redirect-Callbacks. Mehrfachaufrufe teilen sich denselben Lauf, sodass der
-   * Router-Guard zuverlässig erst NACH abgeschlossener Auth entscheidet.
+   * Bootstrap (idempotent): verarbeitet den OIDC-Redirect-Callback ({@code /auth/callback}) bzw. lädt
+   * eine bestehende Session (lokaler OIDC-User → Exchange, sonst bestehende Vendure-Session).
+   * Mehrfachaufrufe teilen sich denselben Lauf, sodass der Router-Guard erst NACH der Auth entscheidet.
    */
   function init(): Promise<void> {
     if (!initPromise) initPromise = doInit();
@@ -80,40 +90,46 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function doInit(): Promise<void> {
     try {
-      await keycloak.init({
-        onLoad: 'check-sso',
-        silentCheckSsoRedirectUri: `${location.origin}/silent-check-sso.html`,
-        pkceMethod: 'S256',
-        checkLoginIframe: false,
-      });
-      if (keycloak.authenticated) {
-        await exchangeToken();
+      if (location.pathname === '/auth/callback') {
+        const user = await userManager.signinRedirectCallback();
+        const returnTo = (user.state as { returnTo?: string } | undefined)?.returnTo || '/';
+        history.replaceState(null, '', returnTo);
+        await exchangeToken(user.access_token);
       } else {
-        // evtl. besteht schon eine Vendure-Session (Reload ohne KC-Login)
-        await loadCustomer();
+        const user = await userManager.getUser();
+        if (user && !user.expired) {
+          await exchangeToken(user.access_token);
+        } else {
+          // evtl. besteht schon eine Vendure-Session (Reload ohne neuen OIDC-Login)
+          await loadCustomer();
+        }
       }
     } catch (e) {
-      console.warn('[auth] Keycloak-Init/Exchange fehlgeschlagen:', e);
+      console.warn('[auth] OIDC-Init/Exchange fehlgeschlagen:', e);
+      if (location.pathname === '/auth/callback') {
+        history.replaceState(null, '', '/');
+      }
     } finally {
       ready.value = true;
     }
   }
 
-  /** Login am Checkout: Redirect zu Keycloak, danach zurück zu `redirectPath`. */
+  /** Login am Checkout: Redirect zum OIDC-Provider, danach zurück zu `redirectPath`. */
   async function login(redirectPath = '/checkout'): Promise<void> {
-    await keycloak.login({ redirectUri: `${location.origin}${redirectPath}` });
+    await userManager.signinRedirect({ state: { returnTo: redirectPath } });
   }
 
-  /** Registrierung läuft über die Keycloak-Registrierungsseite (§8a, kein Gast). */
+  /** Registrierung über die Keycloak-Registrierungsseite (Standard-OIDC {@code prompt=create}, §8a). */
   async function register(redirectPath = '/checkout'): Promise<void> {
-    await keycloak.register({ redirectUri: `${location.origin}${redirectPath}` });
+    await userManager.signinRedirect({ state: { returnTo: redirectPath }, extraQueryParams: { prompt: 'create' } });
   }
 
-  /** Single-Logout (§8a-15): erst Vendure-Session, dann Keycloak-Session. */
+  /** Single-Logout (§8a-15): erst Vendure-Session, dann OIDC-Session. */
   async function logout(): Promise<void> {
     await shopClient.mutation(Logout, {}).toPromise();
     customer.value = null;
-    await keycloak.logout({ redirectUri: `${location.origin}/` });
+    await userManager.removeUser();
+    await userManager.signoutRedirect();
   }
 
   return { ready, customer, isLoggedIn, init, login, register, logout, exchangeToken };

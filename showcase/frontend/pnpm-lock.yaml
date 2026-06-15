@@ -17,9 +17,9 @@ importers:
       graphql:
         specifier: ^16.9.0
         version: 16.14.2
-      keycloak-js:
-        specifier: ^26.2.0
-        version: 26.2.4
+      oidc-client-ts:
+        specifier: 3.5.0
+        version: 3.5.0
       pinia:
         specifier: 3.0.4
         version: 3.0.4(typescript@6.0.3)(vue@3.5.38(typescript@6.0.3))
@@ -1259,8 +1259,9 @@ packages:
     engines: {node: '>=6'}
     hasBin: true
 
-  keycloak-js@26.2.4:
-    resolution: {integrity: sha512-PnXpR3ubETGOt0B/Qt2lxmPbkZr5bc3vlQsOqDoTPPQsZRp7JjhTKxlJ187uWh8qJhvBab6Gsjb06a8ayOPfuw==}
+  jwt-decode@4.0.0:
+    resolution: {integrity: sha512-+KJGIyHgkGuIq3IEBNftfhW/LfWhXUIY6OmyVWjliu5KH1y0fw7VQ8YndE2O4qZdMSd9SqbnC8GOcZEy0Om7sA==}
+    engines: {node: '>=18'}
 
   lightningcss-android-arm64@1.32.0:
     resolution: {integrity: sha512-YK7/ClTt4kAK0vo6w3X+Pnm0D2cf2vPHbhOXdoNti1Ga0al1P4TBZhwjATvjNwLEBCnKvjJc2jQgHXH0NEwlAg==}
@@ -1438,6 +1439,10 @@ packages:
   normalize-path@2.1.1:
     resolution: {integrity: sha512-3pKJwH184Xo/lnH6oyP1q2pMd7HcypqqmRs91/6/i2CGtWwIKGCkOOMTm/zXbgTEWHw1uNpNi/igc3ePOYHb6w==}
     engines: {node: '>=0.10.0'}
+
+  oidc-client-ts@3.5.0:
+    resolution: {integrity: sha512-l2q8l9CTCTOlbX+AnK4p3M+4CEpKpyQhle6blQkdFhm0IsBqsxm15bYaSa11G7pWdsYr6epdsRZxJpCyCRbT8A==}
+    engines: {node: '>=18'}
 
   onetime@7.0.0:
     resolution: {integrity: sha512-VXJjc87FScF88uafS3JllDgvAm+c/Slfz06lorj2uAY34rlUu0Nt+v8wreiImcrgAjjIHp1rXpTDlLOGw29WwQ==}
@@ -3156,7 +3161,7 @@ snapshots:
 
   json5@2.2.3: {}
 
-  keycloak-js@26.2.4: {}
+  jwt-decode@4.0.0: {}
 
   lightningcss-android-arm64@1.32.0:
     optional: true
@@ -3303,6 +3308,10 @@ snapshots:
   normalize-path@2.1.1:
     dependencies:
       remove-trailing-separator: 1.1.0
+
+  oidc-client-ts@3.5.0:
+    dependencies:
+      jwt-decode: 4.0.0
 
   onetime@7.0.0:
     dependencies:
