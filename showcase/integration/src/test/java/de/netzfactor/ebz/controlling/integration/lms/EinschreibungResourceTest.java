@@ -36,12 +36,17 @@ class EinschreibungResourceTest {
     }
 
     private Long neuerKurs() {
+        return neuerKurs(null);
+    }
+
+    private Long neuerKurs(String vendureProductId) {
         return QuarkusTransaction.requiringNew().call(() -> {
             WbtKurs k = new WbtKurs();
             k.code = "WBT-ER-" + (System.nanoTime() % 1_000_000_000L);
             k.titel = "Resource-Testkurs";
             k.status = AngebotStatus.AKTIV;
             k.openolatKey = 884736L;
+            k.vendureProductId = vendureProductId;
             k.persist();
             return k.id;
         });
@@ -82,6 +87,36 @@ class EinschreibungResourceTest {
         given().when().get("/lms/einschreibungen")
                 .then().statusCode(200)
                 .body("findAll { it.keycloakSub == '%s' }.status".formatted(sub), hasItem("ANGEFORDERT"));
+    }
+
+    @Test
+    @TestSecurity(user = "pfleger", roles = "katalog-pflege")
+    void ausBestellungLoestNurWbtAufUndStorniert() {
+        String produktId = "vp-" + UUID.randomUUID();
+        neuerKurs(produktId); // genau ein WBT mit dieser vendureProductId
+        String sub = UUID.randomUUID().toString();
+        String orderId = "ORD-" + UUID.randomUUID();
+        // Order mit 2 Positionen: das WBT + ein Nicht-WBT-Produkt → nur 1 Einschreibung erwartet.
+        String body = """
+                {"vendureOrderId":"%s","keycloakSub":"%s","email":"o@ebz.de","anzeigeName":"Otto Order",
+                 "vendureProductIds":["%s","vp-NICHT-WBT-999"]}
+                """.formatted(orderId, sub, produktId);
+        given().contentType(ContentType.JSON).body(body)
+                .when().post("/lms/einschreibungen/bestellung")
+                .then().statusCode(202)
+                .body("size()", equalTo(1))
+                .body("status", hasItem("ANGEFORDERT"))
+                .body("keycloakSub", hasItem(sub));
+
+        // erneuter Push = idempotent (keine zweite Zeile)
+        given().contentType(ContentType.JSON).body(body)
+                .when().post("/lms/einschreibungen/bestellung")
+                .then().statusCode(202).body("size()", equalTo(1));
+
+        // Refund/Storno der Order → STORNO_ANGEFORDERT
+        given().when().post("/lms/einschreibungen/bestellung/" + orderId + "/storno")
+                .then().statusCode(200)
+                .body("status", hasItem("STORNO_ANGEFORDERT"));
     }
 
     @Test

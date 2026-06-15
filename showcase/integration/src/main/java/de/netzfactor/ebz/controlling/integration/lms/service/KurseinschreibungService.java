@@ -88,6 +88,43 @@ public class KurseinschreibungService {
         return e;
     }
 
+    /**
+     * Order-Naht (L3): überführt eine bezahlte Vendure-Order in Einschreibungs-Anforderungen. Löst je
+     * Produkt den {@link WbtKurs} über {@code vendureProductId} auf; Nicht-WBT-Positionen (kein Treffer)
+     * und noch nicht importierte Kurse (ohne {@code openolatKey}) werden still übersprungen. Idempotent
+     * über {@link #anfordern} (Unique Kurs×Sub) — erneuter Order-Push erzeugt keine Dubletten.
+     */
+    @Transactional
+    public List<Kurseinschreibung> ausBestellung(String vendureOrderId, String keycloakSub, String email,
+            String anzeigeName, List<String> vendureProductIds) {
+        List<Kurseinschreibung> ergebnis = new java.util.ArrayList<>();
+        for (String produktId : vendureProductIds) {
+            WbtKurs kurs = WbtKurs.find("vendureProductId", produktId).firstResult();
+            if (kurs == null || kurs.openolatKey == null) {
+                continue; // kein WBT bzw. (noch) nicht auslieferbar → kein Einschreibe-Auftrag
+            }
+            ergebnis.add(anfordern(keycloakSub, email, anzeigeName, kurs.id, vendureOrderId));
+        }
+        LOG.infof("Order %s: %d WBT-Einschreibung(en) aus %d Position(en) angefordert",
+                vendureOrderId, ergebnis.size(), vendureProductIds.size());
+        return ergebnis;
+    }
+
+    /** Refund-Naht (L3): storniert alle (offenen/eingeschriebenen) Einschreibungen einer Order. */
+    @Transactional
+    public List<Kurseinschreibung> stornoBestellung(String vendureOrderId) {
+        List<Kurseinschreibung> list = Kurseinschreibung.list("vendureOrderId", vendureOrderId);
+        for (Kurseinschreibung e : list) {
+            if (e.status == EinschreibungStatus.EINGESCHRIEBEN || e.status == EinschreibungStatus.ANGEFORDERT) {
+                e.status = EinschreibungStatus.STORNO_ANGEFORDERT;
+                e.versuche = 0;
+                e.naechsterVersuchAm = Instant.now();
+                e.letzterFehler = null;
+            }
+        }
+        return list;
+    }
+
     /** Storniert eine Einschreibung (Gegen-Event): setzt sie auf {@code STORNO_ANGEFORDERT} (Dispatcher schreibt aus). */
     @Transactional
     public Kurseinschreibung ausschreiben(Long einschreibungId) {

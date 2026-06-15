@@ -14,9 +14,11 @@
 > Datensatz** (Begründung §6a) + `KurseinschreibungService` (anfordern/ausschreiben, Backoff/Dead-Letter)
 > + `EnrollmentDispatcher` (@Scheduled) + `OpenolatProvisioning`/`OpenolatApi` (ensureUser **per
 > `authProvider=KEYCLOAK`+sub**, enrol/unenrol — alle Endpunkte live gegen `/restapi/openapi.json`
-> verifiziert) + `EinschreibungResource` (`/lms/einschreibungen`). **15/15 rest-assured/Unit grün**
-> (OpenOLAT per `@io.quarkus.test.Mock`). **Offen:** L3 Order→Einschreibung-Naht; Portal „Meine
-> Trainings" + SSO-Launch; orval-Client regen (Tag ergänzt). Lemon-Migration gegated (L5b). Slices §11.
+> verifiziert) + `EinschreibungResource` (`/lms/einschreibungen`). **L3 Order-Naht** ✅:
+> `POST /lms/einschreibungen/bestellung` (+ `/storno`) löst Produkt→`WbtKurs` auf (§8). **16/16
+> rest-assured/Unit grün** (OpenOLAT per `@io.quarkus.test.Mock`). **Offen:** Vendure-Emitter-Plugin
+> (PaymentSettled→Push), Portal „Meine Trainings" + SSO-Launch, orval-Client regen (Tag ergänzt).
+> Lemon-Migration gegated (L5b). Slices §11.
 
 ## §1 Architektur-Rollen
 - **OpenOLAT** = LMS/Delivery-SoR (Kurse, SCORM-1.2-Inhalte, Lern-Fortschritt). Eigenständig wie Vendure.
@@ -149,12 +151,16 @@ Dead-Letter nach 5 Versuchen → HITL). `wbtKurs` bleibt echte FK; `keycloakSub`
   (orval — **neuen Tag `LMS Resource` in `orval.config.ts` `input.filters.tags` ergänzen**, sonst wird
   der Client nicht generiert; danach regen→typecheck→build→Image).
 
-## §8 Provisionierungs-Naht (bezahlte Vendure-Order → Einschreibung)
-- **Trigger:** bezahlte Order mit Kurs-Produkt. Umsetzung wie der Rechnungs-/Order-Pfad (R7-Muster):
-  Vendure-Event/Fulfillment → interner Endpoint `POST /lms/einschreibungen` (Service-Auth) mit
-  `{ keycloakSub|email, vendureOrderId, openolatKeys[] }` → `KurseinschreibungService.anfordern(...)`.
-- Mapping Produkt→Kurs über `WbtKurs.vendureProductId`/`openolatKey`.
-- **Storno/Refund** → `ausschreiben(...)` (Gegen-Event), optional konfigurierbar (Zugang sofort entziehen ja/nein).
+## §8 Provisionierungs-Naht (bezahlte Vendure-Order → Einschreibung) — ✅ GEBAUT (L3)
+- **Push wie R7** (`/rechnung/quellen/bestellung`): bezahlte Order → **`POST /lms/einschreibungen/bestellung`**
+  `{ vendureOrderId, keycloakSub, email?, anzeigeName?, vendureProductIds[] }`. Das Backend
+  (`KurseinschreibungService.ausBestellung`) löst je `vendureProductId` den `WbtKurs` auf
+  (**Nicht-WBT-Positionen + nicht importierte Kurse werden still übersprungen**) und ruft `anfordern(...)`
+  → idempotent über Unique Kurs×Sub (erneuter Push = keine Dublette).
+- **Storno/Refund** → **`POST /lms/einschreibungen/bestellung/{vendureOrderId}/storno`**
+  (`stornoBestellung` setzt alle offenen/eingeschriebenen Zeilen der Order auf `STORNO_ANGEFORDERT`).
+- **Offen:** der Vendure-seitige Emitter (Plugin auf `PaymentSettled` ruft diesen Endpunkt) — wie bei R7
+  ein dünner Push (im Showcase per Skript/Test getrieben); `keycloakSub` trägt der Storefront-Kontext.
 
 ## §9 REST-Endpunkte
 **Katalog/Pflege `/lms` (RBAC `katalog-pflege`):**
@@ -187,7 +193,7 @@ Dead-Letter nach 5 Versuchen → HITL). `wbtKurs` bleibt echte FK; `keycloakSub`
 | **L0** ✅ | `openolat`-Service + DB `openolat` + Host/Proxy; Admin erreichbar | kein Fachcode |
 | **L1** ✅ | OIDC-Lernende (JIT), SCORM-1.2-Kurse importiert, `WbtKurs` + Projektion nach Vendure | Portal-Launch offen; Provisionierung manuell |
 | **L2** ✅ | `KurseinschreibungService` + Outbox (Entity-as-Outbox, §6a) + `EnrollmentDispatcher` + `OpenolatProvisioning` (idempotent, Retry/HITL) | Completion noch nicht |
-| **L3** | Provisionierungs-Naht Vendure-Order→`POST /lms/einschreibungen`; „Meine Trainings" produktiv | — |
+| **L3** 🟡 | Order-Naht `POST /lms/einschreibungen/bestellung` (+Storno) ✅; Vendure-Emitter-Plugin + „Meine Trainings" offen | Portal-Teil offen |
 | **L4** | Completion-Read + Zertifikate (OpenOLAT-Zertifikatsmodul) | — |
 | **L5a** | **Seed-Import** der 3 SCORM-1.2-Kurse aus `testdata/` end-to-end (Import → `WbtKurs` → Projektion → Kauf → Einschreibung → Launch) | **jetzt machbar, kein Lemon nötig** |
 | **L5b** | Bulk-Migration der echten 100 Kurse (nach Lemon-Export) | **gegated** (Lemon-Zugang/Export) |

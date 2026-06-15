@@ -48,6 +48,18 @@ public class EinschreibungResource {
             @NotEmpty List<Long> wbtKursIds) {
     }
 
+    /**
+     * Order-Naht (L3): bezahlte Vendure-Order. Das Backend löst je {@code vendureProductId} den WBT auf
+     * (Nicht-WBT-Positionen werden ignoriert) — gepusht wie {@code /rechnung/quellen/bestellung} (R7).
+     */
+    public record WbtBestellung(
+            @NotBlank String vendureOrderId,
+            @NotBlank String keycloakSub,
+            String email,
+            String anzeigeName,
+            @NotEmpty List<String> vendureProductIds) {
+    }
+
     /** Cockpit-/Audit-Projektion einer Einschreibung. */
     public record EinschreibungDto(Long id, Long wbtKursId, String kursTitel, String keycloakSub, String email,
             EinschreibungStatus status, Long openolatIdentityKey, int versuche, String letzterFehler) {
@@ -63,6 +75,28 @@ public class EinschreibungResource {
                 .map(EinschreibungResource::toDto)
                 .toList();
         return Response.accepted(ergebnis).build(); // 202: angenommen, async-Zustellung folgt
+    }
+
+    /** Bezahlte Order → Einschreibungen (Produkt→WbtKurs-Auflösung im Backend). 202 + erzeugte Aufträge. */
+    @RolesAllowed("katalog-pflege")
+    @POST
+    @Path("/bestellung")
+    @Transactional
+    public Response ausBestellung(@Valid WbtBestellung req) {
+        List<EinschreibungDto> ergebnis = service.ausBestellung(req.vendureOrderId(), req.keycloakSub(),
+                        req.email(), req.anzeigeName(), req.vendureProductIds())
+                .stream().map(EinschreibungResource::toDto).toList();
+        return Response.accepted(ergebnis).build();
+    }
+
+    /** Refund/Storno einer Order → alle zugehörigen Einschreibungen ausschreiben. */
+    @RolesAllowed("katalog-pflege")
+    @POST
+    @Path("/bestellung/{vendureOrderId}/storno")
+    @Consumes(MediaType.WILDCARD)
+    @Transactional
+    public List<EinschreibungDto> stornoBestellung(@PathParam("vendureOrderId") String vendureOrderId) {
+        return service.stornoBestellung(vendureOrderId).stream().map(EinschreibungResource::toDto).toList();
     }
 
     @RolesAllowed("katalog-pflege")
