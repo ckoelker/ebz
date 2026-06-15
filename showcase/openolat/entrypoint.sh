@@ -8,6 +8,7 @@ set -e
 : "${OLAT_SERVER_DOMAIN:=localhost}"; : "${OLAT_SERVER_PORT:=8089}"
 : "${OLAT_CONTEXTPATH:=}"
 : "${SMTP_HOST:=mailpit}"; : "${SMTP_PORT:=1025}"
+: "${RESTAPI_ENABLED:=true}"
 # Keycloak-OIDC (Login-Übergabe aus dem Portal). context MUSS leer sein (Keycloak-Quarkus ohne /auth).
 : "${OIDC_ENABLED:=true}"
 : "${KC_ENDPOINT:=http://localhost:8088}"; : "${KC_CONTEXT:=}"
@@ -62,6 +63,8 @@ oauth.keycloak.endpoint=${KC_ENDPOINT}
 oauth.keycloak.context=${KC_CONTEXT}
 oauth.keycloak.realm=${KC_REALM}
 oauth.registration.allowUserCreation=true
+# REST-API (Provisionierung Einschreibung/Kurse über das integration-/Outbox-Muster)
+restapi.enable=${RESTAPI_ENABLED}
 EOF
 
 echo "OpenOLAT-Konfiguration geschrieben (DB ${DB_USER}@${DB_HOST}:${DB_PORT}/${DB_NAME}). Starte Tomcat…"
