@@ -1,21 +1,22 @@
-// Zentrale per-Typ-Konfiguration ("Frontend-Registry"): bindet die GENERIERTE Schicht
-// (Typen + zod + SDK-Client aus /q/openapi) an die Oberfläche. Eine gemeinsame Feldliste
-// (Stammdaten) + je Typ die spezifischen Felder + das passende zod-Schema + die CRUD-Funktionen.
-// So bleibt die SPA typsicher und komponiert die Pflege aus EINEM gemeinsamen + EINEM typ-Teil.
-import { client } from './gen/client.gen';
-import * as sdk from './gen/sdk.gen';
-import * as z from './gen/zod.gen';
-import type {
-  SeminarDto,
-  TagungDto,
-  BerufsschuljahrDto,
-  StudiengangDto,
-  BildungsangebotTyp,
-} from './gen/types.gen';
-
-// Cockpit läuft same-origin (Vite-Proxy / nginx) → relative URLs statt der generierten
-// Default-Basis http://localhost:8090 (sonst CORS). /bildung + /q werden weitergeleitet.
-client.setConfig({ baseUrl: '' });
+// Zentrale per-Typ-Konfiguration ("Frontend-Registry"): bindet die per orval GENERIERTE Schicht
+// (axios-Funktionen + TS-Modelle/Enums + zod aus /q/openapi) an die Oberfläche. Eine gemeinsame
+// Feldliste (Stammdaten) + je Typ die spezifischen Felder + das passende zod-Schema + CRUD.
+// Same-origin (Vite-Proxy / nginx) + Auth laufen über den orval-Mutator src/api/http.ts.
+import type { AxiosError } from 'axios';
+import {
+  getBildungSeminare, getBildungSeminareId, postBildungSeminare, putBildungSeminareId, deleteBildungSeminareId,
+  getBildungTagungen, getBildungTagungenId, postBildungTagungen, putBildungTagungenId, deleteBildungTagungenId,
+  getBildungBerufsschuljahre, getBildungBerufsschuljahreId, postBildungBerufsschuljahre, putBildungBerufsschuljahreId, deleteBildungBerufsschuljahreId,
+  getBildungStudiengaenge, getBildungStudiengaengeId, postBildungStudiengaenge, putBildungStudiengaengeId, deleteBildungStudiengaengeId,
+  postBildungAngeboteIdShopProjektion,
+} from '@/api/endpoints/bildung-resource/bildung-resource';
+import {
+  Bereich, AngebotStatus, PreisModell, SeminarKategorie, Studienabschluss, Studienform, BildungsangebotTyp,
+} from '@/api/model';
+import type { SeminarDto, TagungDto, BerufsschuljahrDto, StudiengangDto } from '@/api/model';
+import {
+  PostBildungSeminareBody, PostBildungTagungenBody, PostBildungBerufsschuljahreBody, PostBildungStudiengaengeBody,
+} from '@/api/zod/bildung-resource/bildung-resource.zod';
 
 export type Typ = BildungsangebotTyp;
 export type AngebotDto = SeminarDto | TagungDto | BerufsschuljahrDto | StudiengangDto;
@@ -29,13 +30,16 @@ export interface FeldDef {
   options?: readonly string[];
 }
 
+// Enum-Optionen für die Dropdowns aus den generierten TS-Enums (enumGenerationType: 'enum').
+const opts = <T extends Record<string, string>>(e: T): string[] => Object.values(e);
+
 /** Gemeinsame Stammdaten-Felder — in jeder Typ-Maske identisch (eine wiederverwendete Komponente). */
 export const gemeinsameFelder: FeldDef[] = [
   { name: 'code', label: 'Code', art: 'text' },
   { name: 'titel', label: 'Titel', art: 'text' },
-  { name: 'bereich', label: 'Bereich', art: 'select', options: z.zBereich.options },
-  { name: 'status', label: 'Status', art: 'select', options: z.zAngebotStatus.options },
-  { name: 'preisModell', label: 'Preismodell', art: 'select', options: z.zPreisModell.options },
+  { name: 'bereich', label: 'Bereich', art: 'select', options: opts(Bereich) },
+  { name: 'status', label: 'Status', art: 'select', options: opts(AngebotStatus) },
+  { name: 'preisModell', label: 'Preismodell', art: 'select', options: opts(PreisModell) },
   { name: 'preisCent', label: 'Preis je Rate (Cent)', art: 'number' },
   { name: 'abrechnungIntervallMonate', label: 'Abrechnungsintervall (Monate)', art: 'number' },
   { name: 'ratenGesamt', label: 'Raten gesamt (0 = unbefristet)', art: 'number' },
@@ -47,12 +51,24 @@ export const gemeinsameFelder: FeldDef[] = [
   { name: 'kurzbeschreibung', label: 'Kurzbeschreibung', art: 'textarea' },
 ];
 
-type ApiResult = Promise<{ data?: unknown; error?: unknown; response?: Response }>;
+// Hey-api-kompatible Result-Hülle {data,error,response}, damit die Views unverändert bleiben.
+// orval-Funktionen liefern die Daten direkt bzw. werfen AxiosError bei non-2xx.
+type ApiResult = Promise<{ data?: unknown; error?: unknown; response?: { status: number; ok: boolean } }>;
+async function call(fn: () => Promise<unknown>): ApiResult {
+  try {
+    return { data: await fn() };
+  } catch (e) {
+    const ax = e as AxiosError;
+    return ax.response
+      ? { error: ax.response.data, response: { status: ax.response.status, ok: false } }
+      : { error: e };
+  }
+}
 
 interface TypConfig {
   label: string;
   pfad: string;
-  schema: unknown; // z.Zod* — als toTypedSchema-Eingabe in der Maske verwendet
+  schema: unknown; // orval-zod (Body) — als toTypedSchema-Eingabe in der Maske verwendet
   felder: FeldDef[];
   list: () => ApiResult;
   byId: (id: number) => ApiResult;
@@ -65,25 +81,25 @@ export const typen: Record<Typ, TypConfig> = {
   SEMINAR: {
     label: 'Seminar',
     pfad: 'seminare',
-    schema: z.zSeminarDto,
+    schema: PostBildungSeminareBody,
     felder: [
-      { name: 'kategorie', label: 'Kategorie', art: 'select', options: z.zSeminarKategorie.options },
+      { name: 'kategorie', label: 'Kategorie', art: 'select', options: opts(SeminarKategorie) },
       { name: 'dauerUE', label: 'Dauer (UE)', art: 'number' },
       { name: 'minTN', label: 'Min. Teilnehmer', art: 'number' },
       { name: 'maxTN', label: 'Max. Teilnehmer', art: 'number' },
       { name: 'abschluss', label: 'Abschluss', art: 'text' },
       { name: 'zertifikat', label: 'Zertifikat', art: 'checkbox' },
     ],
-    list: () => sdk.getBildungSeminare(),
-    byId: (id) => sdk.getBildungSeminareById({ path: { id } }),
-    create: (body) => sdk.postBildungSeminare({ body: body as SeminarDto }),
-    update: (id, body) => sdk.putBildungSeminareById({ path: { id }, body: body as SeminarDto }),
-    remove: (id) => sdk.deleteBildungSeminareById({ path: { id } }),
+    list: () => call(() => getBildungSeminare()),
+    byId: (id) => call(() => getBildungSeminareId(id)),
+    create: (body) => call(() => postBildungSeminare(body as SeminarDto)),
+    update: (id, body) => call(() => putBildungSeminareId(id, body as SeminarDto)),
+    remove: (id) => call(() => deleteBildungSeminareId(id)),
   },
   TAGUNG: {
     label: 'Tagung',
     pfad: 'tagungen',
-    schema: z.zTagungDto,
+    schema: PostBildungTagungenBody,
     felder: [
       { name: 'thema', label: 'Thema', art: 'text' },
       { name: 'terminVon', label: 'Termin von', art: 'date' },
@@ -92,16 +108,16 @@ export const typen: Record<Typ, TypConfig> = {
       { name: 'programmUrl', label: 'Programm-URL', art: 'text' },
       { name: 'maxTN', label: 'Max. Teilnehmer', art: 'number' },
     ],
-    list: () => sdk.getBildungTagungen(),
-    byId: (id) => sdk.getBildungTagungenById({ path: { id } }),
-    create: (body) => sdk.postBildungTagungen({ body: body as TagungDto }),
-    update: (id, body) => sdk.putBildungTagungenById({ path: { id }, body: body as TagungDto }),
-    remove: (id) => sdk.deleteBildungTagungenById({ path: { id } }),
+    list: () => call(() => getBildungTagungen()),
+    byId: (id) => call(() => getBildungTagungenId(id)),
+    create: (body) => call(() => postBildungTagungen(body as TagungDto)),
+    update: (id, body) => call(() => putBildungTagungenId(id, body as TagungDto)),
+    remove: (id) => call(() => deleteBildungTagungenId(id)),
   },
   BERUFSSCHULJAHR: {
     label: 'Berufsschuljahr',
     pfad: 'berufsschuljahre',
-    schema: z.zBerufsschuljahrDto,
+    schema: PostBildungBerufsschuljahreBody,
     felder: [
       { name: 'fachrichtung', label: 'Fachrichtung', art: 'text' },
       { name: 'schuljahr', label: 'Schuljahr (JJJJ/JJ)', art: 'text' },
@@ -110,29 +126,29 @@ export const typen: Record<Typ, TypConfig> = {
       { name: 'schildNrwSchluessel', label: 'Schild-NRW-Schlüssel', art: 'text' },
       { name: 'plaetze', label: 'Plätze', art: 'number' },
     ],
-    list: () => sdk.getBildungBerufsschuljahre(),
-    byId: (id) => sdk.getBildungBerufsschuljahreById({ path: { id } }),
-    create: (body) => sdk.postBildungBerufsschuljahre({ body: body as BerufsschuljahrDto }),
-    update: (id, body) => sdk.putBildungBerufsschuljahreById({ path: { id }, body: body as BerufsschuljahrDto }),
-    remove: (id) => sdk.deleteBildungBerufsschuljahreById({ path: { id } }),
+    list: () => call(() => getBildungBerufsschuljahre()),
+    byId: (id) => call(() => getBildungBerufsschuljahreId(id)),
+    create: (body) => call(() => postBildungBerufsschuljahre(body as BerufsschuljahrDto)),
+    update: (id, body) => call(() => putBildungBerufsschuljahreId(id, body as BerufsschuljahrDto)),
+    remove: (id) => call(() => deleteBildungBerufsschuljahreId(id)),
   },
   STUDIENGANG: {
     label: 'Studiengang',
     pfad: 'studiengaenge',
-    schema: z.zStudiengangDto,
+    schema: PostBildungStudiengaengeBody,
     felder: [
-      { name: 'abschluss', label: 'Abschluss', art: 'select', options: z.zStudienabschluss.options },
-      { name: 'studienform', label: 'Studienform', art: 'select', options: z.zStudienform.options },
+      { name: 'abschluss', label: 'Abschluss', art: 'select', options: opts(Studienabschluss) },
+      { name: 'studienform', label: 'Studienform', art: 'select', options: opts(Studienform) },
       { name: 'startsemester', label: 'Startsemester (WS/SS+Jahr)', art: 'text' },
       { name: 'regelstudienzeitSemester', label: 'Regelstudienzeit (Sem.)', art: 'number' },
       { name: 'akkreditierungBis', label: 'Akkreditierung bis', art: 'date' },
       { name: 'plaetze', label: 'Plätze', art: 'number' },
     ],
-    list: () => sdk.getBildungStudiengaenge(),
-    byId: (id) => sdk.getBildungStudiengaengeById({ path: { id } }),
-    create: (body) => sdk.postBildungStudiengaenge({ body: body as StudiengangDto }),
-    update: (id, body) => sdk.putBildungStudiengaengeById({ path: { id }, body: body as StudiengangDto }),
-    remove: (id) => sdk.deleteBildungStudiengaengeById({ path: { id } }),
+    list: () => call(() => getBildungStudiengaenge()),
+    byId: (id) => call(() => getBildungStudiengaengeId(id)),
+    create: (body) => call(() => postBildungStudiengaenge(body as StudiengangDto)),
+    update: (id, body) => call(() => putBildungStudiengaengeId(id, body as StudiengangDto)),
+    remove: (id) => call(() => deleteBildungStudiengaengeId(id)),
   },
 };
 
@@ -140,11 +156,9 @@ export const alleTypen = Object.keys(typen) as Typ[];
 
 /**
  * Shop-Projektion (P1.3, §11.6): stößt das Anlegen/Aktualisieren des Vendure-Produkts an und
- * bekommt die vendureProductId zurück. Typ-übergreifend (gemeinsames Feld shopVerkauf) → ein
- * Endpunkt über der Registry-ID, kein per-Typ-Aufruf.
+ * bekommt die vendureProductId zurück. Typ-übergreifend → ein Endpunkt über der Registry-ID.
  */
-export const projiziereInShop = (id: number) =>
-  sdk.postBildungAngeboteByIdShopProjektion({ path: { id } });
+export const projiziereInShop = (id: number) => call(() => postBildungAngeboteIdShopProjektion(id));
 
 /** Sinnvolle Defaults für ein neues Angebot eines Typs (Pflichtfelder vorbelegt). */
 export function leeresAngebot(typ: Typ): Record<string, unknown> {

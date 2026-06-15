@@ -10,6 +10,7 @@ import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import Message from 'primevue/message';
 import { reviewQueue, entscheide, einschaetzungSchwere, ApiFehler, type Fall } from '@/dubletten';
+import { Entscheidung } from '@/api/model';
 import { auth, login } from '@/auth';
 
 const qc = useQueryClient();
@@ -29,13 +30,13 @@ const mut = useMutation({
 
 async function zusammenfuehren(f: Fall, zielId: number, ziel: string) {
   await ausfuehren(f, () =>
-    mut.mutateAsync({ art: f.art!, kandidatId: f.kandidatId!, entscheidung: 'GEMERGT', zielId }),
+    mut.mutateAsync({ art: f.art!, kandidatId: f.kandidatId!, entscheidung: Entscheidung.GEMERGT, zielId }),
     `„${f.bezeichnung}" wurde mit „${ziel}" zusammengeführt.`);
 }
 
 async function neuanlage(f: Fall) {
   await ausfuehren(f, () =>
-    mut.mutateAsync({ art: f.art!, kandidatId: f.kandidatId!, entscheidung: 'NEUANLAGE_BESTAETIGT' }),
+    mut.mutateAsync({ art: f.art!, kandidatId: f.kandidatId!, entscheidung: Entscheidung.NEUANLAGE_BESTAETIGT }),
     `„${f.bezeichnung}" als eigenständige Neuanlage bestätigt.`);
 }
 

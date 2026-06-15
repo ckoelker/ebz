@@ -10,17 +10,20 @@ import Select from 'primevue/select';
 import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import Message from 'primevue/message';
-import * as zod from '@/gen/zod.gen';
-import type { RegistryItemDto } from '@/gen/types.gen';
-import { getBildungAngebote } from '@/gen/sdk.gen';
+import { Bereich, AngebotStatus } from '@/api/model';
+import type { RegistryItemDto } from '@/api/model';
+import { getBildungAngebote } from '@/api/endpoints/bildung-resource/bildung-resource';
 import { typen, alleTypen, projiziereInShop, type Typ } from '@/bildung';
 import { login } from '@/auth';
 
 const router = useRouter();
 
+const bereichOptionen = Object.values(Bereich);
+const statusOptionen = Object.values(AngebotStatus);
+
 const { data, isFetching, refetch } = useQuery({
   queryKey: ['angebote'],
-  queryFn: async (): Promise<RegistryItemDto[]> => (await getBildungAngebote()).data ?? [],
+  queryFn: async (): Promise<RegistryItemDto[]> => (await getBildungAngebote()) ?? [],
 });
 
 const fTyp = ref<Typ | null>(null);
@@ -105,8 +108,8 @@ const statusSchwere: Record<string, 'secondary' | 'success' | 'warn'> = {
 
     <div class="filter">
       <Select v-model="fTyp" :options="alleTypen" placeholder="Typ" showClear />
-      <Select v-model="fBereich" :options="[...zod.zBereich.options]" placeholder="Bereich" showClear />
-      <Select v-model="fStatus" :options="[...zod.zAngebotStatus.options]" placeholder="Status" showClear />
+      <Select v-model="fBereich" :options="bereichOptionen" placeholder="Bereich" showClear />
+      <Select v-model="fStatus" :options="statusOptionen" placeholder="Status" showClear />
       <Button text icon="pi pi-refresh" :loading="isFetching" @click="() => refetch()" />
     </div>
 

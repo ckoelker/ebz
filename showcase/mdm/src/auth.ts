@@ -5,7 +5,6 @@
 // katalog-pflege → der Request-Interceptor hängt das access_token an alle API-Calls.
 import { reactive } from 'vue';
 import { UserManager, WebStorageStateStore, type User } from 'oidc-client-ts';
-import { client } from './gen/client.gen';
 
 const AUTHORITY =
   import.meta.env.VITE_OIDC_AUTHORITY || 'http://keycloak.localhost:8080/realms/ebz-staff';
@@ -76,8 +75,11 @@ export function logout(): void {
   userManager.signoutRedirect();
 }
 
-// Token an jeden API-Call hängen (sofern Session da); abgelaufenes access_token vorher headless erneuern.
-client.interceptors.request.use(async (request) => {
+/**
+ * Aktuelles access_token für den orval-Mutator (src/api/http.ts). Erneuert ein abgelaufenes Token
+ * vorher headless über den Refresh-Token; {@code null} → kein Token (Call läuft anonym, GET-Listen ok).
+ */
+export async function getAccessToken(): Promise<string | null> {
   if (aktuell && aktuell.expired) {
     try {
       uebernehme(await userManager.signinSilent());
@@ -85,8 +87,5 @@ client.interceptors.request.use(async (request) => {
       uebernehme(null);
     }
   }
-  if (aktuell?.access_token) {
-    request.headers.set('Authorization', `Bearer ${aktuell.access_token}`);
-  }
-  return request;
-});
+  return aktuell?.access_token ?? null;
+}

@@ -1,11 +1,14 @@
-// HITL-Cockpit (Anmeldung Berufsschule, Schritt I): bindet die GENERIERTE party-Schicht (Typen +
-// SDK aus /q/openapi) an die Oberfläche — Dubletten-Review-Queue + Entscheidung sowie offene
-// Anmeldungen + EBZ-Bestätigung. Same-origin über den Vite-Proxy (/party), daher baseUrl ''.
-import { client } from './gen/client.gen';
-import * as sdk from './gen/sdk.gen';
-import type { AnmeldungStatus, EntscheidungDto, Fall, OffeneAnmeldungView } from './gen/types.gen';
-
-client.setConfig({ baseUrl: '' });
+// HITL-Cockpit (Anmeldung Berufsschule, Schritt I): bindet die per orval GENERIERTE party-Schicht
+// (Typen + axios-Funktionen aus /q/openapi) an die Oberfläche — Dubletten-Review-Queue + Entscheidung
+// sowie offene Anmeldungen + EBZ-Bestätigung. Same-origin/Auth über den orval-Mutator src/api/http.ts.
+import type { AxiosError } from 'axios';
+import {
+  getPartyReviewsQueue, postPartyReviewsEntscheidung,
+} from '@/api/endpoints/dubletten-review-resource/dubletten-review-resource';
+import {
+  getPartyAnmeldungen, postPartyAnmeldungenIdBestaetigung,
+} from '@/api/endpoints/anmeldung-workflow-resource/anmeldung-workflow-resource';
+import type { AnmeldungStatus, EntscheidungDto, Fall, OffeneAnmeldungView } from '@/api/model';
 
 export type { EntscheidungDto, Fall, OffeneAnmeldungView };
 
@@ -16,27 +19,28 @@ export class ApiFehler extends Error {
   }
 }
 
-function ergebnis<T>(r: { data?: T; error?: unknown; response?: Response }): T {
-  if (r.error || (r.response && !r.response.ok)) {
-    const status = r.response?.status;
-    const msg = (r.error as { message?: string } | undefined)?.message;
-    throw new ApiFehler(msg ?? `Anfrage fehlgeschlagen (HTTP ${status ?? '?'}).`, status);
+// orval-Funktionen werfen AxiosError bei non-2xx → in ApiFehler (mit Status) übersetzen.
+async function run<T>(fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn();
+  } catch (e) {
+    const ax = e as AxiosError<{ message?: string }>;
+    const status = ax.response?.status;
+    throw new ApiFehler(ax.response?.data?.message ?? `Anfrage fehlgeschlagen (HTTP ${status ?? '?'}).`, status);
   }
-  return r.data as T;
 }
 
 // ── Dubletten-Review ──
-export const reviewQueue = async (): Promise<Fall[]> => ergebnis(await sdk.getPartyReviewsQueue()) ?? [];
+export const reviewQueue = async (): Promise<Fall[]> =>
+  ((await run(() => getPartyReviewsQueue())) as Fall[]) ?? [];
 
-export const entscheide = (body: EntscheidungDto) =>
-  sdk.postPartyReviewsEntscheidung({ body }).then(ergebnis);
+export const entscheide = (body: EntscheidungDto) => run(() => postPartyReviewsEntscheidung(body));
 
 // ── Offene Anmeldungen + EBZ-Bestätigung ──
 export const offeneAnmeldungen = async (status?: AnmeldungStatus): Promise<OffeneAnmeldungView[]> =>
-  ergebnis(await sdk.getPartyAnmeldungen({ query: status ? { status } : {} })) ?? [];
+  ((await run(() => getPartyAnmeldungen(status ? { status } : undefined))) as OffeneAnmeldungView[]) ?? [];
 
-export const bestaetigeAnmeldung = (id: number) =>
-  sdk.postPartyAnmeldungenByIdBestaetigung({ path: { id } }).then(ergebnis);
+export const bestaetigeAnmeldung = (id: number) => run(() => postPartyAnmeldungenIdBestaetigung(id));
 
 /** Anzeige-/Farb-Mapping der KI-Einschätzung (MATCH = wahrscheinlich Dublette → Achtung). */
 export const einschaetzungSchwere: Record<string, 'danger' | 'warn' | 'secondary'> = {

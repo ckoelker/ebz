@@ -1,10 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
-  zSeminarDto,
-  zTagungDto,
-  zBerufsschuljahrDto,
-  zStudiengangDto,
-} from './gen/zod.gen';
+  PostBildungSeminareBody as zSeminarDto,
+  PostBildungTagungenBody as zTagungDto,
+  PostBildungBerufsschuljahreBody as zBerufsschuljahrDto,
+  PostBildungStudiengaengeBody as zStudiengangDto,
+} from './api/zod/bildung-resource/bildung-resource.zod';
 
 /**
  * Spec-Test 2 (Plan §5, Krit. 2) — über ALLE vier per-Typ-zod-Schemas (P1.1-Kernbeweis).

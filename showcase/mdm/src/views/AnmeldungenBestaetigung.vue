@@ -10,12 +10,12 @@ import Button from 'primevue/button';
 import Tag from 'primevue/tag';
 import Select from 'primevue/select';
 import Message from 'primevue/message';
-import type { AnmeldungStatus } from '@/gen/types.gen';
+import { AnmeldungStatus } from '@/api/model';
 import { offeneAnmeldungen, bestaetigeAnmeldung, ApiFehler, type OffeneAnmeldungView } from '@/dubletten';
 import { auth, login } from '@/auth';
 
 const qc = useQueryClient();
-const status = ref<AnmeldungStatus>('ANGEFRAGT');
+const status = ref<AnmeldungStatus>(AnmeldungStatus.ANGEFRAGT);
 
 const { data, isFetching, refetch } = useQuery({
   queryKey: ['offeneAnmeldungen', status],
