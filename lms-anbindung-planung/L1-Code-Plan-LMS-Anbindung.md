@@ -16,8 +16,10 @@
 > `authProvider=KEYCLOAK`+sub**, enrol/unenrol — alle Endpunkte live gegen `/restapi/openapi.json`
 > verifiziert) + `EinschreibungResource` (`/lms/einschreibungen`). **L3 Order-Naht** ✅:
 > `POST /lms/einschreibungen/bestellung` (+ `/storno`) löst Produkt→`WbtKurs` auf (§8). **16/16
-> rest-assured/Unit grün** (OpenOLAT per `@io.quarkus.test.Mock`). **Offen:** Vendure-Emitter-Plugin
-> (PaymentSettled→Push), Portal „Meine Trainings" + SSO-Launch, orval-Client regen (Tag ergänzt).
+> rest-assured/Unit grün** (OpenOLAT per `@io.quarkus.test.Mock`). **Portal „Meine Trainings" ✅**:
+> `GET /lms/portal/trainings` (eigen-skopiert) + Vue-Seite (`/trainings`, SSO-Launch-Deeplink), orval
+> generiert (LMS-Tags getrennt Katalog/Einschreibung/Portal), `vue-tsc`+Build grün, **19/19 Backend-Tests**.
+> **Offen:** Vendure-Emitter-Plugin (PaymentSettled→Push an Order-Naht), L4 Completion/Zertifikate.
 > Lemon-Migration gegated (L5b). Slices §11.
 
 ## §1 Architektur-Rollen
@@ -167,14 +169,17 @@ Dead-Letter nach 5 Versuchen → HITL). `wbtKurs` bleibt echte FK; `keycloakSub`
 - `GET/POST /lms/kurse`, `GET/PUT/DELETE /lms/kurse/{id}`
 - `POST /lms/kurse/{id}/veroeffentlichen` → Vendure-Projektion (vendureProductId zurück)
 
-**Provisionierung (intern, Service-Auth):**
-- `POST /lms/einschreibungen` `{keycloakSub|email, vendureOrderId, openolatKeys[]}`
-- `POST /lms/einschreibungen/{id}/ausschreiben`
+**Provisionierung (intern, Service-Auth) — Tag `LMS Einschreibung`:**
+- `POST /lms/einschreibungen` `{keycloakSub, email?, anzeigeName?, vendureOrderId?, wbtKursIds[]}`
+- `POST /lms/einschreibungen/bestellung` (Order-Naht, §8) + `/bestellung/{orderId}/storno`
+- `POST /lms/einschreibungen/{id}/ausschreiben`, `/{id}/neu-versuch`, `GET /lms/einschreibungen` (Cockpit)
 
-**Portal (Realm `ebz-customers`, kontext-skopiert wie Rechnung-Portal):**
-- `GET /lms/portal/meine-trainings` → Liste `{kurs, status, completion?, launchUrl}`
-- `GET /lms/portal/kurse/{id}/launch` → 302 SSO-Deeplink in OpenOLAT
-- DTO + Bean-Validation als Single Source (Stack B) → erscheint im `/q/openapi` (Tag `LMS Resource`).
+**Portal (Realm `ebz-customers`, kontext-skopiert wie Rechnung-Portal) — Tag `LMS Portal`:** ✅ GEBAUT
+- `GET /lms/portal/trainings` → `[{einschreibungId, kursTitel, kursCode, status, launchUrl?}]`
+  (launchUrl = `{openolat.public-url}/url/RepositoryEntry/{openolatKey}`, nur für EINGESCHRIEBEN).
+- SSO-Launch: die Vue-Seite öffnet `launchUrl` im neuen Tab (Browser → Keycloak-SSO → Kurs); kein
+  302-Endpunkt nötig (XHR-Redirect würde nicht navigieren). orval-Tags getrennt: `LMS Katalog`
+  (Cockpit-Pflege), `LMS Einschreibung` (Cockpit-HITL), `LMS Portal` (Außenportal) — jede SPA nur ihr Teil.
 
 ## §10 Offene Verifikations-/Config-Punkte (nicht L0-blockierend)
 - ~~**Import-Endpunkt**~~ ✅ **erledigt** — `PUT /restapi/repo/entries` (multipart), SCORM-1.2-Seed
@@ -193,7 +198,7 @@ Dead-Letter nach 5 Versuchen → HITL). `wbtKurs` bleibt echte FK; `keycloakSub`
 | **L0** ✅ | `openolat`-Service + DB `openolat` + Host/Proxy; Admin erreichbar | kein Fachcode |
 | **L1** ✅ | OIDC-Lernende (JIT), SCORM-1.2-Kurse importiert, `WbtKurs` + Projektion nach Vendure | Portal-Launch offen; Provisionierung manuell |
 | **L2** ✅ | `KurseinschreibungService` + Outbox (Entity-as-Outbox, §6a) + `EnrollmentDispatcher` + `OpenolatProvisioning` (idempotent, Retry/HITL) | Completion noch nicht |
-| **L3** 🟡 | Order-Naht `POST /lms/einschreibungen/bestellung` (+Storno) ✅; Vendure-Emitter-Plugin + „Meine Trainings" offen | Portal-Teil offen |
+| **L3** 🟡 | Order-Naht `POST /lms/einschreibungen/bestellung` (+Storno) ✅; **Portal „Meine Trainings" + SSO-Launch ✅** (Backend `/lms/portal/trainings` + Vue-Seite, orval-Tags getrennt Katalog/Einschreibung/Portal) | nur noch Vendure-Emitter-Plugin offen |
 | **L4** | Completion-Read + Zertifikate (OpenOLAT-Zertifikatsmodul) | — |
 | **L5a** | **Seed-Import** der 3 SCORM-1.2-Kurse aus `testdata/` end-to-end (Import → `WbtKurs` → Projektion → Kauf → Einschreibung → Launch) | **jetzt machbar, kein Lemon nötig** |
 | **L5b** | Bulk-Migration der echten 100 Kurse (nach Lemon-Export) | **gegated** (Lemon-Zugang/Export) |
