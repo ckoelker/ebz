@@ -7,11 +7,10 @@ import jakarta.transaction.Transactional;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.Produces;
-import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
-import jakarta.ws.rs.core.SecurityContext;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.eclipse.microprofile.jwt.JsonWebToken;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
 import io.quarkus.security.Authenticated;
@@ -38,6 +37,9 @@ public class LmsPortalResource {
     @Inject
     KurseinschreibungService service;
 
+    @Inject
+    JsonWebToken jwt;
+
     @ConfigProperty(name = "openolat.public-url")
     String openolatPublicUrl;
 
@@ -46,13 +48,17 @@ public class LmsPortalResource {
             EinschreibungStatus status, String launchUrl) {
     }
 
+    /**
+     * Eigen-skopiert über den OIDC-{@code sub} (UUID) aus dem {@link JsonWebToken} — genau der Schlüssel,
+     * unter dem die Einschreibung gespeichert ist und den OpenOLAT als {@code KEYCLOAK}-Auth führt.
+     * Bewusst NICHT {@code SecurityContext#getUserPrincipal().getName()} (das wäre der {@code preferred_username}).
+     */
     @Authenticated
     @GET
     @Path("/trainings")
     @Transactional
-    public List<MeinTrainingView> meineTrainings(@Context SecurityContext ctx) {
-        String sub = ctx.getUserPrincipal() == null ? null : ctx.getUserPrincipal().getName();
-        return service.meineTrainings(sub).stream().map(this::toView).toList();
+    public List<MeinTrainingView> meineTrainings() {
+        return service.meineTrainings(jwt.getSubject()).stream().map(this::toView).toList();
     }
 
     private MeinTrainingView toView(Kurseinschreibung e) {

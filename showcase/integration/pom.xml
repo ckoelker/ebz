@@ -114,6 +114,12 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-oidc</artifactId>
     </dependency>
+    <!-- JsonWebToken-Injektion (LMS-Portal: echten OIDC-sub auslesen, nicht preferred_username).
+         Liefert den @Inject-fähigen JsonWebToken-Producer; OIDC bleibt der Token-Validator. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-jwt</artifactId>
+    </dependency>
     <!-- Naht zu Vendure (P1.3, §11.6): GraphQL-over-HTTP gegen die Admin-API zur Produkt-Projektion. -->
     <dependency>
       <groupId>io.quarkus</groupId>
@@ -227,6 +233,12 @@
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-test-security</artifactId>
+      <scope>test</scope>
+    </dependency>
+    <!-- @JwtSecurity/@Claim: echten JWT-sub-Claim im Test setzen (LMS-Portal liest JsonWebToken.getSubject()) -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-test-security-jwt</artifactId>
       <scope>test</scope>
     </dependency>
     <!-- Prozessdoku: In-Memory-Span-Exporter als Fallback fürs Abgreifen der Business-Spans im E2E-Test

@@ -224,6 +224,12 @@ services:
       # Prozessdoku/Tracing: Business-Spans per OTLP an den OTel-Collector, der parallel an Jaeger
       # (alle Spans) UND Phoenix (LLM-Tracing) fan-outet.
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      # LMS-Anbindung (OpenOLAT): der Einschreibungs-Dispatcher ruft die REST-API über den Compose-Netz-
+      # Namen openolat:8080; der SSO-Launch-Deeplink im Portal nutzt die browser-erreichbare localhost:8089.
+      OPENOLAT_RESTAPI_URL: http://openolat:8080
+      OPENOLAT_PUBLIC_URL: ${OPENOLAT_PUBLIC_URL:-http://localhost:8089}
+      OPENOLAT_ADMIN_USER: ${OPENOLAT_ADMIN_USER:-administrator}
+      OPENOLAT_ADMIN_PASSWORD: ${OPENOLAT_ADMIN_PASSWORD:-openolat}
     ports:
       - "${INTEGRATION_PORT:-8090}:8090"
 

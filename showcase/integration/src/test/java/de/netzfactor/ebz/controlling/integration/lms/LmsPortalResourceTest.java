@@ -16,6 +16,8 @@ import org.junit.jupiter.api.Test;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 import io.quarkus.test.security.TestSecurity;
+import io.quarkus.test.security.jwt.Claim;
+import io.quarkus.test.security.jwt.JwtSecurity;
 
 import de.netzfactor.ebz.controlling.integration.bildung.model.AngebotStatus;
 import de.netzfactor.ebz.controlling.integration.lms.model.EinschreibungStatus;
@@ -78,6 +80,7 @@ class LmsPortalResourceTest {
 
     @Test
     @TestSecurity(user = SUB_A)
+    @JwtSecurity(claims = @Claim(key = "sub", value = SUB_A))
     void nurEigeneTrainingsMitLaunchUrlNurWennEingeschrieben() {
         Long kursEin = neuerKurs();
         Long kursOffen = neuerKurs();
@@ -99,6 +102,7 @@ class LmsPortalResourceTest {
 
     @Test
     @TestSecurity(user = SUB_LEER)
+    @JwtSecurity(claims = @Claim(key = "sub", value = SUB_LEER))
     void ohneEinschreibungenLeereListe() {
         given().when().get("/lms/portal/trainings")
                 .then().statusCode(200).body("$", empty());
