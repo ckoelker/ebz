@@ -8,8 +8,8 @@
 
 Die EBZ rechnet über **vier Erlösströme** mit komplexen Regeln ab (Berufsschule halbjährlich
 mit Unterricht + Übernachtung, Hochschule semesterweise mit Split/Raten, Seminare auf Rechnung,
-Shop-Produkte Karte/Rechnung) — inkl. Gutschriften, nachträglicher Berechnung, Stornos,
-Rahmenvertrags-Rabatten. **Heute** erzeugt eine heterogene Softwarelandschaft je Komponente
+Shop-Produkte Karte/Rechnung) — inkl. Gutschriften, nachträglicher Berechnung, Stornos.
+**Heute** erzeugt eine heterogene Softwarelandschaft je Komponente
 **DATEV-CSV** (EXTF-Buchungsstapel), die manuell synchronisiert werden → fehleranfällig;
 **Debitoren-Nummernkreise überschneiden sich** → doppelte Debitoren; Mahnwesen + Lastschrift
 laufen in DATEV und sollen dort bleiben. Dazu kommt die **E-Rechnungs-Pflicht** (B2B).
@@ -87,12 +87,12 @@ Billing-Package ist **Rechnungs-/Beleg-SoR**. Das separate `erechnung`-Repo wird
 | **Hochschule** | semesterweise | Komplettbetrag **oder Ratenzahlung**; **Rechnungs-Split** (z. B. Unternehmen zahlt die Hälfte — duales/berufsbegleitendes Studium) | Aufteilung Rechnungsempfänger (Unternehmen ↔ Studierende) |
 | **Seminare** | je Buchung | auf Rechnung | Unternehmens- vs. Privatkunde |
 | **Shop-Produkte** | je Bestellung | Kreditkarte; bei Unternehmenskunden auch auf Rechnung | bereits in Vendure abgebildet |
-| **Querschnitt** | — | **Storno**, **Rahmenvertrags-Rabatt 20 %**, **Gutschriften** (Korrektur-/Teilgutschrift) | **USt:** Bildungsleistungen i. d. R. **befreit** (§4 UStG) — Übernachtung/Verpflegung ggf. anders → **mit StB klären** |
+| **Querschnitt** | — | **Storno**, **Gutschriften** (Korrektur-/Teilgutschrift) | **USt:** Bildungsleistungen i. d. R. **befreit** (§4 UStG) — Übernachtung/Verpflegung ggf. anders → **mit StB klären** |
 
 → Datenmodell muss tragen: **Rechnung** (Kopf + Positionen + **Steuer je Position** — wichtig, weil
 EBZ als gemeinnützige Stiftung **teilweise** USt-befreit ist), **Gutschrift** (Bezug auf
 Originalrechnung, Teil-/Voll), **Ratenplan** (kommt aus Vendure-Installments), **Split-Empfänger**,
-**Rabatt** (Rahmenvertrag), **Debitor** (Nummernkreis). Dafür ein **eigenes EBZ-Rechnungs-
+**Debitor** (Nummernkreis). Dafür ein **eigenes EBZ-Rechnungs-
 Domänenmodell** (fachlich an der EBZ-Rechnungsvorlage orientiert) — **unabhängig** vom erechnung-Repo.
 
 ---
@@ -184,9 +184,8 @@ von R2** — als Achse offen halten.
 1. **DATEV-Weg:** API/Rechnungsdatenservice vs. DATEVconnect; läuft DATEV on-prem? Partner-Reg.?
 2. **USt je Leistung:** Unterricht (befreit) vs. Übernachtung/Verpflegung (befreit? 7 %?).
 3. **Bestehende Debitoren-Nummernkreise** + Migrations-/Dubletten-Strategie.
-4. **Rahmenvertrags-Rabatte** (20 %) — Regeln, Geltungsbereich, Ausweis auf der Rechnung.
-5. **Storno-/Gutschrift-Regeln** (Fristen, Teil-/Vollgutschrift, Bezug auf Originalrechnung).
-6. **E-Rechnungs-Pflicht-Timeline** für die EBZ (B2B-Anteil; Umsatzgrenze) — Übergangsfristen mit StB.
+4. **Storno-/Gutschrift-Regeln** (Fristen, Teil-/Vollgutschrift, Bezug auf Originalrechnung).
+5. **E-Rechnungs-Pflicht-Timeline** für die EBZ (B2B-Anteil; Umsatzgrenze) — Übergangsfristen mit StB.
 
 ---
 
@@ -199,7 +198,7 @@ von R2** — als Achse offen halten.
 - **R3** **Debitoren-Nummernkreis-Hoheit** (MDM) + Mapping.
 - **R4** **DATEV-Übergabe hinter Interface** — zunächst gegen **Mock/Sandbox** (Weg offen), Buchungssatz
   + Debitor + Beleg.
-- **R5** **Gutschriften / Storno / nachträgliche Berechnung / Rahmenrabatt** (Querschnitt).
+- **R5** **Gutschriften / Storno / nachträgliche Berechnung** (Querschnitt).
 - **R6** **Hochschule** (Semester, Ratenzahlung aus Vendure-Installments, **Rechnungs-Split**).
 - **R7** Seminare/Shop auf Rechnung anschließen; Controlling-Naht (Erlös-Dimension).
 

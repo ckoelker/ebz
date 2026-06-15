@@ -97,7 +97,7 @@ daraus vor, im Entwurf editierbar.
 
 ## Abgrenzung (was NICHT in R1)
 ZUGFeRD/PDF (R2) · Debitoren-Match/Merge + Migration (R3) · DATEV-Übergabe + Erlöskonten/SKR (R4) ·
-Gutschrift-Automatik/Rabatte (R5/6 – Rabatt zurückgestellt) · Hochschule-Lauf + Split + Raten (R6) ·
+Gutschrift-Automatik (R5) · Hochschule-Lauf + Split + Raten (R6) ·
 Vendure-Order→Abrechnungsbasis + Shop/Seminare (R7).
 
 ## Offen (nicht R1-blockierend)

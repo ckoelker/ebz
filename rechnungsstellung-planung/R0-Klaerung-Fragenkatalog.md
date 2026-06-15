@@ -94,22 +94,6 @@ Tabelle Kunde ↔ DATEV-Debitor; Dubletten-Erkennung als eigener R3-Schritt.
 
 ---
 
-### B4. Rahmenvertrags-Rabatte (z. B. 20 %)  🟠
-**Fragen (alle [EBZ]):**
-- Rabatt **pro Firmenkunde/Rahmenvertrag** hinterlegt? Auf **welche Leistungen** (alle / nur Seminare /
-  …)? Befristet?
-- **Ausweis** auf der Rechnung: eigene **Rabatt-Position** oder **reduzierter Einzelpreis**?
-- **Kombinierbarkeit** mit Gutschriften/Storno? Rabatt **vor oder nach** Steuer?
-- Mehrere Rabatte gleichzeitig möglich (Staffel/Sonderkonditionen)?
-
-**Vor-Analyse:** Rabatt als **Rahmenvertrags-Stammdatum** am Debitor/Vertrag (MDM); auf der Rechnung
-EN-16931-konform als **Allowance** (Nachlass) je Position oder Kopf. Empfehlung: transparenter Ausweis
-als Position/Allowance (nicht still im Einzelpreis).
-
-➡️ **Entscheidung: ____**
-
----
-
 ### B5. Storno- & Gutschrift-Regeln  🟠 *zentral für Berufsschule*
 **Hintergrund:** Berufsschule erzeugt **Gutschriften** für ungenutzte Teile (Krankheit, Abbruch) und
 **nachträgliche Berechnungen** (z. B. Block-B-Übernachtung +400 €). Buchhalterisch heißt „Gutschrift"
@@ -159,12 +143,11 @@ deckt B2B **und** B2C in einem Format ab → keine Sonderfälle). Empfangsseite 
 - DATEV-Weg (B1): **DATEV Cloud** (DATEV Unternehmen online) → Buchungsdatenservice/Rechnungsdatenservice-Weg; konkreter Service + Partner-Registrierung noch zu klären.
 - Steuermatrix (B2): EBZ = **gemeinnützige Stiftung des Privatrechts → teilweise umsatzsteuerbefreit** → **Steuer je Position** (befreit + steuerpflichtig gemischt). Genaue Zuordnung je Leistung mit **StB** final klären.
 - Debitoren-Schema + Migration (B3): **offen** [EBZ/StB].
-- Rabatt-Logik (B4): **offen** [EBZ].
 - Storno/Gutschrift-Logik (B5): **offen** [EBZ/StB].
 - Ausstellungspflicht-Stichtag EBZ (B6): **Umsatz > 800.000 € → Ausstellungspflicht B2B ab 1.1.2027** (B2C nicht erfasst).
 → **Ansatz festgelegt:** ZUGFeRD/E-Rechnung wird **unabhängig** im bestehenden `integration`-Service
 umgesetzt (Library-Stack Mustang/PDFBox, Konzept §4f); das separate `erechnung`-Repo wird **ignoriert**
-(kein Code-Merge, nur Bibliotheks-/Versionswahl übernommen). B3/B4/B5 weiter mit Kunde/StB zu klären.
+(kein Code-Merge, nur Bibliotheks-/Versionswahl übernommen). B3/B5 weiter mit Kunde/StB zu klären.
 
 ---
 

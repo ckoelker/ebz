@@ -11,7 +11,7 @@ Planungs-/Konzept-Doku, **kein Code**.
   offene Kundenfragen und Milestone-Roadmap R0–R7.
 - **[R0-Klaerung-Fragenkatalog.md](R0-Klaerung-Fragenkatalog.md)** — Vorbereitung des Kunden-/StB-
   Gesprächs (Meilenstein R0): jetzt festzurrbare Entscheidungen + Fragenkatalog je offenem Punkt
-  (DATEV-Weg, USt je Leistung, Debitoren-Nummernkreise, Rabatte, Storno/Gutschrift, E-Rechnungs-
+  (DATEV-Weg, USt je Leistung, Debitoren-Nummernkreise, Storno/Gutschrift, E-Rechnungs-
   Timeline) mit Vor-Analyse/Empfehlung und Antwortfeldern. Inkl. verifizierter Recherchestände.
 - **[R1-Fachklaerung-Rechnungsstellung.md](R1-Fachklaerung-Rechnungsstellung.md)** — Domänen-Klärung
   für die Code-Planung (Antworten Gruppe 1–8): Abrechnungsquelle, Debitoren-Strategie, Berufsschul-/
@@ -37,7 +37,7 @@ Planungs-/Konzept-Doku, **kein Code**.
   erzeugen, GoBD-konform archivieren, Debitoren-Nummern aus **einer** Quelle vergeben und Beleg-/
   Buchungsdaten **hinter einer austauschbaren Schnittstelle** an DATEV übergeben.
 - **Offen (beim Kunden zu klären):** DATEV-Weg (API/Rechnungsdatenservice vs. DATEVconnect on-prem),
-  USt-Behandlung je Leistung, bestehende Debitoren-Nummernkreise, Rahmenrabatte, Storno-/Gutschrift-
+  USt-Behandlung je Leistung, bestehende Debitoren-Nummernkreise, Storno-/Gutschrift-
   Regeln, E-Rechnungs-Pflicht-Timeline.
 
 > Status: **R1 (Berufsschule end-to-end) GEBAUT + VERIFIZIERT** (Backend im `integration`-Service,

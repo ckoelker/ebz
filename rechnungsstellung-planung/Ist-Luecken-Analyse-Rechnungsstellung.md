@@ -25,15 +25,12 @@
 - **erechnung-Repo** wird nicht eingezogen (nur Referenz).
 
 ## Lücken — Code (Kandidaten für „komplett")
-1. 🔴 **Rabatt / Rahmenrabatt** (R5, §6.4): kein Rabatt-Konstrukt (Positions-/Beleg-Rabatt, %-/Absolut,
-   Ausweis auf Beleg + im ZUGFeRD `AllowanceCharge`). Bisher zurückgestellt — **echte Funktionslücke**,
-   falls „komplett" Rabatte einschließt.
-2. 🟠 **Rechnungsversand an den Kunden:** Der Beleg wird erzeugt + GoBD-archiviert, aber **nicht
+1. 🟠 **Rechnungsversand an den Kunden:** Der Beleg wird erzeugt + GoBD-archiviert, aber **nicht
    zugestellt** (kein E-Mail-Versand des ZUGFeRD-PDF an den Debitor; `quarkus-mailer` ist vorhanden,
    wird in `rechnung` aber nicht genutzt). Für eine „komplette" E-Rechnung gehört Zustellung dazu.
-3. 🟡 **Zahlungseingang/BEZAHLT-Übergang** (s. o.) — minimaler manueller „als bezahlt markieren"-Schritt
+2. 🟡 **Zahlungseingang/BEZAHLT-Übergang** (s. o.) — minimaler manueller „als bezahlt markieren"-Schritt
    wäre für einen runden Lebenszyklus sinnvoll, auch wenn OP/Mahnung in DATEV bleibt.
-4. 🟡 **USt-Differenzierung Übernachtung/Verpflegung:** Steuerfall ist je Position modellierbar
+3. 🟡 **USt-Differenzierung Übernachtung/Verpflegung:** Steuerfall ist je Position modellierbar
    (BEFREIT/STANDARD/ERMAESSIGT vorhanden), aber der Berufsschul-Lauf setzt alles `BEFREIT`. Falls
    Übernachtung/Verpflegung 7 % sind, fehlt die Regel im Lauf (hängt an §6.2-Klärung).
 
@@ -49,8 +46,7 @@
 - Memory `rechnungsstellung-showcase.md`: analog aktualisieren (sagt noch „nur Konzept/Planung").
 
 ## Vorschlag Priorisierung bis „komplett"
-1. **Rabatt/Rahmenrabatt** (R5) — größte echte Funktionslücke, inkl. ZUGFeRD-Ausweis.
-2. **Rechnungsversand** (E-Mail mit ZUGFeRD-PDF an Debitor) — rundet die E-Rechnung ab.
-3. **BEZAHLT-Übergang** (minimaler manueller Zahlungseingang) — abgerundeter Lebenszyklus.
-4. **USt-Regel Übernachtung** — nur falls §6.2 das verlangt (sonst Entscheidung).
-5. Doku/Memory begradigen (parallel, günstig).
+1. **Rechnungsversand** (E-Mail mit ZUGFeRD-PDF an Debitor) — rundet die E-Rechnung ab.
+2. **BEZAHLT-Übergang** (minimaler manueller Zahlungseingang) — abgerundeter Lebenszyklus.
+3. **USt-Regel Übernachtung** — nur falls §6.2 das verlangt (sonst Entscheidung).
+4. Doku/Memory begradigen (parallel, günstig).

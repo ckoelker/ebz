@@ -172,8 +172,8 @@ Debitoren) gezeigt/geprüft werden.
    RFI-Bewertung gegen Power Platform/Dataverse** einspeisen (Soll-Bebauungsplan §5) — statt parallel
    zu laufen.
 
-6. **Restliche Kundenfragen (B3/B4/B5) + Phase-0-⚪-Punkte schließen.**
-   Debitoren-Schema, Rabatt-/Storno-Regeln, echte SKR-Kontierung/Steuersätze (StB) und die fünf
+6. **Restliche Kundenfragen (B3/B5) + Phase-0-⚪-Punkte schließen.**
+   Debitoren-Schema, Storno-Regeln, echte SKR-Kontierung/Steuersätze (StB) und die fünf
    ⚪-Klärungen (PMS, TarLemon, Moodle-Akademie, Fehltage-System, Shop) bleiben Voraussetzung für jede
    verbindliche Bebauung.
 

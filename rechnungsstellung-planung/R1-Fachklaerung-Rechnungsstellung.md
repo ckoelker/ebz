@@ -88,10 +88,6 @@ agnostisch, gleichberechtigt neben den `Anmeldung`en aus Berufsschule/Hochschule
   - 💡 Konsequenz: **Karte = sofort beglichen** (Stripe) → kein Mahnwesen; Rechnung = unser Billing/
     DATEV-Debitor-Pfad. Beleg/Buchung entsteht in beiden Fällen; Karten-Erlöse buchen über ein
     Stripe-/Geldtransit-Konto (Detail bei R4/R7).
-## 6. Rahmenvertrags-Rabatte  ⏭️ ZURÜCKGESTELLT
-- **Q6.1** Rahmenvertrags-Rabatte (z. B. 20 %) für diese Runde **ignorieren**, als **zukünftige
-  Erweiterung** notiert. Datenmodell so offen halten, dass ein Rabatt/Allowance je Position/Kopf
-  später ergänzbar ist (keine Annahmen, die das verbauen).
 ## 7. Storno & Gutschrift
 - ✅ **Q7.1 (Empfehlung):** **Korrekturbeleg mit Typ** + **Pflicht-Referenz auf Originalrechnung**:
   - **Teilgutschrift** (negativ) — Berufsschule Krankheit/Abbruch (Q3.3/Q3.4).
