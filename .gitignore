@@ -47,3 +47,7 @@ Thumbs.db
 .vscode/
 *.swp
 .claude/settings.local.json
+
+# Prozessdoku — generierte BPMN (aus den OTel-Spans erzeugt: bash showcase/prozessdoku/build.sh)
+showcase/docs/bpmn/
+showcase/prozessdoku/out/

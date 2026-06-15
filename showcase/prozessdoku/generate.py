@@ -271,12 +271,23 @@ def _swimlane(xml_text: str, name_zu_akteur: dict, name_zu_system: dict, titel: 
     maxspalte = max(spalte.values()) if spalte else 0
     x0 = POOL_LBL + LANE_LBL + PAD
     total_w = x0 + maxspalte * COL_W + 140
-    lane_y = {a: i * LANE_H for i, a in enumerate(lanes)}
-    pool_h = len(lanes) * LANE_H
+    # Mehrere Knoten in gleicher Lane+Spalte (z. B. parallele Zweige WebUntis ∥ Suite8) vertikal
+    # stapeln, sonst überlagern sie sich auf identischen Koordinaten. Lane-Höhe = größter Stapel.
+    from collections import defaultdict
+    bucket = defaultdict(list)
+    for n in order:
+        bucket[(lane_of[n], spalte[n])].append(n)
+    stapel = {a: max([len(bucket[(a, c)]) for c in range(maxspalte + 1)] or [1]) for a in lanes}
+    lane_h = {a: max(1, stapel[a]) * LANE_H for a in lanes}
+    lane_y, _y = {}, 0
+    for a in lanes:
+        lane_y[a], _y = _y, _y + lane_h[a]
+    pool_h = _y
     pos = {}
-    for n in nodes:
-        w, h = nodes[n]["w"], nodes[n]["h"]
-        pos[n] = (x0 + spalte[n] * COL_W, lane_y[lane_of[n]] + (LANE_H - h) / 2, w, h)
+    for (a, c), ns in bucket.items():
+        for k, n in enumerate(ns):
+            w, h = nodes[n]["w"], nodes[n]["h"]
+            pos[n] = (x0 + c * COL_W, lane_y[a] + k * LANE_H + (LANE_H - h) / 2, w, h)
 
     # laneSet
     lane_xml = [f'    <bpmn:laneSet id="laneset_{stamm}">']
@@ -302,7 +313,7 @@ def _swimlane(xml_text: str, name_zu_akteur: dict, name_zu_system: dict, titel: 
           "      </bpmndi:BPMNShape>"]
     for a in lanes:
         di += [f'      <bpmndi:BPMNShape id="lane_{stamm}_{_slug(a)}_di" bpmnElement="lane_{stamm}_{_slug(a)}" isHorizontal="true">',
-               f'        <omgdc:Bounds x="{POOL_LBL}" y="{lane_y[a]}" width="{total_w - POOL_LBL}" height="{LANE_H}"/>',
+               f'        <omgdc:Bounds x="{POOL_LBL}" y="{lane_y[a]}" width="{total_w - POOL_LBL}" height="{lane_h[a]}"/>',
                "      </bpmndi:BPMNShape>"]
     for n in order:
         x, y, w, h = pos[n]
@@ -387,12 +398,24 @@ def _phase_block(phase: str, semantik: str, name_akteur: dict, name_system: dict
 
     lane_of = {n: akteur(n) for n in nodes}
     lanes = [a for a in AKTEUR_ORDER if a in set(lane_of.values())]
-    lane_y = {a: i * _LANE_H for i, a in enumerate(lanes)}
     maxcol = max(col.values()) if col else 0
+    # Knoten in gleicher Lane+Spalte (parallele Zweige) vertikal stapeln; Lane-Höhe = größter Stapel.
+    from collections import defaultdict
+    bucket = defaultdict(list)
+    for n in order:
+        bucket[(lane_of[n], col[n])].append(n)
+    stapel = {a: max([len(bucket[(a, c)]) for c in range(maxcol + 1)] or [1]) for a in lanes}
+    lane_h = {a: max(1, stapel[a]) * _LANE_H for a in lanes}
+    lane_y, _yy = {}, 0
+    for a in lanes:
+        lane_y[a], _yy = _yy, _yy + lane_h[a]
     content_w = _LANE_LBL + _PAD + maxcol * _COLW + _TW + _PAD
-    content_h = len(lanes) * _LANE_H
-    rel = {n: (_LANE_LBL + _PAD + col[n] * _COLW, lane_y[lane_of[n]] + (_LANE_H - nodes[n]["h"]) / 2,
-               nodes[n]["w"], nodes[n]["h"]) for n in nodes}
+    content_h = _yy
+    rel = {}
+    for (a, c), ns in bucket.items():
+        for k, n in enumerate(ns):
+            rel[n] = (_LANE_LBL + _PAD + c * _COLW, lane_y[a] + k * _LANE_H + (_LANE_H - nodes[n]["h"]) / 2,
+                      nodes[n]["w"], nodes[n]["h"])
 
     fe = []
     for n in order:
@@ -414,8 +437,8 @@ def _phase_block(phase: str, semantik: str, name_akteur: dict, name_system: dict
     ls.append("</bpmn:laneSet>")
 
     return {"phase": phase, "spid": f"sp_{pl}", "name": PHASE_LABEL[phase], "order": order, "flows": flows,
-            "lanes": lanes, "lane_y": lane_y, "rel": rel, "content_w": content_w, "content_h": content_h,
-            "laneset": "".join(ls), "fe": "".join(fe)}
+            "lanes": lanes, "lane_y": lane_y, "lane_h": lane_h, "rel": rel, "content_w": content_w,
+            "content_h": content_h, "laneset": "".join(ls), "fe": "".join(fe)}
 
 
 def _block_di(b: dict, ox: float, oy: float) -> list:
@@ -425,7 +448,7 @@ def _block_di(b: dict, ox: float, oy: float) -> list:
     for a in b["lanes"]:
         out.append(f'<bpmndi:BPMNShape id="lane_{pl}_{_slug(a)}_di" bpmnElement="lane_{pl}_{_slug(a)}"'
                    f' isHorizontal="true"><omgdc:Bounds x="{ox + _LANE_LBL:.0f}" y="{oy + b["lane_y"][a]:.0f}"'
-                   f' width="{b["content_w"] - _LANE_LBL:.0f}" height="{_LANE_H}"/></bpmndi:BPMNShape>')
+                   f' width="{b["content_w"] - _LANE_LBL:.0f}" height="{b["lane_h"][a]:.0f}"/></bpmndi:BPMNShape>')
     for n in b["order"]:
         rx, ry, w, h = b["rel"][n]
         out.append(f'<bpmndi:BPMNShape id="{n}_di" bpmnElement="{n}"><omgdc:Bounds x="{ox + rx:.0f}"'
