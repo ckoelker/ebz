@@ -155,6 +155,30 @@ services:
       - "${JAEGER_OTLP_GRPC_PORT:-4317}:4317"
       - "${JAEGER_OTLP_HTTP_PORT:-4318}:4318"
 
+  # Arize Phoenix — LLM-Observability/Tracing. Nimmt OTLP entgegen (gRPC :4317, HTTP :6006) und zeigt
+  # die langchain4j/OpenAI-Spans in der UI :6006. Wird parallel zu Jaeger über den Collector gespeist.
+  # Profil `controlling`.
+  phoenix:
+    image: arizephoenix/phoenix:latest
+    profiles: ["controlling"]
+    restart: unless-stopped
+    ports:
+      - "${PHOENIX_UI_PORT:-6006}:6006"
+
+  # OpenTelemetry Collector — Fan-out der integration-Spans an Jaeger (alle) UND Phoenix (LLM).
+  # Der integration-Service exportiert OTLP hierher (otel-collector:4317). Config: otel-collector-config.yaml.
+  # Profil `controlling`.
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:latest
+    profiles: ["controlling"]
+    restart: unless-stopped
+    command: ["--config=/etc/otel-collector-config.yaml"]
+    volumes:
+      - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
+    depends_on:
+      - jaeger
+      - phoenix
+
   # ── Controlling (M1+) — nur mit Profil `controlling` gestartet ──
   #   docker compose --profile controlling up -d --build
   # So bleibt der Shop-Stack schlank; die Integration wird nur bei Bedarf gebaut.
@@ -193,8 +217,9 @@ services:
       VENDURE_ADMIN_URL: http://server:3000
       SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-superadmin}
       SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-superadmin}
-      # Prozessdoku/Tracing: Business-Spans per OTLP an Jaeger (Compose-Netz-Alias `jaeger`).
-      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4317
+      # Prozessdoku/Tracing: Business-Spans per OTLP an den OTel-Collector, der parallel an Jaeger
+      # (alle Spans) UND Phoenix (LLM-Tracing) fan-outet.
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
     ports:
       - "${INTEGRATION_PORT:-8090}:8090"
 

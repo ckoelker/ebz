@@ -1,0 +1,26 @@
+# OpenTelemetry Collector — Fan-out der Traces des integration-Service an ZWEI Backends parallel:
+#  • Jaeger    → alle Spans (Prozessdoku/BPMN-aus-Spans bleibt unverändert)
+#  • Phoenix   → LLM-Tracing (langchain4j/OpenAI-Spans; OpenInference-fähig)
+# Der integration-Service exportiert OTLP an diesen Collector (otel-collector:4317) statt direkt an Jaeger.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+exporters:
+  otlp/jaeger:
+    endpoint: jaeger:4317
+    tls:
+      insecure: true
+  # Phoenix nimmt OTLP über HTTP auf :6006 (/v1/traces) entgegen (gRPC :4317 ist hier nicht aktiv).
+  otlphttp/phoenix:
+    endpoint: http://phoenix:6006
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      exporters: [otlp/jaeger, otlphttp/phoenix]
