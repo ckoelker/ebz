@@ -193,6 +193,15 @@
       <artifactId>quarkus-keycloak-admin-rest-client</artifactId>
     </dependency>
 
+    <!-- ── Drittsystem-Provisionierung (Outbox-Pattern): zuverlässiger, asynchroner Versand ──
+         Bei Vertragsbestätigung wird je Zielsystem (WebUntis, später Moodle/Schild …) ein
+         Outbox-Auftrag in DERSELBEN DB-Transaktion geschrieben; ein @Scheduled-Dispatcher zieht ihn
+         nach (idempotent, mit Backoff/Retry, Dead-Letter → HITL). quarkus-scheduler liefert @Scheduled. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-scheduler</artifactId>
+    </dependency>
+
     <!-- ── Prozessdoku (Living Documentation): OpenTelemetry-Business-Spans ──
          Jeder fachliche Prozess-Schritt = ein Span (Attribute prozess.akteur/system/typ/phase, Korrelation
          prozess.fall). Dual-Use: in Prod Export an Jaeger (OTLP), im E2E-Test abgegriffen → PM4py → BPMN

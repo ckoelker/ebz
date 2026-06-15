@@ -61,9 +61,10 @@ Service-Code + E2E-Test
 ### 2. Instrumentierungs-Helfer + Vokabular (Runtime)
 Neu: `showcase/integration/src/main/java/de/netzfactor/ebz/controlling/integration/prozessdoku/`
 - `Prozess.java` — Enums `Akteur` (ANONYM, FIRMA, AZUBI, EBZ, SYSTEM), `System` (PORTAL, COCKPIT,
-  BACKEND, KEYCLOAK, MAIL, VENDURE, RECHNUNGSLAUF), `Typ` (USER_TASK, SERVICE_TASK, MESSAGE,
+  BACKEND, KEYCLOAK, MAIL, VENDURE, RECHNUNGSLAUF, **WEBUNTIS**), `Typ` (USER_TASK, SERVICE_TASK, MESSAGE,
   BUSINESS_RULE), `Phase` (ANFRAGE_DUBLETTEN, EINLADUNG, AZUBI_ANMELDUNG, EBZ_BESTAETIGUNG, VERTRAG,
-  RECHNUNGSLAUF) — je mit Label.
+  **PROVISIONIERUNG**, RECHNUNGSLAUF) — je mit Label. *(2026-06-15: Phase PROVISIONIERUNG + System
+  WEBUNTIS für die Outbox-Drittsystem-Provisionierung; `generate.py:PHASE_LABEL` analog ergänzt.)*
 - `Prozessspur.java` (`@ApplicationScoped`, `@Inject Tracer`): `schritt(aktivitaet, Akteur, System, Typ, Phase)`
   startet/endet einen Span mit Attributen `prozess.akteur/system/typ/phase` und `prozess.fall`
   (aus Baggage; Overload mit explizitem `fall` für Test-Schritte ohne HTTP-Kontext).

@@ -7,37 +7,27 @@
   <bpmn:process id="process_sub-anfrage_dubletten" isExecutable="false">
     <bpmn:laneSet id="laneset_sub-anfrage_dubletten">
       <bpmn:lane id="lane_sub-anfrage_dubletten_interessent_anonym" name="Interessent (anonym)">
-        <bpmn:flowNodeRef>start</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>exclusivegateway_x</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>task_ausbildungsbetrieb_anfrage_stellen</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>start</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="lane_sub-anfrage_dubletten_ebz_sachbearbeitung" name="EBZ-Sachbearbeitung">
         <bpmn:flowNodeRef>task_neuanlage_bestaetigen</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>exclusivegateway_x_2</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>task_dubletten_merge_bestaetigen</bpmn:flowNodeRef>
         <bpmn:flowNodeRef>end</bpmn:flowNodeRef>
-        <bpmn:flowNodeRef>exclusivegateway_x_2</bpmn:flowNodeRef>
       </bpmn:lane>
       <bpmn:lane id="lane_sub-anfrage_dubletten_system" name="System">
         <bpmn:flowNodeRef>task_ki_dublettenbewertung</bpmn:flowNodeRef>
       </bpmn:lane>
     </bpmn:laneSet>
-    <bpmn:task id="task_neuanlage_bestaetigen" name="Neuanlage bestätigen · MDM-Cockpit">
-			<bpmn:incoming>flow_exclusivegateway_x__task_neuanlage_bestaetigen</bpmn:incoming>
-			<bpmn:outgoing>flow_task_neuanlage_bestaetigen__exclusivegateway_x_2</bpmn:outgoing>
-		</bpmn:task>
-		<bpmn:task id="task_dubletten_merge_bestaetigen" name="Dubletten-Merge bestätigen · MDM-Cockpit">
-			<bpmn:incoming>flow_task_ki_dublettenbewertung__task_dubletten_merge_bestaetigen</bpmn:incoming>
-			<bpmn:outgoing>flow_task_dubletten_merge_bestaetigen__exclusivegateway_x_2</bpmn:outgoing>
-		</bpmn:task>
-		<bpmn:startEvent id="start" isInterrupting="true" name="start" parallelMultiple="false">
-			<bpmn:outgoing>flow_start__task_ausbildungsbetrieb_anfrage_stellen</bpmn:outgoing>
-		</bpmn:startEvent>
-		<bpmn:endEvent id="end" name="end">
-			<bpmn:incoming>flow_exclusivegateway_x_2__end</bpmn:incoming>
-		</bpmn:endEvent>
-		<bpmn:task id="task_ki_dublettenbewertung" name="KI-Dublettenbewertung · integration-Backend">
+    <bpmn:task id="task_ki_dublettenbewertung" name="KI-Dublettenbewertung · integration-Backend">
 			<bpmn:incoming>flow_exclusivegateway_x__task_ki_dublettenbewertung</bpmn:incoming>
 			<bpmn:outgoing>flow_task_ki_dublettenbewertung__task_dubletten_merge_bestaetigen</bpmn:outgoing>
+		</bpmn:task>
+		<bpmn:task id="task_neuanlage_bestaetigen" name="Neuanlage bestätigen · MDM-Cockpit">
+			<bpmn:incoming>flow_exclusivegateway_x__task_neuanlage_bestaetigen</bpmn:incoming>
+			<bpmn:outgoing>flow_task_neuanlage_bestaetigen__exclusivegateway_x_2</bpmn:outgoing>
 		</bpmn:task>
 		<bpmn:exclusiveGateway id="exclusivegateway_x" gatewayDirection="Diverging" name="">
 			<bpmn:incoming>flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x</bpmn:incoming>
@@ -53,14 +43,24 @@
 			<bpmn:incoming>flow_start__task_ausbildungsbetrieb_anfrage_stellen</bpmn:incoming>
 			<bpmn:outgoing>flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x</bpmn:outgoing>
 		</bpmn:task>
+		<bpmn:startEvent id="start" isInterrupting="true" name="start" parallelMultiple="false">
+			<bpmn:outgoing>flow_start__task_ausbildungsbetrieb_anfrage_stellen</bpmn:outgoing>
+		</bpmn:startEvent>
+		<bpmn:task id="task_dubletten_merge_bestaetigen" name="Dubletten-Merge bestätigen · MDM-Cockpit">
+			<bpmn:incoming>flow_task_ki_dublettenbewertung__task_dubletten_merge_bestaetigen</bpmn:incoming>
+			<bpmn:outgoing>flow_task_dubletten_merge_bestaetigen__exclusivegateway_x_2</bpmn:outgoing>
+		</bpmn:task>
+		<bpmn:endEvent id="end" name="end">
+			<bpmn:incoming>flow_exclusivegateway_x_2__end</bpmn:incoming>
+		</bpmn:endEvent>
+		<bpmn:sequenceFlow id="flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x" name="" sourceRef="task_ausbildungsbetrieb_anfrage_stellen" targetRef="exclusivegateway_x"/>
 		<bpmn:sequenceFlow id="flow_exclusivegateway_x_2__end" name="" sourceRef="exclusivegateway_x_2" targetRef="end"/>
 		<bpmn:sequenceFlow id="flow_task_dubletten_merge_bestaetigen__exclusivegateway_x_2" name="" sourceRef="task_dubletten_merge_bestaetigen" targetRef="exclusivegateway_x_2"/>
+		<bpmn:sequenceFlow id="flow_task_neuanlage_bestaetigen__exclusivegateway_x_2" name="" sourceRef="task_neuanlage_bestaetigen" targetRef="exclusivegateway_x_2"/>
 		<bpmn:sequenceFlow id="flow_exclusivegateway_x__task_neuanlage_bestaetigen" name="" sourceRef="exclusivegateway_x" targetRef="task_neuanlage_bestaetigen"/>
 		<bpmn:sequenceFlow id="flow_task_ki_dublettenbewertung__task_dubletten_merge_bestaetigen" name="" sourceRef="task_ki_dublettenbewertung" targetRef="task_dubletten_merge_bestaetigen"/>
-		<bpmn:sequenceFlow id="flow_exclusivegateway_x__task_ki_dublettenbewertung" name="" sourceRef="exclusivegateway_x" targetRef="task_ki_dublettenbewertung"/>
-		<bpmn:sequenceFlow id="flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x" name="" sourceRef="task_ausbildungsbetrieb_anfrage_stellen" targetRef="exclusivegateway_x"/>
-		<bpmn:sequenceFlow id="flow_task_neuanlage_bestaetigen__exclusivegateway_x_2" name="" sourceRef="task_neuanlage_bestaetigen" targetRef="exclusivegateway_x_2"/>
 		<bpmn:sequenceFlow id="flow_start__task_ausbildungsbetrieb_anfrage_stellen" name="" sourceRef="start" targetRef="task_ausbildungsbetrieb_anfrage_stellen"/>
+		<bpmn:sequenceFlow id="flow_exclusivegateway_x__task_ki_dublettenbewertung" name="" sourceRef="exclusivegateway_x" targetRef="task_ki_dublettenbewertung"/>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="diagram_sub-anfrage_dubletten">
     <bpmndi:BPMNPlane id="plane_sub-anfrage_dubletten" bpmnElement="collab_sub-anfrage_dubletten">
@@ -76,20 +76,11 @@
       <bpmndi:BPMNShape id="lane_sub-anfrage_dubletten_system_di" bpmnElement="lane_sub-anfrage_dubletten_system" isHorizontal="true">
         <omgdc:Bounds x="30" y="220" width="1290" height="110"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_neuanlage_bestaetigen_di" bpmnElement="task_neuanlage_bestaetigen">
-        <omgdc:Bounds x="640" y="125" width="100" height="80"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_dubletten_merge_bestaetigen_di" bpmnElement="task_dubletten_merge_bestaetigen">
-        <omgdc:Bounds x="820" y="125" width="100" height="80"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
-        <omgdc:Bounds x="100" y="37" width="36" height="36"/>
-      </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="end_di" bpmnElement="end">
-        <omgdc:Bounds x="1180" y="147" width="36" height="36"/>
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="task_ki_dublettenbewertung_di" bpmnElement="task_ki_dublettenbewertung">
         <omgdc:Bounds x="640" y="235" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="task_neuanlage_bestaetigen_di" bpmnElement="task_neuanlage_bestaetigen">
+        <omgdc:Bounds x="640" y="125" width="100" height="80"/>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="exclusivegateway_x_di" bpmnElement="exclusivegateway_x">
         <omgdc:Bounds x="460" y="30" width="50" height="50"/>
@@ -100,6 +91,21 @@
       <bpmndi:BPMNShape id="task_ausbildungsbetrieb_anfrage_stellen_di" bpmnElement="task_ausbildungsbetrieb_anfrage_stellen">
         <omgdc:Bounds x="280" y="15" width="100" height="80"/>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="start_di" bpmnElement="start">
+        <omgdc:Bounds x="100" y="37" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="task_dubletten_merge_bestaetigen_di" bpmnElement="task_dubletten_merge_bestaetigen">
+        <omgdc:Bounds x="820" y="125" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="end_di" bpmnElement="end">
+        <omgdc:Bounds x="1180" y="147" width="36" height="36"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x_di" bpmnElement="flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x">
+        <omgdi:waypoint x="380" y="55"/>
+        <omgdi:waypoint x="420" y="55"/>
+        <omgdi:waypoint x="420" y="55"/>
+        <omgdi:waypoint x="460" y="55"/>
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_exclusivegateway_x_2__end_di" bpmnElement="flow_exclusivegateway_x_2__end">
         <omgdi:waypoint x="1050" y="165"/>
         <omgdi:waypoint x="1115" y="165"/>
@@ -110,6 +116,12 @@
         <omgdi:waypoint x="920" y="165"/>
         <omgdi:waypoint x="960" y="165"/>
         <omgdi:waypoint x="960" y="165"/>
+        <omgdi:waypoint x="1000" y="165"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_task_neuanlage_bestaetigen__exclusivegateway_x_2_di" bpmnElement="flow_task_neuanlage_bestaetigen__exclusivegateway_x_2">
+        <omgdi:waypoint x="740" y="165"/>
+        <omgdi:waypoint x="870" y="165"/>
+        <omgdi:waypoint x="870" y="165"/>
         <omgdi:waypoint x="1000" y="165"/>
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_exclusivegateway_x__task_neuanlage_bestaetigen_di" bpmnElement="flow_exclusivegateway_x__task_neuanlage_bestaetigen">
@@ -124,29 +136,17 @@
         <omgdi:waypoint x="780" y="165"/>
         <omgdi:waypoint x="820" y="165"/>
       </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_exclusivegateway_x__task_ki_dublettenbewertung_di" bpmnElement="flow_exclusivegateway_x__task_ki_dublettenbewertung">
-        <omgdi:waypoint x="510" y="55"/>
-        <omgdi:waypoint x="575" y="55"/>
-        <omgdi:waypoint x="575" y="275"/>
-        <omgdi:waypoint x="640" y="275"/>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x_di" bpmnElement="flow_task_ausbildungsbetrieb_anfrage_stellen__exclusivegateway_x">
-        <omgdi:waypoint x="380" y="55"/>
-        <omgdi:waypoint x="420" y="55"/>
-        <omgdi:waypoint x="420" y="55"/>
-        <omgdi:waypoint x="460" y="55"/>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_neuanlage_bestaetigen__exclusivegateway_x_2_di" bpmnElement="flow_task_neuanlage_bestaetigen__exclusivegateway_x_2">
-        <omgdi:waypoint x="740" y="165"/>
-        <omgdi:waypoint x="870" y="165"/>
-        <omgdi:waypoint x="870" y="165"/>
-        <omgdi:waypoint x="1000" y="165"/>
-      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_start__task_ausbildungsbetrieb_anfrage_stellen_di" bpmnElement="flow_start__task_ausbildungsbetrieb_anfrage_stellen">
         <omgdi:waypoint x="136" y="55"/>
         <omgdi:waypoint x="208" y="55"/>
         <omgdi:waypoint x="208" y="55"/>
         <omgdi:waypoint x="280" y="55"/>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="flow_exclusivegateway_x__task_ki_dublettenbewertung_di" bpmnElement="flow_exclusivegateway_x__task_ki_dublettenbewertung">
+        <omgdi:waypoint x="510" y="55"/>
+        <omgdi:waypoint x="575" y="55"/>
+        <omgdi:waypoint x="575" y="275"/>
+        <omgdi:waypoint x="640" y="275"/>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>

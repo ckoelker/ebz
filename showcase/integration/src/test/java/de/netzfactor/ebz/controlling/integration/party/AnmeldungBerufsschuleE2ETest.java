@@ -4,6 +4,7 @@ import static io.restassured.RestAssured.given;
 import static org.hamcrest.Matchers.anyOf;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
+import static org.hamcrest.Matchers.hasItem;
 
 import org.junit.jupiter.api.Test;
 
@@ -126,11 +127,23 @@ class AnmeldungBerufsschuleE2ETest {
                 .when().post("/party/anmeldungen/" + anmeldungId + "/bestaetigung").then().statusCode(200)
                 .body("status", equalTo("BESTAETIGT_EBZ"));
 
-        // 7) Firma bestätigt den Ausbildungsvertrag (Portal) → AKTIV
+        // 7) Firma bestätigt den Ausbildungsvertrag (Portal) → AKTIV (+ Outbox-Auftrag WebUntis)
         gegeben(fall, n)
                 .when().post("/party/portal/anmeldungen/" + anmeldungId + "/vertrag-bestaetigen").then()
                 .statusCode(200)
                 .body("status", equalTo("AKTIV"));
+
+        // 7b) Drittsystem-Provisionierung: der Outbox-Dispatcher überträgt den Azubi an WebUntis UND Suite8.
+        // Die SERVICE_TASK-Spans (Phase PROVISIONIERUNG, System WebUntis/Suite8) machen die Syncs im BPMN
+        // sichtbar. (Der 5s-Scheduler kann sie auch schon gezogen haben; der manuelle Trigger ist synchron.)
+        gegeben(fall, n).when().post("/outbox/dispatch").then().statusCode(200);
+        // WebUntis hat den Azubi als Schüler, Suite8 ein Konto mit Bezahlkarte (Kiosk/Kantine) übernommen
+        gegeben(fall, n)
+                .when().get("/mock/webuntis/schueler").then().statusCode(200)
+                .body("email", hasItem(azubiEmail));
+        gegeben(fall, n)
+                .when().get("/mock/suite8/konten").then().statusCode(200)
+                .body("email", hasItem(azubiEmail));
 
         // 8) Rechnungslauf bucht die nun aktive Anmeldung
         gegeben(fall, n)
@@ -208,10 +221,13 @@ class AnmeldungBerufsschuleE2ETest {
                 .when().post("/party/anmeldungen/" + anmeldungId + "/bestaetigung").then().statusCode(200)
                 .body("status", equalTo("BESTAETIGT_EBZ"));
 
-        // 5) Firma bestätigt Vertrag → AKTIV
+        // 5) Firma bestätigt Vertrag → AKTIV (+ Outbox-Auftrag WebUntis)
         gegeben(fall, n)
                 .when().post("/party/portal/anmeldungen/" + anmeldungId + "/vertrag-bestaetigen").then()
                 .statusCode(200).body("status", equalTo("AKTIV"));
+
+        // 5b) Drittsystem-Provisionierung: Outbox-Dispatcher überträgt den Azubi an WebUntis + Suite8 (Sync)
+        gegeben(fall, n).when().post("/outbox/dispatch").then().statusCode(200);
 
         // 6) Rechnungslauf bucht die nun aktive Anmeldung
         gegeben(fall, n)

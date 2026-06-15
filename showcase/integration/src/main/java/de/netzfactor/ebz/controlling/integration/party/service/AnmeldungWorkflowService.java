@@ -9,6 +9,9 @@ import jakarta.transaction.Transactional;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 
+import de.netzfactor.ebz.controlling.integration.outbox.model.OutboxAuftrag.Ereignis;
+import de.netzfactor.ebz.controlling.integration.outbox.model.OutboxAuftrag.Zielsystem;
+import de.netzfactor.ebz.controlling.integration.outbox.service.OutboxService;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
@@ -33,6 +36,9 @@ public class AnmeldungWorkflowService {
 
     @Inject
     Prozessspur prozess;
+
+    @Inject
+    OutboxService outbox;
 
     /**
      * EBZ bestätigt eine angefragte Anmeldung ({@code ANGEFRAGT → BESTAETIGT_EBZ}) und benachrichtigt
@@ -108,6 +114,14 @@ public class AnmeldungWorkflowService {
         a.vertragBestaetiger = bestaetigerPersonId == null ? null : Person.findById(bestaetigerPersonId);
         prozess.schritt("Ausbildungsvertrag bestätigen", Akteur.FIRMA, Prozess.System.PORTAL,
                 Typ.USER_TASK, Phase.VERTRAG);
+
+        // Drittsystem-Provisionierung NICHT synchron hier (würde die Bestätigung an die Drittsysteme
+        // koppeln), sondern je Ziel als Outbox-Auftrag in DERSELBEN Transaktion (atomar). Der Dispatcher
+        // zieht sie asynchron, idempotent und mit Retry/Dead-Letter nach. [[outbox-drittsystem-provisionierung]]
+        // - WebUntis: Übernahme als Schüler (Stundenplan/Klassenbuch)
+        // - Suite8:   Konto + Bezahlkarte für Kiosk & Kantine
+        outbox.enqueue(a, Zielsystem.WEBUNTIS, Ereignis.AZUBI_VERTRAG_BESTAETIGT);
+        outbox.enqueue(a, Zielsystem.SUITE8, Ereignis.AZUBI_VERTRAG_BESTAETIGT);
         return a;
     }
 

@@ -37,6 +37,7 @@ PHASE_LABEL = {
     "AZUBI_ANMELDUNG": "Azubi-Anmeldung",
     "EBZ_BESTAETIGUNG": "EBZ-Bestätigung",
     "VERTRAG": "Vertragsbestätigung",
+    "PROVISIONIERUNG": "Provisionierung Drittsysteme",
     "RECHNUNGSLAUF": "Rechnungslauf",
 }
 
@@ -130,6 +131,56 @@ def _stabile_ids(xml_text: str, stamm: str) -> str:
     for alt in sorted(mapping, key=len, reverse=True):
         xml_text = xml_text.replace(alt, mapping[alt])
     return xml_text
+
+
+def _ist_parallelphase(teil: pd.DataFrame) -> bool:
+    """
+    Generische Erkennung einer **nebenläufigen** Phase: ALLE Schritte tragen denselben
+    {@code parallelgruppe}-Marker (gesetzt z. B. von der Outbox-Provisionierung je Zielsystem) und es
+    gibt mindestens zwei verschiedene Aktivitäten. Dann werden sie als parallele Zweige gerendert —
+    unabhängig vom Phasen-Namen und von der Zahl der Ziele (skaliert auf WebUntis, Suite8, Moodle …).
+    Gemischte Phasen (teils markiert) fallen auf das normale Mining zurück.
+    """
+    if "parallelgruppe" not in teil.columns:
+        return False
+    markiert = teil["parallelgruppe"].notna()
+    return bool(markiert.all()) and teil["name"].nunique() >= 2
+
+
+def _parallel_semantik(teil: pd.DataFrame, stamm: str) -> str:
+    """
+    Baut deterministisch ein semantisches BPMN für eine nebenläufige Phase:
+    {@code start → parallelGateway(split) → [Task je Aktivität] → parallelGateway(join) → end}.
+    Aktivitätsnamen/Systeme stammen aus den Spans (also weiterhin „aus Telemetrie"); nur die parallele
+    Struktur wird gesetzt. Format = {@code bpmn:}-Präfix wie die pm4py-Ausgabe, damit Swimlane-Layouter,
+    Einbettung und Stable-IDs die Datei unverändert weiterverarbeiten.
+    """
+    erst = teil.groupby("name")["startEpochNanos"].min().sort_values()
+    namen = list(erst.index)
+    benutzt: set[str] = set()
+    tasks, flows = [], []
+    for nm in namen:
+        tid, i = "task_" + _slug(nm), 2
+        while tid in benutzt:
+            tid, i = f"task_{_slug(nm)}_{i}", i + 1
+        benutzt.add(tid)
+        tasks.append(f'<bpmn:task id="{tid}" name="{_xml_attr(nm)}"/>')
+        flows.append((f"flow_gw_split__{tid}", "gw_split", tid))
+        flows.append((f"flow_{tid}__gw_join", tid, "gw_join"))
+    flows = [("flow_start__gw_split", "start", "gw_split"), *flows, ("flow_gw_join__end", "gw_join", "end")]
+    elemente = [
+        '<bpmn:startEvent id="start" name="Start"/>',
+        '<bpmn:parallelGateway id="gw_split" gatewayDirection="Diverging"/>',
+        *tasks,
+        '<bpmn:parallelGateway id="gw_join" gatewayDirection="Converging"/>',
+        '<bpmn:endEvent id="end" name="Ende"/>',
+        *[f'<bpmn:sequenceFlow id="{fid}" sourceRef="{s}" targetRef="{t}"/>' for fid, s, t in flows],
+    ]
+    return (f'<?xml version="1.0" encoding="UTF-8"?>\n'
+            f'<bpmn:definitions xmlns:bpmn="{BPMN_NS}" targetNamespace="http://ebz/prozessdoku">\n'
+            f'  <bpmn:process id="process_{stamm}" isExecutable="false">\n    '
+            + "".join(elemente)
+            + f'\n  </bpmn:process>\n</bpmn:definitions>\n')
 
 
 def schreibe_bpmn(bpmn, pfad: Path) -> None:
@@ -503,10 +554,14 @@ def main() -> None:
         if teil.empty:
             continue
         pfad = OUT / f"sub-{phase.lower()}.bpmn"
-        schreibe_bpmn(entdecke(teil, "name"), pfad)
         name_zu_akteur = dict(zip(teil["name"], teil["akteur"]))
         name_zu_system = dict(zip(teil["name"], teil["system"]))
-        roh = pfad.read_text(encoding="utf-8")
+        if _ist_parallelphase(teil):
+            # Nebenläufige Phase (Marker an allen Schritten): parallele Zweige statt geminter Sequenz.
+            roh = _parallel_semantik(teil, pfad.stem)
+        else:
+            schreibe_bpmn(entdecke(teil, "name"), pfad)
+            roh = pfad.read_text(encoding="utf-8")
         sub_semantik[phase] = roh
         if LANES_AKTIV:
             # echte Swimlanes (Lane = Person), System im Task-Label — fertiges Layout, layout.mjs überspringt es.

@@ -29,6 +29,13 @@ public class Prozessspur {
     public static final String ATTR_SYSTEM = "prozess.system";
     public static final String ATTR_TYP = "prozess.typ";
     public static final String ATTR_PHASE = "prozess.phase";
+    /**
+     * Markiert einen Schritt als <b>nebenläufig</b>: alle Schritte einer Phase mit demselben Gruppen-Wert
+     * sind voneinander unabhängig (kein Ordnungszwang) und werden im BPMN zwischen parallelen Gateways
+     * (AND-Split/Join) dargestellt. Generisch genutzt z. B. von der Outbox-Provisionierung (je Zielsystem
+     * ein paralleler Zweig) — neue Ziele erscheinen ohne Generator-Änderung automatisch parallel.
+     */
+    public static final String ATTR_PARALLELGRUPPE = "prozess.parallelgruppe";
 
     /** Baggage-Schlüssel für die Fall-Korrelation (= BPMN-Case-Id). */
     public static final String BAGGAGE_FALL = "prozess.fall";
@@ -38,19 +45,32 @@ public class Prozessspur {
 
     /** Markiert einen Schritt; die Fall-Id wird aus dem aktuellen Baggage gezogen. */
     public void schritt(String aktivitaet, Akteur akteur, Prozess.System system, Typ typ, Phase phase) {
-        schritt(aktuellerFall(), aktivitaet, akteur, system, typ, phase);
+        schritt(aktuellerFall(), aktivitaet, akteur, system, typ, phase, null);
     }
 
     /** Markiert einen Schritt mit explizit gesetzter Fall-Id (z. B. Test-Schritte ohne HTTP-Kontext). */
     public void schritt(String fall, String aktivitaet, Akteur akteur, Prozess.System system, Typ typ,
             Phase phase) {
-        Span span = tracer.spanBuilder(aktivitaet)
+        schritt(fall, aktivitaet, akteur, system, typ, phase, null);
+    }
+
+    /**
+     * Wie {@link #schritt(String, String, Akteur, Prozess.System, Typ, Phase)}, zusätzlich als
+     * <b>nebenläufig</b> markiert ({@link #ATTR_PARALLELGRUPPE}): Schritte einer Phase mit gleicher
+     * {@code parallelgruppe} erscheinen im BPMN zwischen parallelen Gateways. {@code null} = sequenziell.
+     */
+    public void schritt(String fall, String aktivitaet, Akteur akteur, Prozess.System system, Typ typ,
+            Phase phase, String parallelgruppe) {
+        var builder = tracer.spanBuilder(aktivitaet)
                 .setAttribute(ATTR_FALL, fall)
                 .setAttribute(ATTR_AKTEUR, akteur.label)
                 .setAttribute(ATTR_SYSTEM, system.label)
                 .setAttribute(ATTR_TYP, typ.name())
-                .setAttribute(ATTR_PHASE, phase.name())
-                .startSpan();
+                .setAttribute(ATTR_PHASE, phase.name());
+        if (parallelgruppe != null && !parallelgruppe.isBlank()) {
+            builder.setAttribute(ATTR_PARALLELGRUPPE, parallelgruppe);
+        }
+        Span span = builder.startSpan();
         span.end();
     }
 

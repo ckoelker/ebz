@@ -34,7 +34,9 @@ public final class Prozess {
         KEYCLOAK("Keycloak"),
         MAIL("Mail"),
         VENDURE("Vendure"),
-        RECHNUNGSLAUF("Rechnungslauf");
+        RECHNUNGSLAUF("Rechnungslauf"),
+        WEBUNTIS("WebUntis"),
+        SUITE8("Suite8");
 
         public final String label;
 
@@ -55,6 +57,7 @@ public final class Prozess {
         AZUBI_ANMELDUNG("Azubi-Anmeldung"),
         EBZ_BESTAETIGUNG("EBZ-Bestätigung"),
         VERTRAG("Vertragsbestätigung"),
+        PROVISIONIERUNG("Provisionierung Drittsysteme"),
         RECHNUNGSLAUF("Rechnungslauf");
 
         public final String label;

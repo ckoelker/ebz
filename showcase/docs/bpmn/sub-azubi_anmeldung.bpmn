@@ -18,10 +18,6 @@
     <bpmn:startEvent id="start" isInterrupting="true" name="start" parallelMultiple="false">
 			<bpmn:outgoing>flow_start__task_azubi_anmelden</bpmn:outgoing>
 		</bpmn:startEvent>
-		<bpmn:task id="task_azubi_anmelden" name="Azubi anmelden · Portal-SPA">
-			<bpmn:incoming>flow_start__task_azubi_anmelden</bpmn:incoming>
-			<bpmn:outgoing>flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt</bpmn:outgoing>
-		</bpmn:task>
 		<bpmn:task id="task_anmeldung_anlegen_angefragt" name="Anmeldung anlegen (ANGEFRAGT) · integration-Backend">
 			<bpmn:incoming>flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt</bpmn:incoming>
 			<bpmn:outgoing>flow_task_anmeldung_anlegen_angefragt__end</bpmn:outgoing>
@@ -29,9 +25,13 @@
 		<bpmn:endEvent id="end" name="end">
 			<bpmn:incoming>flow_task_anmeldung_anlegen_angefragt__end</bpmn:incoming>
 		</bpmn:endEvent>
+		<bpmn:task id="task_azubi_anmelden" name="Azubi anmelden · Portal-SPA">
+			<bpmn:incoming>flow_start__task_azubi_anmelden</bpmn:incoming>
+			<bpmn:outgoing>flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt</bpmn:outgoing>
+		</bpmn:task>
+		<bpmn:sequenceFlow id="flow_task_anmeldung_anlegen_angefragt__end" name="" sourceRef="task_anmeldung_anlegen_angefragt" targetRef="end"/>
 		<bpmn:sequenceFlow id="flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt" name="" sourceRef="task_azubi_anmelden" targetRef="task_anmeldung_anlegen_angefragt"/>
 		<bpmn:sequenceFlow id="flow_start__task_azubi_anmelden" name="" sourceRef="start" targetRef="task_azubi_anmelden"/>
-		<bpmn:sequenceFlow id="flow_task_anmeldung_anlegen_angefragt__end" name="" sourceRef="task_anmeldung_anlegen_angefragt" targetRef="end"/>
   </bpmn:process>
   <bpmndi:BPMNDiagram id="diagram_sub-azubi_anmeldung">
     <bpmndi:BPMNPlane id="plane_sub-azubi_anmeldung" bpmnElement="collab_sub-azubi_anmeldung">
@@ -47,15 +47,21 @@
       <bpmndi:BPMNShape id="start_di" bpmnElement="start">
         <omgdc:Bounds x="100" y="37" width="36" height="36"/>
       </bpmndi:BPMNShape>
-      <bpmndi:BPMNShape id="task_azubi_anmelden_di" bpmnElement="task_azubi_anmelden">
-        <omgdc:Bounds x="280" y="15" width="100" height="80"/>
-      </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="task_anmeldung_anlegen_angefragt_di" bpmnElement="task_anmeldung_anlegen_angefragt">
         <omgdc:Bounds x="460" y="125" width="100" height="80"/>
       </bpmndi:BPMNShape>
       <bpmndi:BPMNShape id="end_di" bpmnElement="end">
         <omgdc:Bounds x="640" y="147" width="36" height="36"/>
       </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="task_azubi_anmelden_di" bpmnElement="task_azubi_anmelden">
+        <omgdc:Bounds x="280" y="15" width="100" height="80"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="flow_task_anmeldung_anlegen_angefragt__end_di" bpmnElement="flow_task_anmeldung_anlegen_angefragt__end">
+        <omgdi:waypoint x="560" y="165"/>
+        <omgdi:waypoint x="600" y="165"/>
+        <omgdi:waypoint x="600" y="165"/>
+        <omgdi:waypoint x="640" y="165"/>
+      </bpmndi:BPMNEdge>
       <bpmndi:BPMNEdge id="flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt_di" bpmnElement="flow_task_azubi_anmelden__task_anmeldung_anlegen_angefragt">
         <omgdi:waypoint x="380" y="55"/>
         <omgdi:waypoint x="420" y="55"/>
@@ -67,12 +73,6 @@
         <omgdi:waypoint x="208" y="55"/>
         <omgdi:waypoint x="208" y="55"/>
         <omgdi:waypoint x="280" y="55"/>
-      </bpmndi:BPMNEdge>
-      <bpmndi:BPMNEdge id="flow_task_anmeldung_anlegen_angefragt__end_di" bpmnElement="flow_task_anmeldung_anlegen_angefragt__end">
-        <omgdi:waypoint x="560" y="165"/>
-        <omgdi:waypoint x="600" y="165"/>
-        <omgdi:waypoint x="600" y="165"/>
-        <omgdi:waypoint x="640" y="165"/>
       </bpmndi:BPMNEdge>
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
