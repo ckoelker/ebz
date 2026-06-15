@@ -12,14 +12,15 @@ import {
 import {
   getPartyPortalRechnungsKontexte, getPartyPortalRechnungen, getPartyPortalRechnungenIdZugferd,
 } from '@/api/endpoints/rechnung-portal-resource/rechnung-portal-resource';
+import { getLmsPortalTrainings } from '@/api/endpoints/lms-portal/lms-portal';
 import type {
   AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, Login, PersonView,
-  PortalRechnungView, RechnungsKontextView,
+  PortalRechnungView, RechnungsKontextView, MeinTrainingView,
 } from '@/api/model';
 
 export type {
   AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, PersonView,
-  PortalRechnungView, RechnungsKontextView,
+  PortalRechnungView, RechnungsKontextView, MeinTrainingView,
 };
 
 /** Fehler mit HTTP-Status, damit Views 401 (→ Login) / 403 / 429 unterscheiden können. */
@@ -72,3 +73,8 @@ export const meineRechnungen = async (organisationId?: number): Promise<PortalRe
 /** ZUGFeRD-E-Rechnung als Blob (für den Download); orval setzt responseType 'blob', Auth via Mutator. */
 export const rechnungPdf = (id: number): Promise<Blob> =>
   run(() => getPartyPortalRechnungenIdZugferd(id));
+
+// ── Meine Trainings (WBT/LMS): eigene Einschreibungen + SSO-Launch-Deeplink ──
+/** WBT-Einschreibungen des eingeloggten Lernenden (eigen-skopiert über den Token-sub). */
+export const meineTrainings = async (): Promise<MeinTrainingView[]> =>
+  ((await run(() => getLmsPortalTrainings())) as MeinTrainingView[]) ?? [];

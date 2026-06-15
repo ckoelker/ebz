@@ -18,6 +18,7 @@ export default defineConfig({
     port: 5175,
     proxy: {
       '/party': { target: INTEGRATION, changeOrigin: true },
+      '/lms': { target: INTEGRATION, changeOrigin: true },
       '/q': { target: INTEGRATION, changeOrigin: true },
     },
   },

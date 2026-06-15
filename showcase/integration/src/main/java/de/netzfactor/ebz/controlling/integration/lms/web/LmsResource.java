@@ -38,7 +38,7 @@ import de.netzfactor.ebz.controlling.integration.lms.vendure.WbtVendureProjektio
  * Resource} → orval generiert den Client (Filter in {@code mdm/orval.config.ts}).
  */
 @Path("/lms/kurse")
-@Tag(name = "LMS Resource")
+@Tag(name = "LMS Katalog")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class LmsResource {

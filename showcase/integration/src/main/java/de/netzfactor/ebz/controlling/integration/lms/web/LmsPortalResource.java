@@ -31,7 +31,7 @@ import de.netzfactor.ebz.controlling.integration.lms.service.KurseinschreibungSe
  * nur für {@code EINGESCHRIEBEN}e Trainings gesetzt (vorher ist der Kurs nicht zugänglich).
  */
 @Path("/lms/portal")
-@Tag(name = "LMS Resource")
+@Tag(name = "LMS Portal")
 @Produces(MediaType.APPLICATION_JSON)
 public class LmsPortalResource {
 

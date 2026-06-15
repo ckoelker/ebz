@@ -31,7 +31,7 @@ import de.netzfactor.ebz.controlling.integration.lms.service.KurseinschreibungSe
  * Storno und manueller Neuversuch (HITL).
  */
 @Path("/lms/einschreibungen")
-@Tag(name = "LMS Resource")
+@Tag(name = "LMS Einschreibung")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class EinschreibungResource {
