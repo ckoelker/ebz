@@ -139,6 +139,14 @@ public class KurseinschreibungService {
         return e;
     }
 
+    /** Portal-Sicht: alle (nicht stornierten) Einschreibungen des eingeloggten Lernenden (per sub). */
+    @Transactional
+    public List<Kurseinschreibung> meineTrainings(String keycloakSub) {
+        return Kurseinschreibung.list(
+                "keycloakSub = ?1 and status <> ?2 and status <> ?3 order by id desc",
+                keycloakSub, EinschreibungStatus.AUSGESCHRIEBEN, EinschreibungStatus.STORNO_ANGEFORDERT);
+    }
+
     /** IDs aller fälligen Einschreibungen (offene Richtung + Zeit erreicht). */
     @Transactional
     public List<Long> faelligeIds(int limit) {

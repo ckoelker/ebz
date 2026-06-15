@@ -23,6 +23,7 @@ public class PortalTenantResolver implements TenantResolver {
     public String resolve(RoutingContext context) {
         String path = context.normalizedPath();
         if (path.startsWith("/party/portal")
+                || path.startsWith("/lms/portal")
                 || path.equals("/party/personen/login")
                 || path.startsWith("/party/firmensicht")) {
             return "customers";
