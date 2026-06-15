@@ -66,7 +66,17 @@ RID=$(curl -s -H "$SH" -H "$JS" -X POST "$API/rechnung/laeufe" -d "{\"schuljahr\
 NUMMER=$(curl -s -H "$SH" -H "$JS" -X POST "$API/rechnung/rechnungen/$RID/ausstellen" \
   | jget "d['nummer'] if d['status']=='AUSGESTELLT' else (_ for _ in ()).throw(SystemExit('nicht AUSGESTELLT'))") \
   || fail "Ausstellen (Rechnung $RID)"
-ok "Rechnung festgeschrieben: $NUMMER (Entwurf $RID)"
+ok "Firmen-Rechnung festgeschrieben: $NUMMER (Entwurf $RID)"
+
+# Shop-Bestellung DERSELBEN Person als Selbstzahler (Zahlungsart RECHNUNG, KEIN Org-Kontext → privat).
+# Käufer per E-Mail = dieselbe Identität wie der Portal-Login; der private Debitor wird projiziert.
+SHOP_RID=$(curl -s -H "$SH" -H "$JS" -X POST "$API/party/quellen/shop-bestellung" \
+  -d "{\"quelle\":\"SHOP-SMOKE\",\"externeId\":\"smoke-shop-$N\",\"zahlungsart\":\"RECHNUNG\",\"bereich\":\"SHOP\",\"kaeuferEmail\":\"$CUST_EMAIL\",\"kaeuferName\":\"$CUST_NAME\",\"positionen\":[{\"beschreibung\":\"Fachbuch Immobilienbewertung\",\"betragCent\":4990,\"steuerfall\":\"STANDARD\",\"steuersatz\":19}]}" \
+  | jget "d['rechnungId']") || fail "Shop-Bestellung (privat, auf Rechnung)"
+SHOP_NUMMER=$(curl -s -H "$SH" -H "$JS" -X POST "$API/rechnung/rechnungen/$SHOP_RID/ausstellen" \
+  | jget "d['nummer'] if d['status']=='AUSGESTELLT' else (_ for _ in ()).throw(SystemExit('nicht AUSGESTELLT'))") \
+  || fail "Shop-Beleg ausstellen (Rechnung $SHOP_RID)"
+ok "Shop-Bestellung als Rechnung festgeschrieben: $SHOP_NUMMER (Selbstzahler/privat, Entwurf $SHOP_RID)"
 
 # ─────────────────────────── 2) Abruf mit Customer-Token ───────────────────────────
 CT=$(curl -s "${RESOLVE[@]}" -X POST "$KC/realms/ebz-customers/protocol/openid-connect/token" \
@@ -95,14 +105,18 @@ ok "Kontexte: PRIVAT + Firma $ORG"
 
 BELEGE=$(curl -s -H "$CH" "$API/party/portal/rechnungen?organisationId=$ORG")
 echo "$BELEGE" | jget "next(r for r in d if r['nummer']=='$NUMMER' and r['status']=='AUSGESTELLT')" >/dev/null \
-  || fail "Beleg $NUMMER nicht im Firmenkontext sichtbar"
-ok "Beleg $NUMMER im Firmenkontext sichtbar"
+  || fail "Firmenbeleg $NUMMER nicht im Firmenkontext sichtbar"
+echo "$BELEGE" | jget "(_ for _ in ()).throw(SystemExit('Shop-Beleg im Firmenkontext!')) if any(r['nummer']=='$SHOP_NUMMER' for r in d) else 1" >/dev/null \
+  || fail "Datentrennung: Shop-/Privatbeleg taucht im Firmenkontext auf"
+ok "Firmenkontext: $NUMMER sichtbar, Shop-Beleg nicht"
 
-# Privatkontext darf den Firmenbeleg NICHT zeigen
+# Privatkontext (Selbstzahler): zeigt die Shop-Rechnung, NICHT den Firmenbeleg
 PRIV=$(curl -s -H "$CH" "$API/party/portal/rechnungen")
+echo "$PRIV" | jget "next(r for r in d if r['nummer']=='$SHOP_NUMMER' and r['status']=='AUSGESTELLT')" >/dev/null \
+  || fail "Shop-Rechnung $SHOP_NUMMER nicht im Privatkontext sichtbar"
 echo "$PRIV" | jget "(_ for _ in ()).throw(SystemExit('Firmenbeleg im Privatkontext!')) if any(r['nummer']=='$NUMMER' for r in d) else 1" >/dev/null \
   || fail "Datentrennung: Firmenbeleg taucht im Privatkontext auf"
-ok "Privatkontext zeigt den Firmenbeleg nicht"
+ok "Privatkontext: Shop-Rechnung $SHOP_NUMMER sichtbar, Firmenbeleg nicht"
 
 CTYPE=$(curl -s -o /tmp/smoke-rechnung.pdf -w '%{content_type}' -H "$CH" "$API/party/portal/rechnungen/$RID/zugferd")
 case "$CTYPE" in application/pdf*) ;; *) fail "PDF-Download Content-Type=$CTYPE" ;; esac
@@ -110,6 +124,7 @@ head -c4 /tmp/smoke-rechnung.pdf | grep -q '%PDF' || fail "PDF-Download kein gü
 ok "ZUGFeRD-PDF geladen ($(wc -c </tmp/smoke-rechnung.pdf) Bytes)"
 
 echo ""
-echo "🎉 PASS — Portal-Rechnungsabruf end-to-end ok (Beleg $NUMMER, Org-ID $ORG)."
+echo "🎉 PASS — Portal-Rechnungsabruf end-to-end ok (Firma $NUMMER, privat $SHOP_NUMMER)."
 echo "    Browser-Test: http://localhost:5175 -> Anmelden -> customer / customer -> Meine Rechnungen."
-echo "    Firmenkontext Demo Bau GmbH (Smoke) $N zeigt $NUMMER (1.500,00 EUR) inkl. ZUGFeRD-PDF."
+echo "    Firmenkontext Demo Bau GmbH (Smoke) $N -> $NUMMER (1.500,00 EUR);"
+echo "    Privatkontext (Selbstzahler) -> Shop-Rechnung $SHOP_NUMMER (49,90 EUR); beide inkl. ZUGFeRD-PDF."
