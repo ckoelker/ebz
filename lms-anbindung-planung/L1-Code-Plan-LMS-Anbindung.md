@@ -73,6 +73,23 @@ auf SCORM 1.2):
 > Repo-Lizenz → Nutzung **nur lokal zum Testen**, `testdata/` ist **gitignored** (keine
 > Redistribution). Für eine produktive Auslieferung gelten die echten Lemon-Kurse (L5b).
 
+### §5a.1 Import-Pfad — VERIFIZIERT (REST, OpenOLAT 20.1)
+Der Content-Pfad ist gegen die laufende Instanz bewiesen. Reproduzierbar über das committete Skript
+**`showcase/openolat/lms-import-seed.sh`** (idempotent: bereits importierte Kurse werden per
+`displayname` erkannt und übersprungen):
+
+| Endpunkt | Zweck | Hinweis |
+|---|---|---|
+| `PUT /restapi/repo/entries` (multipart: `file`,`filename`,`resourcename`,`displayname`) | Lernressource importieren → liefert `key` (= `openolatKey`) | ⚠️ curl `-F` erzwingt POST → **`-X PUT`** zwingend, sonst **405** |
+| `POST /restapi/repo/entries/{key}/status` (`newStatus=published`) | Kurs freigeben | sonst `entryStatus=preparation` |
+| `GET /restapi/repo/entries` | Liste (Idempotenz-Check) | — |
+
+SCORM 1.2 wird korrekt als **`olatResourceTypeName = FileResource.SCORMCP`** erkannt. Beim Erstlauf
+vergebene Keys (Verweis für `WbtKurs.openolatKey`): `golf-scorm12=884736`, `minimal-smoke=884737`,
+`learn-git-branching=884738`. Auth = HTTP Basic `administrator` (Service-Account später, §6).
+Die OpenAPI-Spec der Instanz liegt unter **`/restapi/openapi.json`** (422 Pfade — maßgebliche Quelle
+für alle weiteren Pfade/Payloads statt Raten).
+
 ## §6 Services
 - **`WbtKatalogService`** — CRUD `WbtKurs`; `veroeffentliche(id)` = **MDM-Projektion** (s. §7).
 - **`KurseinschreibungService`** — `anfordern(personRef, wbtKursId, vendureOrderId, kontextRef?)`:
@@ -123,8 +140,11 @@ auf SCORM 1.2):
 - DTO + Bean-Validation als Single Source (Stack B) → erscheint im `/q/openapi` (Tag `LMS Resource`).
 
 ## §10 Offene Verifikations-/Config-Punkte (nicht L0-blockierend)
+- ~~**Import-Endpunkt**~~ ✅ **erledigt** — `PUT /restapi/repo/entries` (multipart), SCORM-1.2-Seed
+  importiert+published (§5a.1); OpenAPI unter `/restapi/openapi.json`.
 - **OpenOLAT-REST-Completion-Read** (für L4 Reporting/Zertifikate) in der OpenAPI-Spec bestätigen.
-- **Exakte REST-Pfade/Payloads** (auth/user/enrol) gegen die OpenOLAT-Version verifizieren.
+- **Exakte REST-Pfade/Payloads** (auth/user/enrol) gegen die OpenOLAT-Version verifizieren
+  (Import bestätigt; User-/Enrol-Pfade als Nächstes für L2).
 - **Staff-SSO** (`ebz-staff` als zweiter OIDC-Provider) vs. lokale Author-Accounts — Config-Entscheidung.
 - **Lemon-Export** der 100 Kurse als SCORM 1.2 (alle vs. nur WBTs) — fachliches Gating.
 - **Zugang-bei-Storno** (sofort entziehen?) — Produktentscheidung.
