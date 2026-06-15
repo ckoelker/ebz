@@ -24,6 +24,7 @@
     "@vendure/graphiql-plugin": "3.6.4",
     "dotenv": "17.4.2",
     "jose": "^6.2.3",
+    "oidc-client-ts": "3.5.0",
     "pg": "^8.21.0"
   },
   "devDependencies": {

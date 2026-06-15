@@ -50,7 +50,8 @@ services:
         condition: service_healthy
     environment:
       APP_ENV: dev
-      SERVE_DASHBOARD: "false"
+      # Dashboard (React, /dashboard) im Server-Image ausliefern; Mitarbeiter-Login via Keycloak.
+      SERVE_DASHBOARD: "true"
       PORT: "3000"
       DB_HOST: postgres
       DB_PORT: "5432"

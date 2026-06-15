@@ -18,6 +18,7 @@ import { recurringInvoiceTask } from './plugins/recurring-invoice/recurring-invo
 import { SeminarCostPlugin } from './plugins/seminar-cost/seminar-cost.plugin';
 import { KeycloakShopAuthStrategy } from './plugins/keycloak/keycloak-shop.strategy';
 import { KeycloakAdminAuthStrategy } from './plugins/keycloak/keycloak-admin.strategy';
+import { KeycloakDashboardPlugin } from './plugins/keycloak/keycloak-dashboard.plugin';
 import 'dotenv/config';
 import path from 'path';
 
@@ -170,6 +171,8 @@ export const config: VendureConfig = {
                 changeEmailAddressUrl: 'http://localhost:8080/verify-email-address-change'
             },
         }),
+        // Trägt die Dashboard-Login-Extension bei (zentraler Keycloak-Mitarbeiter-Login, Realm ebz-staff).
+        KeycloakDashboardPlugin,
         ...(SERVE_DASHBOARD ? [DashboardPlugin.init({
             route: 'dashboard',
             appDir: IS_DEV

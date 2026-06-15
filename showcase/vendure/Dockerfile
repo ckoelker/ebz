@@ -16,6 +16,9 @@ RUN pnpm install --frozen-lockfile
 # Sourcen kopieren und Server + Worker bauen (tsc -> dist/).
 COPY . .
 RUN pnpm run build
+# Dashboard (React) ins Image bauen (vite -> dist/dashboard); wird bei SERVE_DASHBOARD=true unter
+# /dashboard ausgeliefert. Schema-Introspektion läuft statisch aus der Config (kein laufender Server nötig).
+RUN pnpm run build:dashboard
 
 EXPOSE 3000
 
