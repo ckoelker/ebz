@@ -35,6 +35,21 @@
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:5175/*"
       }
+    },
+    {
+      "clientId": "openolat",
+      "enabled": true,
+      "publicClient": false,
+      "secret": "openolat-dev-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "rootUrl": "http://localhost:8089",
+      "redirectUris": ["http://localhost:8089/*"],
+      "webOrigins": ["http://localhost:8089", "+"],
+      "protocol": "openid-connect",
+      "attributes": {
+        "post.logout.redirect.uris": "http://localhost:8089/*"
+      }
     }
   ],
   "users": [

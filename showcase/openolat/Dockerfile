@@ -5,6 +5,11 @@
 # gitignored). Der Entrypoint schreibt olat.local.properties + JNDI-Context aus Env und startet Tomcat.
 FROM tomcat:10.1-jdk17-temurin
 
+# socat = Back-Channel-Bridge zu Keycloak (siehe entrypoint.sh): erlaubt OpenOLAT, denselben
+# Issuer (localhost:8088) wie der Browser zu nutzen, ohne *.localhost/glibc-Loopback-Probleme.
+RUN apt-get update && apt-get install -y --no-install-recommends socat \
+ && rm -rf /var/lib/apt/lists/*
+
 # Mitgelieferte Standard-Webapps entfernen; OpenOLAT wird als ROOT-Context deployt.
 RUN rm -rf "$CATALINA_HOME/webapps/ROOT" "$CATALINA_HOME/webapps.dist"
 
