@@ -51,3 +51,7 @@ Thumbs.db
 # Prozessdoku — generierte BPMN (aus den OTel-Spans erzeugt: bash showcase/prozessdoku/build.sh)
 showcase/docs/bpmn/
 showcase/prozessdoku/out/
+
+# LMS-Seed-/Testdaten — heruntergeladene SCORM-Pakete (nicht committen, nur lokal/dev)
+testdata/
+**/testdata/
