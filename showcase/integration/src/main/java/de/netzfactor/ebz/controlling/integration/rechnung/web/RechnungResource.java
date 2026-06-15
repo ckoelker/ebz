@@ -48,6 +48,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.model.DebitorStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungPosition;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungStatus;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungVersandStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.datev.Buchungssatz;
 import de.netzfactor.ebz.controlling.integration.rechnung.datev.DatevService;
 import de.netzfactor.ebz.controlling.integration.rechnung.datev.DatevUebergabe;
@@ -55,6 +56,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.gobd.GobdArchivService
 import de.netzfactor.ebz.controlling.integration.rechnung.service.BestellungBillingService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungService;
+import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungVersandService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungslaufService;
 import de.netzfactor.ebz.controlling.integration.rechnung.zugferd.RechnungZugferdDaten;
 import de.netzfactor.ebz.controlling.integration.rechnung.zugferd.RechnungZugferdMapper;
@@ -77,6 +79,9 @@ public class RechnungResource {
 
     @Inject
     RechnungService rechnungService;
+
+    @Inject
+    RechnungVersandService rechnungVersand;
 
     @Inject
     ZugferdService zugferd;
@@ -415,6 +420,20 @@ public class RechnungResource {
         }
     }
 
+    /**
+     * Versendet die E-Rechnung des festgeschriebenen Belegs als ZUGFeRD-PDF-Anhang per E-Mail an den
+     * Debitor und vermerkt den Versand ({@code versandStatus}/{@code versendetAm}). Der Mustang-Validator
+     * ist Pflicht-Tor; erneuter Aufruf ist erlaubt (Re-Send). Fehler → 404/409 (siehe {@link RechnungVersandService}).
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/rechnungen/{id}/versenden")
+    @Consumes(MediaType.WILDCARD)
+    @Transactional
+    public RechnungDto versenden(@PathParam("id") Long id) {
+        return toRechnung(rechnungVersand.versende(id));
+    }
+
     // ───────────────────────── Lebenszyklus (Service) ─────────────────────────
     @RolesAllowed("rechnung-pflege")
     @POST
@@ -548,9 +567,11 @@ public class RechnungResource {
 
     private static RechnungDto toRechnung(Rechnung r) {
         List<RechnungPositionDto> pos = r.positionen.stream().map(RechnungResource::toPosition).toList();
+        RechnungVersandStatus versand = r.versandStatus == null
+                ? RechnungVersandStatus.NICHT_VERSENDET : r.versandStatus;
         return new RechnungDto(r.id, r.version, r.belegart, r.bereich, r.nummer, r.debitorId(),
                 r.zeitraumBezeichnung, r.ausstellungsdatum, r.zahlungszielTage, r.status,
-                r.originalRechnungId(), r.summeCent(), pos);
+                r.originalRechnungId(), r.summeCent(), versand, r.versendetAm, r.versendetAn, pos);
     }
 
     private static RechnungPositionDto toPosition(RechnungPosition p) {

@@ -1,5 +1,6 @@
 package de.netzfactor.ebz.controlling.integration.rechnung.model;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +71,22 @@ public class Rechnung extends PanacheEntity {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "original_rechnung_id")
     public Rechnung originalRechnung;
+
+    /**
+     * Versand der E-Rechnung an den Debitor. {@code null} auf Altbeständen = {@code NICHT_VERSENDET}
+     * (Spalte nullable, damit Hibernate-{@code update} sie auf der Live-DB ohne Default ergänzen kann).
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "versand_status", length = 16)
+    public RechnungVersandStatus versandStatus;
+
+    /** Zeitpunkt des erfolgreichen Versands (Mail an den Debitor). */
+    @Column(name = "versendet_am")
+    public Instant versendetAm;
+
+    /** E-Mail-Adresse, an die zuletzt versendet wurde (Audit/Beleg-Sicht). */
+    @Column(name = "versendet_an", length = 200)
+    public String versendetAn;
 
     @OneToMany(mappedBy = "rechnung", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
