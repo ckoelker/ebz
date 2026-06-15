@@ -10,21 +10,16 @@ set -e
 : "${SMTP_HOST:=mailpit}"; : "${SMTP_PORT:=1025}"
 : "${RESTAPI_ENABLED:=true}"
 # Keycloak-OIDC (Login-Übergabe aus dem Portal). context MUSS leer sein (Keycloak-Quarkus ohne /auth).
+# Endpoint = keycloak.localhost:8080 = DERSELBE Issuer-Host wie Portal/Shop → der Browser teilt die
+# Keycloak-SSO-Session (Cookie ist domain-gebunden) → nahtlose Übergabe ohne erneuten Login. Dank
+# glibc-2.35-Basisimage (Dockerfile) löst keycloak.localhost auch SERVER-seitig den Compose-Alias auf
+# (keine socat-Bridge nötig). OIDC_ROOT=true: OpenOLAT leitet unauthentifizierte Aufrufe direkt zu
+# Keycloak (Auto-Redirect), statt die DMZ-Loginseite zu zeigen.
 : "${OIDC_ENABLED:=true}"
-: "${KC_ENDPOINT:=http://localhost:8088}"; : "${KC_CONTEXT:=}"
+: "${OIDC_ROOT:=true}"
+: "${KC_ENDPOINT:=http://keycloak.localhost:8080}"; : "${KC_CONTEXT:=}"
 : "${KC_REALM:=ebz-customers}"
 : "${KC_CLIENT_ID:=openolat}"; : "${KC_CLIENT_SECRET:=openolat-dev-secret}"
-: "${KC_BACKEND:=keycloak:8080}"
-
-# Back-Channel-Bridge: OpenOLAT (Java) ruft den Issuer KC_ENDPOINT auf. Damit Browser UND Server
-# DENSELBEN Issuer nutzen können (localhost:8088 = euer kanonischer ebz-customers-Issuer), leitet
-# ein lokaler socat 127.0.0.1:<port> an den Keycloak-Container weiter. Grund: glibc ≥2.34 verdrahtet
-# *.localhost fest auf Loopback (ignoriert /etc/hosts) → keycloak.localhost aus dem Container unbrauchbar.
-KC_PORT="$(echo "$KC_ENDPOINT" | sed -E 's#^https?://[^/]*:([0-9]+).*#\1#')"; : "${KC_PORT:=80}"
-case "$KC_ENDPOINT" in
-  *localhost*) socat TCP4-LISTEN:${KC_PORT},bind=127.0.0.1,fork,reuseaddr TCP4:${KC_BACKEND} &
-              echo "socat back-channel: 127.0.0.1:${KC_PORT} -> ${KC_BACKEND}" ;;
-esac
 
 # JNDI-Datasource für den ROOT-Context (OpenOLAT web.xml referenziert jdbc/openolatDS).
 mkdir -p "$CATALINA_HOME/conf/Catalina/localhost"
@@ -57,6 +52,7 @@ smtp.host=${SMTP_HOST}
 smtp.port=${SMTP_PORT}
 # ── Keycloak-OIDC-SSO (Realm ebz-customers) ──
 oauth.keycloak.enabled=${OIDC_ENABLED}
+oauth.keycloak.root=${OIDC_ROOT}
 oauth.keycloak.client.id=${KC_CLIENT_ID}
 oauth.keycloak.client.secret=${KC_CLIENT_SECRET}
 oauth.keycloak.endpoint=${KC_ENDPOINT}

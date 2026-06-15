@@ -3,12 +3,12 @@
 #   Tomcat 10.1 + JDK 17, JNDI-Datasource, DB-Schema wird beim ERSTSTART automatisch angelegt.
 # WAR + Postgres-JDBC-Treiber kommen aus dem Build-Context (via openolat/fetch-artifacts.sh geladen,
 # gitignored). Der Entrypoint schreibt olat.local.properties + JNDI-Context aus Env und startet Tomcat.
-FROM tomcat:10.1-jdk17-temurin
-
-# socat = Back-Channel-Bridge zu Keycloak (siehe entrypoint.sh): erlaubt OpenOLAT, denselben
-# Issuer (localhost:8088) wie der Browser zu nutzen, ohne *.localhost/glibc-Loopback-Probleme.
-RUN apt-get update && apt-get install -y --no-install-recommends socat \
- && rm -rf /var/lib/apt/lists/*
+#
+# Basis bewusst -jammy (Ubuntu 22.04, glibc 2.35): glibc ≥2.39 (Ubuntu 24.04/-noble) verdrahtet
+# *.localhost FEST auf Loopback (ignoriert Docker-DNS/-hosts) → der Container könnte den kanonischen
+# Issuer keycloak.localhost:8080 nicht erreichen. Mit glibc 2.35 löst keycloak.localhost den Compose-
+# Alias auf → OpenOLAT nutzt DENSELBEN Keycloak-Host wie Portal/Shop → echtes SSO (geteiltes Cookie).
+FROM tomcat:10.1-jdk17-temurin-jammy
 
 # Mitgelieferte Standard-Webapps entfernen; OpenOLAT wird als ROOT-Context deployt.
 RUN rm -rf "$CATALINA_HOME/webapps/ROOT" "$CATALINA_HOME/webapps.dist"

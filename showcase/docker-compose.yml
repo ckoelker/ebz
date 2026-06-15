@@ -368,16 +368,17 @@ services:
       OLAT_SERVER_PORT: "${OPENOLAT_PORT:-8089}"
       SMTP_HOST: mailpit
       SMTP_PORT: "1025"
-      # Keycloak-OIDC (Login-Übergabe): Issuer = localhost:8088 (kanonischer ebz-customers-Issuer,
-      # auch vom Shop genutzt). Browser erreicht ihn über den publizierten Port; der Server über die
-      # socat-Bridge im Container (KC_BACKEND). preferIPv4Stack: Java soll 127.0.0.1 (socat) treffen.
+      # Keycloak-OIDC (Login-Übergabe): Issuer = keycloak.localhost:8080 = DERSELBE Host wie Portal/Shop.
+      # Der Browser teilt dadurch die Keycloak-SSO-Session (Cookie domain-gebunden) → nahtlose Übergabe.
+      # Server-seitig löst keycloak.localhost dank glibc-2.35-Basisimage (jammy) den Compose-Alias auf
+      # (keine socat-Bridge mehr). OIDC_ROOT=true: Auto-Redirect zu Keycloak statt OpenOLAT-DMZ-Login.
       OIDC_ENABLED: "true"
-      KC_ENDPOINT: http://localhost:8088
-      KC_BACKEND: keycloak:8080
+      OIDC_ROOT: "true"
+      KC_ENDPOINT: http://keycloak.localhost:8080
       KC_REALM: ebz-customers
       KC_CLIENT_ID: openolat
       KC_CLIENT_SECRET: ${OPENOLAT_OIDC_SECRET:-openolat-dev-secret}
-      JAVA_OPTS: "-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m -Duser.timezone=Europe/Berlin -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true"
+      JAVA_OPTS: "-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m -Duser.timezone=Europe/Berlin -Djava.awt.headless=true"
     ports:
       - "${OPENOLAT_PORT:-8089}:8080"
     volumes:
