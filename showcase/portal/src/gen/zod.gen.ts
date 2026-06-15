@@ -190,6 +190,27 @@ export const zIngestionResult = z.object({
 
 export const zInstant = z.string().datetime();
 
+export const zAuftragView = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    anmeldungId: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    teilnehmerName: z.string().optional(),
+    zielsystem: z.string().optional(),
+    ereignis: z.string().optional(),
+    status: z.string().optional(),
+    versuche: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    naechsterVersuchAm: zInstant.optional(),
+    letzterFehler: z.string().optional(),
+    erstelltAm: zInstant.optional(),
+    erledigtAm: zInstant.optional()
+});
+
+export const zKonto = z.object({
+    name: z.string().optional(),
+    email: z.string().optional(),
+    bezahlkartenNr: z.string().optional(),
+    angelegtAm: zInstant.optional()
+});
+
 export const zLeistungsart = z.enum([
     'UNTERRICHT',
     'UEBERNACHTUNG',
@@ -306,6 +327,31 @@ export const zRechnungStatus = z.enum([
     'STORNIERT'
 ]);
 
+export const zPortalRechnungView = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    nummer: z.string().optional(),
+    belegart: zBelegart.optional(),
+    bereich: zBereich1.optional(),
+    status: zRechnungStatus.optional(),
+    ausstellungsdatum: zLocalDate.optional(),
+    zahlungszielTage: z.number().int().min(-2147483648, { message: 'Invalid value: Expected int32 to be >= -2147483648' }).max(2147483647, { message: 'Invalid value: Expected int32 to be <= 2147483647' }).optional(),
+    summeCent: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    zeitraumBezeichnung: z.string().optional(),
+    empfaengerName: z.string().optional()
+});
+
+export const zRechnungVersandStatus = z.enum([
+    'NICHT_VERSENDET',
+    'VERSENDET',
+    'FEHLGESCHLAGEN'
+]);
+
+export const zRechnungsKontextView = z.object({
+    art: z.string().optional(),
+    organisationId: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    bezeichnung: z.string().optional()
+});
+
 export const zRechnungslaufRequest = z.object({
     schuljahr: z.string().regex(/^\d{4}\/\d{4}$/),
     halbjahr: z.number().int().gte(1).lte(2)
@@ -367,6 +413,13 @@ export const zPersonView = z.object({
     goldenPersonId: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     emails: z.array(z.string()).optional(),
     mitgliedschaften: z.array(zMitgliedschaftView).optional()
+});
+
+export const zSchueler = z.object({
+    name: z.string().optional(),
+    email: z.string().optional(),
+    klasse: z.string().optional(),
+    importiertAm: zInstant.optional()
 });
 
 export const zSelbstRegistrierung = z.object({
@@ -449,6 +502,12 @@ export const zStats = z.object({
     viaFallback: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
 });
 
+export const zStatus = z.enum([
+    'OFFEN',
+    'ERLEDIGT',
+    'FEHLGESCHLAGEN'
+]);
+
 export const zSteuerfall = z.enum([
     'BEFREIT',
     'STANDARD',
@@ -505,6 +564,9 @@ export const zRechnungDto = z.object({
     status: zRechnungStatus.optional(),
     originalRechnungId: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
     summeCent: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional(),
+    versandStatus: zRechnungVersandStatus.optional(),
+    versendetAm: zInstant.optional(),
+    versendetAn: z.string().optional(),
     positionen: z.array(zRechnungPositionDto).optional()
 });
 
@@ -779,6 +841,37 @@ export const zPostIngestRunResponse = zIngestionResult;
  */
 export const zGetIngestStatsResponse = zStats;
 
+/**
+ * OK
+ */
+export const zGetMockSuite8KontenResponse = z.array(zKonto);
+
+export const zPostMockSuite8VerfuegbarkeitQuery = z.object({
+    verfuegbar: z.boolean().optional()
+});
+
+/**
+ * OK
+ */
+export const zGetMockWebuntisSchuelerResponse = z.array(zSchueler);
+
+export const zPostMockWebuntisVerfuegbarkeitQuery = z.object({
+    verfuegbar: z.boolean().optional()
+});
+
+export const zGetOutboxQuery = z.object({
+    status: zStatus.optional()
+});
+
+/**
+ * OK
+ */
+export const zGetOutboxResponse = z.array(zAuftragView);
+
+export const zPostOutboxByIdNeuVersuchPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
 export const zPostPartyAnfragenAusbildungsbetriebBody = zAusbildungsbetriebAnfrage;
 
 export const zGetPartyAnmeldungenQuery = z.object({
@@ -905,6 +998,29 @@ export const zPostPartyPortalAnmeldungenByIdVertragBestaetigenPath = z.object({
 });
 
 export const zPostPartyPortalAzubiAnmeldungBody = zAzubiAnmeldungDto;
+
+export const zGetPartyPortalRechnungenQuery = z.object({
+    organisationId: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' }).optional()
+});
+
+/**
+ * OK
+ */
+export const zGetPartyPortalRechnungenResponse = z.array(zPortalRechnungView);
+
+export const zGetPartyPortalRechnungenByIdZugferdPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * OK
+ */
+export const zGetPartyPortalRechnungenByIdZugferdResponse = z.string();
+
+/**
+ * OK
+ */
+export const zGetPartyPortalRechnungsKontexteResponse = z.array(zRechnungsKontextView);
 
 export const zPostPartyQuellenShopBestellungBody = zShopBestellung;
 
@@ -1105,6 +1221,15 @@ export const zPostRechnungRechnungenByIdStornoPath = z.object({
  * OK
  */
 export const zPostRechnungRechnungenByIdStornoResponse = zRechnungDto;
+
+export const zPostRechnungRechnungenByIdVersendenPath = z.object({
+    id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })
+});
+
+/**
+ * OK
+ */
+export const zPostRechnungRechnungenByIdVersendenResponse = zRechnungDto;
 
 export const zGetRechnungRechnungenByIdZugferdPath = z.object({
     id: z.coerce.bigint().min(BigInt('-9223372036854775808'), { message: 'Invalid value: Expected int64 to be >= -9223372036854775808' }).max(BigInt('9223372036854775807'), { message: 'Invalid value: Expected int64 to be <= 9223372036854775807' })

@@ -11,6 +11,7 @@ import { auth, login, logout } from './auth';
     <nav class="nav">
       <RouterLink to="/">Ausbildungsbetrieb anmelden</RouterLink>
       <RouterLink to="/azubis">Meine Azubis</RouterLink>
+      <RouterLink to="/rechnungen">Meine Rechnungen</RouterLink>
     </nav>
     <span class="spacer" />
     <template v-if="auth.bereit">

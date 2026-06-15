@@ -10,11 +10,16 @@ import type {
   KontextView,
   Login,
   PersonView,
+  PortalRechnungView,
+  RechnungsKontextView,
 } from './gen/types.gen';
 
 client.setConfig({ baseUrl: '' });
 
-export type { AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, PersonView };
+export type {
+  AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, PersonView,
+  PortalRechnungView, RechnungsKontextView,
+};
 
 /** Fehler mit HTTP-Status, damit Views 401 (→ Login) / 403 / 429 unterscheiden können. */
 export class ApiFehler extends Error {
@@ -53,3 +58,16 @@ export const azubiAnmelden = (body: AzubiAnmeldungDto) =>
 
 export const vertragBestaetigen = (id: number) =>
   sdk.postPartyPortalAnmeldungenByIdVertragBestaetigen({ path: { id } }).then(ergebnis);
+
+// ── Rechnungsabruf (Self-Service): Kontexte wählen, Belege listen, ZUGFeRD-PDF laden ──
+export const rechnungsKontexte = async (): Promise<RechnungsKontextView[]> =>
+  ergebnis<RechnungsKontextView[]>(await sdk.getPartyPortalRechnungsKontexte()) ?? [];
+
+/** Festgeschriebene Belege eines Kontexts; ohne organisationId ⇒ privat (Selbstzahler). */
+export const meineRechnungen = async (organisationId?: number): Promise<PortalRechnungView[]> =>
+  ergebnis<PortalRechnungView[]>(await sdk.getPartyPortalRechnungen(
+    organisationId == null ? {} : { query: { organisationId } })) ?? [];
+
+/** ZUGFeRD-E-Rechnung als Blob (für den Download); Auth-Token hängt der Client-Interceptor an. */
+export const rechnungPdf = async (id: number): Promise<Blob> =>
+  ergebnis<Blob>(await sdk.getPartyPortalRechnungenByIdZugferd({ path: { id }, parseAs: 'blob' }));
