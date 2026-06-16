@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EBZ H5P Showcase</title>
+  <!-- h5p-standalone-Dist + entpackter H5P-Inhalt werden beim Build (lms-fetch-testdata.sh)
+       in ./assets bzw. ./h5p gelegt. Reine HTML5-Wiedergabe — KEIN Flash, kein H5P-Server. -->
+  <link rel="stylesheet" href="assets/styles/font-open-sans.css">
+  <style>html,body{margin:0;padding:0;background:#fff}#h5p-container{max-width:1000px;margin:0 auto}</style>
+  <script src="assets/main.bundle.js"></script>
+</head>
+<body>
+  <div id="h5p-container"></div>
+  <script>
+    new H5PStandalone.H5P(document.getElementById('h5p-container'), {
+      h5pJsonPath: 'h5p',
+      frameJs: 'assets/frame.bundle.js',
+      frameCss: 'assets/styles/h5p.css'
+    }).catch(function (e) {
+      document.getElementById('h5p-container').innerHTML =
+        '<pre style="color:#b00;padding:1em">H5P load error: ' + (e && e.message ? e.message : e) + '</pre>';
+    });
+  </script>
+</body>
+</html>

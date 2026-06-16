@@ -2,12 +2,21 @@
 # Lädt frei verfügbare SCORM-1.2-Seed-Kurse nach testdata/scorm/ (gitignored).
 # Ersatz für den (noch nicht verfügbaren) Lemon-Export — reproduzierbarer Seed aus der Quelle,
 # analog zum Repeatable-Seed-Prinzip (vgl. showcase/smoke-portal-rechnungen.sh).
-# python wird NUR als JSON-Parser genutzt. Nutzung:  bash showcase/lms-fetch-testdata.sh
+# python wird als JSON-Parser UND (mangels zip-Binary) zum Packen genutzt.
+# Nutzung:  bash showcase/lms-fetch-testdata.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEST="$ROOT/testdata/scorm"
+TEMPLATE="$ROOT/showcase/openolat/h5p-scorm"   # committete SCORM-Hülle (index.html + imsmanifest.xml)
 mkdir -p "$DEST"
+
+# Reichhaltige H5P-Beispiel-„Course Presentation" (viele Content-Typen: MultiChoice, Blanks,
+# DragText, DragQuestion, MarkTheWords, Summary, SingleChoiceSet, Dialogcards, TrueFalse, Table,
+# InteractiveVideo …). Quelle: offizielles h5p/h5p-integration-test-suite (GitHub, raw).
+H5P_EXAMPLE_URL="${H5P_EXAMPLE_URL:-https://raw.githubusercontent.com/h5p/h5p-integration-test-suite/master/test-content/h5p-org-examples/course-presentation-08042017.h5p}"
+# h5p-standalone: rendert H5P rein clientseitig (HTML5, kein H5P-Server, kein Flash). 1.x/3.x-Linie.
+H5P_STANDALONE="${H5P_STANDALONE:-3.8.0}"
 
 verify_scorm12() {
   local dir="$1" name="$2" manifest
@@ -30,11 +39,34 @@ fetch_zip() {
   verify_scorm12 "$DEST/$folder" "$name"
 }
 
-# 1) Umfänglicher Golf-Beispielkurs (SCORM 1.2, mehrseitig, mit Quiz/Completion)
-#    Quelle: github.com/jbroadway/scorm (samples). Inhalt = Rustici Golf Examples (Wikipedia/Wikihow).
-fetch_zip \
-  "https://raw.githubusercontent.com/jbroadway/scorm/master/samples/SCORM%201.2%20Completes%20On%20Passing%20Quiz.zip" \
-  "golf-scorm12" "Golf Examples (Completes On Passing Quiz)"
+# Baut ein SCORM-1.2-Paket, das eine H5P-„Course Presentation" rein clientseitig (HTML5) abspielt.
+# Verpackt = entpacktes H5P (h5p.json + content/ + libraries) + h5p-standalone-Player (assets/) +
+# committete SCORM-Hülle (index.html + imsmanifest.xml). Ersetzt den früheren Flash-Golf-Kurs, der
+# in modernen Browsern nur „Couldn't load plugin." zeigte. Import-/Render-Pfad bleibt unverändert
+# (OpenOLAT: FileResource.SCORMCP), nur der Inhalt ist jetzt zeitgemäßes H5P.
+build_h5p_scorm() {
+  local folder="$1" name="$2"
+  local work="$DEST/$folder"
+  echo "→ $name (H5P→SCORM)"
+  rm -rf "$work"; mkdir -p "$work/assets" "$work/h5p"
+  # 1) Beispiel-H5P holen + entpacken (das .h5p-Format bündelt h5p.json, content/ und alle libraries).
+  curl -fsSL -o "$DEST/$folder.h5p" "$H5P_EXAMPLE_URL"
+  unzip -q -o "$DEST/$folder.h5p" -d "$work/h5p"
+  # 2) h5p-standalone-Dist (npm-Tarball) holen + Player nach assets/ legen.
+  curl -fsSL -o "$DEST/h5p-standalone.tgz" \
+    "https://registry.npmjs.org/h5p-standalone/-/h5p-standalone-${H5P_STANDALONE}.tgz"
+  rm -rf "$DEST/package"; tar xzf "$DEST/h5p-standalone.tgz" -C "$DEST"
+  cp -r "$DEST/package/dist/." "$work/assets/"; rm -rf "$DEST/package" "$DEST/h5p-standalone.tgz"
+  # 3) SCORM-Hülle (Loader + Manifest) aus dem committeten Template.
+  cp "$TEMPLATE/index.html" "$TEMPLATE/imsmanifest.xml" "$work/"
+  # 4) Zippen ohne zip-Binary (Python). imsmanifest.xml liegt dadurch top-level im Zip.
+  rm -f "$DEST/$folder.zip"
+  python -c "import shutil,sys; shutil.make_archive(sys.argv[1],'zip',sys.argv[2])" "$work" "$work"
+  verify_scorm12 "$work" "$name"
+}
+
+# 1) Reichhaltiger H5P-Showcase-Kurs (Course Presentation) als SCORM 1.2 verpackt (HTML5, kein Flash).
+build_h5p_scorm "h5p-cp-scorm" "H5P Showcase – Course Presentation"
 
 # 2) Minimal-Smoke (SCORM 1.2 RuntimeMinimumCalls = kanonisches Minimalpaket) — schnelle Tests
 fetch_zip \

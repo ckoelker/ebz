@@ -57,12 +57,12 @@ import_course() {
 echo "OpenOLAT-Import gegen $BASE"
 echo "→ Seed-Kurse importieren:"
 # Reihenfolge stabil halten → stabile Key-Zuordnung beim ersten Lauf.
-K_GOLF="$(import_course golf-scorm12        'Golf SCORM 1.2 (Seed)'      | tail -n1)"
+K_H5P="$(import_course h5p-cp-scorm        'H5P Showcase – Course Presentation' | tail -n1)"
 K_MIN="$(import_course  minimal-smoke        'Minimal Smoke (SCORM 1.2)'  | tail -n1)"
 K_LGB="$(import_course  learn-git-branching   'Learn Git Branching (Seed)' | tail -n1)"
 
 echo
 echo "repoEntryKeys (→ WbtKurs.openolatKey):"
-echo "  golf-scorm12        = $K_GOLF"
+echo "  h5p-cp-scorm        = $K_H5P"
 echo "  minimal-smoke       = $K_MIN"
 echo "  learn-git-branching = $K_LGB"
