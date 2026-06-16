@@ -29,6 +29,8 @@ public class Prozessspur {
     public static final String ATTR_SYSTEM = "prozess.system";
     public static final String ATTR_TYP = "prozess.typ";
     public static final String ATTR_PHASE = "prozess.phase";
+    /** Oberstes Verfahren (End-to-End-Prozess) des Schritts — aus der {@link Phase} abgeleitet. */
+    public static final String ATTR_VERFAHREN = "prozess.verfahren";
     /**
      * Markiert einen Schritt als <b>nebenläufig</b>: alle Schritte einer Phase mit demselben Gruppen-Wert
      * sind voneinander unabhängig (kein Ordnungszwang) und werden im BPMN zwischen parallelen Gateways
@@ -66,7 +68,8 @@ public class Prozessspur {
                 .setAttribute(ATTR_AKTEUR, akteur.label)
                 .setAttribute(ATTR_SYSTEM, system.label)
                 .setAttribute(ATTR_TYP, typ.name())
-                .setAttribute(ATTR_PHASE, phase.name());
+                .setAttribute(ATTR_PHASE, phase.name())
+                .setAttribute(ATTR_VERFAHREN, phase.verfahren.name());
         if (parallelgruppe != null && !parallelgruppe.isBlank()) {
             builder.setAttribute(ATTR_PARALLELGRUPPE, parallelgruppe);
         }

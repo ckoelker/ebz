@@ -46,6 +46,7 @@ public class SpanLogExporter implements SpanProcessor {
     private static final AttributeKey<String> K_SYSTEM = AttributeKey.stringKey(Prozessspur.ATTR_SYSTEM);
     private static final AttributeKey<String> K_TYP = AttributeKey.stringKey(Prozessspur.ATTR_TYP);
     private static final AttributeKey<String> K_PHASE = AttributeKey.stringKey(Prozessspur.ATTR_PHASE);
+    private static final AttributeKey<String> K_VERFAHREN = AttributeKey.stringKey(Prozessspur.ATTR_VERFAHREN);
     private static final AttributeKey<String> K_PARALLELGRUPPE =
             AttributeKey.stringKey(Prozessspur.ATTR_PARALLELGRUPPE);
 
@@ -81,6 +82,7 @@ public class SpanLogExporter implements SpanProcessor {
         row.put("akteur", span.getAttribute(K_AKTEUR));
         row.put("system", span.getAttribute(K_SYSTEM));
         row.put("typ", span.getAttribute(K_TYP));
+        row.put("verfahren", orElse(span.getAttribute(K_VERFAHREN), "UNBEKANNT"));
         row.put("phase", phase);
         row.put("parallelgruppe", span.getAttribute(K_PARALLELGRUPPE)); // null = sequenziell
         try {

@@ -29,6 +29,11 @@ import de.netzfactor.ebz.controlling.integration.bildung.vendure.VendureExceptio
 import de.netzfactor.ebz.controlling.integration.lms.dto.WbtKursDto;
 import de.netzfactor.ebz.controlling.integration.lms.model.WbtKurs;
 import de.netzfactor.ebz.controlling.integration.lms.vendure.WbtVendureProjektion;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Typ;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 
 /**
  * Eine Resource für den WBT-Katalog (LMS-Anbindung L1, Pflege-Seite). CRUD über {@link WbtKursDto}
@@ -45,6 +50,9 @@ public class LmsResource {
 
     @Inject
     WbtVendureProjektion vendure;
+
+    @Inject
+    Prozessspur prozess;
 
     @GET
     @Transactional
@@ -67,6 +75,8 @@ public class LmsResource {
         WbtKurs e = new WbtKurs();
         apply(dto, e);
         e.persist();
+        // USER_TASK in der Katalog-Phase: das EBZ pflegt den WBT-Katalog im Cockpit.
+        prozess.schritt("WBT-Kurs anlegen", Akteur.EBZ, Prozess.System.COCKPIT, Typ.USER_TASK, Phase.WBT_KATALOG);
         return Response.created(URI.create("/lms/kurse/" + e.id)).entity(toDto(e)).build();
     }
 
@@ -128,6 +138,9 @@ public class LmsResource {
             WbtVendureProjektion.Ergebnis r = vendure.projiziere(e); // dirty → Flush am Tx-Commit
             e.vendureProductId = r.productId();
             e.vendureVariantId = r.variantId();
+            // SERVICE_TASK in der Katalog-Phase: der Kurs wird als Produkt im Shop (Vendure) gelistet.
+            prozess.schritt("WBT im Shop veröffentlichen", Akteur.EBZ, Prozess.System.VENDURE,
+                    Typ.SERVICE_TASK, Phase.WBT_KATALOG);
             return Response.ok(new ProjektionErgebnis(e.id, e.code, e.vendureProductId, e.vendureVariantId)).build();
         } catch (VendureException ex) {
             return Response.status(Response.Status.BAD_GATEWAY).entity(new Fehler(ex.getMessage())).build();

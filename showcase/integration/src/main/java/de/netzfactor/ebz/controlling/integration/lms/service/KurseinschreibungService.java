@@ -84,6 +84,9 @@ public class KurseinschreibungService {
         if (neu) {
             e.persist(); // erst jetzt — alle NOT-NULL-Felder gesetzt (persist() flusht sofort)
         }
+        // SERVICE_TASK in der Kauf-Phase: die bezahlte Order wird zur Einschreibungs-Anforderung (Outbox).
+        prozess.schritt("WBT-Einschreibung anfordern", Akteur.SYSTEM, Prozess.System.BACKEND,
+                Typ.SERVICE_TASK, Phase.WBT_KAUF);
         LOG.infof("Einschreibung angefordert: Kurs %d (openolat %d) × sub %s", wbtKursId, kurs.openolatKey, keycloakSub);
         return e;
     }
@@ -97,6 +100,8 @@ public class KurseinschreibungService {
     @Transactional
     public List<Kurseinschreibung> ausBestellung(String vendureOrderId, String keycloakSub, String email,
             String anzeigeName, List<String> vendureProductIds) {
+        // USER_TASK in der Kauf-Phase: der Kunde hat im Shop (Vendure) gekauft → Order-Naht.
+        prozess.schritt("WBT im Shop kaufen", Akteur.KUNDE, Prozess.System.VENDURE, Typ.USER_TASK, Phase.WBT_KAUF);
         List<Kurseinschreibung> ergebnis = new java.util.ArrayList<>();
         for (String produktId : vendureProductIds) {
             WbtKurs kurs = WbtKurs.find("vendureProductId", produktId).firstResult();
@@ -204,10 +209,11 @@ public class KurseinschreibungService {
                         e.id, e.versuche, e.letzterFehler, e.naechsterVersuchAm);
             }
         }
-        // SERVICE_TASK in der Provisionierungs-Phase (Jaeger + BPMN), demselben Fall zugeordnet.
+        // SERVICE_TASK in der Auslieferungs-Phase (Jaeger + BPMN), dem gespeicherten Fall zugeordnet.
+        // Enrol bzw. Unenrol sind ALTERNATIVEN (XOR-Gateway), KEINE parallelen Zweige → keine
+        // parallelgruppe (anders als die Anmeldungs-Provisionierung WebUntis ∥ Suite8).
         prozess.schritt(fall(e), (storno ? "WBT-Zugang in OpenOLAT entziehen" : "WBT-Einschreibung nach OpenOLAT"),
-                Akteur.SYSTEM, Prozess.System.OPENOLAT, Typ.SERVICE_TASK, Phase.PROVISIONIERUNG,
-                Phase.PROVISIONIERUNG.name());
+                Akteur.SYSTEM, Prozess.System.OPENOLAT, Typ.SERVICE_TASK, Phase.WBT_AUSLIEFERUNG);
     }
 
     /** Manueller Neuversuch eines Dead-Letter-Eintrags (HITL-Aktion aus dem Cockpit). */

@@ -18,6 +18,11 @@ import io.quarkus.security.Authenticated;
 import de.netzfactor.ebz.controlling.integration.lms.model.EinschreibungStatus;
 import de.netzfactor.ebz.controlling.integration.lms.model.Kurseinschreibung;
 import de.netzfactor.ebz.controlling.integration.lms.service.KurseinschreibungService;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Typ;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 
 /**
  * „Meine Trainings" im Außenportal (Realm {@code ebz-customers}, pfadbasiert auf den {@code customers}-
@@ -36,6 +41,9 @@ public class LmsPortalResource {
 
     @Inject
     KurseinschreibungService service;
+
+    @Inject
+    Prozessspur prozess;
 
     @Inject
     JsonWebToken jwt;
@@ -58,6 +66,9 @@ public class LmsPortalResource {
     @Path("/trainings")
     @Transactional
     public List<MeinTrainingView> meineTrainings() {
+        // USER_TASK in der Nutzungs-Phase: der Kunde ruft seine Trainings im Portal ab (Launch via SSO-Deeplink).
+        prozess.schritt("Meine Trainings abrufen", Akteur.KUNDE, Prozess.System.PORTAL,
+                Typ.USER_TASK, Phase.WBT_NUTZUNG);
         return service.meineTrainings(jwt.getSubject()).stream().map(this::toView).toList();
     }
 

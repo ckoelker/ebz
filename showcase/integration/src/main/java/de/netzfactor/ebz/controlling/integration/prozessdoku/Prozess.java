@@ -16,6 +16,7 @@ public final class Prozess {
         ANONYM("Interessent (anonym)"),
         FIRMA("Firma (Ansprechpartner)"),
         AZUBI("Azubi"),
+        KUNDE("Kunde"),
         EBZ("EBZ-Sachbearbeitung"),
         SYSTEM("System");
 
@@ -51,20 +52,45 @@ public final class Prozess {
         USER_TASK, SERVICE_TASK, MESSAGE, BUSINESS_RULE
     }
 
-    /** Fachliche Phase — wird zum Subprozess bzw. zur Call-Activity in der Übersicht. */
-    public enum Phase {
-        ANFRAGE_DUBLETTEN("Anfrage & Dublettenprüfung"),
-        EINLADUNG("Login-Einladung"),
-        AZUBI_ANMELDUNG("Azubi-Anmeldung"),
-        EBZ_BESTAETIGUNG("EBZ-Bestätigung"),
-        VERTRAG("Vertragsbestätigung"),
-        PROVISIONIERUNG("Provisionierung Drittsysteme"),
-        RECHNUNGSLAUF("Rechnungslauf");
+    /**
+     * Fachliches <b>Verfahren</b> (ganzer End-to-End-Geschäftsprozess) — die oberste Gliederungsebene
+     * der Prozessdoku. Jede {@link Phase} gehört genau zu einem Verfahren; der Generator
+     * ({@code showcase/prozessdoku/}) erzeugt pro Verfahren eine eigene Übersicht/Gesamt-Sicht, statt
+     * unzusammenhängende Prozesse in eine Kette zu zwingen.
+     */
+    public enum Verfahren {
+        ANMELDUNG_BERUFSSCHULE("Anmeldung Berufsschule"),
+        WBT_VERKAUF("WBT-Verkauf (Shop → OpenOLAT)");
 
         public final String label;
 
-        Phase(String label) {
+        Verfahren(String label) {
             this.label = label;
+        }
+    }
+
+    /** Fachliche Phase — wird zum Subprozess bzw. zur Call-Activity in der Übersicht des {@link Verfahren}s. */
+    public enum Phase {
+        // ── Verfahren: Anmeldung Berufsschule ──
+        ANFRAGE_DUBLETTEN("Anfrage & Dublettenprüfung", Verfahren.ANMELDUNG_BERUFSSCHULE),
+        EINLADUNG("Login-Einladung", Verfahren.ANMELDUNG_BERUFSSCHULE),
+        AZUBI_ANMELDUNG("Azubi-Anmeldung", Verfahren.ANMELDUNG_BERUFSSCHULE),
+        EBZ_BESTAETIGUNG("EBZ-Bestätigung", Verfahren.ANMELDUNG_BERUFSSCHULE),
+        VERTRAG("Vertragsbestätigung", Verfahren.ANMELDUNG_BERUFSSCHULE),
+        PROVISIONIERUNG("Provisionierung Drittsysteme", Verfahren.ANMELDUNG_BERUFSSCHULE),
+        RECHNUNGSLAUF("Rechnungslauf", Verfahren.ANMELDUNG_BERUFSSCHULE),
+        // ── Verfahren: WBT-Verkauf (Shop → OpenOLAT) ──
+        WBT_KATALOG("WBT-Katalog & Shop-Listung", Verfahren.WBT_VERKAUF),
+        WBT_KAUF("WBT-Kauf im Shop", Verfahren.WBT_VERKAUF),
+        WBT_AUSLIEFERUNG("Auslieferung in OpenOLAT", Verfahren.WBT_VERKAUF),
+        WBT_NUTZUNG("Training nutzen", Verfahren.WBT_VERKAUF);
+
+        public final String label;
+        public final Verfahren verfahren;
+
+        Phase(String label, Verfahren verfahren) {
+            this.label = label;
+            this.verfahren = verfahren;
         }
     }
 }

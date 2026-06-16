@@ -30,8 +30,17 @@ OUT = ROOT / "out"
 # komplettes DI); False → „Person · System" nur im Task-Label, Layout via bpmn-auto-layout.
 LANES_AKTIV = True
 
-# Reihenfolge + Klartext der Phasen (Übersicht/Dateinamen).
+# Verfahren (ganze End-to-End-Prozesse) = oberste Gliederung; je Verfahren eine eigene Übersicht/Gesamt-
+# Sicht. Klartext-Label (Spiegel von Prozess.Verfahren). Reihenfolge = Anzeige-/Fallback-Reihenfolge.
+VERFAHREN_LABEL = {
+    "ANMELDUNG_BERUFSSCHULE": "Anmeldung Berufsschule",
+    "WBT_VERKAUF": "WBT-Verkauf (Shop → OpenOLAT)",
+}
+
+# Reihenfolge + Klartext der Phasen (Übersicht/Dateinamen), je Phase ihrem Verfahren zugeordnet
+# (Spiegel von Prozess.Phase). Innerhalb eines Verfahrens bestimmt diese Reihenfolge die Phasen-Kette.
 PHASE_LABEL = {
+    # Verfahren: Anmeldung Berufsschule
     "ANFRAGE_DUBLETTEN": "Anfrage & Dublettenprüfung",
     "EINLADUNG": "Login-Einladung",
     "AZUBI_ANMELDUNG": "Azubi-Anmeldung",
@@ -39,6 +48,11 @@ PHASE_LABEL = {
     "VERTRAG": "Vertragsbestätigung",
     "PROVISIONIERUNG": "Provisionierung Drittsysteme",
     "RECHNUNGSLAUF": "Rechnungslauf",
+    # Verfahren: WBT-Verkauf (Shop → OpenOLAT)
+    "WBT_KATALOG": "WBT-Katalog & Shop-Listung",
+    "WBT_KAUF": "WBT-Kauf im Shop",
+    "WBT_AUSLIEFERUNG": "Auslieferung in OpenOLAT",
+    "WBT_NUTZUNG": "Training nutzen",
 }
 
 
@@ -53,6 +67,10 @@ def lade_log() -> pd.DataFrame:
     df = df[df["fall"] != "unbekannt"]
     if df.empty:
         sys.exit("Keine korrelierten Prozess-Spans (prozess.fall) im Log.")
+    # Verfahren-Spalte garantieren (ältere Logs ohne prozess.verfahren → ein Sammel-Verfahren).
+    if "verfahren" not in df.columns:
+        df["verfahren"] = "UNBEKANNT"
+    df["verfahren"] = df["verfahren"].fillna("UNBEKANNT")
     df["timestamp"] = pd.to_datetime(df["startEpochNanos"], unit="ns", utc=True)
     return df.sort_values(["fall", "startEpochNanos"]).reset_index(drop=True)
 
@@ -204,7 +222,7 @@ def _label_anreichern(xml_text: str, name_zu_akteur: dict, name_zu_system: dict)
 
 # Lane-Reihenfolge (oben→unten) anhand der Akteur-Labels aus Prozess.java.
 AKTEUR_ORDER = [
-    "Interessent (anonym)", "Firma (Ansprechpartner)", "Azubi", "EBZ-Sachbearbeitung", "System",
+    "Interessent (anonym)", "Firma (Ansprechpartner)", "Azubi", "Kunde", "EBZ-Sachbearbeitung", "System",
 ]
 DI_NS = "http://www.omg.org/spec/BPMN/20100524/DI"
 
@@ -562,18 +580,12 @@ def _embedded(sub_semantik: dict, name_akteur: dict, name_system: dict, collapse
             f'{diagram_xml}\n</bpmn:definitions>\n')
 
 
-def main() -> None:
-    OUT.mkdir(exist_ok=True)
-    df = lade_log()
-
-    name_akteur = dict(zip(df["name"], df["akteur"]))
-    name_system = dict(zip(df["name"], df["system"]))
-
-    # 1) Subprozess je Phase (Detailsicht: die einzelnen Schritte)
+def _erzeuge_verfahren(vdf: pd.DataFrame, vslug: str, name_akteur: dict, name_system: dict) -> list:
+    """Erzeugt die BPMN eines EINZELNEN Verfahrens: sub-<phase> je Phase + uebersicht-/gesamt-<vslug>."""
     erzeugt = []
     sub_semantik = {}  # phase -> semantisches BPMN (reine Ids/Namen) für die Gesamt-Sicht
     for phase in PHASE_LABEL:
-        teil = df[df["phase"] == phase]
+        teil = vdf[vdf["phase"] == phase]
         if teil.empty:
             continue
         pfad = OUT / f"sub-{phase.lower()}.bpmn"
@@ -595,18 +607,41 @@ def main() -> None:
             pfad.write_text(_label_anreichern(roh, name_zu_akteur, name_zu_system), encoding="utf-8")
         erzeugt.append(pfad.name)
 
-    # 2) Übersicht: eingebettete, EINGEKLAPPTE Phasen-Subprozesse — im Modeler je Phase per Drilldown
-    #    aufklappbar (eigene DI-Plane je Phase, mit Swimlanes).
-    (OUT / "uebersicht.bpmn").write_text(
+    # Übersicht: eingebettete, EINGEKLAPPTE Phasen-Subprozesse — im Modeler je Phase per Drilldown
+    # aufklappbar (eigene DI-Plane je Phase, mit Swimlanes).
+    (OUT / f"uebersicht-{vslug}.bpmn").write_text(
         _embedded(sub_semantik, name_akteur, name_system, collapsed=True), encoding="utf-8")
-    erzeugt.append("uebersicht.bpmn")
+    erzeugt.append(f"uebersicht-{vslug}.bpmn")
 
-    # 3) Gesamt-Sicht: alle Phasen AUFGEKLAPPT inline, je Phase mit Swimlanes (Lane = Person).
-    (OUT / "gesamt.bpmn").write_text(
+    # Gesamt-Sicht: alle Phasen AUFGEKLAPPT inline, je Phase mit Swimlanes (Lane = Person).
+    (OUT / f"gesamt-{vslug}.bpmn").write_text(
         _embedded(sub_semantik, name_akteur, name_system, collapsed=False), encoding="utf-8")
-    erzeugt.append("gesamt.bpmn")
+    erzeugt.append(f"gesamt-{vslug}.bpmn")
+    return erzeugt
 
-    print(f"OK: {len(erzeugt)} BPMN-Dateien in {OUT}")
+
+def main() -> None:
+    OUT.mkdir(exist_ok=True)
+    # Altbestand entfernen, sonst bleiben bei umbenannten/entfernten Verfahren/Phasen Waisen liegen.
+    for alt in OUT.glob("*.bpmn"):
+        alt.unlink()
+    df = lade_log()
+
+    name_akteur = dict(zip(df["name"], df["akteur"]))
+    name_system = dict(zip(df["name"], df["system"]))
+
+    # Je Verfahren (End-to-End-Prozess) eine eigene Sicht — unzusammenhängende Prozesse werden NICHT in
+    # eine Kette gezwungen. Reihenfolge: bekannte Verfahren zuerst (VERFAHREN_LABEL), dann evtl. weitere.
+    present = list(df["verfahren"].unique())
+    verfahren_order = ([v for v in VERFAHREN_LABEL if v in present]
+                       + [v for v in present if v not in VERFAHREN_LABEL])
+
+    erzeugt = []
+    for verf in verfahren_order:
+        vdf = df[df["verfahren"] == verf]
+        erzeugt += _erzeuge_verfahren(vdf, _slug(verf), name_akteur, name_system)
+
+    print(f"OK: {len(erzeugt)} BPMN-Dateien in {OUT} ({len(verfahren_order)} Verfahren)")
     for name in erzeugt:
         print("  -", name)
 

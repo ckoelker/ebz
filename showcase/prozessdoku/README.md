@@ -1,8 +1,9 @@
 # Prozessdoku (Living Documentation) — BPMN aus OpenTelemetry-Spans
 
-Erzeugt **automatisch BPMN-Diagramme** des Prozesses „Anmeldung Berufsschule" aus den im E2E-Test
-erfassten **OpenTelemetry-Business-Spans** — dieselbe Instrumentierung, die in Prod an **Jaeger** geht.
-So bleibt die Doku ohne Handarbeit in Sync mit dem Code. Plan: [`../../prozessdoku-planung/`](../../prozessdoku-planung/README.md).
+Erzeugt **automatisch BPMN-Diagramme** der Geschäfts-**Verfahren** (aktuell „Anmeldung Berufsschule"
+und „WBT-Verkauf (Shop → OpenOLAT)") aus den im E2E-Test erfassten **OpenTelemetry-Business-Spans** —
+dieselbe Instrumentierung, die in Prod an **Jaeger** geht. So bleibt die Doku ohne Handarbeit in Sync
+mit dem Code. Plan: [`../../prozessdoku-planung/`](../../prozessdoku-planung/README.md).
 
 ## Pipeline
 ```
@@ -13,15 +14,18 @@ E2E-Test (rest-assured)                Prod
                                                                               └─ layout.mjs (bpmn-auto-layout) ─→ ../docs/bpmn/*.bpmn
 ```
 
+- **Verfahren** (ganzer End-to-End-Prozess) = oberste Gliederung (`prozess.verfahren`) → je Verfahren
+  eine eigene Übersicht/Gesamt-Sicht; unzusammenhängende Prozesse werden NICHT in eine Kette gezwungen.
 - **Case-Id** = `prozess.fall` (W3C-Baggage, im Test der Szenario-Name); **Subprozesse** je `prozess.phase`;
   **Akteur/System** je Schritt (`prozess.akteur`/`prozess.system`).
 - Mehrere Test-Szenarien (Fälle) → der Inductive Miner erzeugt **Gateways/Verzweigungen**.
 
 ## Ausgabe (`../docs/bpmn/`)
-Alle drei Sichten sind **eine** Datei (Camunda Modeler stitcht getrennte Dateien nicht zusammen):
-- `gesamt.bpmn` — alle Phasen **aufgeklappt inline**, jede Phase mit **Swimlanes** (Lane = Person) →
-  „alles auf einen Blick".
-- `uebersicht.bpmn` — alle Phasen als **eingeklappte** Subprozess-Kästen in einer Reihe; im Camunda
+Je Verfahren (`<v>` = `anmeldung_berufsschule`, `wbt_verkauf`, …) zwei zusammengesetzte Sichten plus die
+Phasen-Einzeldateien (Camunda Modeler stitcht getrennte Dateien nicht zusammen):
+- `gesamt-<v>.bpmn` — alle Phasen des Verfahrens **aufgeklappt inline**, jede Phase mit **Swimlanes**
+  (Lane = Person) → „alles auf einen Blick".
+- `uebersicht-<v>.bpmn` — alle Phasen als **eingeklappte** Subprozess-Kästen in einer Reihe; im Camunda
   Modeler je Phase per **Drilldown** (kleines Icon unten am Kasten) aufklappbar — eigene DI-Plane je
   Phase, drinnen die Swimlanes.
 - `sub-<phase>.bpmn` — je Phase einzeln als **Swimlanes** (Lane = Person; System am Task-Label),
