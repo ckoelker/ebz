@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EBZ CRM — Wireframe (Klickdummy)</title>
+  <link rel="stylesheet" href="crm.css" />
+</head>
+<body>
+  <!-- Topbar -->
+  <header class="topbar">
+    <div class="logo">EBZ&nbsp;CRM <small>Stammdaten-Pflege · Wireframe</small></div>
+    <div class="search">
+      <input id="search" type="text" placeholder="Suche: Name, Telefon, Firma, USt-IdNr …  ( / )" autocomplete="off" />
+      <div id="searchResults" class="search-results"></div>
+    </div>
+    <div class="spacer"></div>
+    <button class="btn sm" id="simCall" title="Eingehenden Anruf simulieren">📞 Anruf simulieren</button>
+    <div class="user">
+      <span class="role" id="roleBadge">crm-pflege</span>
+      <span id="userName">Sandra Berg</span>
+      <span class="avatar" id="userAvatar" style="width:30px;height:30px;font-size:12px">SB</span>
+    </div>
+  </header>
+
+  <!-- Main layout -->
+  <div class="layout">
+    <!-- Sidebar: Neuanlage + Quicklinks + Nav -->
+    <aside class="sidebar">
+      <button class="btn-new" id="newPerson">+ Person anlegen</button>
+      <button class="btn-new alt" id="newOrg">+ Firma anlegen</button>
+
+      <div class="side-h">Zuletzt aufgerufen</div>
+      <div id="quicklinks"></div>
+
+      <div class="side-h">Meine Wiedervorlagen</div>
+      <div id="sideWv"></div>
+
+      <div class="side-h">Mein Profil</div>
+      <button class="side-btn" id="showGroups">👥 Gruppen &amp; Rolle</button>
+    </aside>
+
+    <!-- Master list -->
+    <section class="masterlist">
+      <div class="ml-head">
+        <button class="seg active" data-seg="alle">Alle</button>
+        <button class="seg" data-seg="person">Personen</button>
+        <button class="seg" data-seg="org">Firmen</button>
+      </div>
+      <div id="list"></div>
+    </section>
+
+    <!-- Detail -->
+    <main class="detail" id="detail">
+      <p class="muted">Wähle links einen Kontakt oder lege einen neuen an.</p>
+    </main>
+  </div>
+
+  <!-- Modal host -->
+  <div class="modal-bg" id="modalBg">
+    <div class="modal" id="modal"></div>
+  </div>
+
+  <!-- Toast (Anruf) -->
+  <div class="toast" id="toast"></div>
+
+  <script src="mock-data.js"></script>
+  <script src="crm.js"></script>
+</body>
+</html>
