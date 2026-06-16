@@ -1,0 +1,55 @@
+@charset "UTF-8";
+
+/*
+ * =================================================
+ *  EBZ-Showcase „Regenbogen"-Theme (eigenes SCSS-Theme)
+ * =================================================
+ *
+ * Dieses Theme wird NICHT in die OpenOLAT-.war gebacken, sondern AUSSERHALB davon
+ * geladen: der Docker-Build kompiliert dieses SCSS gegen die Framework-Partials
+ * (siehe Dockerfile) und der Entrypoint legt das Ergebnis nach
+ *   olatdata/customizing/themes/ebz/   (= das per-Volume persistierte Datenverzeichnis)
+ * OpenOLAT lädt Themes von dort dank  layout.custom.themes.dir=${userdata.dir}/customizing/themes
+ * und  layout.theme=ebz  (siehe entrypoint.sh).
+ *
+ * Vorgehen bewusst minimal: wir importieren das mitgelieferte OpenOLAT-Default-Theme
+ * (`light`) und überschreiben nur einige Farbvariablen mit kräftigen „Regenbogen"-Werten,
+ * damit der Effekt eines extern geladenen Themes sofort sichtbar ist.
+ *
+ * Warum `light` als Basis: alle Config-Variablen im light-Theme sind mit `!default`
+ * deklariert → die hier ZUVOR gesetzten Werte gewinnen und schlagen sauber durch alle
+ * abgeleiteten Regeln durch (Buttons, Links, aktive Navigation, Badges, Progress …).
+ * Das `openolat`-Theme baut selbst auf `light` auf, setzt seine Farben aber definitiv
+ * (ohne `!default`) — dort würden Variablen-Overrides nicht durchschlagen.
+ *
+ * Kompiliert wird mit  --load-path=<war>/static/themes  (siehe Dockerfile), damit
+ * `@import "light/theme"` (und die framework-relativen Bootstrap-Imports) aufgelöst werden.
+ */
+
+/* ---- Regenbogen-Farbüberschreibungen (VOR dem Default-Theme!) ---- */
+$brand-primary:    #e6007e;  // Magenta  → Primär (Buttons, aktive Navigation, Links-Akzent)
+$brand-success:    #43b02a;  // Grün
+$brand-info:       #00a3e0;  // Cyan
+$brand-warning:    #ffcd00;  // Gelb
+$brand-danger:     #e4002b;  // Rot
+$link-color:       #6f2da8;  // Violett
+$link-hover-color: #e6007e;  // Magenta
+
+/* ---- OpenOLAT-Default-Theme (light) komplett importieren ---- */
+@import "light/theme";
+
+/* ---- Unübersehbare Regenbogen-Akzente (NACH dem Import, CSS-Ebene) ---- */
+.o_navbar,
+.o_navbar_wrapper .o_navbar,
+.navbar.o_navbar {
+	background-image: linear-gradient(90deg,
+		#e4002b, #ff7f00, #ffcd00, #43b02a, #00a3e0, #3f48cc, #6f2da8) !important;
+	border-bottom: 4px solid #e6007e !important;
+}
+
+.o_navbar .navbar-brand,
+.o_navbar .o_navbar_brand,
+.o_navbar .o_navbar_tab a {
+	color: #fff !important;
+	text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
+}

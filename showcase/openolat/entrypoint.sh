@@ -20,6 +20,24 @@ set -e
 : "${KC_ENDPOINT:=http://keycloak.localhost:8080}"; : "${KC_CONTEXT:=}"
 : "${KC_REALM:=ebz-customers}"
 : "${KC_CLIENT_ID:=openolat}"; : "${KC_CLIENT_SECRET:=openolat-dev-secret}"
+# Eigenes SCSS-Theme: wird AUSSERHALB der .war aus olatdata/customizing/themes geladen.
+: "${OLAT_THEME:=ebz}"
+
+# Theme-Seed (im Image unter themes-seed/ kompiliert) in das per-Volume persistierte
+# olatdata/customizing/themes kopieren — also AUSSERHALB der .war. OpenOLAT lädt Themes von
+# dort dank layout.custom.themes.dir (s.u.). Bei jedem Start frisch überschrieben, damit ein
+# Rebuild des Themes sofort greift; vorhandene andere Custom-Themes bleiben unberührt.
+THEMES_DIR="/opt/openolat/olatdata/customizing/themes"
+if [ -d /opt/openolat/themes-seed ]; then
+  mkdir -p "$THEMES_DIR"
+  for seed in /opt/openolat/themes-seed/*/; do
+    [ -d "$seed" ] || continue
+    name="$(basename "$seed")"
+    rm -rf "$THEMES_DIR/$name"
+    cp -r "$seed" "$THEMES_DIR/$name"
+    echo "Custom-Theme '$name' nach $THEMES_DIR/$name kopiert (außerhalb der .war)."
+  done
+fi
 
 # JNDI-Datasource für den ROOT-Context (OpenOLAT web.xml referenziert jdbc/openolatDS).
 mkdir -p "$CATALINA_HOME/conf/Catalina/localhost"
@@ -50,6 +68,12 @@ server.contextpath=${OLAT_CONTEXTPATH}
 server.modjk.enabled=false
 smtp.host=${SMTP_HOST}
 smtp.port=${SMTP_PORT}
+# ── Eigenes SCSS-Theme, AUSSERHALB der .war geladen ──
+# layout.custom.themes.dir zeigt auf das per-Volume persistierte olatdata; der Entrypoint
+# hat das kompilierte Theme dorthin kopiert. layout.theme wählt es aus (statt 'openolat').
+layout.theme=${OLAT_THEME}
+layout.custom.themes.dir=/opt/openolat/olatdata/customizing/themes
+layout.theme.values=light,openolat,${OLAT_THEME}
 # ── Keycloak-OIDC-SSO (Realm ebz-customers) ──
 oauth.keycloak.enabled=${OIDC_ENABLED}
 oauth.keycloak.root=${OIDC_ROOT}

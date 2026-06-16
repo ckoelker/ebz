@@ -378,6 +378,9 @@ services:
       KC_REALM: ebz-customers
       KC_CLIENT_ID: openolat
       KC_CLIENT_SECRET: ${OPENOLAT_OIDC_SECRET:-openolat-dev-secret}
+      # Eigenes SCSS-Theme (showcase/openolat/theme/ebz), beim Build kompiliert und vom
+      # Entrypoint nach olatdata/customizing/themes kopiert → AUSSERHALB der .war geladen.
+      OLAT_THEME: ${OPENOLAT_THEME:-ebz}
       JAVA_OPTS: "-Xms512m -Xmx1536m -XX:MaxMetaspaceSize=512m -Duser.timezone=Europe/Berlin -Djava.awt.headless=true"
     ports:
       - "${OPENOLAT_PORT:-8089}:8080"
