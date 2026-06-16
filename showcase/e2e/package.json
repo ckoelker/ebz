@@ -1,0 +1,17 @@
+{
+  "name": "ebz-e2e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.5.2",
+  "description": "Projektweite End-to-End-/Browser-Tests (Playwright) für den EBZ-Showcase — service-übergreifende Flows wie Keycloak-SSO Portal->OpenOLAT, Cockpit-Masken und Shop. Läuft gegen den laufenden docker-compose-Stack (showcase/docker-compose.yml).",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "report": "playwright show-report",
+    "install:browser": "playwright install chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.60.0"
+  }
+}

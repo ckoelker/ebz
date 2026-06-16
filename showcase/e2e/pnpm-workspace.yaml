@@ -1,0 +1,11 @@
+# pnpm-11-Settings (lokal, nur dieses Paket) — analog zu ../portal und ../mdm.
+# trustPolicy off + minimumReleaseAge 0: bewusst gewählte, gepinnte Test-Dependency
+# (@playwright/test). allowBuilds: Playwright braucht seinen postinstall, um die
+# gebündelten Browser-Treiber zu installieren.
+nodeLinker: hoisted
+trustPolicy: "off"
+minimumReleaseAge: 0
+allowBuilds:
+  "@playwright/test": true
+  playwright: true
+  playwright-core: true
