@@ -1,5 +1,8 @@
 # ── Projekt-.gitignore (ebz/) — gilt rekursiv für showcase/ + Planungsordner ──
 
+# Wegwerf-/Generier-Outputs (unversioniert) — z.B. Architektur-MD+PDF aus ARCHITEKTUR-GENERIERUNG.md
+/tmp/
+
 # Secrets / lokale Env (NICHT committen) — .env.example und frontend/.env.development bleiben versioniert
 .env
 .env.local
