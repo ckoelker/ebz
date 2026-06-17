@@ -1,0 +1,414 @@
+{
+  "generatedAt": "2026-06-17",
+  "nodes": [
+    {
+      "name": "FeldRenderer",
+      "group": "bausteine",
+      "children": [],
+      "ui": [
+        "UCheckbox",
+        "UFormField",
+        "UInput",
+        "UInputNumber",
+        "USelect",
+        "UTextarea"
+      ]
+    },
+    {
+      "name": "KanalEdit",
+      "group": "bausteine",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UButton",
+        "UIcon",
+        "UInput",
+        "USelect"
+      ]
+    },
+    {
+      "name": "LookupCheckboxListe",
+      "group": "bausteine",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UCheckbox",
+        "UInput"
+      ]
+    },
+    {
+      "name": "MitgliedschaftEdit",
+      "group": "bausteine",
+      "children": [
+        "LookupCheckboxListe"
+      ],
+      "ui": [
+        "UBadge",
+        "UButton",
+        "UCard",
+        "UCheckbox",
+        "UFormField",
+        "UIcon",
+        "UInput"
+      ]
+    },
+    {
+      "name": "StammdatenForm",
+      "group": "bausteine",
+      "children": [],
+      "ui": [
+        "UButton",
+        "UCard",
+        "UIcon"
+      ]
+    },
+    {
+      "name": "VerknuepfungDialog",
+      "group": "bausteine",
+      "children": [],
+      "ui": [
+        "UAlert",
+        "UAvatar",
+        "UButton",
+        "UIcon",
+        "UInput",
+        "UModal",
+        "USelect"
+      ]
+    },
+    {
+      "name": "AnrufToast",
+      "group": "cockpit",
+      "children": [],
+      "ui": [
+        "UAvatar",
+        "UButton",
+        "UIcon"
+      ]
+    },
+    {
+      "name": "EingriffeKarten",
+      "group": "cockpit",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UButton",
+        "UCard"
+      ]
+    },
+    {
+      "name": "ProzessStatusTabelle",
+      "group": "cockpit",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UButton"
+      ]
+    },
+    {
+      "name": "SonderfaelleKarten",
+      "group": "cockpit",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UButton"
+      ]
+    },
+    {
+      "name": "NeueFirmaDialog",
+      "group": "dialoge",
+      "children": [
+        "FeldRenderer"
+      ],
+      "ui": [
+        "UAlert",
+        "UButton",
+        "UModal"
+      ]
+    },
+    {
+      "name": "NeuePersonDialog",
+      "group": "dialoge",
+      "children": [
+        "FeldRenderer"
+      ],
+      "ui": [
+        "UAlert",
+        "UButton",
+        "UIcon",
+        "UModal"
+      ]
+    },
+    {
+      "name": "NotizDialog",
+      "group": "dialoge",
+      "children": [],
+      "ui": [
+        "UButton",
+        "UFormField",
+        "UInput",
+        "UModal",
+        "USelect",
+        "UTextarea"
+      ]
+    },
+    {
+      "name": "RechtAufVergessenDialog",
+      "group": "dialoge",
+      "children": [],
+      "ui": [
+        "UAlert",
+        "UButton",
+        "UCheckbox",
+        "UModal"
+      ]
+    },
+    {
+      "name": "WiedervorlageDialog",
+      "group": "dialoge",
+      "children": [],
+      "ui": [
+        "UButton",
+        "UFormField",
+        "UInput",
+        "UModal",
+        "USelect"
+      ]
+    },
+    {
+      "name": "KontaktDetailHeader",
+      "group": "kunden",
+      "children": [],
+      "ui": [
+        "UAvatar",
+        "UBadge",
+        "UButton"
+      ]
+    },
+    {
+      "name": "KundenMasterDetailDemo",
+      "group": "kunden",
+      "children": [
+        "KontaktDetailHeader",
+        "KundenMasterListe",
+        "TabBar"
+      ],
+      "ui": [
+        "UBadge",
+        "UCard"
+      ]
+    },
+    {
+      "name": "KundenMasterListe",
+      "group": "kunden",
+      "children": [
+        "MasterListItem"
+      ],
+      "ui": [
+        "UButton",
+        "UInput"
+      ]
+    },
+    {
+      "name": "MasterListItem",
+      "group": "kunden",
+      "children": [],
+      "ui": [
+        "UAvatar",
+        "UIcon"
+      ]
+    },
+    {
+      "name": "TabBar",
+      "group": "kunden",
+      "children": [],
+      "ui": [
+        "UBadge"
+      ]
+    },
+    {
+      "name": "TokenGallery",
+      "group": "root",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UButton"
+      ]
+    },
+    {
+      "name": "CockpitShell",
+      "group": "shell",
+      "children": [
+        "Rail",
+        "Topbar"
+      ],
+      "ui": []
+    },
+    {
+      "name": "Rail",
+      "group": "shell",
+      "children": [],
+      "ui": [
+        "UAvatar",
+        "UBadge",
+        "UIcon"
+      ]
+    },
+    {
+      "name": "Topbar",
+      "group": "shell",
+      "children": [],
+      "ui": [
+        "UAvatar",
+        "UButton",
+        "UInput"
+      ]
+    },
+    {
+      "name": "EinwilligungTabelle",
+      "group": "tabs",
+      "children": [],
+      "ui": [
+        "UBadge"
+      ]
+    },
+    {
+      "name": "KontakthistorieListe",
+      "group": "tabs",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UIcon"
+      ]
+    },
+    {
+      "name": "WeiterbildungStundenkonto",
+      "group": "tabs",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UCard",
+        "UIcon",
+        "UProgress"
+      ]
+    }
+  ],
+  "uiUsedIn": {
+    "UCheckbox": [
+      "FeldRenderer",
+      "LookupCheckboxListe",
+      "MitgliedschaftEdit",
+      "RechtAufVergessenDialog"
+    ],
+    "UFormField": [
+      "FeldRenderer",
+      "MitgliedschaftEdit",
+      "NotizDialog",
+      "WiedervorlageDialog"
+    ],
+    "UInput": [
+      "FeldRenderer",
+      "KanalEdit",
+      "KundenMasterListe",
+      "LookupCheckboxListe",
+      "MitgliedschaftEdit",
+      "NotizDialog",
+      "Topbar",
+      "VerknuepfungDialog",
+      "WiedervorlageDialog"
+    ],
+    "UInputNumber": [
+      "FeldRenderer"
+    ],
+    "USelect": [
+      "FeldRenderer",
+      "KanalEdit",
+      "NotizDialog",
+      "VerknuepfungDialog",
+      "WiedervorlageDialog"
+    ],
+    "UTextarea": [
+      "FeldRenderer",
+      "NotizDialog"
+    ],
+    "UBadge": [
+      "EingriffeKarten",
+      "EinwilligungTabelle",
+      "KanalEdit",
+      "KontaktDetailHeader",
+      "KontakthistorieListe",
+      "KundenMasterDetailDemo",
+      "LookupCheckboxListe",
+      "MitgliedschaftEdit",
+      "ProzessStatusTabelle",
+      "Rail",
+      "SonderfaelleKarten",
+      "TabBar",
+      "TokenGallery",
+      "WeiterbildungStundenkonto"
+    ],
+    "UButton": [
+      "AnrufToast",
+      "EingriffeKarten",
+      "KanalEdit",
+      "KontaktDetailHeader",
+      "KundenMasterListe",
+      "MitgliedschaftEdit",
+      "NeueFirmaDialog",
+      "NeuePersonDialog",
+      "NotizDialog",
+      "ProzessStatusTabelle",
+      "RechtAufVergessenDialog",
+      "SonderfaelleKarten",
+      "StammdatenForm",
+      "TokenGallery",
+      "Topbar",
+      "VerknuepfungDialog",
+      "WiedervorlageDialog"
+    ],
+    "UIcon": [
+      "AnrufToast",
+      "KanalEdit",
+      "KontakthistorieListe",
+      "MasterListItem",
+      "MitgliedschaftEdit",
+      "NeuePersonDialog",
+      "Rail",
+      "StammdatenForm",
+      "VerknuepfungDialog",
+      "WeiterbildungStundenkonto"
+    ],
+    "UCard": [
+      "EingriffeKarten",
+      "KundenMasterDetailDemo",
+      "MitgliedschaftEdit",
+      "StammdatenForm",
+      "WeiterbildungStundenkonto"
+    ],
+    "UAlert": [
+      "NeueFirmaDialog",
+      "NeuePersonDialog",
+      "RechtAufVergessenDialog",
+      "VerknuepfungDialog"
+    ],
+    "UAvatar": [
+      "AnrufToast",
+      "KontaktDetailHeader",
+      "MasterListItem",
+      "Rail",
+      "Topbar",
+      "VerknuepfungDialog"
+    ],
+    "UModal": [
+      "NeueFirmaDialog",
+      "NeuePersonDialog",
+      "NotizDialog",
+      "RechtAufVergessenDialog",
+      "VerknuepfungDialog",
+      "WiedervorlageDialog"
+    ],
+    "UProgress": [
+      "WeiterbildungStundenkonto"
+    ]
+  }
+}

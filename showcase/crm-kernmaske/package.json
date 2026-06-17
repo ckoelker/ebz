@@ -12,6 +12,7 @@
     "storybook": "storybook dev -p 6007 --no-open",
     "build-storybook": "storybook build",
     "depcruise": "depcruise src --include-only ^src",
+    "usage": "node scripts/usage.mjs",
     "graph": "node scripts/graph.mjs",
     "graph:archi": "node scripts/graph.mjs --archi"
   },
