@@ -10,7 +10,10 @@
     "build": "vue-tsc -b && vite build",
     "typecheck": "vue-tsc --noEmit",
     "storybook": "storybook dev -p 6007 --no-open",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "depcruise": "depcruise src --include-only ^src",
+    "graph": "node scripts/graph.mjs",
+    "graph:archi": "node scripts/graph.mjs --archi"
   },
   "dependencies": {
     "@internationalized/date": "3.10.0",
@@ -21,9 +24,11 @@
     "zod": "3.25.76"
   },
   "devDependencies": {
+    "@hpcc-js/wasm-graphviz": "1.22.1",
     "@storybook/vue3-vite": "10.4.6",
     "@types/node": "^22.19.21",
     "@vitejs/plugin-vue": "6.0.7",
+    "dependency-cruiser": "17.4.3",
     "storybook": "10.4.6",
     "typescript": "6.0.3",
     "vite": "8.0.16",

@@ -21,7 +21,20 @@ pnpm storybook        # http://localhost:6007  (Abnahme)
 pnpm build-storybook  # statischer Export nach storybook-static/
 pnpm typecheck        # vue-tsc --noEmit
 pnpm dev              # minimaler Vite-Einstieg (nur Hinweis-Seite)
+
+pnpm graph            # dependency-graph.svg (Komponenten-Baum, dependency-cruiser)
+pnpm graph:archi      # dito, nach Ordnern verdichtet
+pnpm depcruise        # nur Architektur-Regeln prüfen (CI-tauglich)
 ```
+
+### Komponenten-Baum / Verwendungsnachweis
+
+`pnpm graph` erzeugt `dependency-graph.svg` (zoom-/scrollbar im Browser) über
+[dependency-cruiser](https://github.com/sverweij/dependency-cruiser) — SVG wird via
+Graphviz-as-WASM (`@hpcc-js/wasm-graphviz`) gerendert, **kein** System-Graphviz nötig.
+Zeigt die expliziten `import`s (eigene Sub-Komponenten). **Hinweis:** Nuxt-UI-Komponenten
+(`<UButton>` …) sind Auto-Imports von `@nuxt/ui/vite` und erscheinen im Graph **nicht** —
+die bekommt man nur über einen Template-Scan.
 
 ## Inventar (7 Gruppen, 30 Stories) — alle gegen Mock-Daten
 

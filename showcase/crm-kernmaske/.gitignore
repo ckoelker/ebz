@@ -5,3 +5,5 @@ storybook-static
 # Von @nuxt/ui/vite generiert
 auto-imports.d.ts
 components.d.ts
+# dependency-cruiser-Graph (generiert)
+dependency-graph.svg
