@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
-import { getCrmOrganisationenId, getCrmOrganisationenIdAktivitaeten }
+import { getCrmOrganisationenId, getCrmOrganisationenIdAktivitaeten, getCrmOrganisationenIdUebersicht }
   from '@/api/endpoints/crm-resource/crm-resource';
-import type { OrgDetail, AktivitaetView } from '@/api/model';
+import type { OrgDetail, AktivitaetView, Uebersicht360View } from '@/api/model';
 import NeueFirmaDialog from '@/crm/dialoge/NeueFirmaDialog.vue';
 import KontaktpunktDialog from '@/crm/dialoge/KontaktpunktDialog.vue';
 import NotizDialog from '@/crm/dialoge/NotizDialog.vue';
+import Uebersicht360 from '@/crm/Uebersicht360.vue';
 
 const props = defineProps<{ id: number }>();
 const emit = defineEmits<{ (e: 'select-person', id: number): void; (e: 'select-org', id: number): void }>();
@@ -20,6 +21,10 @@ const { data: historie } = useQuery({
   queryKey: computed(() => ['crm-org-akt', props.id]),
   queryFn: async (): Promise<AktivitaetView[]> => (await getCrmOrganisationenIdAktivitaeten(props.id)) ?? [],
 });
+const { data: uebersicht } = useQuery({
+  queryKey: computed(() => ['crm-org-360', props.id]),
+  queryFn: async (): Promise<Uebersicht360View> => await getCrmOrganisationenIdUebersicht(props.id),
+});
 function reload() {
   qc.invalidateQueries({ queryKey: ['crm-org', props.id] });
   qc.invalidateQueries({ queryKey: ['crm-org-akt', props.id] });
@@ -30,6 +35,7 @@ const tabs = [
   { key: 'stammdaten', label: 'Stammdaten', icon: 'i-lucide-building-2' },
   { key: 'personen', label: 'Personen', icon: 'i-lucide-users' },
   { key: 'kommunikation', label: 'Kommunikation', icon: 'i-lucide-history' },
+  { key: 'uebersicht', label: '360°', icon: 'i-lucide-layout-dashboard' },
   { key: 'hierarchie', label: 'Hierarchie', icon: 'i-lucide-network' },
 ];
 const editStamm = ref(false);
@@ -132,6 +138,11 @@ const aktiv = (bis?: string) => !bis;
           <p v-if="a.inhaltHtml" class="text-sm text-default mt-1 whitespace-pre-wrap">{{ a.inhaltHtml }}</p>
         </li>
       </ol>
+    </UCard>
+
+    <UCard v-else-if="tab === 'uebersicht'">
+      <h3 class="font-semibold mb-3">360°-Sicht (Firmenkontext)</h3>
+      <Uebersicht360 :data="uebersicht" />
     </UCard>
 
     <UCard v-else-if="tab === 'hierarchie'">

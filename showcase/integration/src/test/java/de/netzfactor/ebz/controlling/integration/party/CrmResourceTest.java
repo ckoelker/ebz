@@ -284,6 +284,27 @@ class CrmResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "sb", roles = "crm-pflege")
+    void uebersicht360_liefertAnmeldungenUndRechnungen() {
+        long n = uniq();
+        int personId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"vorname":"Uschi","nachname":"Uebersicht %d","geschlecht":"WEIBLICH","werbesperre":false,
+                         "auskunftssperre":false}""".formatted(n))
+                .when().post("/crm/personen").then().statusCode(201).extract().jsonPath().getInt("id");
+        long orgId = given().contentType(ContentType.JSON).body("{\"name\":\"360 Firma %d\"}".formatted(n))
+                .when().post("/crm/organisationen").then().statusCode(201).extract().jsonPath().getLong("id");
+
+        // Frische Person/Firma → Endpunkt liefert (leere) Bündel, ohne am Debitor-Join zu scheitern.
+        given().when().get("/crm/personen/" + personId + "/uebersicht").then().statusCode(200)
+                .body("anmeldungen", org.hamcrest.Matchers.notNullValue())
+                .body("rechnungen", org.hamcrest.Matchers.notNullValue());
+        given().when().get("/crm/organisationen/" + orgId + "/uebersicht").then().statusCode(200)
+                .body("anmeldungen.size()", greaterThanOrEqualTo(0))
+                .body("rechnungen.size()", greaterThanOrEqualTo(0));
+    }
+
+    @Test
     void schreibenOhneRolle_istVerboten() {
         given().contentType(ContentType.JSON)
                 .body("{\"vorname\":\"X\",\"nachname\":\"Y\"}")

@@ -109,6 +109,17 @@ public class CrmResource {
             List<WeiterbildungView> nachweise) {
     }
 
+    public record AnmeldungView(Long id, String typ, String teilnehmerName, String status, String zeitraum,
+            long betragCent, Long kontextOrganisationId, String kontextOrganisation) {
+    }
+
+    public record RechnungView(Long id, String nummer, String bereich, LocalDate ausstellungsdatum,
+            String status, long summeCent, String versandStatus) {
+    }
+
+    public record Uebersicht360View(List<AnmeldungView> anmeldungen, List<RechnungView> rechnungen) {
+    }
+
     // ───────────────────────── Lookups (generisch) ─────────────────────────
 
     /** Generischer Lookup-Read: {@code kategorie} = rolle|verband|unternehmenstyp|schwerpunkt|beziehungstyp|
@@ -388,6 +399,46 @@ public class CrmResource {
     public Response weiterbildungLoeschen(@PathParam("id") Long id) {
         crm.loescheWeiterbildung(id);
         return Response.noContent().build();
+    }
+
+    // ───────────────────────── 360°-Sicht (A18) ─────────────────────────
+
+    @GET
+    @Path("/personen/{id}/uebersicht")
+    @Transactional
+    public Uebersicht360View personUebersicht(@PathParam("id") Long id) {
+        return uebersicht360(crm.uebersichtPerson(id));
+    }
+
+    @GET
+    @Path("/organisationen/{id}/uebersicht")
+    @Transactional
+    public Uebersicht360View organisationUebersicht(@PathParam("id") Long id) {
+        return uebersicht360(crm.uebersichtOrganisation(id));
+    }
+
+    private static Uebersicht360View uebersicht360(CrmService.Uebersicht u) {
+        return new Uebersicht360View(
+                u.anmeldungen().stream().map(CrmResource::anmeldungView).toList(),
+                u.rechnungen().stream().map(CrmResource::rechnungView).toList());
+    }
+
+    private static AnmeldungView anmeldungView(de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung a) {
+        String zeitraum = a.schuljahr != null
+                ? a.schuljahr + (a.halbjahr != null ? " · HJ " + a.halbjahr : "")
+                : a.semester;
+        long betrag = (a.unterrichtBetragCent == null ? 0 : a.unterrichtBetragCent)
+                + (a.uebernachtungBetragCent == null ? 0 : a.uebernachtungBetragCent)
+                + (a.semesterbetragCent == null ? 0 : a.semesterbetragCent);
+        return new AnmeldungView(a.id, a.typ == null ? null : a.typ.name(), a.teilnehmerName,
+                a.status == null ? null : a.status.name(), zeitraum, betrag, a.kontextOrganisationId(),
+                a.kontextOrganisation == null ? null : a.kontextOrganisation.name);
+    }
+
+    private static RechnungView rechnungView(de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung r) {
+        return new RechnungView(r.id, r.nummer, r.bereich == null ? null : r.bereich.name(),
+                r.ausstellungsdatum, r.status == null ? null : r.status.name(), r.summeCent(),
+                r.versandStatus == null ? null : r.versandStatus.name());
     }
 
     // ───────────────────────── Mapping ─────────────────────────

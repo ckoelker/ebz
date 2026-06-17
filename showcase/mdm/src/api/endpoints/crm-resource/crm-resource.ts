@@ -26,6 +26,7 @@ import type {
   PersonDetail,
   PersonInput,
   Treffer,
+  Uebersicht360View,
   WeiterbildungInput,
   WeiterbildungKontoView
 } from '../../model';
@@ -231,6 +232,17 @@ export const getCrmOrganisationenIdAktivitaeten = (
       );
     }
   /**
+ * @summary Organisation Uebersicht
+ */
+export const getCrmOrganisationenIdUebersicht = (
+    id: number,
+ ) => {
+      return http<Uebersicht360View>(
+      {url: `/crm/organisationen/${id}/uebersicht`, method: 'GET'
+    },
+      );
+    }
+  /**
  * @summary Personen
  */
 export const getCrmPersonen = (
@@ -299,6 +311,17 @@ export const getCrmPersonenIdEinwilligungen = (
  ) => {
       return http<EinwilligungView[]>(
       {url: `/crm/personen/${id}/einwilligungen`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * @summary Person Uebersicht
+ */
+export const getCrmPersonenIdUebersicht = (
+    id: number,
+ ) => {
+      return http<Uebersicht360View>(
+      {url: `/crm/personen/${id}/uebersicht`, method: 'GET'
     },
       );
     }
@@ -380,12 +403,14 @@ export type PostCrmOrganisationenResult = NonNullable<Awaited<ReturnType<typeof 
 export type PutCrmOrganisationenIdResult = NonNullable<Awaited<ReturnType<typeof putCrmOrganisationenId>>>
 export type GetCrmOrganisationenIdResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenId>>>
 export type GetCrmOrganisationenIdAktivitaetenResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenIdAktivitaeten>>>
+export type GetCrmOrganisationenIdUebersichtResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenIdUebersicht>>>
 export type GetCrmPersonenResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonen>>>
 export type PostCrmPersonenResult = NonNullable<Awaited<ReturnType<typeof postCrmPersonen>>>
 export type PutCrmPersonenIdResult = NonNullable<Awaited<ReturnType<typeof putCrmPersonenId>>>
 export type GetCrmPersonenIdResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenId>>>
 export type GetCrmPersonenIdAktivitaetenResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenIdAktivitaeten>>>
 export type GetCrmPersonenIdEinwilligungenResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenIdEinwilligungen>>>
+export type GetCrmPersonenIdUebersichtResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenIdUebersicht>>>
 export type GetCrmPersonenIdWeiterbildungResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenIdWeiterbildung>>>
 export type PostCrmPersonenPersonIdOrganisationenOrgIdMitgliedschaftenResult = NonNullable<Awaited<ReturnType<typeof postCrmPersonenPersonIdOrganisationenOrgIdMitgliedschaften>>>
 export type GetCrmSucheResult = NonNullable<Awaited<ReturnType<typeof getCrmSuche>>>

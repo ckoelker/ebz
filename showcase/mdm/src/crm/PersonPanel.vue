@@ -4,15 +4,16 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query';
 import { getCrmPersonenId, getCrmPersonenIdAktivitaeten, deleteCrmKontaktpunkteId,
   postCrmMitgliedschaftenIdAusscheiden, getCrmPersonenIdEinwilligungen,
   postCrmEinwilligungenIdErteilen, postCrmEinwilligungenIdWiderrufen,
-  getCrmPersonenIdWeiterbildung } from '@/api/endpoints/crm-resource/crm-resource';
+  getCrmPersonenIdWeiterbildung, getCrmPersonenIdUebersicht } from '@/api/endpoints/crm-resource/crm-resource';
 import type { PersonDetail, KontaktpunktView, MitgliedschaftView, AktivitaetView,
-  EinwilligungView, WeiterbildungKontoView } from '@/api/model';
+  EinwilligungView, WeiterbildungKontoView, Uebersicht360View } from '@/api/model';
 import NeuePersonDialog from '@/crm/dialoge/NeuePersonDialog.vue';
 import KontaktpunktDialog from '@/crm/dialoge/KontaktpunktDialog.vue';
 import MitgliedschaftDialog from '@/crm/dialoge/MitgliedschaftDialog.vue';
 import NotizDialog from '@/crm/dialoge/NotizDialog.vue';
 import EinwilligungDialog from '@/crm/dialoge/EinwilligungDialog.vue';
 import WeiterbildungDialog from '@/crm/dialoge/WeiterbildungDialog.vue';
+import Uebersicht360 from '@/crm/Uebersicht360.vue';
 import { fehlerText } from '@/crm/fehler';
 
 const props = defineProps<{ id: number }>();
@@ -38,6 +39,11 @@ const { data: weiterbildung } = useQuery({
   queryFn: async (): Promise<WeiterbildungKontoView> => await getCrmPersonenIdWeiterbildung(props.id),
 });
 
+const { data: uebersicht } = useQuery({
+  queryKey: computed(() => ['crm-person-360', props.id]),
+  queryFn: async (): Promise<Uebersicht360View> => await getCrmPersonenIdUebersicht(props.id),
+});
+
 function reload() {
   qc.invalidateQueries({ queryKey: ['crm-person', props.id] });
   qc.invalidateQueries({ queryKey: ['crm-person-akt', props.id] });
@@ -51,6 +57,7 @@ const tabs = [
   { key: 'kommunikation', label: 'Kommunikation', icon: 'i-lucide-mail' },
   { key: 'zugehoerigkeiten', label: 'Zugehörigkeiten', icon: 'i-lucide-building-2' },
   { key: 'historie', label: 'Historie', icon: 'i-lucide-history' },
+  { key: 'uebersicht', label: '360°', icon: 'i-lucide-layout-dashboard' },
   { key: 'einwilligung', label: 'Einwilligung', icon: 'i-lucide-mail-check' },
   { key: 'weiterbildung', label: 'Weiterbildung', icon: 'i-lucide-graduation-cap' },
   { key: 'dsgvo', label: 'DSGVO', icon: 'i-lucide-shield' },
@@ -243,6 +250,12 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
           <p v-if="a.inhaltHtml" class="text-sm text-default mt-1 whitespace-pre-wrap">{{ a.inhaltHtml }}</p>
         </li>
       </ol>
+    </UCard>
+
+    <!-- 360°-Sicht (A18) -->
+    <UCard v-else-if="tab === 'uebersicht'">
+      <h3 class="font-semibold mb-3">360°-Sicht</h3>
+      <Uebersicht360 :data="uebersicht" />
     </UCard>
 
     <!-- Einwilligung / Opt-In (A6) -->

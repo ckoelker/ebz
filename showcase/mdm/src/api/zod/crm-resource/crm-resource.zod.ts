@@ -452,6 +452,35 @@ export const GetCrmOrganisationenIdAktivitaetenResponseItem = zod.object({
 export const GetCrmOrganisationenIdAktivitaetenResponse = zod.array(GetCrmOrganisationenIdAktivitaetenResponseItem)
 
 /**
+ * @summary Organisation Uebersicht
+ */
+export const GetCrmOrganisationenIdUebersichtParams = zod.object({
+  "id": zod.number()
+})
+
+export const GetCrmOrganisationenIdUebersichtResponse = zod.object({
+  "anmeldungen": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "typ": zod.string().optional(),
+  "teilnehmerName": zod.string().optional(),
+  "status": zod.string().optional(),
+  "zeitraum": zod.string().optional(),
+  "betragCent": zod.number().optional(),
+  "kontextOrganisationId": zod.number().optional(),
+  "kontextOrganisation": zod.string().optional()
+})).optional(),
+  "rechnungen": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "nummer": zod.string().optional(),
+  "bereich": zod.string().optional(),
+  "ausstellungsdatum": zod.string().date().optional(),
+  "status": zod.string().optional(),
+  "summeCent": zod.number().optional(),
+  "versandStatus": zod.string().optional()
+})).optional()
+})
+
+/**
  * @summary Personen
  */
 export const getCrmPersonenQueryPageDefault = 0;
@@ -679,6 +708,35 @@ export const GetCrmPersonenIdEinwilligungenResponseItem = zod.object({
   "widerrufenAm": zod.string().datetime({"offset":true}).optional()
 })
 export const GetCrmPersonenIdEinwilligungenResponse = zod.array(GetCrmPersonenIdEinwilligungenResponseItem)
+
+/**
+ * @summary Person Uebersicht
+ */
+export const GetCrmPersonenIdUebersichtParams = zod.object({
+  "id": zod.number()
+})
+
+export const GetCrmPersonenIdUebersichtResponse = zod.object({
+  "anmeldungen": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "typ": zod.string().optional(),
+  "teilnehmerName": zod.string().optional(),
+  "status": zod.string().optional(),
+  "zeitraum": zod.string().optional(),
+  "betragCent": zod.number().optional(),
+  "kontextOrganisationId": zod.number().optional(),
+  "kontextOrganisation": zod.string().optional()
+})).optional(),
+  "rechnungen": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "nummer": zod.string().optional(),
+  "bereich": zod.string().optional(),
+  "ausstellungsdatum": zod.string().date().optional(),
+  "status": zod.string().optional(),
+  "summeCent": zod.number().optional(),
+  "versandStatus": zod.string().optional()
+})).optional()
+})
 
 /**
  * @summary Person Weiterbildung

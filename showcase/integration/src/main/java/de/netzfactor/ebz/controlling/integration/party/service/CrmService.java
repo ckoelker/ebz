@@ -22,6 +22,12 @@ import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.model.Weiterbildungsnachweis;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.DebitorRolle;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.DebitorStatus;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
 
@@ -510,6 +516,56 @@ public class CrmService {
                     PartyHoheitService.orgAdresse(z.id).ort(), u.aehnlichkeit(),
                     u.einschaetzung().name(), u.begruendung());
         }).toList();
+    }
+
+    // ───────────────────────── 360°-Sicht (A18) ─────────────────────────
+
+    /** 360°-Bündel: read-only Anmeldungen/Buchungen + festgeschriebene Rechnungen eines Kontakts. */
+    public record Uebersicht(List<Anmeldung> anmeldungen, List<Rechnung> rechnungen) {
+    }
+
+    /**
+     * 360°-Sicht einer Person: ihre eigenen Anmeldungen/Buchungen (als Teilnehmer) + die Rechnungen
+     * ihres PRIVAT-Debitors. Firmenkontext-Belege gehören zur jeweiligen Organisation und erscheinen
+     * dort, nicht hier (DSGVO-Trennung privat/dienstlich).
+     */
+    public Uebersicht uebersichtPerson(Long personId) {
+        Person p = mussPerson(personId);
+        List<Anmeldung> anmeldungen = Anmeldung.list("teilnehmerPerson.id = ?1 order by id desc", personId);
+        List<Rechnung> rechnungen = rechnungenFuer(PartyHoheitService.privatDebitorSchluessel(p),
+                DebitorRolle.PRIVAT);
+        return new Uebersicht(anmeldungen, rechnungen);
+    }
+
+    /**
+     * 360°-Sicht einer Organisation (DSGVO-Scope wie {@link BuchungService#firmensicht}): <b>nur</b>
+     * Buchungen im Kontext dieser Organisation + die Rechnungen ihres FIRMA-Debitors. Privatbuchungen
+     * der verknüpften Personen sind strukturell ausgeschlossen.
+     */
+    public Uebersicht uebersichtOrganisation(Long orgId) {
+        Organisation o = mussOrganisation(orgId);
+        List<Anmeldung> anmeldungen = Anmeldung.list("kontextOrganisation.id = ?1 order by id desc", orgId);
+        List<Rechnung> rechnungen = rechnungenFuer(o.matchSchluessel, DebitorRolle.FIRMA);
+        return new Uebersicht(anmeldungen, rechnungen);
+    }
+
+    /**
+     * Festgeschriebene Rechnungen (kein {@code ENTWURF}) der AKTIVen Debitoren zu einem
+     * {@code matchSchluessel} — exakter Schlüssel-Join auf die bestehende Debitor-Hoheit (wie der
+     * Portal-Self-Service), ohne neue Debitoren anzulegen.
+     */
+    private static List<Rechnung> rechnungenFuer(String matchSchluessel, DebitorRolle rolle) {
+        if (matchSchluessel == null || matchSchluessel.isBlank()) {
+            return List.of();
+        }
+        List<Debitor> debitoren = Debitor.list("matchSchluessel = ?1 and rolle = ?2 and status = ?3",
+                matchSchluessel, rolle, DebitorStatus.AKTIV);
+        if (debitoren.isEmpty()) {
+            return List.of();
+        }
+        Set<Long> ids = debitoren.stream().map(d -> d.id).collect(Collectors.toSet());
+        return Rechnung.list("debitor.id in ?1 and status <> ?2 order by ausstellungsdatum desc, id desc",
+                ids, RechnungStatus.ENTWURF);
     }
 
     // ───────────────────────── Suche ─────────────────────────
