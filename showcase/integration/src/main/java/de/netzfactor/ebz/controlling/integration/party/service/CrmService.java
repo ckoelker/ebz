@@ -1,6 +1,8 @@
 package de.netzfactor.ebz.controlling.integration.party.service;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -8,13 +10,16 @@ import java.util.stream.Collectors;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
 import de.netzfactor.ebz.controlling.integration.party.model.Aktivitaet;
+import de.netzfactor.ebz.controlling.integration.party.model.Einwilligung;
 import de.netzfactor.ebz.controlling.integration.party.model.Kontaktpunkt;
 import de.netzfactor.ebz.controlling.integration.party.model.Lookups;
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
+import de.netzfactor.ebz.controlling.integration.party.model.Weiterbildungsnachweis;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
 
@@ -69,6 +74,16 @@ public class CrmService {
     /** Eingabe einer Aktivität/Kontakthistorie (A9). Bezug = Person und/oder Organisation. */
     public record AktivitaetInput(@NotBlank String typCode, String richtung, @NotBlank String betreff,
             String inhaltHtml, Long personId, Long organisationId, Integer dauerMinuten) {
+    }
+
+    /** Eingabe einer Marketing-Einwilligung (A6). {@code organisationId} = null → globale Einwilligung. */
+    public record EinwilligungInput(@NotNull Long personId, Long organisationId, @NotBlank String kanal,
+            @NotBlank String zweck, String rechtsgrundlage, String quelleCode) {
+    }
+
+    /** Eingabe eines Weiterbildungsnachweises (A19, §34c GewO / §15b MaBV). */
+    public record WeiterbildungInput(@NotNull Long personId, @NotBlank String titel, String anbieter,
+            @NotNull BigDecimal stunden, @NotNull LocalDate datum, boolean extern) {
     }
 
     // ───────────────────────── Person ─────────────────────────
@@ -327,6 +342,109 @@ public class CrmService {
                         + "order by zeitpunkt desc", orgId);
     }
 
+    // ───────────────────────── Einwilligung / Opt-In (A6) ─────────────────────────
+
+    /** Neue Einwilligung erfassen: startet {@code AUSSTEHEND} (Double-Opt-In folgt mit {@link #einwilligungErteilen}). */
+    @Transactional
+    public Einwilligung createEinwilligung(EinwilligungInput in) {
+        Einwilligung e = new Einwilligung();
+        e.person = mussPerson(in.personId());
+        e.organisation = in.organisationId() == null ? null : mussOrganisation(in.organisationId());
+        e.kanal = enumOf(Einwilligung.Kanal.class, in.kanal(), null);
+        e.zweck = enumOf(Einwilligung.Zweck.class, in.zweck(), null);
+        if (e.kanal == null || e.zweck == null) {
+            throw new RegelVerletzung("Kanal und Zweck sind erforderlich.");
+        }
+        e.rechtsgrundlage = enumOf(Einwilligung.Rechtsgrundlage.class, in.rechtsgrundlage(),
+                Einwilligung.Rechtsgrundlage.EINWILLIGUNG_6_1_A);
+        e.quelle = lookup(Lookups.LeadQuelle.class, in.quelleCode());
+        e.status = Einwilligung.Status.AUSSTEHEND;
+        e.ausstehendSeit = LocalDateTime.now();
+        e.persist();
+        return e;
+    }
+
+    /** Double-Opt-In bestätigen: {@code ERTEILT} + Nachweis (Token/Zeit; IP käme aus dem Bestätigungs-Request). */
+    @Transactional
+    public Einwilligung einwilligungErteilen(Long id) {
+        Einwilligung e = mussEinwilligung(id);
+        if (e.status == Einwilligung.Status.WIDERRUFEN) {
+            throw new RegelVerletzung("Eine widerrufene Einwilligung kann nicht erteilt werden.");
+        }
+        e.status = Einwilligung.Status.ERTEILT;
+        e.erteiltAm = LocalDateTime.now();
+        e.nachweisToken = java.util.UUID.randomUUID().toString();
+        e.nachweisZeit = e.erteiltAm;
+        return e;
+    }
+
+    /** Einwilligung widerrufen (jederzeit, Art. 7 Abs. 3 DSGVO). */
+    @Transactional
+    public Einwilligung einwilligungWiderrufen(Long id) {
+        Einwilligung e = mussEinwilligung(id);
+        e.status = Einwilligung.Status.WIDERRUFEN;
+        e.widerrufenAm = LocalDateTime.now();
+        return e;
+    }
+
+    public List<Einwilligung> einwilligungenPerson(Long personId) {
+        return Einwilligung.list("person.id = ?1 order by id desc", personId);
+    }
+
+    // ───────────────────────── Weiterbildung §34c / §15b MaBV (A19) ─────────────────────────
+
+    /** Statutarisches 3-Jahres-Soll der Weiterbildungspflicht (§15b MaBV: 20 Std. je 3-Jahres-Zeitraum). */
+    private static final BigDecimal SOLL_STUNDEN = new BigDecimal("20");
+    /** Beginn des ersten statutarischen Weiterbildungszeitraums (MaBV: ab 2018, danach 3-Jahres-Blöcke). */
+    private static final int ZEITRAUM_BASIS_JAHR = 2018;
+
+    /** Abgeleitetes Stundenkonto für den laufenden 3-Jahres-Zeitraum inkl. Frist-Ampel. */
+    public record WeiterbildungKonto(LocalDate zeitraumVon, LocalDate zeitraumBis, BigDecimal soll,
+            BigDecimal summe, BigDecimal rest, boolean erfuellt, String ampel,
+            List<Weiterbildungsnachweis> nachweise) {
+    }
+
+    @Transactional
+    public Weiterbildungsnachweis createWeiterbildung(WeiterbildungInput in) {
+        if (in.stunden().signum() <= 0) {
+            throw new RegelVerletzung("Stunden müssen größer als 0 sein.");
+        }
+        Weiterbildungsnachweis w = new Weiterbildungsnachweis();
+        w.person = mussPerson(in.personId());
+        w.titel = in.titel().trim();
+        w.anbieter = leer(in.anbieter());
+        w.stunden = in.stunden();
+        w.datum = in.datum();
+        w.extern = in.extern();
+        w.persist();
+        return w;
+    }
+
+    @Transactional
+    public void loescheWeiterbildung(Long id) {
+        if (!Weiterbildungsnachweis.deleteById(id)) {
+            throw RegelVerletzung.nichtGefunden("Weiterbildungsnachweis nicht gefunden: " + id);
+        }
+    }
+
+    /** Stundenkonto der Person für den aktuell laufenden statutarischen 3-Jahres-Zeitraum. */
+    public WeiterbildungKonto weiterbildungskonto(Long personId) {
+        mussPerson(personId);
+        int jahr = LocalDate.now().getYear();
+        int startJahr = ZEITRAUM_BASIS_JAHR + 3 * ((jahr - ZEITRAUM_BASIS_JAHR) / 3);
+        LocalDate von = LocalDate.of(startJahr, 1, 1);
+        LocalDate bis = LocalDate.of(startJahr + 2, 12, 31);
+        List<Weiterbildungsnachweis> alle = Weiterbildungsnachweis.list("person.id = ?1 order by datum desc", personId);
+        BigDecimal summe = alle.stream()
+                .filter(w -> !w.datum.isBefore(von) && !w.datum.isAfter(bis))
+                .map(w -> w.stunden).reduce(BigDecimal.ZERO, BigDecimal::add);
+        boolean erfuellt = summe.compareTo(SOLL_STUNDEN) >= 0;
+        BigDecimal rest = erfuellt ? BigDecimal.ZERO : SOLL_STUNDEN.subtract(summe);
+        // Ampel: erfüllt = grün; sonst rot im letzten Jahr des Zeitraums, davor gelb (Frist-Mahnung).
+        String ampel = erfuellt ? "GRUEN" : (jahr == startJahr + 2 ? "ROT" : "GELB");
+        return new WeiterbildungKonto(von, bis, SOLL_STUNDEN, summe, rest, erfuellt, ampel, alle);
+    }
+
     // ───────────────────────── Suche ─────────────────────────
 
     public List<Treffer> suche(String q) {
@@ -372,6 +490,14 @@ public class CrmService {
             throw RegelVerletzung.nichtGefunden("Mitgliedschaft nicht gefunden: " + id);
         }
         return m;
+    }
+
+    private static Einwilligung mussEinwilligung(Long id) {
+        Einwilligung e = Einwilligung.findById(id);
+        if (e == null) {
+            throw RegelVerletzung.nichtGefunden("Einwilligung nicht gefunden: " + id);
+        }
+        return e;
     }
 
     private static Lookups.Land land(String code) {

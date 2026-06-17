@@ -95,6 +95,20 @@ public class CrmResource {
             java.time.LocalDateTime zeitpunkt, Integer dauerMinuten) {
     }
 
+    public record EinwilligungView(Long id, String kanal, String zweck, String status, String rechtsgrundlage,
+            String quelleCode, Long organisationId, String organisation, java.time.LocalDateTime ausstehendSeit,
+            java.time.LocalDateTime erteiltAm, java.time.LocalDateTime widerrufenAm) {
+    }
+
+    public record WeiterbildungView(Long id, String titel, String anbieter, java.math.BigDecimal stunden,
+            LocalDate datum, boolean extern) {
+    }
+
+    public record WeiterbildungKontoView(LocalDate zeitraumVon, LocalDate zeitraumBis, java.math.BigDecimal soll,
+            java.math.BigDecimal summe, java.math.BigDecimal rest, boolean erfuellt, String ampel,
+            List<WeiterbildungView> nachweise) {
+    }
+
     // ───────────────────────── Lookups (generisch) ─────────────────────────
 
     /** Generischer Lookup-Read: {@code kategorie} = rolle|verband|unternehmenstyp|schwerpunkt|beziehungstyp|
@@ -304,6 +318,67 @@ public class CrmResource {
         return Response.status(Response.Status.CREATED).entity(aktivitaetView(crm.createAktivitaet(in))).build();
     }
 
+    // ───────────────────────── Einwilligung / Opt-In (A6) ─────────────────────────
+
+    @GET
+    @Path("/personen/{id}/einwilligungen")
+    @Transactional
+    public List<EinwilligungView> personEinwilligungen(@PathParam("id") Long id) {
+        return crm.einwilligungenPerson(id).stream().map(CrmResource::einwilligungView).toList();
+    }
+
+    @RolesAllowed("crm-pflege")
+    @POST
+    @Path("/einwilligungen")
+    @Transactional
+    public Response einwilligungAnlegen(@Valid CrmService.EinwilligungInput in) {
+        return Response.status(Response.Status.CREATED).entity(einwilligungView(crm.createEinwilligung(in))).build();
+    }
+
+    @RolesAllowed("crm-pflege")
+    @POST
+    @Path("/einwilligungen/{id}/erteilen")
+    @Transactional
+    public EinwilligungView einwilligungErteilen(@PathParam("id") Long id) {
+        return einwilligungView(crm.einwilligungErteilen(id));
+    }
+
+    @RolesAllowed("crm-pflege")
+    @POST
+    @Path("/einwilligungen/{id}/widerrufen")
+    @Transactional
+    public EinwilligungView einwilligungWiderrufen(@PathParam("id") Long id) {
+        return einwilligungView(crm.einwilligungWiderrufen(id));
+    }
+
+    // ───────────────────────── Weiterbildung §34c (A19) ─────────────────────────
+
+    @GET
+    @Path("/personen/{id}/weiterbildung")
+    @Transactional
+    public WeiterbildungKontoView personWeiterbildung(@PathParam("id") Long id) {
+        CrmService.WeiterbildungKonto k = crm.weiterbildungskonto(id);
+        return new WeiterbildungKontoView(k.zeitraumVon(), k.zeitraumBis(), k.soll(), k.summe(), k.rest(),
+                k.erfuellt(), k.ampel(), k.nachweise().stream().map(CrmResource::weiterbildungView).toList());
+    }
+
+    @RolesAllowed("crm-pflege")
+    @POST
+    @Path("/weiterbildung")
+    @Transactional
+    public Response weiterbildungAnlegen(@Valid CrmService.WeiterbildungInput in) {
+        return Response.status(Response.Status.CREATED)
+                .entity(weiterbildungView(crm.createWeiterbildung(in))).build();
+    }
+
+    @RolesAllowed("crm-pflege")
+    @DELETE
+    @Path("/weiterbildung/{id}")
+    public Response weiterbildungLoeschen(@PathParam("id") Long id) {
+        crm.loescheWeiterbildung(id);
+        return Response.noContent().build();
+    }
+
     // ───────────────────────── Mapping ─────────────────────────
 
     private static PersonDetail personDetail(Person p) {
@@ -345,6 +420,20 @@ public class CrmResource {
                 m.rolle == null ? null : m.rolle.code, m.rolle == null ? null : m.rolle.bezeichnung,
                 m.position, m.abteilung, m.hauptzugehoerigkeit, m.hauptansprechpartner, m.buchungsberechtigt,
                 m.rechnungsempfaenger, m.gueltigVon, m.gueltigBis);
+    }
+
+    private static EinwilligungView einwilligungView(de.netzfactor.ebz.controlling.integration.party.model.Einwilligung e) {
+        return new EinwilligungView(e.id, e.kanal == null ? null : e.kanal.name(),
+                e.zweck == null ? null : e.zweck.name(), e.status == null ? null : e.status.name(),
+                e.rechtsgrundlage == null ? null : e.rechtsgrundlage.name(), code(e.quelle),
+                e.organisation == null ? null : e.organisation.id,
+                e.organisation == null ? null : e.organisation.name,
+                e.ausstehendSeit, e.erteiltAm, e.widerrufenAm);
+    }
+
+    private static WeiterbildungView weiterbildungView(
+            de.netzfactor.ebz.controlling.integration.party.model.Weiterbildungsnachweis w) {
+        return new WeiterbildungView(w.id, w.titel, w.anbieter, w.stunden, w.datum, w.extern);
     }
 
     private static AktivitaetView aktivitaetView(Aktivitaet a) {

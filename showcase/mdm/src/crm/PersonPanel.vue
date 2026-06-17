@@ -2,12 +2,17 @@
 import { ref, computed } from 'vue';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query';
 import { getCrmPersonenId, getCrmPersonenIdAktivitaeten, deleteCrmKontaktpunkteId,
-  postCrmMitgliedschaftenIdAusscheiden } from '@/api/endpoints/crm-resource/crm-resource';
-import type { PersonDetail, KontaktpunktView, MitgliedschaftView, AktivitaetView } from '@/api/model';
+  postCrmMitgliedschaftenIdAusscheiden, getCrmPersonenIdEinwilligungen,
+  postCrmEinwilligungenIdErteilen, postCrmEinwilligungenIdWiderrufen,
+  getCrmPersonenIdWeiterbildung } from '@/api/endpoints/crm-resource/crm-resource';
+import type { PersonDetail, KontaktpunktView, MitgliedschaftView, AktivitaetView,
+  EinwilligungView, WeiterbildungKontoView } from '@/api/model';
 import NeuePersonDialog from '@/crm/dialoge/NeuePersonDialog.vue';
 import KontaktpunktDialog from '@/crm/dialoge/KontaktpunktDialog.vue';
 import MitgliedschaftDialog from '@/crm/dialoge/MitgliedschaftDialog.vue';
 import NotizDialog from '@/crm/dialoge/NotizDialog.vue';
+import EinwilligungDialog from '@/crm/dialoge/EinwilligungDialog.vue';
+import WeiterbildungDialog from '@/crm/dialoge/WeiterbildungDialog.vue';
 import { fehlerText } from '@/crm/fehler';
 
 const props = defineProps<{ id: number }>();
@@ -23,9 +28,21 @@ const { data: historie } = useQuery({
   queryFn: async (): Promise<AktivitaetView[]> => (await getCrmPersonenIdAktivitaeten(props.id)) ?? [],
 });
 
+const { data: einwilligungen } = useQuery({
+  queryKey: computed(() => ['crm-person-einw', props.id]),
+  queryFn: async (): Promise<EinwilligungView[]> => (await getCrmPersonenIdEinwilligungen(props.id)) ?? [],
+});
+
+const { data: weiterbildung } = useQuery({
+  queryKey: computed(() => ['crm-person-wb', props.id]),
+  queryFn: async (): Promise<WeiterbildungKontoView> => await getCrmPersonenIdWeiterbildung(props.id),
+});
+
 function reload() {
   qc.invalidateQueries({ queryKey: ['crm-person', props.id] });
   qc.invalidateQueries({ queryKey: ['crm-person-akt', props.id] });
+  qc.invalidateQueries({ queryKey: ['crm-person-einw', props.id] });
+  qc.invalidateQueries({ queryKey: ['crm-person-wb', props.id] });
 }
 
 const tab = ref('stammdaten');
@@ -34,6 +51,8 @@ const tabs = [
   { key: 'kommunikation', label: 'Kommunikation', icon: 'i-lucide-mail' },
   { key: 'zugehoerigkeiten', label: 'Zugehörigkeiten', icon: 'i-lucide-building-2' },
   { key: 'historie', label: 'Historie', icon: 'i-lucide-history' },
+  { key: 'einwilligung', label: 'Einwilligung', icon: 'i-lucide-mail-check' },
+  { key: 'weiterbildung', label: 'Weiterbildung', icon: 'i-lucide-graduation-cap' },
   { key: 'dsgvo', label: 'DSGVO', icon: 'i-lucide-shield' },
 ];
 
@@ -44,6 +63,8 @@ const kpEdit = ref<KontaktpunktView | null>(null);
 const mgDialog = ref(false);
 const mgEdit = ref<MitgliedschaftView | null>(null);
 const notizDialog = ref(false);
+const einwDialog = ref(false);
+const wbDialog = ref(false);
 const meldung = ref('');
 
 const richtungIcon = (r?: string) =>
@@ -63,6 +84,27 @@ const mgAus = useMutation({
   mutationFn: (id: number) => postCrmMitgliedschaftenIdAusscheiden(id),
   onSuccess: reload,
   onError: (e) => { meldung.value = fehlerText(e); },
+});
+const einwErteilen = useMutation({
+  mutationFn: (id: number) => postCrmEinwilligungenIdErteilen(id),
+  onSuccess: reload,
+  onError: (e) => { meldung.value = fehlerText(e); },
+});
+const einwWiderrufen = useMutation({
+  mutationFn: (id: number) => postCrmEinwilligungenIdWiderrufen(id),
+  onSuccess: reload,
+  onError: (e) => { meldung.value = fehlerText(e); },
+});
+
+const einwColor = (s?: string) =>
+  s === 'ERTEILT' ? 'success' : s === 'WIDERRUFEN' ? 'error' : 'warning';
+const ampel = computed(() => {
+  const a = weiterbildung.value?.ampel;
+  return a === 'GRUEN'
+    ? { color: 'success' as const, icon: 'i-lucide-circle-check', iconClass: 'text-success-500 size-8', text: 'Erfüllt' }
+    : a === 'ROT'
+      ? { color: 'error' as const, icon: 'i-lucide-circle-alert', iconClass: 'text-error-500 size-8', text: 'Frist kritisch' }
+      : { color: 'warning' as const, icon: 'i-lucide-circle-dot', iconClass: 'text-warning-500 size-8', text: 'In Bearbeitung' };
 });
 
 const kpIcon = (typ?: string) =>
@@ -203,6 +245,73 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
       </ol>
     </UCard>
 
+    <!-- Einwilligung / Opt-In (A6) -->
+    <UCard v-else-if="tab === 'einwilligung'">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-semibold">Marketing-Einwilligungen</h3>
+        <UButton size="sm" icon="i-lucide-plus" @click="einwDialog = true">Opt-In erfassen</UButton>
+      </div>
+      <UAlert v-if="person.werbesperre" color="warning" variant="soft" class="mb-3"
+              icon="i-lucide-shield-alert"
+              title="Werbesperre aktiv – Marketing-Opt-Ins werden in der Verarbeitung überstimmt." />
+      <p v-if="!einwilligungen?.length" class="text-sm text-muted">Noch keine Einwilligungen erfasst.</p>
+      <ul class="divide-y divide-default">
+        <li v-for="e in einwilligungen" :key="e.id" class="flex items-center gap-3 py-2">
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium">
+              {{ e.zweck }} <span class="text-muted">· {{ e.kanal }}</span>
+              <span v-if="e.organisation" class="text-muted"> · {{ e.organisation }}</span>
+            </div>
+            <div class="text-xs text-muted">
+              {{ e.rechtsgrundlage }}<span v-if="e.quelleCode"> · Quelle {{ e.quelleCode }}</span>
+            </div>
+          </div>
+          <UBadge :color="einwColor(e.status)" variant="soft" size="sm">{{ e.status }}</UBadge>
+          <UButton v-if="e.status === 'AUSSTEHEND'" color="success" variant="ghost" size="xs"
+                   icon="i-lucide-check" title="Double-Opt-In bestätigen" @click="einwErteilen.mutate(e.id!)" />
+          <UButton v-if="e.status !== 'WIDERRUFEN'" color="error" variant="ghost" size="xs"
+                   icon="i-lucide-ban" title="Widerrufen" @click="einwWiderrufen.mutate(e.id!)" />
+        </li>
+      </ul>
+    </UCard>
+
+    <!-- Weiterbildung §34c / §15b MaBV (A19) -->
+    <UCard v-else-if="tab === 'weiterbildung'">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-semibold">Weiterbildungspflicht §34c GewO</h3>
+        <UButton size="sm" icon="i-lucide-plus" @click="wbDialog = true">Nachweis erfassen</UButton>
+      </div>
+      <div v-if="weiterbildung" class="flex items-center gap-4 p-3 rounded-lg bg-elevated mb-4">
+        <UIcon :name="ampel.icon" :class="ampel.iconClass" />
+        <div class="flex-1">
+          <div class="text-sm font-semibold">
+            {{ weiterbildung.summe }} / {{ weiterbildung.soll }} Std.
+            <UBadge :color="ampel.color" variant="soft" size="sm" class="ml-1">{{ ampel.text }}</UBadge>
+          </div>
+          <div class="text-xs text-muted">
+            Zeitraum {{ weiterbildung.zeitraumVon }} – {{ weiterbildung.zeitraumBis }}
+            <span v-if="!weiterbildung.erfuellt"> · noch {{ weiterbildung.rest }} Std. offen</span>
+          </div>
+          <UProgress :model-value="Number(weiterbildung.summe) || 0" :max="Number(weiterbildung.soll) || 20"
+                     :color="ampel.color" size="sm" class="mt-2" />
+        </div>
+      </div>
+      <p v-if="!weiterbildung?.nachweise?.length" class="text-sm text-muted">Noch keine Nachweise erfasst.</p>
+      <ul class="divide-y divide-default">
+        <li v-for="w in weiterbildung?.nachweise" :key="w.id" class="flex items-center gap-3 py-2">
+          <UIcon name="i-lucide-award" class="text-dimmed" />
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium">{{ w.titel }}</div>
+            <div class="text-xs text-muted">
+              {{ w.datum }} <span v-if="w.anbieter">· {{ w.anbieter }}</span>
+            </div>
+          </div>
+          <UBadge color="neutral" variant="soft" size="sm">{{ w.stunden }} Std.</UBadge>
+          <UBadge v-if="w.extern" color="info" variant="outline" size="sm">extern</UBadge>
+        </li>
+      </ul>
+    </UCard>
+
     <!-- DSGVO -->
     <UCard v-else-if="tab === 'dsgvo'">
       <h3 class="font-semibold mb-3">Sperren & Betroffenenrechte</h3>
@@ -221,5 +330,7 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
       v-model:open="kpDialog" owner-type="person" :owner-id="id" :existing="kpEdit" @saved="reload" />
     <MitgliedschaftDialog v-model:open="mgDialog" :person-id="id" :existing="mgEdit" @saved="reload" />
     <NotizDialog v-model:open="notizDialog" owner-type="person" :owner-id="id" @saved="reload" />
+    <EinwilligungDialog v-model:open="einwDialog" :person-id="id" @saved="reload" />
+    <WeiterbildungDialog v-model:open="wbDialog" :person-id="id" @saved="reload" />
   </div>
 </template>

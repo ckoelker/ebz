@@ -27,6 +27,66 @@ export const PostCrmAktivitaetenBody = zod.object({
 export const PostCrmAktivitaetenResponse = zod.unknown()
 
 /**
+ * @summary Einwilligung Anlegen
+ */
+export const postCrmEinwilligungenBodyKanalRegExp = new RegExp('\\S');
+export const postCrmEinwilligungenBodyZweckRegExp = new RegExp('\\S');
+
+
+export const PostCrmEinwilligungenBody = zod.object({
+  "personId": zod.number(),
+  "organisationId": zod.number().optional(),
+  "kanal": zod.string().regex(postCrmEinwilligungenBodyKanalRegExp),
+  "zweck": zod.string().regex(postCrmEinwilligungenBodyZweckRegExp),
+  "rechtsgrundlage": zod.string().optional(),
+  "quelleCode": zod.string().optional()
+})
+
+export const PostCrmEinwilligungenResponse = zod.unknown()
+
+/**
+ * @summary Einwilligung Erteilen
+ */
+export const PostCrmEinwilligungenIdErteilenParams = zod.object({
+  "id": zod.number()
+})
+
+export const PostCrmEinwilligungenIdErteilenResponse = zod.object({
+  "id": zod.number().optional(),
+  "kanal": zod.string().optional(),
+  "zweck": zod.string().optional(),
+  "status": zod.string().optional(),
+  "rechtsgrundlage": zod.string().optional(),
+  "quelleCode": zod.string().optional(),
+  "organisationId": zod.number().optional(),
+  "organisation": zod.string().optional(),
+  "ausstehendSeit": zod.string().datetime({"offset":true}).optional(),
+  "erteiltAm": zod.string().datetime({"offset":true}).optional(),
+  "widerrufenAm": zod.string().datetime({"offset":true}).optional()
+})
+
+/**
+ * @summary Einwilligung Widerrufen
+ */
+export const PostCrmEinwilligungenIdWiderrufenParams = zod.object({
+  "id": zod.number()
+})
+
+export const PostCrmEinwilligungenIdWiderrufenResponse = zod.object({
+  "id": zod.number().optional(),
+  "kanal": zod.string().optional(),
+  "zweck": zod.string().optional(),
+  "status": zod.string().optional(),
+  "rechtsgrundlage": zod.string().optional(),
+  "quelleCode": zod.string().optional(),
+  "organisationId": zod.number().optional(),
+  "organisation": zod.string().optional(),
+  "ausstehendSeit": zod.string().datetime({"offset":true}).optional(),
+  "erteiltAm": zod.string().datetime({"offset":true}).optional(),
+  "widerrufenAm": zod.string().datetime({"offset":true}).optional()
+})
+
+/**
  * @summary Kontaktpunkt Anlegen
  */
 export const postCrmKontaktpunkteBodyTypRegExp = new RegExp('\\S');
@@ -573,6 +633,53 @@ export const GetCrmPersonenIdAktivitaetenResponseItem = zod.object({
 export const GetCrmPersonenIdAktivitaetenResponse = zod.array(GetCrmPersonenIdAktivitaetenResponseItem)
 
 /**
+ * @summary Person Einwilligungen
+ */
+export const GetCrmPersonenIdEinwilligungenParams = zod.object({
+  "id": zod.number()
+})
+
+export const GetCrmPersonenIdEinwilligungenResponseItem = zod.object({
+  "id": zod.number().optional(),
+  "kanal": zod.string().optional(),
+  "zweck": zod.string().optional(),
+  "status": zod.string().optional(),
+  "rechtsgrundlage": zod.string().optional(),
+  "quelleCode": zod.string().optional(),
+  "organisationId": zod.number().optional(),
+  "organisation": zod.string().optional(),
+  "ausstehendSeit": zod.string().datetime({"offset":true}).optional(),
+  "erteiltAm": zod.string().datetime({"offset":true}).optional(),
+  "widerrufenAm": zod.string().datetime({"offset":true}).optional()
+})
+export const GetCrmPersonenIdEinwilligungenResponse = zod.array(GetCrmPersonenIdEinwilligungenResponseItem)
+
+/**
+ * @summary Person Weiterbildung
+ */
+export const GetCrmPersonenIdWeiterbildungParams = zod.object({
+  "id": zod.number()
+})
+
+export const GetCrmPersonenIdWeiterbildungResponse = zod.object({
+  "zeitraumVon": zod.string().date().optional(),
+  "zeitraumBis": zod.string().date().optional(),
+  "soll": zod.number().optional(),
+  "summe": zod.number().optional(),
+  "rest": zod.number().optional(),
+  "erfuellt": zod.boolean().optional(),
+  "ampel": zod.string().optional(),
+  "nachweise": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "titel": zod.string().optional(),
+  "anbieter": zod.string().optional(),
+  "stunden": zod.number().optional(),
+  "datum": zod.string().date().optional(),
+  "extern": zod.boolean().optional()
+})).optional()
+})
+
+/**
  * @summary Mitgliedschaft Anlegen
  */
 export const PostCrmPersonenPersonIdOrganisationenOrgIdMitgliedschaftenParams = zod.object({
@@ -611,4 +718,30 @@ export const GetCrmSucheResponseItem = zod.object({
   "untertitel": zod.string().optional()
 })
 export const GetCrmSucheResponse = zod.array(GetCrmSucheResponseItem)
+
+/**
+ * @summary Weiterbildung Anlegen
+ */
+export const postCrmWeiterbildungBodyTitelRegExp = new RegExp('\\S');
+
+
+export const PostCrmWeiterbildungBody = zod.object({
+  "personId": zod.number(),
+  "titel": zod.string().regex(postCrmWeiterbildungBodyTitelRegExp),
+  "anbieter": zod.string().optional(),
+  "stunden": zod.number(),
+  "datum": zod.string().date(),
+  "extern": zod.boolean().optional()
+})
+
+export const PostCrmWeiterbildungResponse = zod.unknown()
+
+/**
+ * @summary Weiterbildung Loeschen
+ */
+export const DeleteCrmWeiterbildungIdParams = zod.object({
+  "id": zod.number()
+})
+
+export const DeleteCrmWeiterbildungIdResponse = zod.unknown()
 

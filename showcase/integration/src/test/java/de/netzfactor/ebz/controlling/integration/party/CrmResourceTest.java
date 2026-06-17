@@ -175,6 +175,75 @@ class CrmResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "sb", roles = "crm-pflege")
+    void einwilligung_optInLebenszyklus_ausstehend_erteilt_widerrufen() {
+        long n = uniq();
+        int personId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"vorname":"Olga","nachname":"OptIn %d","geschlecht":"WEIBLICH","werbesperre":false,
+                         "auskunftssperre":false}""".formatted(n))
+                .when().post("/crm/personen").then().statusCode(201).extract().jsonPath().getInt("id");
+
+        int einwId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"personId":%d,"kanal":"EMAIL","zweck":"NEWSLETTER","quelleCode":"WEBSITE"}""".formatted(personId))
+                .when().post("/crm/einwilligungen").then().statusCode(201)
+                .body("status", equalTo("AUSSTEHEND"))
+                .body("kanal", equalTo("EMAIL"))
+                .body("zweck", equalTo("NEWSLETTER"))
+                .extract().jsonPath().getInt("id");
+
+        // Double-Opt-In bestätigen → ERTEILT
+        given().contentType(ContentType.JSON)
+                .when().post("/crm/einwilligungen/" + einwId + "/erteilen").then().statusCode(200)
+                .body("status", equalTo("ERTEILT"));
+
+        // Widerruf
+        given().contentType(ContentType.JSON)
+                .when().post("/crm/einwilligungen/" + einwId + "/widerrufen").then().statusCode(200)
+                .body("status", equalTo("WIDERRUFEN"));
+
+        given().when().get("/crm/personen/" + personId + "/einwilligungen").then().statusCode(200)
+                .body("status", hasItem("WIDERRUFEN"));
+    }
+
+    @Test
+    @TestSecurity(user = "sb", roles = "crm-pflege")
+    void weiterbildung_stundenkonto_ampelSchaltetBeiErfuellung() {
+        long n = uniq();
+        int personId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"vorname":"Walter","nachname":"Weiterbildung %d","geschlecht":"MAENNLICH","werbesperre":false,
+                         "auskunftssperre":false}""".formatted(n))
+                .when().post("/crm/personen").then().statusCode(201).extract().jsonPath().getInt("id");
+
+        // Leeres Konto im laufenden Zeitraum → nicht erfüllt
+        given().when().get("/crm/personen/" + personId + "/weiterbildung").then().statusCode(200)
+                .body("soll", equalTo(20))
+                .body("erfuellt", equalTo(false));
+
+        String heute = java.time.LocalDate.now().toString();
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"personId":%d,"titel":"Maklerrecht-Update","anbieter":"EBZ","stunden":12,"datum":"%s","extern":false}"""
+                        .formatted(personId, heute))
+                .when().post("/crm/weiterbildung").then().statusCode(201)
+                .body("stunden", equalTo(12));
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"personId":%d,"titel":"WEG-Verwaltung","anbieter":"Verband","stunden":8,"datum":"%s","extern":true}"""
+                        .formatted(personId, heute))
+                .when().post("/crm/weiterbildung").then().statusCode(201);
+
+        // 12 + 8 = 20 → erfüllt, Ampel grün
+        given().when().get("/crm/personen/" + personId + "/weiterbildung").then().statusCode(200)
+                .body("summe", equalTo(20.0f))
+                .body("erfuellt", equalTo(true))
+                .body("ampel", equalTo("GRUEN"))
+                .body("nachweise.size()", equalTo(2));
+    }
+
+    @Test
     void schreibenOhneRolle_istVerboten() {
         given().contentType(ContentType.JSON)
                 .body("{\"vorname\":\"X\",\"nachname\":\"Y\"}")
