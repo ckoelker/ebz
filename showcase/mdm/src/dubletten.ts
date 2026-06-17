@@ -42,9 +42,10 @@ export const offeneAnmeldungen = async (status?: AnmeldungStatus): Promise<Offen
 
 export const bestaetigeAnmeldung = (id: number) => run(() => postPartyAnmeldungenIdBestaetigung(id));
 
-/** Anzeige-/Farb-Mapping der KI-Einschätzung (MATCH = wahrscheinlich Dublette → Achtung). */
-export const einschaetzungSchwere: Record<string, 'danger' | 'warn' | 'secondary'> = {
-  MATCH: 'danger',
-  UNSICHER: 'warn',
-  KEIN_MATCH: 'secondary',
+/** Anzeige-/Farb-Mapping der KI-Einschätzung (MATCH = wahrscheinlich Dublette → Achtung).
+    Werte = Nuxt-UI-UBadge-Farben. */
+export const einschaetzungSchwere: Record<string, 'error' | 'warning' | 'neutral'> = {
+  MATCH: 'error',
+  UNSICHER: 'warning',
+  KEIN_MATCH: 'neutral',
 };

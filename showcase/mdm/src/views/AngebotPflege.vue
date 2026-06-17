@@ -8,8 +8,6 @@ import { useRoute, useRouter } from 'vue-router';
 import { useForm } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import { useQueryClient } from '@tanstack/vue-query';
-import Button from 'primevue/button';
-import Message from 'primevue/message';
 import StammdatenFelder from '@/components/StammdatenFelder.vue';
 import TypSpezifischeFelder from '@/components/TypSpezifischeFelder.vue';
 import { typen, leeresAngebot, violationsZuFehlern, type Typ, type AngebotDto } from '@/bildung';
@@ -66,27 +64,19 @@ const speichern = handleSubmit(async (values) => {
 
 <template>
   <section v-if="geladen">
-    <h2>{{ id ? 'Bearbeiten' : 'Neu' }}: {{ config.label }}</h2>
+    <h2 class="text-xl font-bold mb-4">{{ id ? 'Bearbeiten' : 'Neu' }}: {{ config.label }}</h2>
 
     <form @submit="speichern">
       <StammdatenFelder />
       <TypSpezifischeFelder :typ="typ" />
 
-      <Message v-if="serverFehler" severity="error" :closable="false">{{ serverFehler }}</Message>
+      <UAlert v-if="serverFehler" color="error" variant="soft" icon="i-lucide-alert-circle" :title="serverFehler" class="mb-4" />
 
-      <div class="aktionen">
-        <Button label="Speichern" icon="pi pi-check" type="submit" :loading="isSubmitting" />
-        <Button label="Abbrechen" severity="secondary" text type="button" @click="router.push('/')" />
+      <div class="flex gap-3 mt-4">
+        <UButton type="submit" icon="i-lucide-check" :loading="isSubmitting">Speichern</UButton>
+        <UButton color="neutral" variant="ghost" type="button" @click="router.push('/')">Abbrechen</UButton>
       </div>
     </form>
   </section>
   <section v-else>Lade…</section>
 </template>
-
-<style scoped>
-.aktionen {
-  display: flex;
-  gap: 0.75rem;
-  margin-top: 1rem;
-}
-</style>

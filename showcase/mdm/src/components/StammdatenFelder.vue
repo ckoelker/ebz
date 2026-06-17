@@ -6,28 +6,10 @@ import { gemeinsameFelder } from '@/bildung';
 </script>
 
 <template>
-  <fieldset class="block">
-    <legend>Stammdaten (alle Bildungsangebote)</legend>
-    <div class="grid">
+  <fieldset class="rounded-lg border border-default p-4 px-5 mb-5">
+    <legend class="font-bold px-2">Stammdaten (alle Bildungsangebote)</legend>
+    <div class="grid grid-cols-2 gap-x-6">
       <AngebotFeld v-for="f in gemeinsameFelder" :key="f.name" :field="f" />
     </div>
   </fieldset>
 </template>
-
-<style scoped>
-.block {
-  border: 1px solid var(--p-content-border-color, #ddd);
-  border-radius: 8px;
-  padding: 1rem 1.25rem;
-  margin-bottom: 1.25rem;
-}
-legend {
-  font-weight: 700;
-  padding: 0 0.5rem;
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0 1.5rem;
-}
-</style>

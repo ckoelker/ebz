@@ -1,15 +1,12 @@
 <script setup lang="ts">
 // Verwaltungsliste über ALLE Typen (Registry-Endpunkt /bildung/angebote). Filter typ/bereich/
 // status; Neu (Typ wählen) → Pflege-Maske; Zeile → Bearbeiten; Archivieren = Soft-Delete.
-import { ref, computed } from 'vue';
+import { ref, computed, h, resolveComponent } from 'vue';
 import { useRouter } from 'vue-router';
 import { useQuery } from '@tanstack/vue-query';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Select from 'primevue/select';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
-import Message from 'primevue/message';
+import { getPaginationRowModel } from '@tanstack/vue-table';
+import type { TableColumn } from '@nuxt/ui';
+import type { Column } from '@tanstack/vue-table';
 import { Bereich, AngebotStatus } from '@/api/model';
 import type { RegistryItemDto } from '@/api/model';
 import { getBildungAngebote } from '@/api/endpoints/bildung-resource/bildung-resource';
@@ -18,17 +15,20 @@ import { login } from '@/auth';
 
 const router = useRouter();
 
-const bereichOptionen = Object.values(Bereich);
-const statusOptionen = Object.values(AngebotStatus);
-
 const { data, isFetching, refetch } = useQuery({
   queryKey: ['angebote'],
   queryFn: async (): Promise<RegistryItemDto[]> => (await getBildungAngebote()) ?? [],
 });
 
-const fTyp = ref<Typ | null>(null);
-const fBereich = ref<string | null>(null);
-const fStatus = ref<string | null>(null);
+// Filter — leerer Wert ('') = kein Filter; Items mit „Alle …"-Eintrag statt PrimeVue-showClear.
+const fTyp = ref('');
+const fBereich = ref('');
+const fStatus = ref('');
+
+const typItems = [{ label: 'Alle Typen', value: '' }, ...alleTypen.map((t) => ({ label: typen[t].label, value: t }))];
+const bereichItems = [{ label: 'Alle Bereiche', value: '' }, ...Object.values(Bereich).map((b) => ({ label: b, value: b }))];
+const statusItems = [{ label: 'Alle Status', value: '' }, ...Object.values(AngebotStatus).map((s) => ({ label: s, value: s }))];
+const neuItems = alleTypen.map((t) => ({ label: typen[t].label, value: t }));
 
 const gefiltert = computed(() =>
   (data.value ?? []).filter(
@@ -39,7 +39,7 @@ const gefiltert = computed(() =>
   ),
 );
 
-const neuTyp = ref<Typ | null>(null);
+const neuTyp = ref<Typ | undefined>();
 function neu() {
   if (neuTyp.value) router.push(`/pflege/${neuTyp.value}`);
 }
@@ -89,95 +89,139 @@ async function projizieren(row: RegistryItemDto) {
   }
 }
 
-const statusSchwere: Record<string, 'secondary' | 'success' | 'warn'> = {
-  ENTWURF: 'secondary',
+const statusFarbe: Record<string, 'neutral' | 'success' | 'warning'> = {
+  ENTWURF: 'neutral',
   AKTIV: 'success',
-  ARCHIVIERT: 'warn',
+  ARCHIVIERT: 'warning',
 };
+
+// Sortierbarer Spaltenkopf (Nuxt-UI/TanStack-Muster): Klick toggelt asc/desc.
+function sortHeader(label: string) {
+  return ({ column }: { column: Column<RegistryItemDto> }) => {
+    const UButton = resolveComponent('UButton');
+    const dir = column.getIsSorted();
+    return h(UButton, {
+      color: 'neutral',
+      variant: 'ghost',
+      label,
+      class: '-mx-2.5',
+      icon: dir === 'asc' ? 'i-lucide-arrow-up' : dir === 'desc' ? 'i-lucide-arrow-down' : 'i-lucide-arrow-up-down',
+      onClick: () => column.toggleSorting(column.getIsSorted() === 'asc'),
+    });
+  };
+}
+
+const columns: TableColumn<RegistryItemDto>[] = [
+  { accessorKey: 'code', header: sortHeader('Code') },
+  { accessorKey: 'titel', header: sortHeader('Titel') },
+  { accessorKey: 'typ', header: sortHeader('Typ') },
+  { accessorKey: 'bereich', header: sortHeader('Bereich') },
+  { accessorKey: 'status', header: sortHeader('Status') },
+  { id: 'shop', header: 'Shop' },
+  { id: 'aktionen', header: '' },
+];
+
+// Pagination wie zuvor (10 Zeilen/Seite) — TanStack-Modell + separate UPagination.
+const pagination = ref({ pageIndex: 0, pageSize: 10 });
+const page = computed({
+  get: () => pagination.value.pageIndex + 1,
+  set: (p: number) => {
+    pagination.value.pageIndex = p - 1;
+  },
+});
 </script>
 
 <template>
   <section>
-    <div class="kopf">
-      <h2>Bildungsangebote</h2>
-      <div class="neu">
-        <Select v-model="neuTyp" :options="alleTypen" placeholder="Typ für Neu…" />
-        <Button label="Neu" icon="pi pi-plus" :disabled="!neuTyp" @click="neu" />
+    <div class="flex justify-between items-center">
+      <h2 class="text-xl font-bold">Bildungsangebote</h2>
+      <div class="flex gap-2 items-center">
+        <USelect v-model="neuTyp" :items="neuItems" placeholder="Typ für Neu…" class="w-44" />
+        <UButton icon="i-lucide-plus" :disabled="!neuTyp" @click="neu">Neu</UButton>
       </div>
     </div>
 
-    <div class="filter">
-      <Select v-model="fTyp" :options="alleTypen" placeholder="Typ" showClear />
-      <Select v-model="fBereich" :options="bereichOptionen" placeholder="Bereich" showClear />
-      <Select v-model="fStatus" :options="statusOptionen" placeholder="Status" showClear />
-      <Button text icon="pi pi-refresh" :loading="isFetching" @click="() => refetch()" />
+    <div class="flex gap-2 items-center my-4">
+      <USelect v-model="fTyp" :items="typItems" class="w-40" />
+      <USelect v-model="fBereich" :items="bereichItems" class="w-40" />
+      <USelect v-model="fStatus" :items="statusItems" class="w-40" />
+      <UButton color="neutral" variant="ghost" icon="i-lucide-refresh-cw" :loading="isFetching" @click="() => { refetch(); }" />
     </div>
 
-    <Message v-if="projektionMeldung" :severity="projektionMeldung.severity" :closable="true" @close="projektionMeldung = null">
-      {{ projektionMeldung.text }}
-    </Message>
+    <UAlert
+      v-if="projektionMeldung"
+      :color="projektionMeldung.severity === 'success' ? 'success' : 'error'"
+      variant="soft"
+      :title="projektionMeldung.text"
+      close
+      class="mb-4"
+      @update:open="projektionMeldung = null"
+    />
 
-    <DataTable :value="gefiltert" dataKey="id" stripedRows paginator :rows="10" size="small">
-      <Column field="code" header="Code" sortable />
-      <Column field="titel" header="Titel" sortable />
-      <Column field="typ" header="Typ" sortable>
-        <template #body="{ data: r }"><Tag :value="typen[r.typ as Typ]?.label ?? r.typ" /></template>
-      </Column>
-      <Column field="bereich" header="Bereich" sortable />
-      <Column field="status" header="Status" sortable>
-        <template #body="{ data: r }"><Tag :value="r.status" :severity="statusSchwere[r.status]" /></template>
-      </Column>
-      <Column header="Shop" style="width: 12rem">
-        <template #body="{ data: r }">
-          <span v-if="r.vendureProductId" class="shop-status">
-            <Tag value="im Shop" severity="success" />
-            <small class="vid">Produkt {{ r.vendureProductId }}</small>
-            <Button v-if="projizierbar(r)" text rounded size="small" icon="pi pi-sync"
-              v-tooltip.top="'Erneut projizieren'" :loading="projizierendeId === r.id" @click="projizieren(r)" />
-          </span>
-          <Button v-else-if="projizierbar(r)" text size="small" icon="pi pi-shopping-cart" label="Veröffentlichen"
-            :loading="projizierendeId === r.id" @click="projizieren(r)" />
-          <i v-else :class="r.shopVerkauf ? 'pi pi-clock' : 'pi pi-minus'"
-            v-tooltip.top="r.shopVerkauf ? 'Erst im Status AKTIV projizierbar' : 'Nicht für den Shop markiert'" />
-        </template>
-      </Column>
-      <Column header="" style="width: 6rem">
-        <template #body="{ data: r }">
-          <Button text rounded icon="pi pi-pencil" @click="bearbeiten(r)" />
-          <Button v-if="r.status !== 'ARCHIVIERT'" text rounded severity="warn" icon="pi pi-inbox" @click="archivieren(r)" />
-        </template>
-      </Column>
-      <template #empty><div class="leer">Keine Bildungsangebote.</div></template>
-    </DataTable>
+    <UTable
+      ref="table"
+      v-model:pagination="pagination"
+      :data="gefiltert"
+      :columns="columns"
+      :pagination-options="{ getPaginationRowModel: getPaginationRowModel() }"
+      :empty="'Keine Bildungsangebote.'"
+    >
+      <template #typ-cell="{ row }">
+        <UBadge color="neutral" variant="subtle" size="sm">{{ typen[row.original.typ as Typ]?.label ?? row.original.typ }}</UBadge>
+      </template>
+      <template #status-cell="{ row }">
+        <UBadge :color="statusFarbe[row.original.status ?? ''] ?? 'neutral'" variant="soft" size="sm">{{ row.original.status }}</UBadge>
+      </template>
+      <template #shop-cell="{ row }">
+        <span v-if="row.original.vendureProductId" class="inline-flex items-center gap-1.5">
+          <UBadge color="success" variant="soft" size="sm">im Shop</UBadge>
+          <small class="text-muted whitespace-nowrap">Produkt {{ row.original.vendureProductId }}</small>
+          <UTooltip v-if="projizierbar(row.original)" text="Erneut projizieren">
+            <UButton
+              color="neutral"
+              variant="ghost"
+              size="sm"
+              icon="i-lucide-refresh-cw"
+              :loading="projizierendeId === row.original.id"
+              @click="projizieren(row.original)"
+            />
+          </UTooltip>
+        </span>
+        <UButton
+          v-else-if="projizierbar(row.original)"
+          color="neutral"
+          variant="ghost"
+          size="sm"
+          icon="i-lucide-shopping-cart"
+          :loading="projizierendeId === row.original.id"
+          @click="projizieren(row.original)"
+        >
+          Veröffentlichen
+        </UButton>
+        <UTooltip
+          v-else
+          :text="row.original.shopVerkauf ? 'Erst im Status AKTIV projizierbar' : 'Nicht für den Shop markiert'"
+        >
+          <UIcon :name="row.original.shopVerkauf ? 'i-lucide-clock' : 'i-lucide-minus'" class="text-muted" />
+        </UTooltip>
+      </template>
+      <template #aktionen-cell="{ row }">
+        <div class="flex gap-1 justify-end">
+          <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-pencil" @click="bearbeiten(row.original)" />
+          <UButton
+            v-if="row.original.status !== 'ARCHIVIERT'"
+            color="warning"
+            variant="ghost"
+            size="sm"
+            icon="i-lucide-archive"
+            @click="archivieren(row.original)"
+          />
+        </div>
+      </template>
+    </UTable>
+
+    <div v-if="gefiltert.length > pagination.pageSize" class="flex justify-end mt-3">
+      <UPagination v-model:page="page" :total="gefiltert.length" :items-per-page="pagination.pageSize" />
+    </div>
   </section>
 </template>
-
-<style scoped>
-.kopf {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.neu,
-.filter {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-.filter {
-  margin: 1rem 0;
-}
-.leer {
-  padding: 1rem;
-  color: #888;
-}
-.shop-status {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.vid {
-  color: #888;
-  white-space: nowrap;
-}
-</style>

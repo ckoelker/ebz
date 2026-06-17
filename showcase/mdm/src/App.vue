@@ -1,82 +1,67 @@
 <script setup lang="ts">
 // Rahmen des MDM-Cockpits: Kopfzeile (mit SSO-Status) + Router-Outlet.
+// UApp stellt Overlays/Tooltips/Toasts für Nuxt UI bereit.
 import { RouterLink, RouterView } from 'vue-router';
-import Button from 'primevue/button';
 import { auth, login, logout } from './auth';
 </script>
 
 <template>
-  <header class="topbar">
-    <RouterLink to="/" class="marke">EBZ MDM</RouterLink>
-    <nav class="nav">
-      <RouterLink to="/">Bildungsangebote</RouterLink>
-      <RouterLink to="/reviews">Dubletten-Review</RouterLink>
-      <RouterLink to="/anmeldungen">Anmeldungen</RouterLink>
-    </nav>
-    <span class="spacer" />
-    <template v-if="auth.bereit">
-      <span v-if="auth.angemeldet" class="user"><i class="pi pi-user" /> {{ auth.benutzer }}</span>
-      <Button v-if="auth.angemeldet" label="Abmelden" size="small" text @click="logout" />
-      <Button v-else label="Anmelden" icon="pi pi-sign-in" size="small" @click="login" />
-    </template>
-  </header>
-  <main class="inhalt">
-    <RouterView />
-  </main>
+  <UApp>
+    <!-- Theming wie in der Storybook-Abnahme: App-Fläche auf den semantischen
+         Nuxt-UI-Tokens (bg-default/text-default), Default Light. -->
+    <div class="min-h-screen bg-default text-default">
+      <header class="flex items-baseline gap-4 px-6 py-3 bg-primary-500 text-white">
+        <RouterLink to="/" class="font-extrabold no-underline text-white">EBZ MDM</RouterLink>
+        <nav class="flex gap-4 ml-4">
+          <RouterLink to="/" class="topnav">Bildungsangebote</RouterLink>
+          <RouterLink to="/reviews" class="topnav">Dubletten-Review</RouterLink>
+          <RouterLink to="/anmeldungen" class="topnav">Anmeldungen</RouterLink>
+        </nav>
+        <span class="flex-1" />
+        <template v-if="auth.bereit">
+          <span v-if="auth.angemeldet" class="text-sm inline-flex items-center gap-1">
+            <UIcon name="i-lucide-user" /> {{ auth.benutzer }}
+          </span>
+          <UButton
+            v-if="auth.angemeldet"
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            class="text-white hover:bg-white/10"
+            @click="logout"
+          >
+            Abmelden
+          </UButton>
+          <UButton
+            v-else
+            color="neutral"
+            variant="ghost"
+            size="sm"
+            icon="i-lucide-log-in"
+            class="text-white hover:bg-white/10"
+            @click="login"
+          >
+            Anmelden
+          </UButton>
+        </template>
+      </header>
+      <main class="max-w-5xl mx-auto px-5 py-6">
+        <RouterView />
+      </main>
+    </div>
+  </UApp>
 </template>
 
-<style>
-body {
-  margin: 0;
-  font-family: system-ui, sans-serif;
-  background: var(--p-content-background, #fff);
-  color: var(--p-text-color, #1f2937);
-}
-.topbar {
-  display: flex;
-  align-items: baseline;
-  gap: 1rem;
-  padding: 0.9rem 1.5rem;
-  background: var(--p-primary-color, #6366f1);
-  color: #fff;
-}
-.marke {
-  font-weight: 800;
-  color: #fff;
-  text-decoration: none;
-}
-.hint {
-  font-size: 0.8rem;
-  opacity: 0.85;
-}
-.nav {
-  display: flex;
-  gap: 1rem;
-  margin-left: 1rem;
-}
-.nav a {
+<style scoped>
+.topnav {
   color: #fff;
   text-decoration: none;
   opacity: 0.85;
   font-size: 0.95rem;
 }
-.nav a.router-link-active {
+.topnav.router-link-active {
   opacity: 1;
   font-weight: 700;
   border-bottom: 2px solid #fff;
-}
-.spacer {
-  flex: 1;
-}
-.user {
-  font-size: 0.9rem;
-}
-.topbar :deep(.p-button) {
-  color: #fff;
-}
-.inhalt {
-  max-width: 1000px;
-  margin: 1.5rem auto;
-  padding: 0 1.25rem;
 }
 </style>
