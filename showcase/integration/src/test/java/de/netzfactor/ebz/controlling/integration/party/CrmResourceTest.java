@@ -244,6 +244,46 @@ class CrmResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "sb", roles = "crm-pflege")
+    void dublettenPruefung_findetGleichnamigePerson_undFirmaPerUstId() {
+        long n = uniq();
+        String nachname = "Doppelgaenger " + n;
+        int personId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"vorname":"Dirk","nachname":"%s","geschlecht":"MAENNLICH","werbesperre":false,
+                         "auskunftssperre":false}""".formatted(nachname))
+                .when().post("/crm/personen").then().statusCode(201).extract().jsonPath().getInt("id");
+
+        // Gleicher Name → Bestandstreffer als Dubletten-Vorschlag
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"art":"PERSON","vorname":"Dirk","nachname":"%s"}""".formatted(nachname))
+                .when().post("/crm/dubletten-pruefung").then().statusCode(200)
+                .body("id", hasItem(personId))
+                .body("art", hasItem("PERSON"));
+
+        // Unbekannter Name → kein Treffer
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"art":"PERSON","vorname":"Niemand","nachname":"Gibtsnicht %d"}""".formatted(n))
+                .when().post("/crm/dubletten-pruefung").then().statusCode(200)
+                .body("size()", equalTo(0));
+
+        // Firma: gleiche USt-IdNr. trotz abweichendem Namen → Treffer
+        String ust = "DE" + (n % 1_000_000_000L);
+        long orgId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"name":"Erst Immobilien GmbH %d","ustId":"%s"}""".formatted(n, ust))
+                .when().post("/crm/organisationen").then().statusCode(201).extract().jsonPath().getLong("id");
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"art":"ORGANISATION","name":"Voellig anderer Name %d","ustId":"%s"}""".formatted(n, ust))
+                .when().post("/crm/dubletten-pruefung").then().statusCode(200)
+                .body("id", hasItem((int) orgId))
+                .body("art", hasItem("ORGANISATION"));
+    }
+
+    @Test
     void schreibenOhneRolle_istVerboten() {
         given().contentType(ContentType.JSON)
                 .body("{\"vorname\":\"X\",\"nachname\":\"Y\"}")

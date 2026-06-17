@@ -7,6 +7,8 @@
 import type {
   AktivitaetInput,
   AktivitaetView,
+  DublettenKandidat,
+  DublettenPruefInput,
   EinwilligungInput,
   EinwilligungView,
   GetCrmOrganisationenParams,
@@ -42,6 +44,19 @@ export const postCrmAktivitaeten = (
       {url: `/crm/aktivitaeten`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: aktivitaetInput
+    },
+      );
+    }
+  /**
+ * @summary Dubletten Pruefung
+ */
+export const postCrmDublettenPruefung = (
+    dublettenPruefInput: DublettenPruefInput,
+ ) => {
+      return http<DublettenKandidat[]>(
+      {url: `/crm/dubletten-pruefung`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: dublettenPruefInput
     },
       );
     }
@@ -350,6 +365,7 @@ export const deleteCrmWeiterbildungId = (
       );
     }
   export type PostCrmAktivitaetenResult = NonNullable<Awaited<ReturnType<typeof postCrmAktivitaeten>>>
+export type PostCrmDublettenPruefungResult = NonNullable<Awaited<ReturnType<typeof postCrmDublettenPruefung>>>
 export type PostCrmEinwilligungenResult = NonNullable<Awaited<ReturnType<typeof postCrmEinwilligungen>>>
 export type PostCrmEinwilligungenIdErteilenResult = NonNullable<Awaited<ReturnType<typeof postCrmEinwilligungenIdErteilen>>>
 export type PostCrmEinwilligungenIdWiderrufenResult = NonNullable<Awaited<ReturnType<typeof postCrmEinwilligungenIdWiderrufen>>>

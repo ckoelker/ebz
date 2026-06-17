@@ -15,6 +15,8 @@ export * from './art';
 export * from './bereich';
 export * from './berufsschuljahrDto';
 export * from './bildungsangebotTyp';
+export * from './dublettenKandidat';
+export * from './dublettenPruefInput';
 export * from './einschreibungDto';
 export * from './einschreibungStatus';
 export * from './einwilligungInput';

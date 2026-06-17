@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import DialogShell from '@/components/DialogShell.vue';
+import DublettenWarnung from '@/crm/DublettenWarnung.vue';
 import { useLookup, lookupItems } from '@/crm/lookups';
 import { fehlerText, istUnauth } from '@/crm/fehler';
 import { violationsZuFehlern } from '@/bildung';
@@ -12,8 +13,15 @@ import { PostCrmOrganisationenBody } from '@/api/zod/crm-resource/crm-resource.z
 import type { OrgDetail } from '@/api/model';
 
 // Anlage/Bearbeitung einer Organisation (Plan A2), Stack B (zod→vee-validate, Server-400→setErrors).
+// Beim Anlegen: Live-Dublettenwarnung (A16, Name/USt-IdNr.).
 const props = defineProps<{ open: boolean; existing?: OrgDetail | null }>();
-const emit = defineEmits<{ (e: 'update:open', v: boolean): void; (e: 'created', id: number): void; (e: 'saved'): void }>();
+const emit = defineEmits<{ (e: 'update:open', v: boolean): void; (e: 'created', id: number): void;
+  (e: 'verwenden', id: number): void; (e: 'saved'): void }>();
+
+function aufVerwenden(id: number) {
+  emit('verwenden', id);
+  emit('update:open', false);
+}
 
 const { data: branchen } = useLookup('branche');
 const { data: unternehmenstypen } = useLookup('unternehmenstyp');
@@ -95,6 +103,13 @@ const speichern = handleSubmit(async (values) => {
     @primary="speichern"
   >
     <UAlert v-if="serverFehler" color="error" variant="soft" :title="serverFehler" class="mb-4" />
+    <DublettenWarnung
+      v-if="!existing"
+      art="org"
+      :name="name"
+      :ust-id="ustId"
+      @verwenden="aufVerwenden"
+    />
     <div class="grid grid-cols-2 gap-4">
       <UFormField label="Name" required class="col-span-2" :error="errors.name">
         <UInput v-model="name" class="w-full" />

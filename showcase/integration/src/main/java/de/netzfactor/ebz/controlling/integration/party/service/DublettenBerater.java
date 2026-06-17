@@ -10,6 +10,7 @@ import de.netzfactor.ebz.controlling.integration.party.model.DublettenUrteil;
 import de.netzfactor.ebz.controlling.integration.party.model.DublettenUrteil.Einschaetzung;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
+import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
 
 /**
  * Bewertet ein Dubletten-Kandidatenpaar — primär via {@link DublettenKlassifikator} (KI), mit einem
@@ -41,6 +42,30 @@ public class DublettenBerater {
     public DublettenUrteil bewertePerson(Person kandidat, Person ziel) {
         return bewerte(merkmalePerson(kandidat), merkmalePerson(ziel),
                 regelScore(kandidat.matchSchluessel, ziel.matchSchluessel));
+    }
+
+    /**
+     * Live-Vorabprüfung beim Anlegen (Plan A16): bewertet einen <i>noch nicht persistierten</i>
+     * Personen-Kandidaten (nur Name/Titel bekannt, keine Adresse) gegen ein Bestandsziel. Der
+     * Kandidat-{@code matchSchluessel} wird mit derselben Normalisierung wie bei der Neuanlage
+     * gebildet ({@link Person#matchSchluessel} = normalisierter {@code anzeigeName}).
+     */
+    public DublettenUrteil bewertePersonKandidat(String anzeigeName, Person ziel) {
+        String a = "Person; Name=" + norm(anzeigeName) + "; PLZ=; Ort=";
+        return bewerte(a, merkmalePerson(ziel), regelScore(personSchluessel(anzeigeName), ziel.matchSchluessel));
+    }
+
+    /** Live-Vorabprüfung beim Anlegen (Plan A16): noch nicht persistierte Firma (Name/USt) gegen Bestandsziel. */
+    public DublettenUrteil bewerteFirmaKandidat(String name, String ustId, Organisation ziel) {
+        String a = "Firma; Name=" + norm(name) + "; PLZ=; Ort=; USt-Id vorhanden="
+                + (ustId != null && !ustId.isBlank() ? "ja" : "nein");
+        return bewerte(a, merkmaleFirma(ziel),
+                regelScore(DebitorHoheitService.matchSchluessel(name, null, ustId), ziel.matchSchluessel));
+    }
+
+    /** Personen-Dublettenschlüssel wie bei der Neuanlage: nur alphanumerisch, kleingeschrieben. */
+    private static String personSchluessel(String anzeigeName) {
+        return anzeigeName == null ? "" : anzeigeName.toLowerCase().replaceAll("[^a-z0-9]", "");
     }
 
     private DublettenUrteil bewerte(String a, String b, double regelScore) {

@@ -118,7 +118,9 @@ function ausTreffer(t: Treffer) {
       </div>
     </section>
 
-    <NeuePersonDialog v-model:open="neuePerson" @created="waehle('person', $event)" />
-    <NeueFirmaDialog v-model:open="neueFirma" @created="waehle('org', $event)" />
+    <NeuePersonDialog v-model:open="neuePerson"
+                      @created="waehle('person', $event)" @verwenden="waehle('person', $event)" />
+    <NeueFirmaDialog v-model:open="neueFirma"
+                     @created="waehle('org', $event)" @verwenden="waehle('org', $event)" />
   </div>
 </template>

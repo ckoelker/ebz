@@ -27,6 +27,32 @@ export const PostCrmAktivitaetenBody = zod.object({
 export const PostCrmAktivitaetenResponse = zod.unknown()
 
 /**
+ * @summary Dubletten Pruefung
+ */
+export const postCrmDublettenPruefungBodyArtRegExp = new RegExp('\\S');
+
+
+export const PostCrmDublettenPruefungBody = zod.object({
+  "art": zod.string().regex(postCrmDublettenPruefungBodyArtRegExp),
+  "vorname": zod.string().optional(),
+  "nachname": zod.string().optional(),
+  "titel": zod.string().optional(),
+  "name": zod.string().optional(),
+  "ustId": zod.string().optional()
+})
+
+export const PostCrmDublettenPruefungResponseItem = zod.object({
+  "art": zod.string().optional(),
+  "id": zod.number().optional(),
+  "bezeichnung": zod.string().optional(),
+  "ort": zod.string().optional(),
+  "aehnlichkeit": zod.number().optional(),
+  "einschaetzung": zod.string().optional(),
+  "begruendung": zod.string().optional()
+})
+export const PostCrmDublettenPruefungResponse = zod.array(PostCrmDublettenPruefungResponseItem)
+
+/**
  * @summary Einwilligung Anlegen
  */
 export const postCrmEinwilligungenBodyKanalRegExp = new RegExp('\\S');

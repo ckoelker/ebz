@@ -144,6 +144,17 @@ public class CrmResource {
         return crm.suche(q);
     }
 
+    // ───────────────────────── Live-Dublettenprüfung beim Anlegen (A16) ─────────────────────────
+
+    /** Vorab-Dublettencheck beim Anlegen: liefert Bestandstreffer + KI-/Regel-Bewertung zum Verknüpfen.
+     *  Reiner Lese-Vorgang (kein Schreiben) → offen wie die übrigen CRM-Reads; RBAC-Feinschliff folgt. */
+    @POST
+    @Path("/dubletten-pruefung")
+    @Transactional
+    public List<CrmService.DublettenKandidat> dublettenPruefung(@Valid CrmService.DublettenPruefInput in) {
+        return crm.pruefeDubletten(in);
+    }
+
     // ───────────────────────── Person ─────────────────────────
 
     @GET

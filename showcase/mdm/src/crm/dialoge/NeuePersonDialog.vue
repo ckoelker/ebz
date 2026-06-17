@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import DialogShell from '@/components/DialogShell.vue';
+import DublettenWarnung from '@/crm/DublettenWarnung.vue';
 import { useLookup, lookupItems } from '@/crm/lookups';
 import { fehlerText, istUnauth } from '@/crm/fehler';
 import { violationsZuFehlern } from '@/bildung';
@@ -13,9 +14,15 @@ import type { PersonDetail } from '@/api/model';
 
 // Anlage/Bearbeitung einer Person (Plan A1). Stack B: Validierung aus der generierten zod
 // (toTypedSchema) über vee-validate; Server-400 (Bean-Validation-Violations) wird via setErrors an
-// die Felder gehängt. Mit `existing` = Edit.
+// die Felder gehängt. Mit `existing` = Edit. Beim Anlegen: Live-Dublettenwarnung (A16).
 const props = defineProps<{ open: boolean; existing?: PersonDetail | null }>();
-const emit = defineEmits<{ (e: 'update:open', v: boolean): void; (e: 'created', id: number): void; (e: 'saved'): void }>();
+const emit = defineEmits<{ (e: 'update:open', v: boolean): void; (e: 'created', id: number): void;
+  (e: 'verwenden', id: number): void; (e: 'saved'): void }>();
+
+function aufVerwenden(id: number) {
+  emit('verwenden', id);
+  emit('update:open', false);
+}
 
 const { data: sprachen } = useLookup('sprache');
 const { data: leadquellen } = useLookup('leadquelle');
@@ -93,6 +100,14 @@ const speichern = handleSubmit(async (values) => {
     @primary="speichern"
   >
     <UAlert v-if="serverFehler" color="error" variant="soft" :title="serverFehler" class="mb-4" />
+    <DublettenWarnung
+      v-if="!existing"
+      art="person"
+      :vorname="vorname"
+      :nachname="nachname"
+      :titel="titel"
+      @verwenden="aufVerwenden"
+    />
     <div class="grid grid-cols-2 gap-4">
       <UFormField label="Vorname" required :error="errors.vorname">
         <UInput v-model="vorname" class="w-full" />

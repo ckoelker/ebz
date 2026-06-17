@@ -8,11 +8,13 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 import de.netzfactor.ebz.controlling.integration.party.model.Aktivitaet;
+import de.netzfactor.ebz.controlling.integration.party.model.DublettenUrteil;
 import de.netzfactor.ebz.controlling.integration.party.model.Einwilligung;
 import de.netzfactor.ebz.controlling.integration.party.model.Kontaktpunkt;
 import de.netzfactor.ebz.controlling.integration.party.model.Lookups;
@@ -39,6 +41,12 @@ import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzun
  */
 @ApplicationScoped
 public class CrmService {
+
+    /** Begrenzung der Live-Dublettentreffer (Showcase). */
+    private static final int DUBLETTEN_LIMIT = 8;
+
+    @Inject
+    DublettenBerater dublettenBerater;
 
     // ───────────────────────── Eingabe-DTOs (Bean Validation = Stack-B-Quelle) ─────────────────────────
 
@@ -84,6 +92,16 @@ public class CrmService {
     /** Eingabe eines Weiterbildungsnachweises (A19, §34c GewO / §15b MaBV). */
     public record WeiterbildungInput(@NotNull Long personId, @NotBlank String titel, String anbieter,
             @NotNull BigDecimal stunden, @NotNull LocalDate datum, boolean extern) {
+    }
+
+    /** Eingabe der Live-Dublettenprüfung beim Anlegen (A16). {@code art} = PERSON|ORGANISATION. */
+    public record DublettenPruefInput(@NotBlank String art, String vorname, String nachname, String titel,
+            String name, String ustId) {
+    }
+
+    /** Ein potenzieller Dubletten-Bestandstreffer mit KI-/Regel-Bewertung (Vorschlag, keine Entscheidung). */
+    public record DublettenKandidat(String art, Long id, String bezeichnung, String ort, double aehnlichkeit,
+            String einschaetzung, String begruendung) {
     }
 
     // ───────────────────────── Person ─────────────────────────
@@ -443,6 +461,55 @@ public class CrmService {
         // Ampel: erfüllt = grün; sonst rot im letzten Jahr des Zeitraums, davor gelb (Frist-Mahnung).
         String ampel = erfuellt ? "GRUEN" : (jahr == startJahr + 2 ? "ROT" : "GELB");
         return new WeiterbildungKonto(von, bis, SOLL_STUNDEN, summe, rest, erfuellt, ampel, alle);
+    }
+
+    // ───────────────────────── Live-Dublettenprüfung beim Anlegen (A16) ─────────────────────────
+
+    /**
+     * Vorab-Dublettencheck (Plan A16, Fallstrick 10): billiger Bestands-Vorfilter über Name/USt-IdNr.
+     * (kein Tastendruck-Spam — das Frontend ruft debounced an), anschließend Bewertung der wenigen
+     * Treffer durch den {@link DublettenBerater} (KI mit robustem regelbasiertem Fallback). Liefert
+     * <b>Vorschläge</b> zum Verknüpfen/Mergen; die finale Auflösung trifft der Mensch (HITL).
+     */
+    public List<DublettenKandidat> pruefeDubletten(DublettenPruefInput in) {
+        if ("ORGANISATION".equalsIgnoreCase(in.art())) {
+            return pruefeFirma(leer(in.name()), leer(in.ustId()));
+        }
+        return pruefePerson(leer(in.vorname()), leer(in.nachname()), in.titel());
+    }
+
+    private List<DublettenKandidat> pruefePerson(String vorname, String nachname, String titel) {
+        if (vorname == null || nachname == null) {
+            return List.of();
+        }
+        List<Person> treffer = Person.list("status <> ?1 and lower(vorname) = ?2 and lower(nachname) = ?3",
+                Person.Status.ZUSAMMENGEFUEHRT, vorname.toLowerCase(), nachname.toLowerCase());
+        String anzeige = ((titel == null || titel.isBlank() ? "" : titel.trim() + " ")
+                + vorname + " " + nachname).trim();
+        return treffer.stream().limit(DUBLETTEN_LIMIT).map(z -> {
+            DublettenUrteil u = dublettenBerater.bewertePersonKandidat(anzeige, z);
+            return new DublettenKandidat("PERSON", z.id, z.anzeigeName(),
+                    PartyHoheitService.personAdresse(z.id).ort(), u.aehnlichkeit(),
+                    u.einschaetzung().name(), u.begruendung());
+        }).toList();
+    }
+
+    private List<DublettenKandidat> pruefeFirma(String name, String ustId) {
+        if (name == null) {
+            return List.of();
+        }
+        String n = name.toLowerCase();
+        List<Organisation> treffer = (ustId == null)
+                ? Organisation.list("status <> ?1 and lower(name) = ?2",
+                        Organisation.Status.ZUSAMMENGEFUEHRT, n)
+                : Organisation.list("status <> ?1 and (lower(name) = ?2 or lower(ustId) = ?3)",
+                        Organisation.Status.ZUSAMMENGEFUEHRT, n, ustId.toLowerCase());
+        return treffer.stream().limit(DUBLETTEN_LIMIT).map(z -> {
+            DublettenUrteil u = dublettenBerater.bewerteFirmaKandidat(name, ustId, z);
+            return new DublettenKandidat("ORGANISATION", z.id, z.name,
+                    PartyHoheitService.orgAdresse(z.id).ort(), u.aehnlichkeit(),
+                    u.einschaetzung().name(), u.begruendung());
+        }).toList();
     }
 
     // ───────────────────────── Suche ─────────────────────────
