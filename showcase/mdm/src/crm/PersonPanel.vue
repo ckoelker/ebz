@@ -1,12 +1,13 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query';
-import { getCrmPersonenId, deleteCrmKontaktpunkteId, postCrmMitgliedschaftenIdAusscheiden }
-  from '@/api/endpoints/crm-resource/crm-resource';
-import type { PersonDetail, KontaktpunktView, MitgliedschaftView } from '@/api/model';
+import { getCrmPersonenId, getCrmPersonenIdAktivitaeten, deleteCrmKontaktpunkteId,
+  postCrmMitgliedschaftenIdAusscheiden } from '@/api/endpoints/crm-resource/crm-resource';
+import type { PersonDetail, KontaktpunktView, MitgliedschaftView, AktivitaetView } from '@/api/model';
 import NeuePersonDialog from '@/crm/dialoge/NeuePersonDialog.vue';
 import KontaktpunktDialog from '@/crm/dialoge/KontaktpunktDialog.vue';
 import MitgliedschaftDialog from '@/crm/dialoge/MitgliedschaftDialog.vue';
+import NotizDialog from '@/crm/dialoge/NotizDialog.vue';
 import { fehlerText } from '@/crm/fehler';
 
 const props = defineProps<{ id: number }>();
@@ -17,8 +18,14 @@ const { data: person, isFetching } = useQuery({
   queryFn: async (): Promise<PersonDetail> => await getCrmPersonenId(props.id),
 });
 
+const { data: historie } = useQuery({
+  queryKey: computed(() => ['crm-person-akt', props.id]),
+  queryFn: async (): Promise<AktivitaetView[]> => (await getCrmPersonenIdAktivitaeten(props.id)) ?? [],
+});
+
 function reload() {
   qc.invalidateQueries({ queryKey: ['crm-person', props.id] });
+  qc.invalidateQueries({ queryKey: ['crm-person-akt', props.id] });
 }
 
 const tab = ref('stammdaten');
@@ -26,6 +33,7 @@ const tabs = [
   { key: 'stammdaten', label: 'Stammdaten', icon: 'i-lucide-id-card' },
   { key: 'kommunikation', label: 'Kommunikation', icon: 'i-lucide-mail' },
   { key: 'zugehoerigkeiten', label: 'Zugehörigkeiten', icon: 'i-lucide-building-2' },
+  { key: 'historie', label: 'Historie', icon: 'i-lucide-history' },
   { key: 'dsgvo', label: 'DSGVO', icon: 'i-lucide-shield' },
 ];
 
@@ -35,7 +43,11 @@ const kpDialog = ref(false);
 const kpEdit = ref<KontaktpunktView | null>(null);
 const mgDialog = ref(false);
 const mgEdit = ref<MitgliedschaftView | null>(null);
+const notizDialog = ref(false);
 const meldung = ref('');
+
+const richtungIcon = (r?: string) =>
+  r === 'EINGEHEND' ? 'i-lucide-arrow-down-left' : r === 'INTERN' ? 'i-lucide-dot' : 'i-lucide-arrow-up-right';
 
 function neuerKp() { kpEdit.value = null; kpDialog.value = true; }
 function bearbeiteKp(k: KontaktpunktView) { kpEdit.value = k; kpDialog.value = true; }
@@ -168,6 +180,29 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
       </ul>
     </UCard>
 
+    <!-- Historie -->
+    <UCard v-else-if="tab === 'historie'">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-semibold">Kontakthistorie</h3>
+        <UButton size="sm" icon="i-lucide-plus" @click="notizDialog = true">Aktivität erfassen</UButton>
+      </div>
+      <p v-if="!historie?.length" class="text-sm text-muted">Noch keine Aktivitäten.</p>
+      <ol class="relative border-s border-default ml-2">
+        <li v-for="a in historie" :key="a.id" class="ms-5 py-2">
+          <span class="absolute -start-1.5 mt-1.5 w-3 h-3 rounded-full bg-primary-500" />
+          <div class="flex items-center gap-2">
+            <UIcon :name="richtungIcon(a.richtung)" class="text-dimmed" />
+            <span class="text-sm font-medium">{{ a.betreff }}</span>
+            <UBadge color="neutral" variant="soft" size="sm">{{ a.typ }}</UBadge>
+          </div>
+          <div class="text-xs text-muted">
+            {{ a.zeitpunkt }} <span v-if="a.dauerMinuten">· {{ a.dauerMinuten }} Min.</span>
+          </div>
+          <p v-if="a.inhaltHtml" class="text-sm text-default mt-1 whitespace-pre-wrap">{{ a.inhaltHtml }}</p>
+        </li>
+      </ol>
+    </UCard>
+
     <!-- DSGVO -->
     <UCard v-else-if="tab === 'dsgvo'">
       <h3 class="font-semibold mb-3">Sperren & Betroffenenrechte</h3>
@@ -185,5 +220,6 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
     <KontaktpunktDialog
       v-model:open="kpDialog" owner-type="person" :owner-id="id" :existing="kpEdit" @saved="reload" />
     <MitgliedschaftDialog v-model:open="mgDialog" :person-id="id" :existing="mgEdit" @saved="reload" />
+    <NotizDialog v-model:open="notizDialog" owner-type="person" :owner-id="id" @saved="reload" />
   </div>
 </template>

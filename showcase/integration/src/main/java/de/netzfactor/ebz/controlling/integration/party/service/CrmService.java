@@ -9,6 +9,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.transaction.Transactional;
 import jakarta.validation.constraints.NotBlank;
 
+import de.netzfactor.ebz.controlling.integration.party.model.Aktivitaet;
 import de.netzfactor.ebz.controlling.integration.party.model.Kontaktpunkt;
 import de.netzfactor.ebz.controlling.integration.party.model.Lookups;
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
@@ -63,6 +64,11 @@ public class CrmService {
 
     /** Schmaler Suchtreffer (Person ODER Organisation) für die globale Sofortsuche. */
     public record Treffer(String art, Long id, String titel, String untertitel) {
+    }
+
+    /** Eingabe einer Aktivität/Kontakthistorie (A9). Bezug = Person und/oder Organisation. */
+    public record AktivitaetInput(@NotBlank String typCode, String richtung, @NotBlank String betreff,
+            String inhaltHtml, Long personId, Long organisationId, Integer dauerMinuten) {
     }
 
     // ───────────────────────── Person ─────────────────────────
@@ -285,6 +291,40 @@ public class CrmService {
             throw new RegelVerletzung("PLZ '" + plz + "' ist für " + land.bezeichnung + " ungültig.");
         }
         return plz;
+    }
+
+    // ───────────────────────── Aktivität / Kontakthistorie (A9) ─────────────────────────
+
+    @Transactional
+    public Aktivitaet createAktivitaet(AktivitaetInput in) {
+        if (in.personId() == null && in.organisationId() == null) {
+            throw new RegelVerletzung("Eine Aktivität braucht einen Bezug (Person oder Organisation).");
+        }
+        Aktivitaet a = new Aktivitaet();
+        a.typ = lookup(Lookups.Aktivitaetstyp.class, in.typCode());
+        if (a.typ == null) {
+            throw RegelVerletzung.nichtGefunden("Aktivitätstyp nicht gefunden: " + in.typCode());
+        }
+        a.richtung = enumOf(Aktivitaet.Richtung.class, in.richtung(), Aktivitaet.Richtung.AUSGEHEND);
+        a.betreff = in.betreff().trim();
+        a.inhaltHtml = leer(in.inhaltHtml());
+        a.person = in.personId() == null ? null : mussPerson(in.personId());
+        a.organisation = in.organisationId() == null ? null : mussOrganisation(in.organisationId());
+        a.dauerMinuten = in.dauerMinuten();
+        a.persist();
+        return a;
+    }
+
+    /** Kontakthistorie einer Person (neueste zuerst). */
+    public List<Aktivitaet> aktivitaetenPerson(Long personId) {
+        return Aktivitaet.list("person.id = ?1 order by zeitpunkt desc", personId);
+    }
+
+    /** Kontakthistorie einer Organisation inkl. der Aktivitäten ihrer verknüpften Personen (Plan: Firma-Kommunikation). */
+    public List<Aktivitaet> aktivitaetenOrganisation(Long orgId) {
+        return Aktivitaet.list(
+                "organisation.id = ?1 or person.id in (select m.person.id from Mitgliedschaft m where m.organisation.id = ?1) "
+                        + "order by zeitpunkt desc", orgId);
     }
 
     // ───────────────────────── Suche ─────────────────────────

@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
-import { getCrmOrganisationenId } from '@/api/endpoints/crm-resource/crm-resource';
-import type { OrgDetail } from '@/api/model';
+import { getCrmOrganisationenId, getCrmOrganisationenIdAktivitaeten }
+  from '@/api/endpoints/crm-resource/crm-resource';
+import type { OrgDetail, AktivitaetView } from '@/api/model';
 import NeueFirmaDialog from '@/crm/dialoge/NeueFirmaDialog.vue';
 import KontaktpunktDialog from '@/crm/dialoge/KontaktpunktDialog.vue';
+import NotizDialog from '@/crm/dialoge/NotizDialog.vue';
 
 const props = defineProps<{ id: number }>();
 const emit = defineEmits<{ (e: 'select-person', id: number): void; (e: 'select-org', id: number): void }>();
@@ -14,16 +16,27 @@ const { data: org, isFetching } = useQuery({
   queryKey: computed(() => ['crm-org', props.id]),
   queryFn: async (): Promise<OrgDetail> => await getCrmOrganisationenId(props.id),
 });
-function reload() { qc.invalidateQueries({ queryKey: ['crm-org', props.id] }); }
+const { data: historie } = useQuery({
+  queryKey: computed(() => ['crm-org-akt', props.id]),
+  queryFn: async (): Promise<AktivitaetView[]> => (await getCrmOrganisationenIdAktivitaeten(props.id)) ?? [],
+});
+function reload() {
+  qc.invalidateQueries({ queryKey: ['crm-org', props.id] });
+  qc.invalidateQueries({ queryKey: ['crm-org-akt', props.id] });
+}
 
 const tab = ref('stammdaten');
 const tabs = [
   { key: 'stammdaten', label: 'Stammdaten', icon: 'i-lucide-building-2' },
   { key: 'personen', label: 'Personen', icon: 'i-lucide-users' },
+  { key: 'kommunikation', label: 'Kommunikation', icon: 'i-lucide-history' },
   { key: 'hierarchie', label: 'Hierarchie', icon: 'i-lucide-network' },
 ];
 const editStamm = ref(false);
 const kpDialog = ref(false);
+const notizDialog = ref(false);
+const richtungIcon = (r?: string) =>
+  r === 'EINGEHEND' ? 'i-lucide-arrow-down-left' : r === 'INTERN' ? 'i-lucide-dot' : 'i-lucide-arrow-up-right';
 
 const adresse = computed(() => {
   const o = org.value;
@@ -100,6 +113,27 @@ const aktiv = (bis?: string) => !bis;
       </ul>
     </UCard>
 
+    <UCard v-else-if="tab === 'kommunikation'">
+      <div class="flex justify-between items-center mb-3">
+        <h3 class="font-semibold">Kommunikation (Firma + verknüpfte Personen)</h3>
+        <UButton size="sm" icon="i-lucide-plus" @click="notizDialog = true">Aktivität erfassen</UButton>
+      </div>
+      <p v-if="!historie?.length" class="text-sm text-muted">Noch keine Aktivitäten.</p>
+      <ol class="relative border-s border-default ml-2">
+        <li v-for="a in historie" :key="a.id" class="ms-5 py-2">
+          <span class="absolute -start-1.5 mt-1.5 w-3 h-3 rounded-full bg-primary-500" />
+          <div class="flex items-center gap-2 flex-wrap">
+            <UIcon :name="richtungIcon(a.richtung)" class="text-dimmed" />
+            <span class="text-sm font-medium">{{ a.betreff }}</span>
+            <UBadge color="neutral" variant="soft" size="sm">{{ a.typ }}</UBadge>
+            <UBadge v-if="a.person" color="info" variant="soft" size="sm">{{ a.person }}</UBadge>
+          </div>
+          <div class="text-xs text-muted">{{ a.zeitpunkt }}</div>
+          <p v-if="a.inhaltHtml" class="text-sm text-default mt-1 whitespace-pre-wrap">{{ a.inhaltHtml }}</p>
+        </li>
+      </ol>
+    </UCard>
+
     <UCard v-else-if="tab === 'hierarchie'">
       <h3 class="font-semibold mb-3">Firmenhierarchie</h3>
       <p class="text-sm">
@@ -115,5 +149,6 @@ const aktiv = (bis?: string) => !bis;
 
     <NeueFirmaDialog v-model:open="editStamm" :existing="org" @saved="reload" />
     <KontaktpunktDialog v-model:open="kpDialog" owner-type="organisation" :owner-id="id" :existing="null" @saved="reload" />
+    <NotizDialog v-model:open="notizDialog" owner-type="organisation" :owner-id="id" @saved="reload" />
   </div>
 </template>

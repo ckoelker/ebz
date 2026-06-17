@@ -5,6 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  AktivitaetInput,
+  AktivitaetView,
   GetCrmOrganisationenParams,
   GetCrmPersonenParams,
   GetCrmSucheParams,
@@ -26,6 +28,19 @@ import { http } from '../../http';
 
 
 
+  /**
+ * @summary Aktivitaet Anlegen
+ */
+export const postCrmAktivitaeten = (
+    aktivitaetInput: AktivitaetInput,
+ ) => {
+      return http<unknown>(
+      {url: `/crm/aktivitaeten`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: aktivitaetInput
+    },
+      );
+    }
   /**
  * @summary Kontaktpunkt Anlegen
  */
@@ -151,6 +166,17 @@ export const getCrmOrganisationenId = (
       );
     }
   /**
+ * @summary Organisation Aktivitaeten
+ */
+export const getCrmOrganisationenIdAktivitaeten = (
+    id: number,
+ ) => {
+      return http<AktivitaetView[]>(
+      {url: `/crm/organisationen/${id}/aktivitaeten`, method: 'GET'
+    },
+      );
+    }
+  /**
  * @summary Personen
  */
 export const getCrmPersonen = (
@@ -201,6 +227,17 @@ export const getCrmPersonenId = (
       );
     }
   /**
+ * @summary Person Aktivitaeten
+ */
+export const getCrmPersonenIdAktivitaeten = (
+    id: number,
+ ) => {
+      return http<AktivitaetView[]>(
+      {url: `/crm/personen/${id}/aktivitaeten`, method: 'GET'
+    },
+      );
+    }
+  /**
  * @summary Mitgliedschaft Anlegen
  */
 export const postCrmPersonenPersonIdOrganisationenOrgIdMitgliedschaften = (
@@ -227,7 +264,8 @@ export const getCrmSuche = (
     },
       );
     }
-  export type PostCrmKontaktpunkteResult = NonNullable<Awaited<ReturnType<typeof postCrmKontaktpunkte>>>
+  export type PostCrmAktivitaetenResult = NonNullable<Awaited<ReturnType<typeof postCrmAktivitaeten>>>
+export type PostCrmKontaktpunkteResult = NonNullable<Awaited<ReturnType<typeof postCrmKontaktpunkte>>>
 export type DeleteCrmKontaktpunkteIdResult = NonNullable<Awaited<ReturnType<typeof deleteCrmKontaktpunkteId>>>
 export type PutCrmKontaktpunkteIdResult = NonNullable<Awaited<ReturnType<typeof putCrmKontaktpunkteId>>>
 export type GetCrmLookupsKategorieResult = NonNullable<Awaited<ReturnType<typeof getCrmLookupsKategorie>>>
@@ -237,9 +275,11 @@ export type GetCrmOrganisationenResult = NonNullable<Awaited<ReturnType<typeof g
 export type PostCrmOrganisationenResult = NonNullable<Awaited<ReturnType<typeof postCrmOrganisationen>>>
 export type PutCrmOrganisationenIdResult = NonNullable<Awaited<ReturnType<typeof putCrmOrganisationenId>>>
 export type GetCrmOrganisationenIdResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenId>>>
+export type GetCrmOrganisationenIdAktivitaetenResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenIdAktivitaeten>>>
 export type GetCrmPersonenResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonen>>>
 export type PostCrmPersonenResult = NonNullable<Awaited<ReturnType<typeof postCrmPersonen>>>
 export type PutCrmPersonenIdResult = NonNullable<Awaited<ReturnType<typeof putCrmPersonenId>>>
 export type GetCrmPersonenIdResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenId>>>
+export type GetCrmPersonenIdAktivitaetenResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenIdAktivitaeten>>>
 export type PostCrmPersonenPersonIdOrganisationenOrgIdMitgliedschaftenResult = NonNullable<Awaited<ReturnType<typeof postCrmPersonenPersonIdOrganisationenOrgIdMitgliedschaften>>>
 export type GetCrmSucheResult = NonNullable<Awaited<ReturnType<typeof getCrmSuche>>>

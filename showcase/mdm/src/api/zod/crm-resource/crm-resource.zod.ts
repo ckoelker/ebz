@@ -8,6 +8,25 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Aktivitaet Anlegen
+ */
+export const postCrmAktivitaetenBodyTypCodeRegExp = new RegExp('\\S');
+export const postCrmAktivitaetenBodyBetreffRegExp = new RegExp('\\S');
+
+
+export const PostCrmAktivitaetenBody = zod.object({
+  "typCode": zod.string().regex(postCrmAktivitaetenBodyTypCodeRegExp),
+  "richtung": zod.string().optional(),
+  "betreff": zod.string().regex(postCrmAktivitaetenBodyBetreffRegExp),
+  "inhaltHtml": zod.string().optional(),
+  "personId": zod.number().optional(),
+  "organisationId": zod.number().optional(),
+  "dauerMinuten": zod.number().optional()
+})
+
+export const PostCrmAktivitaetenResponse = zod.unknown()
+
+/**
  * @summary Kontaktpunkt Anlegen
  */
 export const postCrmKontaktpunkteBodyTypRegExp = new RegExp('\\S');
@@ -324,6 +343,29 @@ export const GetCrmOrganisationenIdResponse = zod.object({
 })
 
 /**
+ * @summary Organisation Aktivitaeten
+ */
+export const GetCrmOrganisationenIdAktivitaetenParams = zod.object({
+  "id": zod.number()
+})
+
+export const GetCrmOrganisationenIdAktivitaetenResponseItem = zod.object({
+  "id": zod.number().optional(),
+  "typCode": zod.string().optional(),
+  "typ": zod.string().optional(),
+  "richtung": zod.string().optional(),
+  "betreff": zod.string().optional(),
+  "inhaltHtml": zod.string().optional(),
+  "personId": zod.number().optional(),
+  "person": zod.string().optional(),
+  "organisationId": zod.number().optional(),
+  "organisation": zod.string().optional(),
+  "zeitpunkt": zod.string().datetime({"offset":true}).optional(),
+  "dauerMinuten": zod.number().optional()
+})
+export const GetCrmOrganisationenIdAktivitaetenResponse = zod.array(GetCrmOrganisationenIdAktivitaetenResponseItem)
+
+/**
  * @summary Personen
  */
 export const getCrmPersonenQueryPageDefault = 0;
@@ -506,6 +548,29 @@ export const GetCrmPersonenIdResponse = zod.object({
   "gueltigBis": zod.string().date().optional()
 })).optional()
 })
+
+/**
+ * @summary Person Aktivitaeten
+ */
+export const GetCrmPersonenIdAktivitaetenParams = zod.object({
+  "id": zod.number()
+})
+
+export const GetCrmPersonenIdAktivitaetenResponseItem = zod.object({
+  "id": zod.number().optional(),
+  "typCode": zod.string().optional(),
+  "typ": zod.string().optional(),
+  "richtung": zod.string().optional(),
+  "betreff": zod.string().optional(),
+  "inhaltHtml": zod.string().optional(),
+  "personId": zod.number().optional(),
+  "person": zod.string().optional(),
+  "organisationId": zod.number().optional(),
+  "organisation": zod.string().optional(),
+  "zeitpunkt": zod.string().datetime({"offset":true}).optional(),
+  "dauerMinuten": zod.number().optional()
+})
+export const GetCrmPersonenIdAktivitaetenResponse = zod.array(GetCrmPersonenIdAktivitaetenResponseItem)
 
 /**
  * @summary Mitgliedschaft Anlegen

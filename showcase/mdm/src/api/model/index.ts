@@ -5,6 +5,8 @@
  * OpenAPI spec version: 0.1.0
  */
 
+export * from './aktivitaetInput';
+export * from './aktivitaetView';
 export * from './anforderung';
 export * from './angebotStatus';
 export * from './anmeldungStatus';
@@ -25,6 +27,7 @@ export * from './getPartyAnmeldungenParams';
 export * from './kontaktpunktInput';
 export * from './kontaktpunktView';
 export * from './localDate';
+export * from './localDateTime';
 export * from './lookupView';
 export * from './mitgliedschaftInput';
 export * from './mitgliedschaftView';

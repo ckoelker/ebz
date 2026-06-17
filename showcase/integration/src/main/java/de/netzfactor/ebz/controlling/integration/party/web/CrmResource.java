@@ -22,6 +22,7 @@ import jakarta.ws.rs.core.Response;
 import io.quarkus.panache.common.Page;
 import io.quarkus.panache.common.Sort;
 
+import de.netzfactor.ebz.controlling.integration.party.model.Aktivitaet;
 import de.netzfactor.ebz.controlling.integration.party.model.Kontaktpunkt;
 import de.netzfactor.ebz.controlling.integration.party.model.Lookups;
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
@@ -87,6 +88,11 @@ public class CrmResource {
             Integer bestandsgroesse, String gewerbeerlaubnis, boolean ausbildungsbetrieb, String ihkKammerCode,
             List<String> unternehmenstypen, List<String> taetigkeitsschwerpunkte, List<String> verbaende,
             String strasse, String plz, String ort, String status, List<OrgMitgliedView> mitglieder) {
+    }
+
+    public record AktivitaetView(Long id, String typCode, String typ, String richtung, String betreff,
+            String inhaltHtml, Long personId, String person, Long organisationId, String organisation,
+            java.time.LocalDateTime zeitpunkt, Integer dauerMinuten) {
     }
 
     // ───────────────────────── Lookups (generisch) ─────────────────────────
@@ -274,6 +280,30 @@ public class CrmResource {
         return Response.noContent().build();
     }
 
+    // ───────────────────────── Aktivität / Kontakthistorie (A9) ─────────────────────────
+
+    @GET
+    @Path("/personen/{id}/aktivitaeten")
+    @Transactional
+    public List<AktivitaetView> personAktivitaeten(@PathParam("id") Long id) {
+        return crm.aktivitaetenPerson(id).stream().map(CrmResource::aktivitaetView).toList();
+    }
+
+    @GET
+    @Path("/organisationen/{id}/aktivitaeten")
+    @Transactional
+    public List<AktivitaetView> organisationAktivitaeten(@PathParam("id") Long id) {
+        return crm.aktivitaetenOrganisation(id).stream().map(CrmResource::aktivitaetView).toList();
+    }
+
+    @RolesAllowed("crm-pflege")
+    @POST
+    @Path("/aktivitaeten")
+    @Transactional
+    public Response aktivitaetAnlegen(@Valid CrmService.AktivitaetInput in) {
+        return Response.status(Response.Status.CREATED).entity(aktivitaetView(crm.createAktivitaet(in))).build();
+    }
+
     // ───────────────────────── Mapping ─────────────────────────
 
     private static PersonDetail personDetail(Person p) {
@@ -315,6 +345,14 @@ public class CrmResource {
                 m.rolle == null ? null : m.rolle.code, m.rolle == null ? null : m.rolle.bezeichnung,
                 m.position, m.abteilung, m.hauptzugehoerigkeit, m.hauptansprechpartner, m.buchungsberechtigt,
                 m.rechnungsempfaenger, m.gueltigVon, m.gueltigBis);
+    }
+
+    private static AktivitaetView aktivitaetView(Aktivitaet a) {
+        return new AktivitaetView(a.id, a.typ == null ? null : a.typ.code, a.typ == null ? null : a.typ.bezeichnung,
+                a.richtung == null ? null : a.richtung.name(), a.betreff, a.inhaltHtml,
+                a.person == null ? null : a.person.id, a.person == null ? null : a.person.anzeigeName(),
+                a.organisation == null ? null : a.organisation.id, a.organisation == null ? null : a.organisation.name,
+                a.zeitpunkt, a.dauerMinuten);
     }
 
     private static String hauptFirma(Long personId) {

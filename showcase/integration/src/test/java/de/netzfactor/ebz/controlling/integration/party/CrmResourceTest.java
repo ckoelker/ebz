@@ -153,6 +153,28 @@ class CrmResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "sb", roles = "crm-pflege")
+    void aktivitaet_anlegen_erscheintInKontakthistorie() {
+        long n = uniq();
+        int personId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"vorname":"Hans","nachname":"Historie %d","geschlecht":"MAENNLICH","werbesperre":false,
+                         "auskunftssperre":false}""".formatted(n))
+                .when().post("/crm/personen").then().statusCode(201).extract().jsonPath().getInt("id");
+
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"typCode":"TELEFONAT","richtung":"EINGEHEND","betreff":"Rückruf %d","personId":%d,
+                         "dauerMinuten":5}""".formatted(n, personId))
+                .when().post("/crm/aktivitaeten").then().statusCode(201)
+                .body("typ", equalTo("Telefonat"))
+                .body("person", startsWith("Hans"));
+
+        given().when().get("/crm/personen/" + personId + "/aktivitaeten").then().statusCode(200)
+                .body("betreff", hasItem("Rückruf " + n));
+    }
+
+    @Test
     void schreibenOhneRolle_istVerboten() {
         given().contentType(ContentType.JSON)
                 .body("{\"vorname\":\"X\",\"nachname\":\"Y\"}")
