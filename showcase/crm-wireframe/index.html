@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EBZ CRM — Wireframe (Klickdummy)</title>
+  <title>EBZ Cockpit — Wireframe (Klickdummy)</title>
   <link rel="stylesheet" href="crm.css" />
 </head>
 <body>
   <!-- Topbar -->
   <header class="topbar">
-    <div class="logo">EBZ&nbsp;CRM <small>Stammdaten-Pflege · Wireframe</small></div>
+    <div class="logo">EBZ&nbsp;Cockpit <small>Prozesse · Eingriffe · Stammdaten · Wireframe</small></div>
     <div class="search">
       <input id="search" type="text" placeholder="Suche: Name, Telefon, Firma, USt-IdNr …  ( / )" autocomplete="off" />
       <div id="searchResults" class="search-results"></div>
@@ -23,37 +23,25 @@
     </div>
   </header>
 
-  <!-- Main layout -->
-  <div class="layout">
-    <!-- Sidebar: Neuanlage + Quicklinks + Nav -->
-    <aside class="sidebar">
-      <button class="btn-new" id="newPerson">+ Person anlegen</button>
-      <button class="btn-new alt" id="newOrg">+ Firma anlegen</button>
-
+  <!-- ===== Einheitliche Cockpit-Shell (linke Schiene bleibt konstant) ===== -->
+  <div class="cockpit" id="cockpit">
+    <aside class="ck-rail">
+      <nav class="ck-nav-list">
+        <button class="ck-nav" data-nav="cockpit">📊 Cockpit</button>
+        <button class="ck-nav" data-nav="eingriffe">⚠ Eingriffe <span class="navcount" id="cntEingriffe"></span></button>
+        <button class="ck-nav" data-nav="sonder">✋ Sonderfälle <span class="navcount" id="cntSonder"></span></button>
+        <button class="ck-nav" data-nav="kunden">👥 Kundenstamm (m:n)</button>
+        <div class="ck-subnav">
+          <button class="ck-subitem" id="newPerson">+ Person anlegen</button>
+          <button class="ck-subitem" id="newOrg">+ Firma anlegen</button>
+        </div>
+      </nav>
       <div class="side-h">Zuletzt aufgerufen</div>
-      <div id="quicklinks"></div>
-
-      <div class="side-h">Meine Wiedervorlagen</div>
-      <div id="sideWv"></div>
-
+      <div id="quicklinksCk" class="ql-host"></div>
       <div class="side-h">Mein Profil</div>
-      <button class="side-btn" id="showGroups">👥 Gruppen &amp; Rolle</button>
+      <button class="side-btn" id="showGroupsCk">👥 Gruppen &amp; Rolle</button>
     </aside>
-
-    <!-- Master list -->
-    <section class="masterlist">
-      <div class="ml-head">
-        <button class="seg active" data-seg="alle">Alle</button>
-        <button class="seg" data-seg="person">Personen</button>
-        <button class="seg" data-seg="org">Firmen</button>
-      </div>
-      <div id="list"></div>
-    </section>
-
-    <!-- Detail -->
-    <main class="detail" id="detail">
-      <p class="muted">Wähle links einen Kontakt oder lege einen neuen an.</p>
-    </main>
+    <main class="ck-main" id="ckMain"></main>
   </div>
 
   <!-- Modal host -->

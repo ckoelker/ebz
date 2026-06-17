@@ -62,7 +62,7 @@ a { color: var(--blue); }
 .side-h { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--grey-600); margin: 14px 0 6px; }
 .side-btn { display: block; width: 100%; text-align: left; border: none; background: none; padding: 8px 10px; border-radius: 6px; color: var(--text); }
 .side-btn:hover { background: var(--grey-100); }
-.quicklink { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+.quicklink { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-radius: 6px; cursor: pointer; transition: opacity .35s ease, transform .35s ease, background .15s; }
 .quicklink:hover { background: var(--blue-light); }
 .btn-new { width: 100%; background: var(--navy); color: #fff; border: none; border-radius: 6px; padding: 10px; font-weight: 600; margin-bottom: 4px; }
 .btn-new.alt { background: var(--blue); }
@@ -78,6 +78,7 @@ a { color: var(--blue); }
 .avatar.org { border-radius: 6px; background: var(--blue); }
 .ml-item .name { font-weight: 600; }
 .ml-item .sub { color: var(--grey-600); font-size: 12px; }
+.ml-item .sub2 { color: var(--grey-400); font-size: 11px; margin-top: 1px; }
 
 /* ---------- Detail ---------- */
 .dt-head { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 6px; }
@@ -177,13 +178,81 @@ table.grid th { color: var(--grey-600); font-weight: 600; font-size: 11px; text-
 .ringing { width: 9px; height: 9px; border-radius: 50%; background: var(--ok); animation: pulse 1s infinite; }
 @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 
+/* ---------- Inline-Pflege (Detail) ---------- */
+.row-actions { text-align: right; white-space: nowrap; }
+.row-actions .btn.sm { padding: 3px 7px; margin-left: 3px; }
+tr.inl-edit > td { background: var(--blue-light); }
+.inl-form { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.inl-form input, .inl-form select { padding: 6px 8px; border: 1px solid var(--grey-200); border-radius: 6px; font: inherit; }
+.inl-form input:focus, .inl-form select:focus { outline: none; border-color: var(--blue); }
+.inl-form .chip { display: inline-flex; align-items: center; gap: 4px; }
+.inl-form-block .field { margin-bottom: 8px; }
+/* Chip-Auswahllisten (Rollen/Verbände/Schwerpunkte) inline halten, auch innerhalb .field */
+.field label.chip { display: inline-flex; align-items: center; width: auto; margin: 2px 4px 2px 0; }
+.field label.chip input[type="checkbox"] { margin: 0 5px 0 0; }
+
+/* ---------- Cockpit-Shell (eine Shell, linke Schiene konstant) ---------- */
+.cockpit { flex: 1; display: grid; grid-template-columns: 230px 1fr; overflow: hidden; }
+.ck-rail { background: #fff; border-right: 1px solid var(--grey-200); padding: 12px; overflow: auto; }
+.ck-main { overflow: auto; padding: 18px 22px; }
+.ck-main.flush { padding: 0; overflow: hidden; }  /* Kundenstamm-Master-Detail randlos */
+.ck-nav-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 6px; }
+.ck-nav { display: flex; align-items: center; gap: 8px; width: 100%; text-align: left; border: none; background: none; padding: 9px 10px; border-radius: 6px; color: var(--text); font-weight: 600; }
+.ck-nav:hover { background: var(--grey-100); }
+.ck-nav.active { background: var(--navy); color: #fff; }
+.navcount { margin-left: auto; background: var(--err2); color: #fff; border-radius: 10px; font-size: 11px; padding: 0 7px; min-width: 18px; text-align: center; }
+.ck-nav.active .navcount { background: rgba(255,255,255,.3); }
+/* Untermenü von „Kundenstamm" (+ Person / + Firma) */
+.ck-subnav { display: none; flex-direction: column; gap: 1px; margin: 1px 0 2px 0; }
+body.on-kunden .ck-subnav { display: flex; box-shadow: inset 2px 0 0 var(--grey-200); } /* erst bei Klick auf „Kundenstamm" */
+.ck-subitem { text-align: left; border: none; background: none; padding: 6px 10px 6px 30px; border-radius: 6px; color: var(--blue); font-weight: 600; font-size: 13px; }
+.ck-subitem:hover { background: var(--blue-light); }
+
+/* Kundenstamm-Seite (Master-Detail innerhalb der Shell) */
+.kunden-page { display: grid; grid-template-columns: 320px 1fr; height: 100%; overflow: hidden; }
+.kunden-page .masterlist { background: #fff; border-right: 1px solid var(--grey-200); overflow: auto; height: 100%; }
+.kunden-page .detail { background: var(--grey-50); overflow: auto; height: 100%; padding: 16px 20px; }
+
+/* Quicklinks „Zuletzt aufgerufen" — Hochgleit-Animation (FLIP) */
+.quicklink.ql-enter { opacity: 0; transform: translateY(-10px); }
+.quicklink.ql-flash { animation: qlflash 1s ease; }
+@keyframes qlflash { 0%, 60% { background: var(--blue-light); } 100% { background: transparent; } }
+
+.ck-page { max-width: 1120px; }
+.ck-head { margin-bottom: 14px; }
+.ck-head h1 { font-size: 22px; margin: 0 0 2px; color: var(--navy); }
+
+table.proc td { vertical-align: top; }
+.proc-name .proc-desc { font-size: 11px; margin-top: 2px; }
+.proc-act { text-align: right; white-space: nowrap; }
+.ck-ico { font-size: 15px; }
+.hdot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; vertical-align: middle; margin-right: 4px; }
+.h-ok { background: var(--ok); } .h-warn { background: var(--warn); } .h-err { background: var(--err2); animation: pulse 1.2s infinite; }
+
+.ck-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+.ck-item { border: 1px solid var(--grey-200); border-radius: 8px; padding: 10px 12px; margin-bottom: 10px; }
+.ck-item:last-child { margin-bottom: 0; }
+.ck-item.sev-err { border-left: 4px solid var(--err2); }
+.ck-item.sev-warn { border-left: 4px solid var(--warn); }
+.ck-item-h { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.ck-age { margin-left: auto; font-size: 11px; }
+.ck-item-sub { font-size: 12px; margin: 4px 0 8px; }
+.ck-item-act { display: flex; gap: 6px; flex-wrap: wrap; }
+.ck-kunden-row { display: flex; gap: 8px; }
+.ck-kunden-row input { flex: 1; padding: 8px 10px; border: 1px solid var(--grey-200); border-radius: 6px; font: inherit; }
+.ck-kunden-row input:focus { outline: none; border-color: var(--blue); box-shadow: 0 0 0 2px var(--blue-light); }
+.ck-search-res { margin-top: 8px; }
+.ck-search-res .quicklink { border: 1px solid var(--grey-100); margin-bottom: 3px; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 1000px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { display: none; }
-  .masterlist { display: var(--ml-display, block); border-right: none; }
-  body.show-detail .masterlist { display: none; }
-  body:not(.show-detail) .detail { display: none; }
+  .cockpit { grid-template-columns: 1fr; }
+  .ck-rail { display: none; }
+  .ck-cols { grid-template-columns: 1fr; }
+  .kunden-page { grid-template-columns: 1fr; }
+  .kunden-page .masterlist { border-right: none; }
+  body.show-detail .kunden-page .masterlist { display: none; }
+  body:not(.show-detail) .kunden-page .detail { display: none; }
 }
 .back-btn { display: none; }
 @media (max-width: 1000px) { .back-btn { display: inline-block; } }

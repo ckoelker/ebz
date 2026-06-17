@@ -26,6 +26,18 @@ const LOOKUPS = {
   schwerpunkte: ['Vermietung', 'WEG-Verwaltung', 'Mietverwaltung', 'Verkauf', 'Bewertung', 'Finanzierung', 'Neubau'],
   branche: ['Wohnungswirtschaft', 'Immobilienvermittlung', 'Immobilienverwaltung', 'Bauträger/Projektentwicklung', 'Sachverständigenwesen'],
   land: ['DE', 'AT', 'CH', 'NL', 'LU'],
+  // Länder: DE, dann AT/CH, dann alphabetisch (für Adress-Auswahl)
+  laender: [
+    { code: 'DE', name: 'Deutschland' }, { code: 'AT', name: 'Österreich' }, { code: 'CH', name: 'Schweiz' },
+    { code: 'BE', name: 'Belgien' }, { code: 'DK', name: 'Dänemark' }, { code: 'FR', name: 'Frankreich' },
+    { code: 'IT', name: 'Italien' }, { code: 'LU', name: 'Luxemburg' }, { code: 'NL', name: 'Niederlande' },
+    { code: 'NO', name: 'Norwegen' }, { code: 'PL', name: 'Polen' }, { code: 'PT', name: 'Portugal' },
+    { code: 'SE', name: 'Schweden' }, { code: 'ES', name: 'Spanien' }, { code: 'CZ', name: 'Tschechien' },
+    { code: 'TR', name: 'Türkei' }, { code: 'HU', name: 'Ungarn' }, { code: 'US', name: 'Vereinigte Staaten' },
+    { code: 'GB', name: 'Vereinigtes Königreich' },
+  ],
+  // Korrespondenzsprache: Deutsch default, Englisch als Alternative
+  sprachen: [ { code: 'DE', name: 'Deutsch' }, { code: 'EN', name: 'Englisch' } ],
   leadQuelle: ['Telefon', 'Web-Formular', 'Messe', 'Empfehlung', 'Shop', 'Verband', 'Bestandskunde'],
   beziehungstyp: ['Erziehungsberechtigt', 'Notfallkontakt', 'Assistenz', 'Kollege'],
   aktivitaetTyp: ['Telefon eingehend', 'Telefon ausgehend', 'E-Mail', 'Notiz', 'Brief', 'Meeting'],
@@ -210,4 +222,55 @@ const QUICKLINKS = [
   { typ: 'person', id: 'p1' },
   { typ: 'org', id: 'o1' },
   { typ: 'person', id: 'p3' },
+];
+
+/* ============================================================
+ * COCKPIT — Fokus: automatisierte Prozesse überblicken & eingreifen,
+ * Sonderfälle manuell abarbeiten. Marketing läuft über HubSpot-Bridge.
+ * Alle Werte gemockt (Wegwerf-Prototyp).
+ * ============================================================ */
+
+// Laufende automatisierte Prozesse (entsprechen den Showcase-Strecken)
+const PROZESSE = [
+  { id: 'pr-anm', icon: '🎓', name: 'Anmeldungen (Self-Service)', health: 'warn',
+    kennzahl: '12 laufen', detail: '8 abgeschlossen · 1 stockt (Zahlungseingang offen)', last: 'vor 3 Min',
+    beschreibung: 'Berufsschul-/Seminar-Anmeldung mit KI-Dublettencheck und HITL-Bestätigung.' },
+  { id: 'pr-rech', icon: '🧾', name: 'Rechnungslauf & Versand', health: 'ok',
+    kennzahl: 'nächster Lauf 14:00', detail: 'letzter Lauf: 41 Rechnungen, 0 Fehler', last: 'heute 06:00',
+    beschreibung: 'ZUGFeRD-Erzeugung, Versand, Debitoren-Nummernkreis, DATEV-Übergabe.' },
+  { id: 'pr-untis', icon: '🏫', name: 'WebUntis-Provisionierung', health: 'err',
+    kennzahl: '1 Dead-Letter', detail: '2 Retry laufen · 1 Vorgang nach 3 Fehlversuchen abgebrochen', last: 'vor 25 Min',
+    beschreibung: 'Transaktionale Outbox → Drittsystem-Sync bei Vertragsbestätigung.' },
+  { id: 'pr-lms', icon: '📚', name: 'LMS-Einschreibung (Shop→OpenOLAT)', health: 'ok',
+    kennzahl: 'alle ok', detail: '6 Einschreibungen heute · Outbox leer', last: 'vor 12 Min',
+    beschreibung: 'WBT-Kauf im Shop → Einschreibung in OpenOLAT-Kurs.' },
+  { id: 'pr-doi', icon: '✉', name: 'Double-Opt-In (DSGVO)', health: 'warn',
+    kennzahl: '5 ausstehend', detail: '5 Bestätigungen offen, davon 1 > 14 Tage', last: 'vor 1 Std',
+    beschreibung: 'Einwilligungs-Bestätigung; Nachweis (Token/IP/Zeit). Marketing-Versand erst danach.' },
+];
+
+// Eingriffe (Human-in-the-loop): hier hält die Automatik an
+const EINGRIFFE = [
+  { id: 'e1', prozess: 'WebUntis-Provisionierung', schwere: 'err', alter: 'vor 25 Min',
+    titel: 'Provisionierung fehlgeschlagen: Tobias Krüger',
+    detail: 'WebUntis-Endpunkt 3× Timeout → Dead-Letter. Schüler kann sich nicht einloggen.',
+    personId: 'p2', aktionen: [ { key: 'retry', label: '↻ Erneut versuchen' }, { key: 'uebernehmen', label: '✋ Manuell übernehmen' }, { key: 'kontakt', label: '↗ Kontakt öffnen' } ] },
+  { id: 'e2', prozess: 'Anmeldung · KI-Dublettencheck', schwere: 'warn', alter: 'vor 1 Std',
+    titel: 'Mögliche Dublette: „Markus Meyer" vs. Neuanmeldung „M. Meier"',
+    detail: 'KI-Ähnlichkeit 86 % (Name + Geburtsjahr + Ort). Vor Anlage prüfen.',
+    personId: 'p3', aktionen: [ { key: 'kontakt', label: '↗ Bestand öffnen' }, { key: 'merge', label: '⇉ Zusammenführen' }, { key: 'ignorieren', label: '✓ Kein Treffer' } ] },
+  { id: 'e3', prozess: 'Double-Opt-In', schwere: 'warn', alter: 'vor 2 Tagen',
+    titel: 'Opt-In seit 14 Tagen ausstehend: Lena Hofmann',
+    detail: 'Keine Bestätigung. Vor Werbeversand erneut anstoßen oder verwerfen.',
+    personId: 'p4', aktionen: [ { key: 'erneut', label: '✉ Erneut anstoßen' }, { key: 'kontakt', label: '↗ Kontakt öffnen' }, { key: 'verwerfen', label: '🗑 Verwerfen' } ] },
+];
+
+// Sonderfälle: nicht automatisierte Vorgänge, die manuell abgearbeitet werden
+const SONDERFAELLE = [
+  { id: 's1', icon: '✋', titel: 'Manuelle Anmeldung (Papierformular Messe)', faellig: '2026-06-18', prioritaet: 'mittel',
+    detail: 'Teilnehmer ohne Online-Konto — manuell erfassen und in Seminar einbuchen.', personId: null },
+  { id: 's2', icon: '🧾', titel: 'Kulanz-Storno + Gutschrift außerhalb Frist', faellig: '2026-06-17', prioritaet: 'hoch',
+    detail: 'Storno nach Widerrufsfrist, manuelle Gutschrift erstellen.', personId: 'p1' },
+  { id: 's3', icon: '🏫', titel: 'Schulwechsel-Sonderfall: abweichende Klassenzuordnung', faellig: '2026-06-20', prioritaet: 'niedrig',
+    detail: 'WebUntis-Automatik nicht anwendbar — Zuordnung manuell mit Berufsschule abstimmen.', personId: 'p2' },
 ];
