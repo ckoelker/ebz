@@ -35,6 +35,8 @@ export default defineConfig({
       '/crm': { target: INTEGRATION, changeOrigin: true },
       '/party': { target: INTEGRATION, changeOrigin: true },
       '/q': { target: INTEGRATION, changeOrigin: true },
+      // A15: WebSocket-Anreicherung (ws: true für das Upgrade).
+      '/ws': { target: INTEGRATION, changeOrigin: true, ws: true },
     },
   },
 });

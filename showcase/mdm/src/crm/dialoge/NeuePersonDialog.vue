@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import DialogShell from '@/components/DialogShell.vue';
@@ -46,7 +46,13 @@ const { value: vorname } = useField<string>('vorname');
 const { value: nachname } = useField<string>('nachname');
 const { value: geschlecht } = useField<string>('geschlecht');
 const { value: titel } = useField<string>('titel');
-const { value: geburtsdatum } = useField<string>('geburtsdatum');
+const { value: geburtsdatum } = useField<string | undefined>('geburtsdatum');
+// Optionales Datum: das native date-Input liefert beim Leeren "" — das verletzt zod
+// (string().date().optional() akzeptiert nur undefined, nicht ""). Daher "" ⇄ undefined mappen.
+const geburtsdatumInput = computed({
+  get: () => geburtsdatum.value ?? '',
+  set: (v: string) => { geburtsdatum.value = v === '' ? undefined : v; },
+});
 const { value: korrespondenzspracheCode } = useField<string>('korrespondenzspracheCode');
 const { value: leadQuelleCode } = useField<string>('leadQuelleCode');
 
@@ -122,7 +128,7 @@ const speichern = handleSubmit(async (values) => {
         <UInput v-model="titel" placeholder="z. B. Dr." class="w-full" />
       </UFormField>
       <UFormField label="Geburtsdatum" :error="errors.geburtsdatum">
-        <UInput v-model="geburtsdatum" type="date" class="w-full" />
+        <UInput v-model="geburtsdatumInput" type="date" class="w-full" />
       </UFormField>
       <UFormField label="Korrespondenzsprache" :error="errors.korrespondenzspracheCode">
         <USelect v-model="korrespondenzspracheCode" :items="lookupItems(sprachen)" class="w-full" />

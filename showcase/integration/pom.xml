@@ -87,6 +87,13 @@
       <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
 
+    <!-- A15 Firmen-Anreicherung: WebSocket-Stream (quarkus-websockets-next, JSON-Austausch).
+         Version vom Platform-BOM gemanagt. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-websockets-next</artifactId>
+    </dependency>
+
     <!-- Persistenz: Warehouse DB `controlling` (stg_hubspot_deal + Schema `bildung`) -->
     <dependency>
       <groupId>io.quarkus</groupId>

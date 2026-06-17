@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue';
+import { ref, watch, onBeforeUnmount } from 'vue';
 import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import DialogShell from '@/components/DialogShell.vue';
@@ -52,8 +52,62 @@ const { value: verbandCodes } = useField<string[]>('verbandCodes');
 
 const serverFehler = ref('');
 
-watch(() => props.open, (v) => {
+// ── A15 „Daten online ziehen": Firmen-Anreicherung über WebSocket (gestreamtes JSON) ──
+type AnreicherungVorschlag = {
+  name?: string; rechtsform?: string; ustId?: string; website?: string;
+  strasse?: string; plz?: string; ort?: string; brancheHinweis?: string;
+};
+type AnreicherungEvent = {
+  typ: string; schritt?: string; status?: string; detail?: string; vorschlag?: AnreicherungVorschlag;
+};
+const anrLog = ref<AnreicherungEvent[]>([]);
+const anrLaeuft = ref(false);
+const anrVorschlag = ref<AnreicherungVorschlag | null>(null);
+let ws: WebSocket | null = null;
+
+function schliesseWs() { ws?.close(); ws = null; }
+function anrReset() { schliesseWs(); anrLog.value = []; anrVorschlag.value = null; anrLaeuft.value = false; }
+
+function datenOnlineZiehen() {
+  if (!name.value?.trim()) return;
+  anrLog.value = [];
+  anrVorschlag.value = null;
+  anrLaeuft.value = true;
+  schliesseWs();
+  const url = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws/crm/anreicherung`;
+  ws = new WebSocket(url);
+  ws.onopen = () => ws?.send(JSON.stringify({ name: name.value, website: website.value, ustId: ustId.value }));
+  ws.onmessage = (ev) => {
+    const e = JSON.parse(ev.data) as AnreicherungEvent;
+    if (e.typ === 'vorschlag') anrVorschlag.value = e.vorschlag ?? null;
+    else anrLog.value = [...anrLog.value, e];
+  };
+  ws.onclose = () => { anrLaeuft.value = false; };
+  ws.onerror = () => {
+    anrLaeuft.value = false;
+    anrLog.value = [...anrLog.value, { typ: 'fehler', detail: 'WebSocket-Verbindung fehlgeschlagen.' }];
+  };
+}
+
+function anrUebernehmen() {
+  const v = anrVorschlag.value;
   if (!v) return;
+  if (v.name) name.value = v.name;
+  if (v.rechtsform) rechtsform.value = v.rechtsform;
+  if (v.ustId) ustId.value = v.ustId;
+  if (v.website) website.value = v.website;
+  anrVorschlag.value = null;
+}
+
+const anrIcon = (status?: string) =>
+  status === 'ok' ? 'i-lucide-check' : status === 'fehler' ? 'i-lucide-x'
+    : status === 'uebersprungen' ? 'i-lucide-minus' : status === 'fallback' ? 'i-lucide-check'
+      : 'i-lucide-loader-circle';
+
+onBeforeUnmount(schliesseWs);
+
+watch(() => props.open, (v) => {
+  if (!v) { anrReset(); return; }
   serverFehler.value = '';
   if (props.existing) {
     resetForm({ values: {
@@ -110,6 +164,38 @@ const speichern = handleSubmit(async (values) => {
       :ust-id="ustId"
       @verwenden="aufVerwenden"
     />
+
+    <!-- A15: Firmen-Anreicherung „Daten online ziehen" (gestreamt via WebSocket) -->
+    <div v-if="!existing" class="mb-4">
+      <UButton size="sm" variant="outline" icon="i-lucide-globe" :loading="anrLaeuft"
+               :disabled="!name?.trim()" @click="datenOnlineZiehen">
+        Daten online ziehen
+      </UButton>
+      <div v-if="anrLog.length || anrVorschlag || anrLaeuft"
+           class="mt-3 rounded-lg border border-default p-3 bg-elevated">
+        <ul class="space-y-1">
+          <li v-for="(e, i) in anrLog" :key="i" class="flex items-start gap-2 text-xs">
+            <UIcon :name="anrIcon(e.status)"
+                   :class="e.typ === 'fehler' || e.status === 'fehler' ? 'text-error-500 mt-0.5' : 'text-dimmed mt-0.5'" />
+            <span><span v-if="e.schritt" class="font-medium">{{ e.schritt }}: </span>{{ e.detail }}</span>
+          </li>
+        </ul>
+        <div v-if="anrVorschlag" class="mt-2 pt-2 border-t border-default">
+          <div class="text-xs text-muted mb-1">KI-Vorschlag aus VIES + Impressum:</div>
+          <div class="text-sm font-medium">
+            {{ anrVorschlag.name }}
+            <span v-if="anrVorschlag.rechtsform" class="text-muted">· {{ anrVorschlag.rechtsform }}</span>
+            <span v-if="anrVorschlag.ustId" class="text-muted">· {{ anrVorschlag.ustId }}</span>
+          </div>
+          <div v-if="anrVorschlag.strasse || anrVorschlag.ort" class="text-xs text-muted">
+            {{ [anrVorschlag.strasse, [anrVorschlag.plz, anrVorschlag.ort].filter(Boolean).join(' ')].filter(Boolean).join(', ') }}
+          </div>
+          <div v-if="anrVorschlag.brancheHinweis" class="text-xs text-muted">{{ anrVorschlag.brancheHinweis }}</div>
+          <UButton size="xs" icon="i-lucide-check" class="mt-2" @click="anrUebernehmen">In Felder übernehmen</UButton>
+        </div>
+      </div>
+    </div>
+
     <div class="grid grid-cols-2 gap-4">
       <UFormField label="Name" required class="col-span-2" :error="errors.name">
         <UInput v-model="name" class="w-full" />
