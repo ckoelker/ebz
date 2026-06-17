@@ -1,13 +1,19 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
+import { useForm, useField } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/zod';
 import DialogShell from '@/components/DialogShell.vue';
 import { useLookup, lookupItems } from '@/crm/lookups';
-import { fehlerText } from '@/crm/fehler';
+import { fehlerText, istUnauth } from '@/crm/fehler';
+import { violationsZuFehlern } from '@/bildung';
+import { login } from '@/auth';
 import { postCrmPersonen, putCrmPersonenId } from '@/api/endpoints/crm-resource/crm-resource';
-import type { PersonInput, PersonDetail } from '@/api/model';
+import { PostCrmPersonenBody } from '@/api/zod/crm-resource/crm-resource.zod';
+import type { PersonDetail } from '@/api/model';
 
-// Anlage/Bearbeitung einer Person (gestuft: Pflicht zuerst). Pflicht = Vorname + Nachname (Plan A1);
-// alles Übrige optional. Klassifikationen (Sprache/Lead-Quelle) aus den Lookups. Mit `existing` = Edit.
+// Anlage/Bearbeitung einer Person (Plan A1). Stack B: Validierung aus der generierten zod
+// (toTypedSchema) über vee-validate; Server-400 (Bean-Validation-Violations) wird via setErrors an
+// die Felder gehängt. Mit `existing` = Edit.
 const props = defineProps<{ open: boolean; existing?: PersonDetail | null }>();
 const emit = defineEmits<{ (e: 'update:open', v: boolean): void; (e: 'created', id: number): void; (e: 'saved'): void }>();
 
@@ -21,56 +27,58 @@ const geschlechtItems = [
   { label: 'Keine Angabe', value: 'KEINE_ANGABE' },
 ];
 
-const leer = (): PersonInput => ({
-  vorname: '', nachname: '', geschlecht: 'KEINE_ANGABE', titel: '', korrespondenzspracheCode: 'de',
-  leadQuelleCode: undefined, werbesperre: false, auskunftssperre: false,
+const initial = () => ({
+  vorname: '', nachname: '', geschlecht: 'KEINE_ANGABE', titel: '', geburtsdatum: undefined,
+  korrespondenzspracheCode: 'de', leadQuelleCode: undefined, werbesperre: false, auskunftssperre: false,
 });
-const form = reactive<PersonInput>(leer());
-const fehler = ref('');
-const speichert = ref(false);
+const { handleSubmit, setErrors, resetForm, isSubmitting, errors } = useForm({
+  validationSchema: toTypedSchema(PostCrmPersonenBody),
+  initialValues: initial(),
+});
+const { value: vorname } = useField<string>('vorname');
+const { value: nachname } = useField<string>('nachname');
+const { value: geschlecht } = useField<string>('geschlecht');
+const { value: titel } = useField<string>('titel');
+const { value: geburtsdatum } = useField<string>('geburtsdatum');
+const { value: korrespondenzspracheCode } = useField<string>('korrespondenzspracheCode');
+const { value: leadQuelleCode } = useField<string>('leadQuelleCode');
+
+const serverFehler = ref('');
 
 watch(() => props.open, (v) => {
   if (!v) return;
-  fehler.value = '';
-  Object.assign(form, leer());
+  serverFehler.value = '';
   if (props.existing) {
-    Object.assign(form, {
-      vorname: props.existing.vorname ?? '',
-      nachname: props.existing.nachname ?? '',
-      geschlecht: props.existing.geschlecht ?? 'KEINE_ANGABE',
-      titel: props.existing.titel ?? '',
-      geburtsdatum: props.existing.geburtsdatum,
-      geburtsort: props.existing.geburtsort ?? '',
-      korrespondenzspracheCode: props.existing.korrespondenzspracheCode ?? 'de',
-      werbesperre: props.existing.werbesperre ?? false,
+    resetForm({ values: {
+      vorname: props.existing.vorname ?? '', nachname: props.existing.nachname ?? '',
+      geschlecht: props.existing.geschlecht ?? 'KEINE_ANGABE', titel: props.existing.titel ?? '',
+      geburtsdatum: props.existing.geburtsdatum, korrespondenzspracheCode: props.existing.korrespondenzspracheCode ?? 'de',
+      leadQuelleCode: undefined, werbesperre: props.existing.werbesperre ?? false,
       auskunftssperre: props.existing.auskunftssperre ?? false,
-    });
+    } });
+  } else {
+    resetForm({ values: initial() });
   }
 });
 
-async function speichern() {
-  fehler.value = '';
-  if (!form.vorname.trim() || !form.nachname.trim()) {
-    fehler.value = 'Vor- und Nachname sind Pflicht.';
-    return;
-  }
-  speichert.value = true;
+const speichern = handleSubmit(async (values) => {
+  serverFehler.value = '';
   try {
-    const payload = { ...form, titel: form.titel || undefined };
     if (props.existing?.id) {
-      await putCrmPersonenId(props.existing.id, payload);
+      await putCrmPersonenId(props.existing.id, values);
       emit('saved');
     } else {
-      const p = (await postCrmPersonen(payload)) as PersonDetail;
+      const p = (await postCrmPersonen(values)) as PersonDetail;
       emit('created', p.id!);
     }
     emit('update:open', false);
   } catch (e) {
-    fehler.value = fehlerText(e);
-  } finally {
-    speichert.value = false;
+    if (istUnauth(e)) return login();
+    const fehler = violationsZuFehlern((e as { response?: { data?: unknown } })?.response?.data);
+    if (Object.keys(fehler).length) setErrors(fehler);
+    else serverFehler.value = fehlerText(e);
   }
-}
+});
 </script>
 
 <template>
@@ -78,39 +86,34 @@ async function speichern() {
     title="Neue Person"
     size="lg"
     :open="open"
-    primary-label="Anlegen"
+    primary-label="Speichern"
     primary-icon="i-lucide-user-plus"
-    :primary-loading="speichert"
+    :primary-loading="isSubmitting"
     @update:open="emit('update:open', $event)"
     @primary="speichern"
   >
-    <UAlert v-if="fehler" color="error" variant="soft" :title="fehler" class="mb-4" />
+    <UAlert v-if="serverFehler" color="error" variant="soft" :title="serverFehler" class="mb-4" />
     <div class="grid grid-cols-2 gap-4">
-      <UFormField label="Vorname" required>
-        <UInput v-model="form.vorname" class="w-full" />
+      <UFormField label="Vorname" required :error="errors.vorname">
+        <UInput v-model="vorname" class="w-full" />
       </UFormField>
-      <UFormField label="Nachname" required>
-        <UInput v-model="form.nachname" class="w-full" />
+      <UFormField label="Nachname" required :error="errors.nachname">
+        <UInput v-model="nachname" class="w-full" />
       </UFormField>
-      <UFormField label="Geschlecht">
-        <USelect v-model="form.geschlecht" :items="geschlechtItems" class="w-full" />
+      <UFormField label="Geschlecht" :error="errors.geschlecht">
+        <USelect v-model="geschlecht" :items="geschlechtItems" class="w-full" />
       </UFormField>
-      <UFormField label="Titel" help="DE-Grade voran (Dr./Prof.), internationale nachgestellt">
-        <UInput v-model="form.titel" placeholder="z. B. Dr." class="w-full" />
+      <UFormField label="Titel" help="DE-Grade voran (Dr./Prof.), internationale nachgestellt" :error="errors.titel">
+        <UInput v-model="titel" placeholder="z. B. Dr." class="w-full" />
       </UFormField>
-      <UFormField label="Geburtsdatum">
-        <UInput v-model="form.geburtsdatum" type="date" class="w-full" />
+      <UFormField label="Geburtsdatum" :error="errors.geburtsdatum">
+        <UInput v-model="geburtsdatum" type="date" class="w-full" />
       </UFormField>
-      <UFormField label="Korrespondenzsprache">
-        <USelect v-model="form.korrespondenzspracheCode" :items="lookupItems(sprachen)" class="w-full" />
+      <UFormField label="Korrespondenzsprache" :error="errors.korrespondenzspracheCode">
+        <USelect v-model="korrespondenzspracheCode" :items="lookupItems(sprachen)" class="w-full" />
       </UFormField>
-      <UFormField label="Lead-Quelle" class="col-span-2">
-        <USelect
-          v-model="form.leadQuelleCode"
-          :items="lookupItems(leadquellen)"
-          placeholder="— wählen —"
-          class="w-full"
-        />
+      <UFormField label="Lead-Quelle" class="col-span-2" :error="errors.leadQuelleCode">
+        <USelect v-model="leadQuelleCode" :items="lookupItems(leadquellen)" placeholder="— wählen —" class="w-full" />
       </UFormField>
     </div>
   </DialogShell>

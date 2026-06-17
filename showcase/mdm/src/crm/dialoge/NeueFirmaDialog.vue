@@ -1,13 +1,17 @@
 <script setup lang="ts">
-import { reactive, ref, watch } from 'vue';
+import { ref, watch } from 'vue';
+import { useForm, useField } from 'vee-validate';
+import { toTypedSchema } from '@vee-validate/zod';
 import DialogShell from '@/components/DialogShell.vue';
 import { useLookup, lookupItems } from '@/crm/lookups';
-import { fehlerText } from '@/crm/fehler';
+import { fehlerText, istUnauth } from '@/crm/fehler';
+import { violationsZuFehlern } from '@/bildung';
+import { login } from '@/auth';
 import { postCrmOrganisationen, putCrmOrganisationenId } from '@/api/endpoints/crm-resource/crm-resource';
-import type { OrganisationInput, OrgDetail } from '@/api/model';
+import { PostCrmOrganisationenBody } from '@/api/zod/crm-resource/crm-resource.zod';
+import type { OrgDetail } from '@/api/model';
 
-// Anlage/Bearbeitung einer Organisation. Pflicht = Name (Plan A2); Immobilien-Spezifika (Unternehmenstyp/
-// Schwerpunkte/Verbände/Branche/IHK) als Mehrfach-Lookups. Mit `existing` = Edit.
+// Anlage/Bearbeitung einer Organisation (Plan A2), Stack B (zod→vee-validate, Server-400→setErrors).
 const props = defineProps<{ open: boolean; existing?: OrgDetail | null }>();
 const emit = defineEmits<{ (e: 'update:open', v: boolean): void; (e: 'created', id: number): void; (e: 'saved'): void }>();
 
@@ -17,59 +21,66 @@ const { data: schwerpunkte } = useLookup('schwerpunkt');
 const { data: verbaende } = useLookup('verband');
 const { data: kammern } = useLookup('ihk');
 
-const leer = (): OrganisationInput => ({
+const initial = () => ({
   name: '', rechtsform: '', brancheCode: undefined, website: '', ustId: '', bestandsgroesse: undefined,
   ausbildungsbetrieb: false, ihkKammerCode: undefined, gewerbeerlaubnis: 'KEINE',
-  unternehmenstypCodes: [], schwerpunktCodes: [], verbandCodes: [],
+  unternehmenstypCodes: [] as string[], schwerpunktCodes: [] as string[], verbandCodes: [] as string[],
 });
-const form = reactive<OrganisationInput>(leer());
-const fehler = ref('');
-const speichert = ref(false);
+const { handleSubmit, setErrors, resetForm, isSubmitting, errors } = useForm({
+  validationSchema: toTypedSchema(PostCrmOrganisationenBody),
+  initialValues: initial(),
+});
+const { value: name } = useField<string>('name');
+const { value: rechtsform } = useField<string>('rechtsform');
+const { value: brancheCode } = useField<string>('brancheCode');
+const { value: website } = useField<string>('website');
+const { value: ustId } = useField<string>('ustId');
+const { value: bestandsgroesse } = useField<number | undefined>('bestandsgroesse');
+const { value: ausbildungsbetrieb } = useField<boolean>('ausbildungsbetrieb');
+const { value: ihkKammerCode } = useField<string>('ihkKammerCode');
+const { value: unternehmenstypCodes } = useField<string[]>('unternehmenstypCodes');
+const { value: schwerpunktCodes } = useField<string[]>('schwerpunktCodes');
+const { value: verbandCodes } = useField<string[]>('verbandCodes');
+
+const serverFehler = ref('');
 
 watch(() => props.open, (v) => {
   if (!v) return;
-  fehler.value = '';
-  Object.assign(form, leer());
+  serverFehler.value = '';
   if (props.existing) {
-    Object.assign(form, {
-      name: props.existing.name ?? '',
-      rechtsform: props.existing.rechtsform ?? '',
-      brancheCode: props.existing.brancheCode ?? undefined,
-      website: props.existing.website ?? '',
-      ustId: props.existing.ustId ?? '',
-      bestandsgroesse: props.existing.bestandsgroesse,
+    resetForm({ values: {
+      name: props.existing.name ?? '', rechtsform: props.existing.rechtsform ?? '',
+      brancheCode: props.existing.brancheCode ?? undefined, website: props.existing.website ?? '',
+      ustId: props.existing.ustId ?? '', bestandsgroesse: props.existing.bestandsgroesse,
       ausbildungsbetrieb: props.existing.ausbildungsbetrieb ?? false,
       ihkKammerCode: props.existing.ihkKammerCode ?? undefined,
       gewerbeerlaubnis: props.existing.gewerbeerlaubnis ?? 'KEINE',
-      unternehmenstypCodes: props.existing.unternehmenstypen ?? [],
-      schwerpunktCodes: props.existing.taetigkeitsschwerpunkte ?? [],
+      unternehmenstypCodes: props.existing.unternehmenstypen ?? [], schwerpunktCodes: props.existing.taetigkeitsschwerpunkte ?? [],
       verbandCodes: props.existing.verbaende ?? [],
-    });
+    } });
+  } else {
+    resetForm({ values: initial() });
   }
 });
 
-async function speichern() {
-  fehler.value = '';
-  if (!form.name.trim()) {
-    fehler.value = 'Name ist Pflicht.';
-    return;
-  }
-  speichert.value = true;
+const speichern = handleSubmit(async (values) => {
+  serverFehler.value = '';
   try {
     if (props.existing?.id) {
-      await putCrmOrganisationenId(props.existing.id, { ...form });
+      await putCrmOrganisationenId(props.existing.id, values);
       emit('saved');
     } else {
-      const o = (await postCrmOrganisationen({ ...form })) as OrgDetail;
+      const o = (await postCrmOrganisationen(values)) as OrgDetail;
       emit('created', o.id!);
     }
     emit('update:open', false);
   } catch (e) {
-    fehler.value = fehlerText(e);
-  } finally {
-    speichert.value = false;
+    if (istUnauth(e)) return login();
+    const fehler = violationsZuFehlern((e as { response?: { data?: unknown } })?.response?.data);
+    if (Object.keys(fehler).length) setErrors(fehler);
+    else serverFehler.value = fehlerText(e);
   }
-}
+});
 </script>
 
 <template>
@@ -77,46 +88,46 @@ async function speichern() {
     title="Neue Organisation"
     size="xl"
     :open="open"
-    primary-label="Anlegen"
+    primary-label="Speichern"
     primary-icon="i-lucide-building-2"
-    :primary-loading="speichert"
+    :primary-loading="isSubmitting"
     @update:open="emit('update:open', $event)"
     @primary="speichern"
   >
-    <UAlert v-if="fehler" color="error" variant="soft" :title="fehler" class="mb-4" />
+    <UAlert v-if="serverFehler" color="error" variant="soft" :title="serverFehler" class="mb-4" />
     <div class="grid grid-cols-2 gap-4">
-      <UFormField label="Name" required class="col-span-2">
-        <UInput v-model="form.name" class="w-full" />
+      <UFormField label="Name" required class="col-span-2" :error="errors.name">
+        <UInput v-model="name" class="w-full" />
       </UFormField>
-      <UFormField label="Rechtsform">
-        <UInput v-model="form.rechtsform" placeholder="z. B. GmbH" class="w-full" />
+      <UFormField label="Rechtsform" :error="errors.rechtsform">
+        <UInput v-model="rechtsform" placeholder="z. B. GmbH" class="w-full" />
       </UFormField>
-      <UFormField label="USt-IdNr.">
-        <UInput v-model="form.ustId" placeholder="DE…" class="w-full" />
+      <UFormField label="USt-IdNr." :error="errors.ustId">
+        <UInput v-model="ustId" placeholder="DE…" class="w-full" />
       </UFormField>
-      <UFormField label="Branche (WZ/NACE)">
-        <USelect v-model="form.brancheCode" :items="lookupItems(branchen)" placeholder="— wählen —" class="w-full" />
+      <UFormField label="Branche (WZ/NACE)" :error="errors.brancheCode">
+        <USelect v-model="brancheCode" :items="lookupItems(branchen)" placeholder="— wählen —" class="w-full" />
       </UFormField>
-      <UFormField label="Website">
-        <UInput v-model="form.website" class="w-full" />
+      <UFormField label="Website" :error="errors.website">
+        <UInput v-model="website" class="w-full" />
       </UFormField>
       <UFormField label="Unternehmenstyp(en)" class="col-span-2">
-        <USelect v-model="form.unternehmenstypCodes" :items="lookupItems(unternehmenstypen)" multiple class="w-full" />
+        <USelect v-model="unternehmenstypCodes" :items="lookupItems(unternehmenstypen)" multiple class="w-full" />
       </UFormField>
       <UFormField label="Tätigkeitsschwerpunkte" class="col-span-2">
-        <USelect v-model="form.schwerpunktCodes" :items="lookupItems(schwerpunkte)" multiple class="w-full" />
+        <USelect v-model="schwerpunktCodes" :items="lookupItems(schwerpunkte)" multiple class="w-full" />
       </UFormField>
       <UFormField label="Verbände" class="col-span-2">
-        <USelect v-model="form.verbandCodes" :items="lookupItems(verbaende)" multiple class="w-full" />
+        <USelect v-model="verbandCodes" :items="lookupItems(verbaende)" multiple class="w-full" />
       </UFormField>
-      <UFormField label="IHK / Kammer">
-        <USelect v-model="form.ihkKammerCode" :items="lookupItems(kammern)" placeholder="— wählen —" class="w-full" />
+      <UFormField label="IHK / Kammer" :error="errors.ihkKammerCode">
+        <USelect v-model="ihkKammerCode" :items="lookupItems(kammern)" placeholder="— wählen —" class="w-full" />
       </UFormField>
-      <UFormField label="Bestandsgröße (Einheiten)">
-        <UInputNumber v-model="form.bestandsgroesse" :min="0" class="w-full" />
+      <UFormField label="Bestandsgröße (Einheiten)" :error="errors.bestandsgroesse">
+        <UInputNumber v-model="bestandsgroesse" :min="0" class="w-full" />
       </UFormField>
       <UFormField label="Ausbildungsbetrieb" class="col-span-2">
-        <UCheckbox v-model="form.ausbildungsbetrieb" label="Ist Ausbildungsbetrieb (Berufsschul-/Azubi-Prozesse)" />
+        <UCheckbox v-model="ausbildungsbetrieb" label="Ist Ausbildungsbetrieb (Berufsschul-/Azubi-Prozesse)" />
       </UFormField>
     </div>
   </DialogShell>
