@@ -31,6 +31,7 @@ export default defineConfig({
     port: 5174,
     proxy: {
       '/bildung': { target: INTEGRATION, changeOrigin: true },
+      '/crm': { target: INTEGRATION, changeOrigin: true },
       '/party': { target: INTEGRATION, changeOrigin: true },
       '/q': { target: INTEGRATION, changeOrigin: true },
     },

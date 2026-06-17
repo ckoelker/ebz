@@ -10,6 +10,7 @@ import type { Column } from '@tanstack/vue-table';
 import { AnmeldungStatus } from '@/api/model';
 import { offeneAnmeldungen, bestaetigeAnmeldung, ApiFehler, type OffeneAnmeldungView } from '@/dubletten';
 import { auth, login } from '@/auth';
+import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
 
 const qc = useQueryClient();
 const status = ref<AnmeldungStatus>(AnmeldungStatus.ANGEFRAGT);
@@ -81,6 +82,7 @@ const page = computed({
 
 <template>
   <section>
+    <NichtAbgestimmtBanner />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-bold">Anmeldungen — EBZ-Bestätigung</h2>
       <div class="flex gap-2 items-center">

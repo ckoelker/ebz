@@ -8,6 +8,7 @@ import type { TableColumn } from '@nuxt/ui';
 import { reviewQueue, entscheide, einschaetzungSchwere, ApiFehler, type Fall } from '@/dubletten';
 import { Entscheidung } from '@/api/model';
 import { auth, login } from '@/auth';
+import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
 
 const qc = useQueryClient();
 
@@ -62,6 +63,7 @@ const columns: TableColumn<Fall>[] = [
 
 <template>
   <section>
+    <NichtAbgestimmtBanner />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-bold">Dubletten-Review</h2>
       <UButton color="neutral" variant="ghost" icon="i-lucide-refresh-cw" :loading="isFetching" @click="() => { refetch(); }" />

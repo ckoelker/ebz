@@ -12,6 +12,7 @@ import type { RegistryItemDto } from '@/api/model';
 import { getBildungAngebote } from '@/api/endpoints/bildung-resource/bildung-resource';
 import { typen, alleTypen, projiziereInShop, type Typ } from '@/bildung';
 import { login } from '@/auth';
+import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
 
 const router = useRouter();
 
@@ -20,22 +21,24 @@ const { data, isFetching, refetch } = useQuery({
   queryFn: async (): Promise<RegistryItemDto[]> => (await getBildungAngebote()) ?? [],
 });
 
-// Filter — leerer Wert ('') = kein Filter; Items mit „Alle …"-Eintrag statt PrimeVue-showClear.
-const fTyp = ref('');
-const fBereich = ref('');
-const fStatus = ref('');
+// Filter — Sentinel 'ALLE' = kein Filter (Reka-UI verbietet leeren SelectItem-Value); „Alle …"-Eintrag
+// statt PrimeVue-showClear.
+const ALLE = 'ALLE';
+const fTyp = ref(ALLE);
+const fBereich = ref(ALLE);
+const fStatus = ref(ALLE);
 
-const typItems = [{ label: 'Alle Typen', value: '' }, ...alleTypen.map((t) => ({ label: typen[t].label, value: t }))];
-const bereichItems = [{ label: 'Alle Bereiche', value: '' }, ...Object.values(Bereich).map((b) => ({ label: b, value: b }))];
-const statusItems = [{ label: 'Alle Status', value: '' }, ...Object.values(AngebotStatus).map((s) => ({ label: s, value: s }))];
+const typItems = [{ label: 'Alle Typen', value: ALLE }, ...alleTypen.map((t) => ({ label: typen[t].label, value: t }))];
+const bereichItems = [{ label: 'Alle Bereiche', value: ALLE }, ...Object.values(Bereich).map((b) => ({ label: b, value: b }))];
+const statusItems = [{ label: 'Alle Status', value: ALLE }, ...Object.values(AngebotStatus).map((s) => ({ label: s, value: s }))];
 const neuItems = alleTypen.map((t) => ({ label: typen[t].label, value: t }));
 
 const gefiltert = computed(() =>
   (data.value ?? []).filter(
     (a) =>
-      (!fTyp.value || a.typ === fTyp.value) &&
-      (!fBereich.value || a.bereich === fBereich.value) &&
-      (!fStatus.value || a.status === fStatus.value),
+      (fTyp.value === ALLE || a.typ === fTyp.value) &&
+      (fBereich.value === ALLE || a.bereich === fBereich.value) &&
+      (fStatus.value === ALLE || a.status === fStatus.value),
   ),
 );
 
@@ -133,6 +136,7 @@ const page = computed({
 
 <template>
   <section>
+    <NichtAbgestimmtBanner />
     <div class="flex justify-between items-center">
       <h2 class="text-xl font-bold">Bildungsangebote</h2>
       <div class="flex gap-2 items-center">

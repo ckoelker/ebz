@@ -12,6 +12,7 @@ import StammdatenFelder from '@/components/StammdatenFelder.vue';
 import TypSpezifischeFelder from '@/components/TypSpezifischeFelder.vue';
 import { typen, leeresAngebot, violationsZuFehlern, type Typ, type AngebotDto } from '@/bildung';
 import { login } from '@/auth';
+import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -58,12 +59,13 @@ const speichern = handleSubmit(async (values) => {
     return;
   }
   await queryClient.invalidateQueries({ queryKey: ['angebote'] });
-  router.push('/');
+  router.push('/angebote');
 });
 </script>
 
 <template>
   <section v-if="geladen">
+    <NichtAbgestimmtBanner />
     <h2 class="text-xl font-bold mb-4">{{ id ? 'Bearbeiten' : 'Neu' }}: {{ config.label }}</h2>
 
     <form @submit="speichern">
@@ -74,7 +76,7 @@ const speichern = handleSubmit(async (values) => {
 
       <div class="flex gap-3 mt-4">
         <UButton type="submit" icon="i-lucide-check" :loading="isSubmitting">Speichern</UButton>
-        <UButton color="neutral" variant="ghost" type="button" @click="router.push('/')">Abbrechen</UButton>
+        <UButton color="neutral" variant="ghost" type="button" @click="router.push('/angebote')">Abbrechen</UButton>
       </div>
     </form>
   </section>
