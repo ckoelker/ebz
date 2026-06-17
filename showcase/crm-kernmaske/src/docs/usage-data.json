@@ -2,19 +2,6 @@
   "generatedAt": "2026-06-17",
   "nodes": [
     {
-      "name": "FeldRenderer",
-      "group": "bausteine",
-      "children": [],
-      "ui": [
-        "UCheckbox",
-        "UFormField",
-        "UInput",
-        "UInputNumber",
-        "USelect",
-        "UTextarea"
-      ]
-    },
-    {
       "name": "KanalEdit",
       "group": "bausteine",
       "children": [],
@@ -29,9 +16,10 @@
     {
       "name": "LookupCheckboxListe",
       "group": "bausteine",
-      "children": [],
+      "children": [
+        "ChipList"
+      ],
       "ui": [
-        "UBadge",
         "UCheckbox",
         "UInput"
       ]
@@ -55,7 +43,10 @@
     {
       "name": "StammdatenForm",
       "group": "bausteine",
-      "children": [],
+      "children": [
+        "FeldRenderer",
+        "KeyValueGrid"
+      ],
       "ui": [
         "UButton",
         "UCard",
@@ -65,21 +56,24 @@
     {
       "name": "VerknuepfungDialog",
       "group": "bausteine",
-      "children": [],
+      "children": [
+        "DialogShell",
+        "PartyAvatar"
+      ],
       "ui": [
         "UAlert",
-        "UAvatar",
         "UButton",
         "UIcon",
         "UInput",
-        "UModal",
         "USelect"
       ]
     },
     {
       "name": "AnrufToast",
       "group": "cockpit",
-      "children": [],
+      "children": [
+        "PartyAvatar"
+      ],
       "ui": [
         "UAvatar",
         "UButton",
@@ -99,7 +93,9 @@
     {
       "name": "ProzessStatusTabelle",
       "group": "cockpit",
-      "children": [],
+      "children": [
+        "HealthDot"
+      ],
       "ui": [
         "UBadge",
         "UButton"
@@ -118,36 +114,36 @@
       "name": "NeueFirmaDialog",
       "group": "dialoge",
       "children": [
+        "DialogShell",
         "FeldRenderer"
       ],
       "ui": [
         "UAlert",
-        "UButton",
-        "UModal"
+        "UButton"
       ]
     },
     {
       "name": "NeuePersonDialog",
       "group": "dialoge",
       "children": [
-        "FeldRenderer"
+        "DialogShell",
+        "FeldRenderer",
+        "Stepper"
       ],
       "ui": [
         "UAlert",
-        "UButton",
-        "UIcon",
-        "UModal"
+        "UButton"
       ]
     },
     {
       "name": "NotizDialog",
       "group": "dialoge",
-      "children": [],
+      "children": [
+        "DialogShell"
+      ],
       "ui": [
-        "UButton",
         "UFormField",
         "UInput",
-        "UModal",
         "USelect",
         "UTextarea"
       ]
@@ -155,33 +151,51 @@
     {
       "name": "RechtAufVergessenDialog",
       "group": "dialoge",
-      "children": [],
+      "children": [
+        "DialogShell"
+      ],
       "ui": [
         "UAlert",
-        "UButton",
-        "UCheckbox",
-        "UModal"
+        "UCheckbox"
       ]
     },
     {
       "name": "WiedervorlageDialog",
       "group": "dialoge",
-      "children": [],
+      "children": [
+        "DialogShell"
+      ],
       "ui": [
-        "UButton",
         "UFormField",
         "UInput",
-        "UModal",
         "USelect"
+      ]
+    },
+    {
+      "name": "ComponentUsage",
+      "group": "docs",
+      "children": [],
+      "ui": [
+        "UBadge"
+      ]
+    },
+    {
+      "name": "TokenGallery",
+      "group": "features (root)",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UButton"
       ]
     },
     {
       "name": "KontaktDetailHeader",
       "group": "kunden",
-      "children": [],
+      "children": [
+        "PartyAvatar",
+        "StatusBadges"
+      ],
       "ui": [
-        "UAvatar",
-        "UBadge",
         "UButton"
       ]
     },
@@ -190,11 +204,11 @@
       "group": "kunden",
       "children": [
         "KontaktDetailHeader",
+        "KontaktpunktList",
         "KundenMasterListe",
         "TabBar"
       ],
       "ui": [
-        "UBadge",
         "UCard"
       ]
     },
@@ -202,19 +216,20 @@
       "name": "KundenMasterListe",
       "group": "kunden",
       "children": [
-        "MasterListItem"
+        "MasterListItem",
+        "SegmentedControl"
       ],
       "ui": [
-        "UButton",
         "UInput"
       ]
     },
     {
       "name": "MasterListItem",
       "group": "kunden",
-      "children": [],
+      "children": [
+        "PartyAvatar"
+      ],
       "ui": [
-        "UAvatar",
         "UIcon"
       ]
     },
@@ -224,15 +239,6 @@
       "children": [],
       "ui": [
         "UBadge"
-      ]
-    },
-    {
-      "name": "TokenGallery",
-      "group": "root",
-      "children": [],
-      "ui": [
-        "UBadge",
-        "UButton"
       ]
     },
     {
@@ -247,9 +253,10 @@
     {
       "name": "Rail",
       "group": "shell",
-      "children": [],
+      "children": [
+        "PartyAvatar"
+      ],
       "ui": [
-        "UAvatar",
         "UBadge",
         "UIcon"
       ]
@@ -257,9 +264,10 @@
     {
       "name": "Topbar",
       "group": "shell",
-      "children": [],
+      "children": [
+        "PartyAvatar"
+      ],
       "ui": [
-        "UAvatar",
         "UButton",
         "UInput"
       ]
@@ -291,9 +299,129 @@
         "UIcon",
         "UProgress"
       ]
+    },
+    {
+      "name": "ChipList",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": [
+        "UBadge"
+      ]
+    },
+    {
+      "name": "DialogShell",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": [
+        "UButton",
+        "UModal"
+      ]
+    },
+    {
+      "name": "FeldRenderer",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": [
+        "UCheckbox",
+        "UFormField",
+        "UInput",
+        "UInputNumber",
+        "USelect",
+        "UTextarea"
+      ]
+    },
+    {
+      "name": "HealthDot",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": []
+    },
+    {
+      "name": "KeyValueGrid",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": []
+    },
+    {
+      "name": "KontaktpunktList",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": [
+        "UBadge",
+        "UIcon"
+      ]
+    },
+    {
+      "name": "PartyAvatar",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": [
+        "UAvatar"
+      ]
+    },
+    {
+      "name": "SegmentedControl",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": [
+        "UButton"
+      ]
+    },
+    {
+      "name": "StatusBadges",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": [
+        "UBadge"
+      ]
+    },
+    {
+      "name": "Stepper",
+      "group": "ui (Primitives)",
+      "children": [],
+      "ui": [
+        "UIcon"
+      ]
     }
   ],
   "uiUsedIn": {
+    "UBadge": [
+      "ChipList",
+      "ComponentUsage",
+      "EingriffeKarten",
+      "EinwilligungTabelle",
+      "KanalEdit",
+      "KontakthistorieListe",
+      "KontaktpunktList",
+      "MitgliedschaftEdit",
+      "ProzessStatusTabelle",
+      "Rail",
+      "SonderfaelleKarten",
+      "StatusBadges",
+      "TabBar",
+      "TokenGallery",
+      "WeiterbildungStundenkonto"
+    ],
+    "UButton": [
+      "AnrufToast",
+      "DialogShell",
+      "EingriffeKarten",
+      "KanalEdit",
+      "KontaktDetailHeader",
+      "MitgliedschaftEdit",
+      "NeueFirmaDialog",
+      "NeuePersonDialog",
+      "ProzessStatusTabelle",
+      "SegmentedControl",
+      "SonderfaelleKarten",
+      "StammdatenForm",
+      "TokenGallery",
+      "Topbar",
+      "VerknuepfungDialog"
+    ],
+    "UModal": [
+      "DialogShell"
+    ],
     "UCheckbox": [
       "FeldRenderer",
       "LookupCheckboxListe",
@@ -331,52 +459,22 @@
       "FeldRenderer",
       "NotizDialog"
     ],
-    "UBadge": [
-      "EingriffeKarten",
-      "EinwilligungTabelle",
-      "KanalEdit",
-      "KontaktDetailHeader",
-      "KontakthistorieListe",
-      "KundenMasterDetailDemo",
-      "LookupCheckboxListe",
-      "MitgliedschaftEdit",
-      "ProzessStatusTabelle",
-      "Rail",
-      "SonderfaelleKarten",
-      "TabBar",
-      "TokenGallery",
-      "WeiterbildungStundenkonto"
-    ],
-    "UButton": [
-      "AnrufToast",
-      "EingriffeKarten",
-      "KanalEdit",
-      "KontaktDetailHeader",
-      "KundenMasterListe",
-      "MitgliedschaftEdit",
-      "NeueFirmaDialog",
-      "NeuePersonDialog",
-      "NotizDialog",
-      "ProzessStatusTabelle",
-      "RechtAufVergessenDialog",
-      "SonderfaelleKarten",
-      "StammdatenForm",
-      "TokenGallery",
-      "Topbar",
-      "VerknuepfungDialog",
-      "WiedervorlageDialog"
-    ],
     "UIcon": [
       "AnrufToast",
       "KanalEdit",
       "KontakthistorieListe",
+      "KontaktpunktList",
       "MasterListItem",
       "MitgliedschaftEdit",
-      "NeuePersonDialog",
       "Rail",
       "StammdatenForm",
+      "Stepper",
       "VerknuepfungDialog",
       "WeiterbildungStundenkonto"
+    ],
+    "UAvatar": [
+      "AnrufToast",
+      "PartyAvatar"
     ],
     "UCard": [
       "EingriffeKarten",
@@ -390,22 +488,6 @@
       "NeuePersonDialog",
       "RechtAufVergessenDialog",
       "VerknuepfungDialog"
-    ],
-    "UAvatar": [
-      "AnrufToast",
-      "KontaktDetailHeader",
-      "MasterListItem",
-      "Rail",
-      "Topbar",
-      "VerknuepfungDialog"
-    ],
-    "UModal": [
-      "NeueFirmaDialog",
-      "NeuePersonDialog",
-      "NotizDialog",
-      "RechtAufVergessenDialog",
-      "VerknuepfungDialog",
-      "WiedervorlageDialog"
     ],
     "UProgress": [
       "WeiterbildungStundenkonto"

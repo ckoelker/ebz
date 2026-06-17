@@ -17,11 +17,25 @@ module.exports = {
       to: { circular: true },
     },
     {
+      name: 'ui-rein',
+      comment: 'ui/-Primitives dürfen NICHT aus features/ oder data/ importieren (nur vue + domain). Stories ausgenommen.',
+      severity: 'error',
+      from: { path: '^src/ui/', pathNot: '\\.stories\\.' },
+      to: { path: '^src/(features|data)/' },
+    },
+    {
+      name: 'domain-rein',
+      comment: 'domain/ ist die unterste Schicht — kein Import aus ui/features/data.',
+      severity: 'error',
+      from: { path: '^src/domain/' },
+      to: { path: '^src/(ui|features|data)/' },
+    },
+    {
       name: 'schichtung-keine-shell-importe',
-      comment: 'Bausteine/Dialoge/Tabs sollen die Shell nicht importieren (untere Schicht zieht nicht die obere).',
+      comment: 'Bausteine/Dialoge/Tabs/Cockpit sollen die Shell nicht importieren (untere Schicht zieht nicht die obere).',
       severity: 'warn',
-      from: { path: '^src/components/(bausteine|dialoge|tabs|cockpit)/' },
-      to: { path: '^src/components/shell/' },
+      from: { path: '^src/features/(bausteine|dialoge|tabs|cockpit)/' },
+      to: { path: '^src/features/shell/' },
     },
   ],
   options: {

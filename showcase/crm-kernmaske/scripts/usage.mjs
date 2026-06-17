@@ -7,17 +7,20 @@ import { join, basename } from 'node:path'
 
 const SRC = 'src'
 const files = []
-;(function walk(d) {
+const walk = (d) => {
   for (const e of readdirSync(d)) {
     const p = join(d, e)
     if (statSync(p).isDirectory()) walk(p)
     else if (p.endsWith('.vue')) files.push(p.replaceAll('\\', '/'))
   }
-})(join(SRC, 'components'))
+}
+walk(join(SRC, 'ui'))
+walk(join(SRC, 'features'))
 
 const groupOf = (p) => {
-  const m = p.match(/components\/([^/]+)\//)
-  return m && m[1] !== basename(p) ? m[1] : 'root'
+  if (p.includes('/ui/')) return 'ui (Primitives)'
+  const m = p.match(/features\/([^/]+)\//)
+  return m && m[1] !== basename(p) ? m[1] : 'features (root)'
 }
 
 const nodes = []

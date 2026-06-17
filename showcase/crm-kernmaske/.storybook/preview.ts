@@ -44,7 +44,7 @@ const preview: Preview = {
     },
     options: {
       storySort: {
-        order: ['Übersicht', 'Tokens', 'Shell', 'Cockpit', 'Kundenstamm', 'Bausteine', 'Tabs', 'Dialoge'],
+        order: ['Übersicht', 'Tokens', 'Primitives', 'Shell', 'Cockpit', 'Kundenstamm', 'Bausteine', 'Tabs', 'Dialoge'],
       },
     },
   },

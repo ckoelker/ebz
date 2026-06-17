@@ -36,9 +36,31 @@ Zeigt die expliziten `import`s (eigene Sub-Komponenten). **Hinweis:** Nuxt-UI-Ko
 (`<UButton>` …) sind Auto-Imports von `@nuxt/ui/vite` und erscheinen im Graph **nicht** —
 die bekommt man nur über einen Template-Scan.
 
-## Inventar (7 Gruppen, 30 Stories) — alle gegen Mock-Daten
+## Architektur (Schichtung)
 
+Geschichtet für Wiederverwendbarkeit/Wartbarkeit und planbares Wachstum; per
+dependency-cruiser erzwungen (`pnpm depcruise`):
+
+```
+src/
+  domain/    reine Logik, keine UI/Daten  (types, severity, party, kontaktpunkt,
+             briefanrede, lookups, forms/Schemas, kundenliste-Selector)
+  ui/        Presentational-Primitives, domänenrein  (PartyAvatar, StatusBadges,
+             HealthDot, KeyValueGrid, ChipList, SegmentedControl, KontaktpunktList,
+             DialogShell, Stepper, FeldRenderer)
+  features/  Organisms/Views je Feature  (shell, cockpit, kunden, bausteine, tabs, dialoge, docs)
+  data/      mock/ jetzt; API-Adapter (orval/vue-query) später hinter gleicher Schnittstelle
+```
+
+Regeln (depcruise, `error`): `ui/` darf nicht aus `features/`/`data/` importieren,
+`domain/` aus nichts darüber. Präsentationskomponenten sind **prop-rein**; ein dünner
+Container (bzw. die Story) liefert die Daten — der Umstieg Mock→API berührt nur die Container.
+
+## Inventar (Stories) — alle gegen Mock-Daten
+
+- **Übersicht** — Komponenten-Verwendung (generiert via `pnpm usage`)
 - **Tokens** — Design-Tokens (Navy-Scale, Severity, Buttons, Badges)
+- **Primitives** — die ui/-Bausteine einzeln (Avatar/Health/Status/Chips/KV/Segment/Kontaktpunkte/Stepper)
 - **Shell** — Topbar (Suche/CTI/User), Rail (Nav+Quicklinks), CockpitShell (komplett)
 - **Cockpit** — ProzessStatusTabelle, EingriffeKarten (HITL), SonderfaelleKarten, AnrufToast
 - **Kundenstamm** — KundenMasterListe, MasterListItem, KontaktDetailHeader, TabBar, Master-Detail-Flow
