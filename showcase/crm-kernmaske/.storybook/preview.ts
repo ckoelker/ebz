@@ -10,9 +10,30 @@ setup((app) => {
 })
 
 const preview: Preview = {
+  // Farbschema-Umschalter in der Toolbar (Default: Light). Nuxt UI / Tailwind v4
+  // schalten Dark über die `.dark`-Klasse auf <html> — wir setzen sie explizit,
+  // damit nicht das System-Schema (prefers-color-scheme) gewinnt.
+  globalTypes: {
+    theme: {
+      description: 'Farbschema',
+      defaultValue: 'light',
+      toolbar: {
+        title: 'Theme',
+        icon: 'sun',
+        items: [
+          { value: 'light', title: 'Light', icon: 'sun' },
+          { value: 'dark', title: 'Dark', icon: 'moon' },
+        ],
+        dynamicTitle: true,
+      },
+    },
+  },
   decorators: [
-    (story) => ({
+    (story, context) => ({
       components: { StoryHost, story },
+      setup() {
+        document.documentElement.classList.toggle('dark', context.globals.theme === 'dark')
+      },
       template: '<StoryHost><story /></StoryHost>',
     }),
   ],
