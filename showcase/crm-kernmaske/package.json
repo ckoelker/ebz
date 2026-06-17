@@ -1,0 +1,32 @@
+{
+  "name": "ebz-crm-kernmaske",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@11.5.2",
+  "description": "EBZ CRM-Kernmaske — Design-Abnahme via Storybook (Nuxt UI 4, Vue-only über @nuxt/ui/vite). Komponenten-Inventar aus dem abgenommenen Wireframe; EBZ-Navy auf Nuxt-Default-Theme. Wegwerf-/Abnahme-Artefakt vor FE/BE-Bau.",
+  "scripts": {
+    "dev": "vite",
+    "build": "vue-tsc -b && vite build",
+    "typecheck": "vue-tsc --noEmit",
+    "storybook": "storybook dev -p 6007 --no-open",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@internationalized/date": "3.10.0",
+    "@nuxt/ui": "4.8.2",
+    "tailwindcss": "4.3.1",
+    "vue": "3.5.38",
+    "vue-router": "5.1.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@storybook/vue3-vite": "10.4.6",
+    "@types/node": "^22.19.21",
+    "@vitejs/plugin-vue": "6.0.7",
+    "storybook": "10.4.6",
+    "typescript": "6.0.3",
+    "vite": "8.0.16",
+    "vue-tsc": "3.3.4"
+  }
+}
