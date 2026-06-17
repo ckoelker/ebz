@@ -98,7 +98,7 @@ public class KundenRechnungService {
     /** Debitoren-IDs eines einzelnen Kontexts (mit Buchungsberechtigung als Firmen-Tor). */
     private Set<Long> debitorIdsFuerKontext(Person p, Long organisationId) {
         if (organisationId == null) {
-            String schluessel = DebitorHoheitService.matchSchluessel(p.anzeigeName, p.plz, null);
+            String schluessel = PartyHoheitService.privatDebitorSchluessel(p);
             return debitorIds(schluessel, DebitorRolle.PRIVAT);
         }
         if (!party.istBuchungsberechtigt(p.id, organisationId)) {

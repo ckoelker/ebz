@@ -77,12 +77,14 @@ public class DublettenBerater {
     }
 
     private static String merkmaleFirma(Organisation o) {
-        return "Firma; Name=" + norm(o.name) + "; PLZ=" + nz(o.plz) + "; Ort=" + norm(o.ort)
+        PartyHoheitService.Adresse a = PartyHoheitService.orgAdresse(o.id);
+        return "Firma; Name=" + norm(o.name) + "; PLZ=" + nz(a.plz()) + "; Ort=" + norm(a.ort())
                 + "; USt-Id vorhanden=" + (o.ustId != null && !o.ustId.isBlank() ? "ja" : "nein");
     }
 
     private static String merkmalePerson(Person p) {
-        return "Person; Name=" + norm(p.anzeigeName) + "; PLZ=" + nz(p.plz) + "; Ort=" + norm(p.ort);
+        PartyHoheitService.Adresse a = PartyHoheitService.personAdresse(p.id);
+        return "Person; Name=" + norm(p.anzeigeName()) + "; PLZ=" + nz(a.plz()) + "; Ort=" + norm(a.ort());
     }
 
     private static String norm(String s) {

@@ -29,7 +29,6 @@ import jakarta.ws.rs.core.SecurityContext;
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
-import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.party.service.BuchungService;
 import de.netzfactor.ebz.controlling.integration.party.service.EinladungsService;
 import de.netzfactor.ebz.controlling.integration.party.service.PartyHoheitService;
@@ -102,7 +101,7 @@ public class PartyResource {
     }
 
     public record TeilnehmerAnlage(@NotBlank @Email String email, @NotBlank String anzeigeName,
-            @NotNull Mitgliedschaft.Rolle rolle, boolean buchungsberechtigt) {
+            @NotBlank String rolle, boolean buchungsberechtigt) {
     }
 
     public record MergeRequest(@NotNull Long quellId, @NotNull Long zielId) {
@@ -112,11 +111,11 @@ public class PartyResource {
             String status, Long goldenPersonId, List<String> emails, List<MitgliedschaftView> mitgliedschaften) {
     }
 
-    public record MitgliedschaftView(Long organisationId, String organisation, Mitgliedschaft.Rolle rolle,
+    public record MitgliedschaftView(Long organisationId, String organisation, String rolle,
             boolean buchungsberechtigt) {
     }
 
-    public record KontextView(String art, Long organisationId, String bezeichnung, List<Mitgliedschaft.Rolle> rollen) {
+    public record KontextView(String art, Long organisationId, String bezeichnung, List<String> rollen) {
     }
 
     public record DebitorView(Long id, String debitorNr, String bereich, String rolle, String name) {
@@ -443,19 +442,20 @@ public class PartyResource {
     }
 
     private static OrganisationView toOrgView(Organisation o) {
-        return new OrganisationView(o.id, o.name, o.plz, o.ort, o.ustId, o.status.name(), o.goldenOrganisationId);
+        PartyHoheitService.Adresse a = PartyHoheitService.orgAdresse(o.id);
+        return new OrganisationView(o.id, o.name, a.plz(), a.ort(), o.ustId, o.status.name(), o.goldenOrganisationId);
     }
 
     private static PersonView toView(Person p) {
-        List<String> emails = PersonEmail.<PersonEmail>list("person.id", p.id).stream()
-                .map(e -> e.email).toList();
+        List<String> emails = PartyHoheitService.alleEmails(p.id);
         List<MitgliedschaftView> ms = Mitgliedschaft.<Mitgliedschaft>list("person.id", p.id).stream()
                 .map(m -> {
                     Organisation o = Organisation.findById(m.organisationId());
                     return new MitgliedschaftView(m.organisationId(), o == null ? null : o.name,
-                            m.rolle, m.buchungsberechtigt);
+                            m.rolle.code, m.buchungsberechtigt);
                 }).toList();
-        return new PersonView(p.id, p.keycloakSub, p.anzeigeName, p.plz, p.ort, p.status.name(),
+        PartyHoheitService.Adresse a = PartyHoheitService.personAdresse(p.id);
+        return new PersonView(p.id, p.keycloakSub, p.anzeigeName(), a.plz(), a.ort(), p.status.name(),
                 p.goldenPersonId, emails, ms);
     }
 }

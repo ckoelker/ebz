@@ -8,10 +8,12 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import de.netzfactor.ebz.controlling.integration.party.model.Kontaktpunkt;
+import de.netzfactor.ebz.controlling.integration.party.model.Login;
+import de.netzfactor.ebz.controlling.integration.party.model.Lookups;
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
-import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.DebitorRolle;
@@ -29,8 +31,10 @@ import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
  *
  * <p>Löst die Leitfrage <i>„eine Identität, n Bestellkontexte (privat / Hauptfirma / Nebenbeschäftigung)"</i>:
  * <ul>
- *   <li><b>Identität = {@link Person}</b>, eindeutig über die globale {@link PersonEmail}-Unique —
- *       <i>nicht</i> die E-Mail ist die Identität, sondern die Person; E-Mail ist Auflösungsschlüssel.</li>
+ *   <li><b>Identität = {@link Person}</b>, eindeutig über die globale {@link Login}-Unique
+ *       ({@code loginEmail}) — <i>nicht</i> die E-Mail ist die Identität, sondern die Person; die
+ *       Login-Adresse ist Auflösungsschlüssel. Kommunikations-E-Mails liegen als {@link Kontaktpunkt}
+ *       (nicht unique) daneben.</li>
  *   <li><b>Kontext = pro Vorgang gewählt</b> aus {@code {PRIVAT} ∪ {Organisationen mit aktiver,
  *       buchungsberechtigter Mitgliedschaft}} — Haupt- und Nebenfirma sind schlicht zwei FIRMA-Kontexte.</li>
  *   <li><b>Abrechnung folgt dem Kontext</b>: {@link #ermittleDebitor} projiziert den passenden Debitor
@@ -43,14 +47,16 @@ import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 @ApplicationScoped
 public class PartyHoheitService {
 
+    private static final String LAND_DEFAULT = "DE";
+
     @Inject
     DebitorHoheitService debitorHoheit;
 
     @Inject
     Prozessspur prozess;
 
-    /** Ein wählbarer Bestellkontext einer Person. {@code organisationId == null} ⇒ PRIVAT. */
-    public record Kontext(Art art, Long organisationId, String bezeichnung, List<Mitgliedschaft.Rolle> rollen) {
+    /** Ein wählbarer Bestellkontext einer Person. {@code organisationId == null} ⇒ PRIVAT. {@code rollen} = Rollen-Codes. */
+    public record Kontext(Art art, Long organisationId, String bezeichnung, List<String> rollen) {
         public enum Art { PRIVAT, FIRMA }
     }
 
@@ -63,14 +69,14 @@ public class PartyHoheitService {
     /**
      * Selbstregistrierung/Login eines Menschen mit seiner E-Mail. Existiert die Adresse bereits (z. B.
      * von der Firma als Azubi vor-angelegt), wird <b>dieselbe Person geclaimt</b>: Keycloak-{@code sub}
-     * gebunden, Adresse verifiziert, Status → AKTIV. Sonst entsteht eine neue, sofort aktive Person.
+     * gebunden, Login-Adresse verifiziert, Status → AKTIV. Sonst entsteht eine neue, sofort aktive Person.
      */
     @Transactional
     public Person selbstRegistrieren(String keycloakSub, String email, String anzeigeName) {
         prozess.schritt("Login & Konto-Claim", Akteur.FIRMA, Prozess.System.KEYCLOAK, Typ.USER_TASK,
                 Phase.EINLADUNG);
-        // 1) Adresse bekannt → diese Person claimen (Login binden, Adresse verifizieren).
-        PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
+        // 1) Login-Adresse bekannt → diese Person claimen (Login binden, Adresse verifizieren).
+        Login vorhanden = Login.find("loginEmail", normEmail(email)).firstResult();
         if (vorhanden != null) {
             Person p = golden(Person.findById(vorhanden.personId()));
             bindeSub(p, keycloakSub);
@@ -114,14 +120,13 @@ public class PartyHoheitService {
     /**
      * Firmenseitige Vor-Anlage eines Teilnehmers/Ansprechpartners per E-Mail: findet die Person über die
      * Adresse oder legt sie <b>provisorisch</b> an (noch kein Login), und verknüpft sie idempotent per
-     * {@link Mitgliedschaft} mit der Organisation. Loggt der Mensch sich später selbst ein, greift
-     * {@link #selbstRegistrieren} auf genau diese Person.
+     * {@link Mitgliedschaft} (Rolle als {@link Lookups.Rolle}-Code) mit der Organisation.
      */
     @Transactional
     public Person registriereTeilnehmer(Long organisationId, String email, String anzeigeName,
-            Mitgliedschaft.Rolle rolle, boolean buchungsberechtigt) {
+            String rolleCode, boolean buchungsberechtigt) {
         Organisation o = mussOrganisation(organisationId);
-        PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
+        Login vorhanden = Login.find("loginEmail", normEmail(email)).firstResult();
         Person p;
         if (vorhanden != null) {
             p = golden(Person.findById(vorhanden.personId()));
@@ -130,7 +135,7 @@ public class PartyHoheitService {
             p.persist();
             legeEmailAn(p, email, false, true);
         }
-        legeMitgliedschaftAn(p, o, rolle, buchungsberechtigt);
+        legeMitgliedschaftAn(p, o, rolleByCode(rolleCode), buchungsberechtigt);
         return p;
     }
 
@@ -141,7 +146,7 @@ public class PartyHoheitService {
      */
     @Transactional
     public Person findeOderLegePerson(String email, String anzeigeName) {
-        PersonEmail vorhanden = PersonEmail.find("email", normEmail(email)).firstResult();
+        Login vorhanden = Login.find("loginEmail", normEmail(email)).firstResult();
         if (vorhanden != null) {
             return golden(Person.findById(vorhanden.personId()));
         }
@@ -163,10 +168,9 @@ public class PartyHoheitService {
     }
 
     /**
-     * Führt {@code quell} in {@code ziel} zusammen: E-Mails und Mitgliedschaften werden umgehängt, der
-     * Login-{@code sub} ggf. übernommen, die unterlegene Person wird ZUSAMMENGEFUEHRT (zeigt per
-     * {@link Person#goldenPersonId} auf {@code ziel}). Same-Email-Dubletten über zwei Adressen lösen
-     * sich so zu einer Identität auf.
+     * Führt {@code quell} in {@code ziel} zusammen: Logins, Kontaktpunkte und Mitgliedschaften werden
+     * umgehängt, der Login-{@code sub} ggf. übernommen, die unterlegene Person wird ZUSAMMENGEFUEHRT
+     * (zeigt per {@link Person#goldenPersonId} auf {@code ziel}).
      */
     @Transactional
     public Person merge(Long quellId, Long zielId) {
@@ -175,7 +179,8 @@ public class PartyHoheitService {
         }
         Person quell = mussAktiv(quellId);
         Person ziel = mussAktiv(zielId);
-        PersonEmail.update("person = ?1 where person.id = ?2", ziel, quell.id);
+        Login.update("person = ?1 where person.id = ?2", ziel, quell.id);
+        Kontaktpunkt.update("person = ?1 where person.id = ?2", ziel, quell.id);
         Mitgliedschaft.update("person = ?1 where person.id = ?2", ziel, quell.id);
         if (ziel.keycloakSub == null && quell.keycloakSub != null) {
             ziel.keycloakSub = quell.keycloakSub;
@@ -189,23 +194,23 @@ public class PartyHoheitService {
     // ───────────────────────── Organisation: anlegen / Dubletten / mergen ─────────────────────────
 
     /**
-     * Legt eine Organisation an und setzt den {@link Organisation#matchSchluessel} mit <i>derselben</i>
-     * Normalisierung wie der Debitor ({@link DebitorHoheitService#matchSchluessel}) — so ist die spätere
-     * Auflösung Debitor↔Organisation ein exakter Schlüssel-Join, kein Raten.
+     * Legt eine Organisation an (Adresse als {@link Kontaktpunkt}) und setzt den
+     * {@link Organisation#matchSchluessel} mit <i>derselben</i> Normalisierung wie der Debitor
+     * ({@link DebitorHoheitService#matchSchluessel}) — so ist die spätere Auflösung Debitor↔Organisation
+     * ein exakter Schlüssel-Join, kein Raten.
      */
     @Transactional
     public Organisation legeOrganisationAn(String name, String strasse, String plz, String ort,
             String land, String ustId, Organisation.Status status) {
         Organisation o = new Organisation();
         o.name = name;
-        o.strasse = strasse;
-        o.plz = plz;
-        o.ort = ort;
-        o.land = land;
         o.ustId = ustId;
         o.status = status == null ? Organisation.Status.AKTIV : status;
         o.matchSchluessel = DebitorHoheitService.matchSchluessel(name, plz, ustId);
         o.persist();
+        if (strasse != null || plz != null || ort != null) {
+            legeOrgAdresseAn(o, strasse, plz, ort, land);
+        }
         return o;
     }
 
@@ -213,7 +218,6 @@ public class PartyHoheitService {
      * Self-Service-Anfrage eines Ausbildungsbetriebs: legt die Organisation <b>provisorisch</b>
      * ({@code ANGEFRAGT}) an und verknüpft den Ansprechpartner als buchungsberechtigte
      * {@code AUSBILDER}-{@link Mitgliedschaft} (Person provisorisch, claimbar beim späteren Login).
-     * Kein Login wird hier erzeugt — der entsteht erst nach der HITL-/KI-Dublettenprüfung.
      */
     @Transactional
     public AnfrageErgebnis anfrageAusbildungsbetrieb(String name, String strasse, String plz, String ort,
@@ -221,8 +225,7 @@ public class PartyHoheitService {
         prozess.schritt("Ausbildungsbetrieb-Anfrage stellen", Akteur.ANONYM, Prozess.System.PORTAL,
                 Typ.USER_TASK, Phase.ANFRAGE_DUBLETTEN);
         Organisation o = legeOrganisationAn(name, strasse, plz, ort, land, ustId, Organisation.Status.ANGEFRAGT);
-        Person ap = registriereTeilnehmer(o.id, ansprechpartnerEmail, ansprechpartnerName,
-                Mitgliedschaft.Rolle.AUSBILDER, true);
+        Person ap = registriereTeilnehmer(o.id, ansprechpartnerEmail, ansprechpartnerName, "AUSBILDER", true);
         return new AnfrageErgebnis(o, ap);
     }
 
@@ -238,7 +241,7 @@ public class PartyHoheitService {
 
     /**
      * Führt die Quell-Organisation in die Ziel-Organisation zusammen (HITL-Entscheidung): Mitgliedschaften
-     * werden umgehängt, die unterlegene Firma wird {@code ZUSAMMENGEFUEHRT} und zeigt per
+     * und Kontaktpunkte werden umgehängt, die unterlegene Firma wird {@code ZUSAMMENGEFUEHRT} und zeigt per
      * {@link Organisation#goldenOrganisationId} auf das Ziel.
      */
     @Transactional
@@ -249,6 +252,7 @@ public class PartyHoheitService {
         Organisation quell = mussOrganisationAktiv(quellId);
         Organisation ziel = mussOrganisationAktiv(zielId);
         Mitgliedschaft.update("organisation = ?1 where organisation.id = ?2", ziel, quell.id);
+        Kontaktpunkt.update("organisation = ?1 where organisation.id = ?2", ziel, quell.id);
         quell.status = Organisation.Status.ZUSAMMENGEFUEHRT;
         quell.goldenOrganisationId = ziel.id;
         return ziel;
@@ -273,9 +277,9 @@ public class PartyHoheitService {
                 .distinct()
                 .forEach(orgId -> {
                     Organisation o = Organisation.findById(orgId);
-                    List<Mitgliedschaft.Rolle> rollen = mitgliedschaften.stream()
+                    List<String> rollen = mitgliedschaften.stream()
                             .filter(m -> m.organisationId().equals(orgId) && m.buchungsberechtigt && aktiv(m, heute))
-                            .map(m -> m.rolle).toList();
+                            .map(m -> m.rolle.code).toList();
                     ergebnis.add(new Kontext(Kontext.Art.FIRMA, orgId,
                             o == null ? ("Organisation " + orgId) : o.name, rollen));
                 });
@@ -294,25 +298,47 @@ public class PartyHoheitService {
             throw RegelVerletzung.nichtGefunden("Person nicht gefunden: " + personId);
         }
         if (organisationId == null) {
+            Adresse a = personAdresse(p.id);
             return debitorHoheit.findeOderLege(new DebitorHoheitService.Stammdaten(
-                    bereich, DebitorRolle.PRIVAT, p.anzeigeName, null, p.plz, p.ort, "DE",
+                    bereich, DebitorRolle.PRIVAT, p.anzeigeName(), null, a.plz(), a.ort(), LAND_DEFAULT,
                     null, null, primaerEmail(p.id)));
         }
         mussBuchungsberechtigt(p.id, organisationId);
         Organisation o = mussOrganisation(organisationId);
+        Adresse a = orgAdresse(o.id);
         return debitorHoheit.findeOderLege(new DebitorHoheitService.Stammdaten(
-                bereich, DebitorRolle.FIRMA, o.name, o.strasse, o.plz, o.ort,
-                o.land == null ? "DE" : o.land, o.ustId, null, null));
+                bereich, DebitorRolle.FIRMA, o.name, a.strasse(), a.plz(), a.ort(),
+                a.land() == null ? LAND_DEFAULT : a.land(), o.ustId, null, null));
     }
 
     // ───────────────────────── intern ─────────────────────────
 
+    /** Schmaler Adress-Lesewert aus dem (primären) ADRESSE-{@link Kontaktpunkt}. */
+    public record Adresse(String strasse, String plz, String ort, String land) {
+        static final Adresse LEER = new Adresse(null, null, null, null);
+    }
+
     private static Person neuePerson(String anzeigeName, Person.Status status) {
         Person p = new Person();
-        p.anzeigeName = anzeigeName;
+        String[] vn = splitName(anzeigeName);
+        p.vorname = vn[0];
+        p.nachname = vn[1];
         p.status = status;
         p.matchSchluessel = normalisiere(anzeigeName);
         return p;
+    }
+
+    /** Zerlegt einen Anzeigenamen heuristisch: letztes Token = Nachname, Rest = Vorname (Fallback „—"). */
+    private static String[] splitName(String anzeigeName) {
+        String s = anzeigeName == null ? "" : anzeigeName.trim();
+        if (s.isEmpty()) {
+            return new String[]{"—", "—"};
+        }
+        int i = s.lastIndexOf(' ');
+        if (i < 0) {
+            return new String[]{s, s};
+        }
+        return new String[]{s.substring(0, i).trim(), s.substring(i + 1).trim()};
     }
 
     private static void bindeSub(Person p, String keycloakSub) {
@@ -328,16 +354,37 @@ public class PartyHoheitService {
         }
     }
 
+    /** Legt Identität ({@link Login}, unique) und Kommunikationskanal ({@link Kontaktpunkt} EMAIL) an. */
     private void legeEmailAn(Person person, String email, boolean verifiziert, boolean primaer) {
-        PersonEmail e = new PersonEmail();
-        e.person = person;
-        e.email = normEmail(email);
-        e.verifiziert = verifiziert;
-        e.primaer = primaer;
-        e.persist();
+        String e = normEmail(email);
+        if (Login.count("loginEmail", e) == 0) {
+            Login l = new Login();
+            l.person = person;
+            l.loginEmail = e;
+            l.verifiziert = verifiziert;
+            l.persist();
+        }
+        Kontaktpunkt k = new Kontaktpunkt();
+        k.typ = Kontaktpunkt.Typ.EMAIL;
+        k.person = person;
+        k.email = e;
+        k.primaer = primaer;
+        k.persist();
     }
 
-    private void legeMitgliedschaftAn(Person person, Organisation organisation, Mitgliedschaft.Rolle rolle,
+    private void legeOrgAdresseAn(Organisation o, String strasse, String plz, String ort, String land) {
+        Kontaktpunkt k = new Kontaktpunkt();
+        k.typ = Kontaktpunkt.Typ.ADRESSE;
+        k.organisation = o;
+        k.strasse = strasse;
+        k.plz = plz;
+        k.ort = ort;
+        k.land = landByCode(land);
+        k.primaer = true;
+        k.persist();
+    }
+
+    private void legeMitgliedschaftAn(Person person, Organisation organisation, Lookups.Rolle rolle,
             boolean buchungsberechtigt) {
         long vorhanden = Mitgliedschaft.count("person.id = ?1 and organisation.id = ?2 and rolle = ?3",
                 person.id, organisation.id, rolle);
@@ -351,6 +398,18 @@ public class PartyHoheitService {
         m.buchungsberechtigt = buchungsberechtigt;
         m.gueltigVon = LocalDate.now();
         m.persist();
+    }
+
+    private static Lookups.Rolle rolleByCode(String code) {
+        Lookups.Rolle r = Lookups.Rolle.find("code", code).firstResult();
+        if (r == null) {
+            throw RegelVerletzung.nichtGefunden("Rolle nicht gefunden: " + code);
+        }
+        return r;
+    }
+
+    private static Lookups.Land landByCode(String code) {
+        return code == null ? null : Lookups.Land.find("code", code.toUpperCase()).firstResult();
     }
 
     private void mussBuchungsberechtigt(Long personId, Long orgId) {
@@ -378,12 +437,51 @@ public class PartyHoheitService {
         return o;
     }
 
-    private static String primaerEmail(Long personId) {
-        PersonEmail e = PersonEmail.find("person.id = ?1 and primaer = true", personId).firstResult();
-        if (e == null) {
-            e = PersonEmail.find("person.id", personId).firstResult();
+    /** Primäre Kommunikations-E-Mail (Kontaktpunkt), Fallback beliebige E-Mail, Fallback Login-Adresse. */
+    static String primaerEmail(Long personId) {
+        Kontaktpunkt k = Kontaktpunkt.find(
+                "person.id = ?1 and typ = ?2 and primaer = true", personId, Kontaktpunkt.Typ.EMAIL).firstResult();
+        if (k == null) {
+            k = Kontaktpunkt.find("person.id = ?1 and typ = ?2", personId, Kontaktpunkt.Typ.EMAIL).firstResult();
         }
-        return e == null ? null : e.email;
+        if (k != null) {
+            return k.email;
+        }
+        Login l = Login.find("person.id", personId).firstResult();
+        return l == null ? null : l.loginEmail;
+    }
+
+    /** Alle Kommunikations-E-Mail-Adressen einer Person (für die 360°-Sicht). */
+    public static List<String> alleEmails(Long personId) {
+        List<Kontaktpunkt> ks = Kontaktpunkt.list(
+                "person.id = ?1 and typ = ?2", personId, Kontaktpunkt.Typ.EMAIL);
+        List<String> mails = new ArrayList<>(ks.stream().map(k -> k.email).toList());
+        if (mails.isEmpty()) {
+            Login.<Login>list("person.id", personId).forEach(l -> mails.add(l.loginEmail));
+        }
+        return mails;
+    }
+
+    /** Privat-Debitor-Matchschlüssel einer Person (Name + PLZ der primären Adresse) — gleiche Bildung wie in {@link #ermittleDebitor}. */
+    public static String privatDebitorSchluessel(Person p) {
+        return DebitorHoheitService.matchSchluessel(p.anzeigeName(), personAdresse(p.id).plz(), null);
+    }
+
+    public static Adresse personAdresse(Long personId) {
+        return adresse(Kontaktpunkt.find(
+                "person.id = ?1 and typ = ?2 order by primaer desc", personId, Kontaktpunkt.Typ.ADRESSE).firstResult());
+    }
+
+    public static Adresse orgAdresse(Long orgId) {
+        return adresse(Kontaktpunkt.find(
+                "organisation.id = ?1 and typ = ?2 order by primaer desc", orgId, Kontaktpunkt.Typ.ADRESSE).firstResult());
+    }
+
+    private static Adresse adresse(Kontaktpunkt k) {
+        if (k == null) {
+            return Adresse.LEER;
+        }
+        return new Adresse(k.strasse, k.plz, k.ort, k.land == null ? null : k.land.code);
     }
 
     private static boolean aktiv(Mitgliedschaft m, LocalDate heute) {

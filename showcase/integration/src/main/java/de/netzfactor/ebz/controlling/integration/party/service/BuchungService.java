@@ -4,10 +4,8 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
-import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
-import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungTyp;
@@ -69,7 +67,7 @@ public class BuchungService {
 
         Anmeldung a = new Anmeldung();
         a.typ = AnmeldungTyp.BERUFSSCHULE;
-        a.teilnehmerName = teilnehmer.anzeigeName;
+        a.teilnehmerName = teilnehmer.anzeigeName();
         a.teilnehmerEmail = primaerEmail(teilnehmer.id);
         a.teilnehmerPerson = teilnehmer;
         a.bestellerPerson = person(bestellerId);
@@ -103,12 +101,12 @@ public class BuchungService {
         prozess.schritt("Azubi anmelden", Akteur.FIRMA, Prozess.System.PORTAL, Typ.USER_TASK,
                 Phase.AZUBI_ANMELDUNG);
         Person azubi = party.registriereTeilnehmer(b.organisationId(), b.azubiEmail(), b.azubiName(),
-                Mitgliedschaft.Rolle.AZUBI, false);
+                "AZUBI", false);
         Debitor debitor = party.ermittleDebitor(b.bestellerPersonId(), b.organisationId(), Bereich.BERUFSSCHULE);
 
         Anmeldung a = new Anmeldung();
         a.typ = AnmeldungTyp.BERUFSSCHULE;
-        a.teilnehmerName = azubi.anzeigeName;
+        a.teilnehmerName = azubi.anzeigeName();
         a.teilnehmerEmail = primaerEmail(azubi.id);
         a.teilnehmerPerson = azubi;
         a.bestellerPerson = person(b.bestellerPersonId());
@@ -152,7 +150,7 @@ public class BuchungService {
 
         Anmeldung a = new Anmeldung();
         a.typ = AnmeldungTyp.HOCHSCHULE;
-        a.teilnehmerName = student.anzeigeName;
+        a.teilnehmerName = student.anzeigeName();
         a.teilnehmerEmail = primaerEmail(student.id);
         a.teilnehmerPerson = student;
         a.bestellerPerson = person(bestellerId);
@@ -210,11 +208,7 @@ public class BuchungService {
     }
 
     private static String primaerEmail(Long personId) {
-        PersonEmail e = PersonEmail.find("person.id = ?1 and primaer = true", personId).firstResult();
-        if (e == null) {
-            e = PersonEmail.find("person.id", personId).firstResult();
-        }
-        return e == null ? null : e.email;
+        return PartyHoheitService.primaerEmail(personId);
     }
 
     /** Lädt eine Person/Organisation per ID (FK-Ziel) bzw. {@code null} — für die Assoziations-Zuweisung. */

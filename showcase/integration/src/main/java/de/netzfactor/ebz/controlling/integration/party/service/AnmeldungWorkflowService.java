@@ -13,7 +13,6 @@ import de.netzfactor.ebz.controlling.integration.outbox.model.OutboxAuftrag.Erei
 import de.netzfactor.ebz.controlling.integration.outbox.model.OutboxAuftrag.Zielsystem;
 import de.netzfactor.ebz.controlling.integration.outbox.service.OutboxService;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
-import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
@@ -133,10 +132,6 @@ public class AnmeldungWorkflowService {
         if (bestellerPersonId == null) {
             return null;
         }
-        PersonEmail e = PersonEmail.find("person.id = ?1 and primaer = true", bestellerPersonId).firstResult();
-        if (e == null) {
-            e = PersonEmail.find("person.id", bestellerPersonId).firstResult();
-        }
-        return e == null ? null : e.email;
+        return PartyHoheitService.primaerEmail(bestellerPersonId);
     }
 }

@@ -10,7 +10,6 @@ import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
-import de.netzfactor.ebz.controlling.integration.party.model.PersonEmail;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
@@ -58,7 +57,7 @@ public class EinladungsService {
         prozess.schritt("Login-Einladung auslösen", Akteur.EBZ, Prozess.System.COCKPIT, Typ.USER_TASK,
                 Phase.EINLADUNG);
 
-        LoginProvisionierung.Ergebnis erg = provisionierung.anlegen(email, p.anzeigeName);
+        LoginProvisionierung.Ergebnis erg = provisionierung.anlegen(email, p.anzeigeName());
         if (erg.provisioniert()) {
             prozess.schritt("Login provisionieren", Akteur.SYSTEM, Prozess.System.KEYCLOAK,
                     Typ.SERVICE_TASK, Phase.EINLADUNG);
@@ -78,7 +77,7 @@ public class EinladungsService {
 
                 Viele Grüße
                 Ihr EBZ-Team
-                """.formatted(p.anzeigeName, portalUrl)));
+                """.formatted(p.anzeigeName(), portalUrl)));
         prozess.schritt("Einladungsmail senden", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
                 Phase.EINLADUNG);
 
@@ -86,10 +85,6 @@ public class EinladungsService {
     }
 
     private static String primaerEmail(Long personId) {
-        PersonEmail e = PersonEmail.find("person.id = ?1 and primaer = true", personId).firstResult();
-        if (e == null) {
-            e = PersonEmail.find("person.id", personId).firstResult();
-        }
-        return e == null ? null : e.email;
+        return PartyHoheitService.primaerEmail(personId);
     }
 }

@@ -88,8 +88,8 @@ public class DublettenReviewService {
                 continue;
             }
             List<ZielVorschlag> vs = kandidaten.stream()
-                    .map(z -> vorschlag(z.id, z.anzeigeName, berater.bewertePerson(p, z))).toList();
-            faelle.add(new Fall(Art.PERSON, p.id, p.anzeigeName, vs));
+                    .map(z -> vorschlag(z.id, z.anzeigeName(), berater.bewertePerson(p, z))).toList();
+            faelle.add(new Fall(Art.PERSON, p.id, p.anzeigeName(), vs));
         }
         return faelle;
     }
