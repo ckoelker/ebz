@@ -81,7 +81,8 @@ Verifizierte Beispiele: `…/linkedin-als-business-netzwerk-nutzen?termin=SVA015
 ## Phasen (MVP-first)
 ### P1 — Vendure-Modell + reproduzierbare Java-Initialisierung (MVP-Basis) → **Detail unten (§ P1-Detail)**
 Custom-Fields (Product/Variant) + Custom-Entities `Ansprechpartner`/`Dozent`/`Bewertung`; **reproduzierbarer, idempotenter Java-Initializer im Integrationsbackend** (`POST /shop/init`), der Vendure über die Admin-API (generierter GraphQL-Client) aufbaut: Grundkonfig + Facets/Collections/TaxCategories + voll ausgestattete Beispielprodukte je Kategorie + Vertragsangebote + Assets + Bewertungen. Alt-`VendureProjektion` auf Nummern-Abgleich reduzieren. **Löst `seed.mjs` ab.**
-### P2 — Nuxt-SSR-Storefront-Gerüst
+### P2 — Nuxt-SSR-Storefront-Gerüst  ✅ GEBAUT+verifiziert 2026-06-18 (Branch feature/produktkatalog-p1)
+Umgesetzt: `showcase/storefront` (Nuxt 4 SSR, @nuxt/ui 4, EBZ-Navy, DE), SSR-Katalog (Shop-API `search`) + Detailseite Speaking-URL `/<slug>?termin=<sku>`+canonical+bedingte Rich-Text-Blöcke, Vertragsangebot→Anmelde-Deeplink, Shop-API server-only über Nuxt-Server-Routen, Compose-Service `storefront` (:3001). Playwright-SSR-Smokes grün. Offen in P3/P4: Codegen, Facetten-Filter, Warenkorb/Checkout, SSO.
 Neue Nuxt-Storefront (Nuxt UI 4, EBZ-Navy, DE) ersetzt `showcase/frontend`: SSR, Speaking-URLs `/<slug>?termin=<nr>` + canonical, GraphQL-Codegen gegen Shop-API, Keycloak-SSO (Shop-Strategy), Warenkorb-/Checkout-Store portieren. Eigener Compose-Service.
 ### P3 — Katalog: Suche/Filter/Pagination
 `search`-Query (term, facetValueFilters, collectionSlug, skip/take, sort) → Trefferliste + Facetten-Sidebar (Thema/Branche/Region/Veranstaltungsart) + Freitext-/Angebotsnr-Suche + Pagination/Trefferzahl, SSR.
