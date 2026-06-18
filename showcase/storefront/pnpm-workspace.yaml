@@ -1,0 +1,11 @@
+# pnpm 11 Settings-Home (siehe ../frontend/pnpm-workspace.yaml für die Begründungen).
+# Nuxt-SSR-Storefront (Produktkatalog P2).
+nodeLinker: hoisted
+trustPolicy: "off"
+minimumReleaseAge: 0
+allowBuilds:
+  esbuild: true
+  "@parcel/watcher": true
+  "@tailwindcss/oxide": true
+  better-sqlite3: true
+  vue-demi: true

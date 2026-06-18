@@ -233,6 +233,21 @@ services:
     ports:
       - "${INTEGRATION_PORT:-8090}:8090"
 
+  # Storefront (Produktkatalog P2) — Nuxt-SSR gegen die Vendure-Shop-API.
+  # SEO/Speaking-URLs/SSR; ersetzt perspektivisch die Vite/Vue-SPA `frontend`.
+  # Spricht die Shop-API serverseitig über den Compose-Netz-Alias `server` an
+  # (NUXT_SHOP_API_URL überschreibt runtimeConfig.shopApiUrl ohne Rebuild).
+  storefront:
+    build: ./storefront
+    restart: unless-stopped
+    depends_on:
+      server:
+        condition: service_healthy
+    environment:
+      NUXT_SHOP_API_URL: http://server:3000/shop-api
+    ports:
+      - "${STOREFRONT_PORT:-3001}:3000"
+
   # MDM-Cockpit (Formularverwaltung P1.0) — Vue-3-SPA (PrimeVue), per nginx ausgeliefert.
   # Verwaltungsmaske „Bildungsangebote"; spricht den integration-Service (/bildung, /q) über
   # den nginx-Proxy an. Typsicher generiert aus /q/openapi (Stack B). Profil `controlling`.
