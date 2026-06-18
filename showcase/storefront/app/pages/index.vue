@@ -42,6 +42,11 @@ function suchen() {
   patchQuery({ q: term.value || undefined, page: undefined })
 }
 
+function sucheLoeschen() {
+  term.value = ''
+  patchQuery({ q: undefined, page: undefined })
+}
+
 function selectedFor(code: string): string[] {
   const v = route.query[code]
   return typeof v === 'string' && v ? v.split(',') : []
@@ -86,7 +91,11 @@ function filterZuruecksetzen() {
     </div>
 
     <form class="mb-6 flex gap-2" @submit.prevent="suchen">
-      <UInput v-model="term" placeholder="Suche (Thema, Titel, Angebotsnummer …)" class="flex-1" icon="i-lucide-search" />
+      <UInput v-model="term" placeholder="Suche (Thema, Titel, Angebotsnummer …)" class="flex-1" icon="i-lucide-search">
+        <template v-if="term" #trailing>
+          <UButton color="neutral" variant="link" size="sm" icon="i-lucide-x" aria-label="Suche löschen" @click="sucheLoeschen" />
+        </template>
+      </UInput>
       <UButton type="submit" :loading="pending">Suchen</UButton>
     </form>
 
@@ -150,6 +159,16 @@ function filterZuruecksetzen() {
             class="flex flex-col transition hover:ring-2 hover:ring-primary/30"
           >
             <NuxtLink :to="`/${item.slug}`" class="flex h-full flex-col gap-2">
+              <img
+                v-if="item.productAsset?.preview"
+                :src="`${item.productAsset.preview}?preset=medium`"
+                :alt="item.productName"
+                class="mb-1 aspect-video w-full rounded-md object-cover"
+                loading="lazy"
+              >
+              <div v-else class="mb-1 flex aspect-video w-full items-center justify-center rounded-md bg-(--ui-bg-elevated) text-(--ui-text-dimmed)">
+                <UIcon name="i-lucide-graduation-cap" class="size-8" />
+              </div>
               <h2 class="font-medium text-(--ui-text-highlighted) line-clamp-2">{{ item.productName }}</h2>
               <p class="flex-1 text-sm text-(--ui-text-muted) line-clamp-3" v-text="item.description" />
               <div class="mt-2 flex items-center justify-between">

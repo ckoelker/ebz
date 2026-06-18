@@ -17,7 +17,7 @@ useHead(() => ({
 </script>
 
 <template>
-  <article v-if="page" class="mx-auto max-w-3xl">
+  <article v-if="page" class="max-w-3xl">
     <UButton to="/" variant="link" color="neutral" icon="i-lucide-arrow-left" class="mb-2 -ml-2">Zum Katalog</UButton>
     <h1 class="text-2xl font-semibold text-(--ui-text-highlighted)">{{ (page as any).titel }}</h1>
     <!-- Inhalt aus Vendure (ContentPage.inhaltHtml), serverseitig gerendert -->

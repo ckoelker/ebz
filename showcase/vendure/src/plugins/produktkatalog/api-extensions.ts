@@ -84,6 +84,8 @@ export const adminApiExtensions = gql`
         upsertAnsprechpartner(input: UpsertAnsprechpartnerInput!): Ansprechpartner!
         upsertDozent(input: UpsertDozentInput!): Dozent!
         upsertBewertung(input: UpsertBewertungInput!): Bewertung!
+        "Produktvorlage als eigenständiges, bestellbares Angebot veröffentlichen (Snapshot-Kopie)."
+        kopiereVorlageZuAngebot(vorlageId: ID!, titelZusatz: String, slugZusatz: String): Product!
     }
 `;
 

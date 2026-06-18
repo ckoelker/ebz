@@ -68,6 +68,13 @@ const bloecke = computed(() => [
       <h1 class="text-2xl font-semibold text-(--ui-text-highlighted)">{{ (product as any).name }}</h1>
       <p class="mt-1 text-(--ui-text-muted)">{{ (product as any).description }}</p>
 
+      <img
+        v-if="(product as any).featuredAsset?.preview"
+        :src="`${(product as any).featuredAsset.preview}?preset=large`"
+        :alt="(product as any).name"
+        class="mt-4 aspect-video w-full rounded-lg object-cover"
+      >
+
       <section v-for="b in bloecke" :key="b.titel" class="mt-6">
         <h2 class="mb-1 text-lg font-medium text-(--ui-text-highlighted)">{{ b.titel }}</h2>
         <!-- Inhalt aus Vendure (Rich-Text-Custom-Fields), serverseitig gerendert -->

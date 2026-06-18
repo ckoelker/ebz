@@ -1,5 +1,5 @@
 import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { Allow, Ctx, ID, Permission, RequestContext, Transaction } from '@vendure/core';
+import { Allow, Ctx, ID, Permission, Product, RequestContext, Transaction } from '@vendure/core';
 import { Ansprechpartner, Bewertung, Dozent } from './produktkatalog.entities';
 import { BewertungUebersicht, ProduktkatalogService } from './produktkatalog.service';
 
@@ -57,6 +57,16 @@ export class ProduktkatalogAdminResolver {
         @Args() args: { input: Parameters<ProduktkatalogService['upsertBewertung']>[1] },
     ): Promise<Bewertung> {
         return this.service.upsertBewertung(ctx, args.input);
+    }
+
+    @Mutation()
+    @Transaction()
+    @Allow(Permission.UpdateCatalog)
+    kopiereVorlageZuAngebot(
+        @Ctx() ctx: RequestContext,
+        @Args() args: { vorlageId: ID; titelZusatz?: string; slugZusatz?: string },
+    ): Promise<Product> {
+        return this.service.kopiereVorlageZuAngebot(ctx, args);
     }
 }
 

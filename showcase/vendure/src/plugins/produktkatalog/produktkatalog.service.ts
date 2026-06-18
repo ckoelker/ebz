@@ -1,5 +1,12 @@
 import { Injectable } from '@nestjs/common';
-import { ID, RequestContext, TransactionalConnection } from '@vendure/core';
+import {
+    EntityDuplicatorService,
+    ID,
+    Product,
+    ProductService,
+    RequestContext,
+    TransactionalConnection,
+} from '@vendure/core';
 import { Ansprechpartner, Bewertung, Dozent } from './produktkatalog.entities';
 
 interface UpsertAnsprechpartnerInput {
@@ -39,7 +46,67 @@ export interface BewertungUebersicht {
  */
 @Injectable()
 export class ProduktkatalogService {
-    constructor(private connection: TransactionalConnection) {}
+    constructor(
+        private connection: TransactionalConnection,
+        private entityDuplicatorService: EntityDuplicatorService,
+        private productService: ProductService,
+    ) {}
+
+    /**
+     * Veröffentlicht eine Produktvorlage als eigenständiges, bestellbares Angebot (Produktvorlagen,
+     * notizen #2). Nutzt Vendures EntityDuplicator (Deep-Copy inkl. Varianten/Assets/Facetten/
+     * Custom-Fields) → die Kopie ist ein **Snapshot**: spätere Änderungen an der Vorlage wirken NICHT
+     * mehr auf diese Kopie, sondern erst auf die nächste. Die Kopie wird aktiviert (enabled),
+     * als bestellbar markiert und per {@code vorlageProductId} auf die Vorlage zurückverlinkt.
+     */
+    async kopiereVorlageZuAngebot(
+        ctx: RequestContext,
+        input: { vorlageId: ID; titelZusatz?: string; slugZusatz?: string },
+    ): Promise<Product> {
+        const result = await this.entityDuplicatorService.duplicateEntity(ctx, {
+            entityName: 'Product',
+            entityId: input.vorlageId,
+            duplicatorInput: {
+                code: 'product-duplicator',
+                arguments: [{ name: 'includeVariants', value: 'true' }],
+            },
+        });
+        if (!('newEntityId' in result) || result.newEntityId == null) {
+            const msg = 'message' in result ? (result as { message: string }).message : 'unbekannt';
+            throw new Error(`Vorlage konnte nicht kopiert werden: ${msg}`);
+        }
+        const newId = result.newEntityId;
+
+        // Übersetzungen der Vorlage lesen → Titel/Slug der Kopie ableiten (eindeutiger Slug).
+        const vorlage = await this.connection.getRepository(ctx, Product).findOne({
+            where: { id: input.vorlageId as string },
+            relations: { translations: true },
+        });
+        const zusatz = input.titelZusatz?.trim();
+        const slugZusatz = (input.slugZusatz?.trim() || zusatz || 'kopie')
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/(^-|-$)/g, '');
+        const eindeutig = `${slugZusatz}-${Date.now().toString(36)}`;
+        const translations = (vorlage?.translations ?? []).map((t) => ({
+            languageCode: t.languageCode,
+            name: zusatz ? `${t.name} – ${zusatz}` : t.name,
+            slug: `${t.slug}-${eindeutig}`,
+            description: t.description,
+        }));
+
+        await this.productService.update(ctx, {
+            id: newId,
+            enabled: true,
+            ...(translations.length ? { translations } : {}),
+            customFields: {
+                istVorlage: false,
+                bestellbar: true,
+                vorlageProductId: String(input.vorlageId),
+            },
+        });
+        return this.productService.findOne(ctx, newId) as Promise<Product>;
+    }
 
     // ── Ansprechpartner ──
     findAnsprechpartner(ctx: RequestContext): Promise<Ansprechpartner[]> {

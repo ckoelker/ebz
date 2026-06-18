@@ -16,9 +16,9 @@ export const ORDER_FIELDS = `
       quantity
       unitPriceWithTax
       linePriceWithTax
-      productVariant { id name sku }
+      productVariant { id name sku customFields { fulfillmentType } }
       featuredAsset { preview }
-      customFields { participantName participantEmail }
+      customFields { teilnehmer participantName participantEmail }
     }
   }
 `
@@ -38,10 +38,20 @@ export interface Order {
     quantity: number
     unitPriceWithTax: number
     linePriceWithTax: number
-    productVariant: { id: string; name: string; sku: string }
+    productVariant: { id: string; name: string; sku: string; customFields: { fulfillmentType: string | null } }
     featuredAsset: { preview: string } | null
-    customFields: { participantName: string | null; participantEmail: string | null }
+    customFields: { teilnehmer: string | null; participantName: string | null; participantEmail: string | null }
   }>
+}
+
+// Ein:e Teilnehmer:in (strukturiert wie im MDM) — als JSON-Liste im OrderLine-Feld `teilnehmer`.
+export interface Teilnehmer {
+  geschlecht: string
+  titel?: string
+  vorname: string
+  nachname: string
+  namensschild?: string
+  email?: string
 }
 
 // Vendure-Union-Rückgaben: ErrorResult → Exception mit Vendure-Meldung.

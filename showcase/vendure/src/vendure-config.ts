@@ -155,6 +155,14 @@ export const config: VendureConfig = {
               label: [{ languageCode: LanguageCode.de, value: 'Dozent:innen' }] },
             { name: 'verwandteProdukte', type: 'relation', list: true, entity: Product, nullable: true,
               label: [{ languageCode: LanguageCode.de, value: 'Verwandte Angebote' }] },
+            // Produktvorlagen: eine Vorlage (istVorlage=true) wird inhaltlich gepflegt, ist aber
+            // NICHT bestellbar (Produkt enabled=false → im Shop unsichtbar). Per „Als Angebot
+            // veröffentlichen" (kopiereVorlageZuAngebot) entsteht eine eigenständige, bestellbare
+            // Kopie (Snapshot) — spätere Vorlagenänderungen wirken nur auf die NÄCHSTE Kopie.
+            { name: 'istVorlage', type: 'boolean', nullable: true, defaultValue: false,
+              label: [{ languageCode: LanguageCode.de, value: 'Produktvorlage (nicht bestellbar)' }] },
+            { name: 'vorlageProductId', type: 'string', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Aus Vorlage (Produkt-ID)' }] },
         ],
         // Kunde: Stammdaten für Berufsschule/Studium
         Customer: [
@@ -171,10 +179,16 @@ export const config: VendureConfig = {
             { name: 'trainingCompany', type: 'string', nullable: true,
               label: [{ languageCode: LanguageCode.de, value: 'Ausbildungsbetrieb' }] },
         ],
-        // Bestellposition: Teilnehmer ≠ Besteller (Seminarbuchung)
+        // Bestellposition: Menge = Anzahl Plätze. Je Platz ein:e Teilnehmer:in, strukturiert wie im
+        // MDM (Geschlecht/Titel/Vorname/Nachname + Namensschild-Freitext) — als JSON-Liste, damit eine
+        // n-fach bestellte Position genau n Teilnehmer:innen erfasst. `teilnehmer` = JSON-Array von
+        // { geschlecht, titel, vorname, nachname, namensschild, email }.
         OrderLine: [
+            { name: 'teilnehmer', type: 'text', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Teilnehmer:innen (JSON)' }] },
+            // Bestand (Kompatibilität: bisheriger Anzeigename + E-Mail des/der ersten Teilnehmer:in)
             { name: 'participantName', type: 'string', nullable: true,
-              label: [{ languageCode: LanguageCode.de, value: 'Teilnehmer:in' }] },
+              label: [{ languageCode: LanguageCode.de, value: 'Teilnehmer:in (Anzeige)' }] },
             { name: 'participantEmail', type: 'string', nullable: true,
               label: [{ languageCode: LanguageCode.de, value: 'Teilnehmer-E-Mail' }] },
         ],
@@ -211,10 +225,11 @@ export const config: VendureConfig = {
         AssetServerPlugin.init({
             route: 'assets',
             assetUploadDir: path.join(__dirname, '../static/assets'),
-            // For local dev, the correct value for assetUrlPrefix should
-            // be guessed correctly, but for production it will usually need
-            // to be set manually to match your production url.
-            assetUrlPrefix: IS_DEV ? undefined : 'https://www.my-shop.com/assets/',
+            // Asset-URLs MÜSSEN browser-erreichbar sein. Im Compose ruft die Storefront Vendure
+            // server-seitig über http://server:3000 auf → ohne festen Prefix enthielten die
+            // Preview-URLs „server:3000" (vom Browser nicht auflösbar). Daher per ENV fixieren
+            // (ASSET_URL_PREFIX=http://localhost:3000/assets/).
+            assetUrlPrefix: process.env.ASSET_URL_PREFIX || (IS_DEV ? undefined : 'https://www.my-shop.com/assets/'),
         }),
         DefaultSchedulerPlugin.init(),
         DefaultJobQueuePlugin.init({ useDatabaseForBuffer: true }),

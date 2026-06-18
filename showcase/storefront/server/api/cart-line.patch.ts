@@ -1,19 +1,18 @@
-// Warenkorb-Position ändern: Menge und/oder Teilnehmer:in-Daten (Custom-Fields).
-import type { Order } from '../utils/order'
+// Warenkorb-Position ändern: Menge und/oder Teilnehmer:innen-Liste (strukturiert wie im MDM).
+// Die Liste wird als JSON im OrderLine-Feld `teilnehmer` gespeichert; participantName/-Email werden
+// aus dem/der ersten Teilnehmer:in abgeleitet (Kompatibilität mit bestehenden Abläufen).
+import type { Order, Teilnehmer } from '../utils/order'
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody<{
-    lineId: string
-    quantity: number
-    participantName?: string
-    participantEmail?: string
-  }>(event)
-  if (!body?.lineId) {
-    throw createError({ statusCode: 400, statusMessage: 'lineId fehlt' })
-  }
+  const body = await readBody<{ lineId: string; quantity: number; teilnehmer?: Teilnehmer[] }>(event)
+  if (!body?.lineId) throw createError({ statusCode: 400, statusMessage: 'lineId fehlt' })
+
+  const liste = Array.isArray(body.teilnehmer) ? body.teilnehmer : []
+  const erste = liste[0]
   const customFields = {
-    participantName: body.participantName || null,
-    participantEmail: body.participantEmail || null,
+    teilnehmer: liste.length ? JSON.stringify(liste) : null,
+    participantName: erste ? `${erste.titel ? erste.titel + ' ' : ''}${erste.vorname} ${erste.nachname}`.trim() : null,
+    participantEmail: erste?.email || null,
   }
   const data = await shopGql<{ adjustOrderLine: Order & { errorCode?: string; message?: string } }>(
     event,

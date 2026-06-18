@@ -1,4 +1,4 @@
-import type { Order } from '~~/server/utils/order'
+import type { Order, Teilnehmer } from '~~/server/utils/order'
 
 // Warenkorb-Client: hält den activeOrder in einem SSR-sicheren useState und ruft die
 // Nuxt-Server-Routen (server/api/cart*) auf. Die Vendure-Session hängt an der httpOnly
@@ -22,10 +22,10 @@ export function useCart() {
     }
   }
 
-  async function adjust(lineId: string, quantity: number, participant: { participantName?: string; participantEmail?: string } = {}) {
+  async function adjust(lineId: string, quantity: number, teilnehmer?: Teilnehmer[]) {
     busy.value = true
     try {
-      order.value = await $fetch<Order>('/api/cart-line', { method: 'PATCH', body: { lineId, quantity, ...participant } })
+      order.value = await $fetch<Order>('/api/cart-line', { method: 'PATCH', body: { lineId, quantity, teilnehmer } })
     } finally {
       busy.value = false
     }

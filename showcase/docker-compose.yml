@@ -72,6 +72,11 @@ services:
       COOKIE_SECRET: ${COOKIE_SECRET:-showcase-dev-secret}
       SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-superadmin}
       SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-superadmin}
+      # Asset-Preview-URLs browser-erreichbar machen (sonst „server:3000" aus server-seitigen Calls).
+      ASSET_URL_PREFIX: ${ASSET_URL_PREFIX:-http://localhost:3000/assets/}
+    volumes:
+      # Hochgeladene Assets persistieren (sonst gehen die Dateien bei jedem Rebuild verloren → 404).
+      - vendure-assets:/usr/src/app/static/assets
     ports:
       - "${VENDURE_PORT:-3000}:3000"
     healthcheck:
@@ -104,6 +109,9 @@ services:
       COOKIE_SECRET: ${COOKIE_SECRET:-showcase-dev-secret}
       SUPERADMIN_USERNAME: ${SUPERADMIN_USERNAME:-superadmin}
       SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-superadmin}
+      ASSET_URL_PREFIX: ${ASSET_URL_PREFIX:-http://localhost:3000/assets/}
+    volumes:
+      - vendure-assets:/usr/src/app/static/assets
 
   keycloak:
     image: quay.io/keycloak/keycloak:26.2.5
@@ -412,3 +420,4 @@ volumes:
   postgres_data:
   minio_data:
   olat_data:
+  vendure-assets:

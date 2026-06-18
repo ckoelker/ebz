@@ -106,16 +106,26 @@ public class ShopInitService {
 
         // ── Grundkonfiguration ──
 
-        // Keine Kapazitäts-/Bestandslogik im Showcase (Plätze max. informativ) → globales
-        // Inventory-Tracking aus, damit jede Durchführung buchbar ist (sonst „insufficient stock").
+        // Globale Grundeinstellungen: (1) Inventory-Tracking aus (keine Kapazitätslogik im Showcase,
+        // sonst „insufficient stock"); (2) Deutsch als Default-/Verfügbar-Sprache des Backends.
         private void ensureGlobalSettings() {
-            JsonObject d = q(field("globalSettings", field("trackInventory")));
-            if (!d.getJsonObject("globalSettings").getBoolean("trackInventory", false)) {
-                skip("GlobalSettings trackInventory=false");
+            JsonObject gs = q(field("globalSettings", field("trackInventory"), field("availableLanguages")))
+                    .getJsonObject("globalSettings");
+            boolean trackAus = !gs.getBoolean("trackInventory", false);
+            boolean deDa = false;
+            for (JsonValue l : gs.getJsonArray("availableLanguages")) {
+                if ("de".equals(((jakarta.json.JsonString) l).getString())) {
+                    deDa = true;
+                }
+            }
+            if (trackAus && deDa) {
+                skip("GlobalSettings (trackInventory=false, Sprache de)");
                 return;
             }
-            m("updateGlobalSettings", "UpdateGlobalSettingsInput!", obj("trackInventory", false), field("__typename"));
-            add("GlobalSettings trackInventory=false");
+            Map<String, Object> input = obj("trackInventory", false);
+            input.put("availableLanguages", List.of("de", "en"));
+            m("updateGlobalSettings", "UpdateGlobalSettingsInput!", input, field("__typename"));
+            add("GlobalSettings (trackInventory=false, Sprache de)");
         }
 
         private String ensureCountry() {
@@ -158,20 +168,31 @@ public class ShopInitService {
 
         private void ensureChannel(String zoneId) {
             JsonObject d = q(field("activeChannel", field("id"), field("defaultCurrencyCode"),
+                    field("defaultLanguageCode"), field("availableLanguageCodes"),
                     field("defaultTaxZone", field("id")), field("defaultShippingZone", field("id"))));
             JsonObject ch = d.getJsonObject("activeChannel");
             boolean taxOk = !ch.isNull("defaultTaxZone");
             boolean shipOk = !ch.isNull("defaultShippingZone");
             boolean eur = "EUR".equals(str(ch, "defaultCurrencyCode"));
-            if (taxOk && shipOk && eur) {
-                skip("Channel (Zonen + EUR)");
+            boolean de = "de".equals(str(ch, "defaultLanguageCode"));
+            boolean deVerfuegbar = false;
+            for (JsonValue l : ch.getJsonArray("availableLanguageCodes")) {
+                if ("de".equals(((jakarta.json.JsonString) l).getString())) {
+                    deVerfuegbar = true;
+                }
+            }
+            if (taxOk && shipOk && eur && de && deVerfuegbar) {
+                skip("Channel (Zonen + EUR + de)");
                 return;
             }
             Map<String, Object> input = obj("id", ch.getString("id"),
-                    "defaultTaxZoneId", zoneId, "defaultShippingZoneId", zoneId, "defaultCurrencyCode", "EUR");
+                    "defaultTaxZoneId", zoneId, "defaultShippingZoneId", zoneId,
+                    "defaultCurrencyCode", "EUR", "defaultLanguageCode", "de");
             input.put("availableCurrencyCodes", List.of("EUR"));
+            // de muss in den Channel-Sprachen sein, sonst indiziert der Such-Index nur en → Shop(de) leer.
+            input.put("availableLanguageCodes", List.of("de", "en"));
             m("updateChannel", "UpdateChannelInput!", input, field("__typename"));
-            add("Channel: Default-Zonen + EUR");
+            add("Channel: Default-Zonen + EUR + Sprache de");
         }
 
         // ── Steuern (Bildung steuerfrei / Standard 19 % / Ermäßigt 7 %) ──
