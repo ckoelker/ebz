@@ -4,6 +4,7 @@ import { useForm, useField } from 'vee-validate';
 import { toTypedSchema } from '@vee-validate/zod';
 import DialogShell from '@/components/DialogShell.vue';
 import { useLookup, lookupItems } from '@/crm/lookups';
+import { VORWAHLEN, VORWAHL_DEFAULT, baueE164, baueAnzeige, zerlege } from '@/crm/telefon';
 import { fehlerText, istUnauth } from '@/crm/fehler';
 import { violationsZuFehlern } from '@/bildung';
 import { login } from '@/auth';
@@ -54,6 +55,17 @@ const { value: landCode } = useField<string>('landCode');
 
 const serverFehler = ref('');
 
+// Telefon-E.164: getrennte Eingabe Vorwahl + nationale Nummer; daraus werden nummerE164/nummerAnzeige
+// normalisiert gebaut (führende Null wird entfernt). Beide Form-Felder bleiben der Server-Vertrag.
+const vorwahl = ref(VORWAHL_DEFAULT);
+const telNational = ref('');
+watch([vorwahl, telNational, typ], () => {
+  if (typ.value === 'TELEFON') {
+    nummerE164.value = baueE164(vorwahl.value, telNational.value);
+    nummerAnzeige.value = baueAnzeige(vorwahl.value, telNational.value);
+  }
+});
+
 watch(() => props.open, (v) => {
   if (!v) return;
   serverFehler.value = '';
@@ -67,6 +79,9 @@ watch(() => props.open, (v) => {
       region: props.existing.region ?? '', landCode: props.existing.landCode ?? 'DE',
     });
   }
+  const z = zerlege(props.existing?.nummerAnzeige);
+  vorwahl.value = z.vorwahl;
+  telNational.value = z.national;
   resetForm({ values: base });
 });
 
@@ -117,14 +132,18 @@ const speichern = handleSubmit(async (values) => {
       </template>
 
       <template v-else-if="typ === 'TELEFON'">
-        <UFormField label="Nummer (Anzeige)" :error="errors.nummerAnzeige">
-          <UInput v-model="nummerAnzeige" placeholder="0231 123456" class="w-full" />
+        <UFormField label="Ländervorwahl">
+          <USelect v-model="vorwahl" :items="VORWAHLEN" class="w-full" />
         </UFormField>
         <UFormField label="Art" :error="errors.telefonart">
           <USelect v-model="telefonart" :items="telefonartItems" class="w-full" />
         </UFormField>
-        <UFormField label="E.164 (normalisiert)" class="col-span-2" help="fürs Anruf-Matching (CTI)" :error="errors.nummerE164">
-          <UInput v-model="nummerE164" placeholder="+49231123456" class="w-full" />
+        <UFormField label="Nummer (national)" class="col-span-2" help="führende Null wird automatisch entfernt"
+                    :error="errors.nummerAnzeige">
+          <UInput v-model="telNational" placeholder="231 555012" class="w-full" />
+        </UFormField>
+        <UFormField label="E.164 (normalisiert)" class="col-span-2" help="fürs Anruf-Matching (CTI) – automatisch erzeugt">
+          <UInput :model-value="nummerE164" disabled placeholder="+49231555012" class="w-full" />
         </UFormField>
       </template>
 

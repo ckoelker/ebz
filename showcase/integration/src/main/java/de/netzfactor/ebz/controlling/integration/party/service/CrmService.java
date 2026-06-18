@@ -17,6 +17,7 @@ import de.netzfactor.ebz.controlling.integration.party.model.Aktivitaet;
 import de.netzfactor.ebz.controlling.integration.party.model.DublettenUrteil;
 import de.netzfactor.ebz.controlling.integration.party.model.Einwilligung;
 import de.netzfactor.ebz.controlling.integration.party.model.Kontaktpunkt;
+import de.netzfactor.ebz.controlling.integration.party.model.Login;
 import de.netzfactor.ebz.controlling.integration.party.model.Lookups;
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
@@ -354,6 +355,33 @@ public class CrmService {
         return a;
     }
 
+    /** Aktivität nachträglich bearbeiten (Backlog: Kontakthistorie editierbar). Bezug/Typ bleiben änderbar. */
+    @Transactional
+    public Aktivitaet updateAktivitaet(Long id, AktivitaetInput in) {
+        Aktivitaet a = Aktivitaet.findById(id);
+        if (a == null) {
+            throw RegelVerletzung.nichtGefunden("Aktivität nicht gefunden: " + id);
+        }
+        Lookups.Aktivitaetstyp typ = lookup(Lookups.Aktivitaetstyp.class, in.typCode());
+        if (typ == null) {
+            throw RegelVerletzung.nichtGefunden("Aktivitätstyp nicht gefunden: " + in.typCode());
+        }
+        a.typ = typ;
+        a.richtung = enumOf(Aktivitaet.Richtung.class, in.richtung(), Aktivitaet.Richtung.AUSGEHEND);
+        a.betreff = in.betreff().trim();
+        a.inhaltHtml = leer(in.inhaltHtml());
+        a.dauerMinuten = in.dauerMinuten();
+        return a;
+    }
+
+    /** Aktivität löschen (Backlog: Löschen im Bearbeiten-Fenster, mit Bestätigung im Frontend). */
+    @Transactional
+    public void loescheAktivitaet(Long id) {
+        if (!Aktivitaet.deleteById(id)) {
+            throw RegelVerletzung.nichtGefunden("Aktivität nicht gefunden: " + id);
+        }
+    }
+
     /** Kontakthistorie einer Person (neueste zuerst). */
     public List<Aktivitaet> aktivitaetenPerson(Long personId) {
         return Aktivitaet.list("person.id = ?1 order by zeitpunkt desc", personId);
@@ -415,6 +443,12 @@ public class CrmService {
         return Einwilligung.list("person.id = ?1 order by id desc", personId);
     }
 
+    /** Einwilligungen im Kontext einer Organisation (Firmen-Opt-Ins der verknüpften Personen). */
+    public List<Einwilligung> einwilligungenOrganisation(Long orgId) {
+        mussOrganisation(orgId);
+        return Einwilligung.list("organisation.id = ?1 order by id desc", orgId);
+    }
+
     // ───────────────────────── Weiterbildung §34c / §15b MaBV (A19) ─────────────────────────
 
     /** Statutarisches 3-Jahres-Soll der Weiterbildungspflicht (§15b MaBV: 20 Std. je 3-Jahres-Zeitraum). */
@@ -451,14 +485,39 @@ public class CrmService {
         }
     }
 
+    /** Eine Zeile der Firmen-Weiterbildungsübersicht (Pflicht §34c je Mitarbeiter, A19/Org-Sicht). */
+    public record WeiterbildungOrgZeile(Long personId, String personName, BigDecimal summe, BigDecimal soll,
+            boolean erfuellt, String ampel) {
+    }
+
     /** Stundenkonto der Person für den aktuell laufenden statutarischen 3-Jahres-Zeitraum. */
     public WeiterbildungKonto weiterbildungskonto(Long personId) {
-        mussPerson(personId);
+        return kontoFuer(mussPerson(personId));
+    }
+
+    /**
+     * Firmen-Weiterbildungsübersicht (A19/Org-Sicht): je <b>aktuell zugehöriger</b> Person des Maklerbetriebs
+     * eine Zeile mit Ampel — so sehen EBZ-Mitarbeiter auf einen Blick, welche Mitarbeiter die §34c-Pflicht
+     * (noch) nicht erfüllen. Distinct je Person (Mehrfachrollen zählen einmal).
+     */
+    public List<WeiterbildungOrgZeile> weiterbildungOrganisation(Long orgId) {
+        mussOrganisation(orgId);
+        List<Person> personen = Person.list(
+                "id in (select distinct m.person.id from Mitgliedschaft m where m.organisation.id = ?1 "
+                        + "and (m.gueltigBis is null or m.gueltigBis >= ?2)) order by nachname, vorname",
+                orgId, LocalDate.now());
+        return personen.stream().map(p -> {
+            WeiterbildungKonto k = kontoFuer(p);
+            return new WeiterbildungOrgZeile(p.id, p.anzeigeName(), k.summe(), k.soll(), k.erfuellt(), k.ampel());
+        }).toList();
+    }
+
+    private WeiterbildungKonto kontoFuer(Person p) {
         int jahr = LocalDate.now().getYear();
         int startJahr = ZEITRAUM_BASIS_JAHR + 3 * ((jahr - ZEITRAUM_BASIS_JAHR) / 3);
         LocalDate von = LocalDate.of(startJahr, 1, 1);
         LocalDate bis = LocalDate.of(startJahr + 2, 12, 31);
-        List<Weiterbildungsnachweis> alle = Weiterbildungsnachweis.list("person.id = ?1 order by datum desc", personId);
+        List<Weiterbildungsnachweis> alle = Weiterbildungsnachweis.list("person.id = ?1 order by datum desc", p.id);
         BigDecimal summe = alle.stream()
                 .filter(w -> !w.datum.isBefore(von) && !w.datum.isAfter(bis))
                 .map(w -> w.stunden).reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -566,6 +625,78 @@ public class CrmService {
         Set<Long> ids = debitoren.stream().map(d -> d.id).collect(Collectors.toSet());
         return Rechnung.list("debitor.id in ?1 and status <> ?2 order by ausstellungsdatum desc, id desc",
                 ids, RechnungStatus.ENTWURF);
+    }
+
+    // ───────────────────────── Recht auf Vergessen (A7, Art. 17 DSGVO) ─────────────────────────
+
+    /** Aufbewahrungsfrist (GoBD/§147 AO) bis zur planmäßigen Anonymisierung, falls keine angegeben. */
+    private static final int AUFBEWAHRUNG_JAHRE_DEFAULT = 10;
+
+    /**
+     * Phase 1 (Einschränkung der Verarbeitung, Art. 18): Person <b>sperren</b> + Werbe-/Auskunftssperre
+     * setzen + Anonymisierung auf das Ende der Aufbewahrungsfrist terminieren. Reversibel-nah; die
+     * eigentliche Löschung folgt mit {@link #personAnonymisieren}.
+     */
+    @Transactional
+    public Person personSperren(Long personId, Integer aufbewahrungJahre) {
+        Person p = mussPerson(personId);
+        int jahre = (aufbewahrungJahre == null || aufbewahrungJahre < 0)
+                ? AUFBEWAHRUNG_JAHRE_DEFAULT : aufbewahrungJahre;
+        p.loeschStatus = Person.LoeschStatus.GESPERRT;
+        p.werbesperre = true;
+        p.auskunftssperre = true;
+        p.anonymisierenAb = LocalDate.now().plusYears(jahre);
+        return p;
+    }
+
+    /**
+     * Phase 2 (Löschung, Art. 17): personenbezogene Daten <b>irreversibel anonymisieren</b> — Kernfelder
+     * überschreiben, Kommunikationskanäle ({@link Kontaktpunkt}) und Login-Identitäten ({@link Login})
+     * entfernen und die Envers-<b>Versionshistorie purgen</b> (sonst lebte die Person in den {@code _aud}-
+     * Tabellen weiter). Buchungs-/Rechnungsbelege bleiben aus Aufbewahrungsgründen bestehen, verlieren aber
+     * den Personenbezug (Schlüssel anonymisiert).
+     */
+    @Transactional
+    public Person personAnonymisieren(Long personId) {
+        Person p = mussPerson(personId);
+        Kontaktpunkt.delete("person.id = ?1", personId);
+        Login.delete("person.id = ?1", personId);
+        p.vorname = "Anonymisiert";
+        p.nachname = "#" + personId;
+        p.geschlecht = Person.Geschlecht.KEINE_ANGABE;
+        p.titel = null;
+        p.geburtsdatum = null;
+        p.geburtsort = null;
+        p.geburtsland = null;
+        p.staatsangehoerigkeit1 = null;
+        p.staatsangehoerigkeit2 = null;
+        p.fotoUrl = null;
+        p.keycloakSub = null;
+        p.leadQuelle = null;
+        p.matchSchluessel = null;
+        p.werbesperre = true;
+        p.auskunftssperre = true;
+        p.loeschStatus = Person.LoeschStatus.ANONYMISIERT;
+        p.anonymisierenAb = LocalDate.now();
+        // Versionsdaten endgültig entfernen (A7) — nach Flush, damit die Lösch-DML eingespielt ist.
+        io.quarkus.hibernate.orm.panache.Panache.getEntityManager().flush();
+        purgeAudit("kontaktpunkt_aud", "person_id", personId);
+        purgeAudit("login_aud", "person_id", personId);
+        purgeAudit("person_aud", "id", personId);
+        return p;
+    }
+
+    /** Best-effort-Purge einer Envers-Audit-Tabelle (Tabellen-/Spaltennamen sind code-konstant, kein Injection-Pfad). */
+    private static void purgeAudit(String table, String whereSpalte, Object wert) {
+        var em = io.quarkus.hibernate.orm.panache.Panache.getEntityManager();
+        Object existiert = em.createNativeQuery(
+                        "select 1 from information_schema.tables where table_schema = 'mdm' and table_name = ?1")
+                .setParameter(1, table).getResultStream().findFirst().orElse(null);
+        if (existiert == null) {
+            return;
+        }
+        em.createNativeQuery("delete from mdm." + table + " where " + whereSpalte + " = ?1")
+                .setParameter(1, wert).executeUpdate();
     }
 
     // ───────────────────────── Suche ─────────────────────────

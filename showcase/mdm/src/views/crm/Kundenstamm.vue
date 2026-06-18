@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
+import { useRoute, useRouter } from 'vue-router';
 import { useQuery } from '@tanstack/vue-query';
 import { getCrmPersonen, getCrmOrganisationen, getCrmSuche }
   from '@/api/endpoints/crm-resource/crm-resource';
@@ -43,6 +44,14 @@ const neueFirma = ref(false);
 function waehle(type: 'person' | 'org', id: number) {
   sel.value = { type, id };
 }
+
+// CTI-Sprung: ein eingehender Anruf (AnrufToast) navigiert hierher mit ?person=/?org= → Kontakt wählen.
+const route = useRoute();
+const router = useRouter();
+watch(() => route.query, (qy) => {
+  if (qy.person) { waehle('person', Number(qy.person)); router.replace({ query: {} }); }
+  else if (qy.org) { waehle('org', Number(qy.org)); router.replace({ query: {} }); }
+}, { immediate: true });
 function ausTreffer(t: Treffer) {
   waehle(t.art === 'ORGANISATION' ? 'org' : 'person', t.id!);
 }

@@ -26,14 +26,33 @@ export const auth = reactive({
   bereit: false,
   angemeldet: false,
   benutzer: '' as string,
+  rollen: [] as string[],
 });
 
 let aktuell: User | null = null;
+
+/** Realm-Rollen aus dem Access-Token (Keycloak {@code realm_access.roles}) — für UI-Gating (RBAC erzwingt der Server). */
+function rollenAus(u: User | null): string[] {
+  try {
+    const t = u?.access_token;
+    if (!t) return [];
+    const payload = JSON.parse(atob(t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    return (payload?.realm_access?.roles as string[]) ?? [];
+  } catch {
+    return [];
+  }
+}
 
 function uebernehme(u: User | null): void {
   aktuell = u && !u.expired ? u : null;
   auth.angemeldet = aktuell != null;
   auth.benutzer = (aktuell?.profile.preferred_username as string) ?? '';
+  auth.rollen = rollenAus(aktuell);
+}
+
+/** Prüft eine Realm-Rolle (UI-Affordance); die eigentliche Durchsetzung passiert serverseitig. */
+export function hatRolle(rolle: string): boolean {
+  return auth.rollen.includes(rolle);
 }
 
 userManager.events.addUserLoaded((u) => uebernehme(u));

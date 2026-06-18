@@ -29,6 +29,7 @@ import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.party.service.CrmService;
+import de.netzfactor.ebz.controlling.integration.party.service.CtiService;
 import de.netzfactor.ebz.controlling.integration.party.service.PartyHoheitService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzung;
 
@@ -46,6 +47,9 @@ public class CrmResource {
 
     @Inject
     CrmService crm;
+
+    @Inject
+    de.netzfactor.ebz.controlling.integration.party.service.CtiService cti;
 
     // ───────────────────────── View-DTOs (gebündelt) ─────────────────────────
 
@@ -72,7 +76,7 @@ public class CrmResource {
     public record PersonDetail(Long id, String vorname, String nachname, String anzeigeName, String geschlecht,
             String titel, String briefanrede, LocalDate geburtsdatum, String geburtsort, String geburtslandCode,
             String korrespondenzspracheCode, boolean werbesperre, boolean auskunftssperre, String status,
-            String loeschStatus, List<String> emails, List<KontaktpunktView> kontaktpunkte,
+            String loeschStatus, LocalDate anonymisierenAb, List<String> emails, List<KontaktpunktView> kontaktpunkte,
             List<MitgliedschaftView> mitgliedschaften) {
     }
 
@@ -96,8 +100,13 @@ public class CrmResource {
     }
 
     public record EinwilligungView(Long id, String kanal, String zweck, String status, String rechtsgrundlage,
-            String quelleCode, Long organisationId, String organisation, java.time.LocalDateTime ausstehendSeit,
-            java.time.LocalDateTime erteiltAm, java.time.LocalDateTime widerrufenAm) {
+            String quelleCode, Long personId, String personName, Long organisationId, String organisation,
+            java.time.LocalDateTime ausstehendSeit, java.time.LocalDateTime erteiltAm,
+            java.time.LocalDateTime widerrufenAm) {
+    }
+
+    public record WeiterbildungOrgZeileView(Long personId, String personName, java.math.BigDecimal summe,
+            java.math.BigDecimal soll, boolean erfuellt, String ampel) {
     }
 
     public record WeiterbildungView(Long id, String titel, String anbieter, java.math.BigDecimal stunden,
@@ -340,6 +349,22 @@ public class CrmResource {
         return Response.status(Response.Status.CREATED).entity(aktivitaetView(crm.createAktivitaet(in))).build();
     }
 
+    @RolesAllowed("crm-pflege")
+    @PUT
+    @Path("/aktivitaeten/{id}")
+    @Transactional
+    public AktivitaetView aktivitaetAendern(@PathParam("id") Long id, @Valid CrmService.AktivitaetInput in) {
+        return aktivitaetView(crm.updateAktivitaet(id, in));
+    }
+
+    @RolesAllowed("crm-pflege")
+    @DELETE
+    @Path("/aktivitaeten/{id}")
+    public Response aktivitaetLoeschen(@PathParam("id") Long id) {
+        crm.loescheAktivitaet(id);
+        return Response.noContent().build();
+    }
+
     // ───────────────────────── Einwilligung / Opt-In (A6) ─────────────────────────
 
     @GET
@@ -347,6 +372,13 @@ public class CrmResource {
     @Transactional
     public List<EinwilligungView> personEinwilligungen(@PathParam("id") Long id) {
         return crm.einwilligungenPerson(id).stream().map(CrmResource::einwilligungView).toList();
+    }
+
+    @GET
+    @Path("/organisationen/{id}/einwilligungen")
+    @Transactional
+    public List<EinwilligungView> organisationEinwilligungen(@PathParam("id") Long id) {
+        return crm.einwilligungenOrganisation(id).stream().map(CrmResource::einwilligungView).toList();
     }
 
     @RolesAllowed("crm-pflege")
@@ -384,6 +416,16 @@ public class CrmResource {
                 k.erfuellt(), k.ampel(), k.nachweise().stream().map(CrmResource::weiterbildungView).toList());
     }
 
+    @GET
+    @Path("/organisationen/{id}/weiterbildung")
+    @Transactional
+    public List<WeiterbildungOrgZeileView> organisationWeiterbildung(@PathParam("id") Long id) {
+        return crm.weiterbildungOrganisation(id).stream()
+                .map(z -> new WeiterbildungOrgZeileView(z.personId(), z.personName(), z.summe(), z.soll(),
+                        z.erfuellt(), z.ampel()))
+                .toList();
+    }
+
     @RolesAllowed("crm-pflege")
     @POST
     @Path("/weiterbildung")
@@ -415,6 +457,38 @@ public class CrmResource {
     @Transactional
     public Uebersicht360View organisationUebersicht(@PathParam("id") Long id) {
         return uebersicht360(crm.uebersichtOrganisation(id));
+    }
+
+    // ───────────────────────── Recht auf Vergessen (A7) — nur crm-datenschutz ─────────────────────────
+
+    /** Optionaler Body der Sperre: Aufbewahrungsfrist bis zur planmäßigen Anonymisierung. */
+    public record SperrenInput(Integer aufbewahrungJahre) {
+    }
+
+    @RolesAllowed("crm-datenschutz")
+    @POST
+    @Path("/personen/{id}/sperren")
+    public PersonDetail personSperren(@PathParam("id") Long id, SperrenInput in) {
+        crm.personSperren(id, in == null ? null : in.aufbewahrungJahre());
+        return person(id);
+    }
+
+    @RolesAllowed("crm-datenschutz")
+    @POST
+    @Path("/personen/{id}/anonymisieren")
+    public PersonDetail personAnonymisieren(@PathParam("id") Long id) {
+        crm.personAnonymisieren(id);
+        return person(id);
+    }
+
+    // ───────────────────────── CTI / Anruf (A13) ─────────────────────────
+
+    /** Simuliert einen eingehenden Anruf (TK-Gateway-Webhook): matcht den Kontakt, protokolliert und
+     *  broadcastet das Event an alle offenen CTI-Cockpit-WebSockets. Showcase-Auslöser für die Live-Demo. */
+    @POST
+    @Path("/cti/simuliere-anruf")
+    public CtiService.AnrufEvent ctiSimuliereAnruf(CtiService.AnrufAnfrage in) {
+        return cti.simuliereAnruf(in);
     }
 
     private static Uebersicht360View uebersicht360(CrmService.Uebersicht u) {
@@ -451,7 +525,7 @@ public class CrmResource {
         return new PersonDetail(p.id, p.vorname, p.nachname, p.anzeigeName(), p.geschlecht.name(), p.titel,
                 p.briefanrede(), p.geburtsdatum, p.geburtsort, code(p.geburtsland),
                 code(p.korrespondenzsprache), p.werbesperre, p.auskunftssperre, p.status.name(),
-                p.loeschStatus.name(), PartyHoheitService.alleEmails(p.id), kps, ms);
+                p.loeschStatus.name(), p.anonymisierenAb, PartyHoheitService.alleEmails(p.id), kps, ms);
     }
 
     private static OrgDetail orgDetail(Organisation o) {
@@ -488,6 +562,7 @@ public class CrmResource {
         return new EinwilligungView(e.id, e.kanal == null ? null : e.kanal.name(),
                 e.zweck == null ? null : e.zweck.name(), e.status == null ? null : e.status.name(),
                 e.rechtsgrundlage == null ? null : e.rechtsgrundlage.name(), code(e.quelle),
+                e.person == null ? null : e.person.id, e.person == null ? null : e.person.anzeigeName(),
                 e.organisation == null ? null : e.organisation.id,
                 e.organisation == null ? null : e.organisation.name,
                 e.ausstehendSeit, e.erteiltAm, e.widerrufenAm);

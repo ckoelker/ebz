@@ -24,6 +24,7 @@ export interface PersonDetail {
   auskunftssperre?: boolean;
   status?: string;
   loeschStatus?: string;
+  anonymisierenAb?: LocalDate;
   emails?: string[];
   kontaktpunkte?: KontaktpunktView[];
   mitgliedschaften?: MitgliedschaftView[];

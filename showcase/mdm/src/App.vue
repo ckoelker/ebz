@@ -4,6 +4,7 @@
 // UApp stellt Overlays/Tooltips/Toasts für Nuxt UI bereit.
 import { RouterLink, RouterView } from 'vue-router';
 import { auth, login, logout } from './auth';
+import AnrufToast from '@/crm/AnrufToast.vue';
 
 const prototypen = [
   { to: '/angebote', label: 'Bildungsangebote', icon: 'i-lucide-book-open' },
@@ -20,6 +21,7 @@ const prototypen = [
         <RouterLink to="/" class="font-extrabold no-underline text-white">EBZ MDM</RouterLink>
         <span class="text-white/60 text-sm">Stammdaten-Cockpit</span>
         <span class="flex-1" />
+        <AnrufToast />
         <template v-if="auth.bereit">
           <span v-if="auth.angemeldet" class="text-sm inline-flex items-center gap-1">
             <UIcon name="i-lucide-user" /> {{ auth.benutzer }}

@@ -4,7 +4,8 @@ import { useQuery, useQueryClient, useMutation } from '@tanstack/vue-query';
 import { getCrmPersonenId, getCrmPersonenIdAktivitaeten, deleteCrmKontaktpunkteId,
   postCrmMitgliedschaftenIdAusscheiden, getCrmPersonenIdEinwilligungen,
   postCrmEinwilligungenIdErteilen, postCrmEinwilligungenIdWiderrufen,
-  getCrmPersonenIdWeiterbildung, getCrmPersonenIdUebersicht } from '@/api/endpoints/crm-resource/crm-resource';
+  getCrmPersonenIdWeiterbildung, deleteCrmWeiterbildungId, getCrmPersonenIdUebersicht,
+  postCrmPersonenIdSperren, postCrmPersonenIdAnonymisieren } from '@/api/endpoints/crm-resource/crm-resource';
 import type { PersonDetail, KontaktpunktView, MitgliedschaftView, AktivitaetView,
   EinwilligungView, WeiterbildungKontoView, Uebersicht360View } from '@/api/model';
 import NeuePersonDialog from '@/crm/dialoge/NeuePersonDialog.vue';
@@ -14,10 +15,13 @@ import NotizDialog from '@/crm/dialoge/NotizDialog.vue';
 import EinwilligungDialog from '@/crm/dialoge/EinwilligungDialog.vue';
 import WeiterbildungDialog from '@/crm/dialoge/WeiterbildungDialog.vue';
 import Uebersicht360 from '@/crm/Uebersicht360.vue';
+import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { fehlerText } from '@/crm/fehler';
+import { hatRolle } from '@/auth';
 
 const props = defineProps<{ id: number }>();
 const qc = useQueryClient();
+const darfDatenschutz = computed(() => hatRolle('crm-datenschutz'));
 
 const { data: person, isFetching } = useQuery({
   queryKey: computed(() => ['crm-person', props.id]),
@@ -70,9 +74,39 @@ const kpEdit = ref<KontaktpunktView | null>(null);
 const mgDialog = ref(false);
 const mgEdit = ref<MitgliedschaftView | null>(null);
 const notizDialog = ref(false);
+const notizEdit = ref<AktivitaetView | null>(null);
 const einwDialog = ref(false);
 const wbDialog = ref(false);
 const meldung = ref('');
+
+// ── Generische Lösch-/irreversible-Bestätigung (Regel „Löschen immer mit Bestätigung") ──
+const confirmState = ref<{ open: boolean; title: string; message: string; detail?: string;
+  confirmLabel: string; confirmColor: string; confirmIcon: string; loading: boolean }>({
+  open: false, title: '', message: '', confirmLabel: 'Löschen', confirmColor: 'error',
+  confirmIcon: 'i-lucide-trash-2', loading: false,
+});
+let confirmAction: null | (() => Promise<unknown>) = null;
+function frage(o: { title: string; message: string; detail?: string; confirmLabel?: string;
+  confirmColor?: string; confirmIcon?: string }, action: () => Promise<unknown>) {
+  confirmState.value = {
+    open: true, loading: false, confirmLabel: 'Löschen', confirmColor: 'error',
+    confirmIcon: 'i-lucide-trash-2', detail: undefined, ...o,
+  };
+  confirmAction = action;
+}
+async function confirmJa() {
+  if (!confirmAction) return;
+  confirmState.value.loading = true;
+  try {
+    await confirmAction();
+    confirmState.value.open = false;
+  } catch (e) {
+    meldung.value = fehlerText(e);
+  } finally {
+    confirmState.value.loading = false;
+    confirmAction = null;
+  }
+}
 
 const richtungIcon = (r?: string) =>
   r === 'EINGEHEND' ? 'i-lucide-arrow-down-left' : r === 'INTERN' ? 'i-lucide-dot' : 'i-lucide-arrow-up-right';
@@ -81,27 +115,58 @@ function neuerKp() { kpEdit.value = null; kpDialog.value = true; }
 function bearbeiteKp(k: KontaktpunktView) { kpEdit.value = k; kpDialog.value = true; }
 function neueMg() { mgEdit.value = null; mgDialog.value = true; }
 function bearbeiteMg(m: MitgliedschaftView) { mgEdit.value = m; mgDialog.value = true; }
+function neueNotiz() { notizEdit.value = null; notizDialog.value = true; }
+function bearbeiteNotiz(a: AktivitaetView) { notizEdit.value = a; notizDialog.value = true; }
 
-const kpDel = useMutation({
-  mutationFn: (id: number) => deleteCrmKontaktpunkteId(id),
-  onSuccess: reload,
-  onError: (e) => { meldung.value = fehlerText(e); },
-});
-const mgAus = useMutation({
-  mutationFn: (id: number) => postCrmMitgliedschaftenIdAusscheiden(id),
-  onSuccess: reload,
-  onError: (e) => { meldung.value = fehlerText(e); },
-});
+const kpDel = useMutation({ mutationFn: (id: number) => deleteCrmKontaktpunkteId(id), onSuccess: reload });
+const mgAus = useMutation({ mutationFn: (id: number) => postCrmMitgliedschaftenIdAusscheiden(id), onSuccess: reload });
+const wbDel = useMutation({ mutationFn: (id: number) => deleteCrmWeiterbildungId(id), onSuccess: reload });
+const a7Sperren = useMutation({ mutationFn: (id: number) => postCrmPersonenIdSperren(id, {}), onSuccess: reload });
+const a7Anon = useMutation({ mutationFn: (id: number) => postCrmPersonenIdAnonymisieren(id), onSuccess: reload });
 const einwErteilen = useMutation({
   mutationFn: (id: number) => postCrmEinwilligungenIdErteilen(id),
   onSuccess: reload,
   onError: (e) => { meldung.value = fehlerText(e); },
 });
-const einwWiderrufen = useMutation({
-  mutationFn: (id: number) => postCrmEinwilligungenIdWiderrufen(id),
-  onSuccess: reload,
-  onError: (e) => { meldung.value = fehlerText(e); },
-});
+const einwWiderrufen = useMutation({ mutationFn: (id: number) => postCrmEinwilligungenIdWiderrufen(id), onSuccess: reload });
+
+function loescheKp(k: KontaktpunktView) {
+  frage({ title: 'Kontaktpunkt löschen?', message: kpText(k) }, () => kpDel.mutateAsync(k.id!));
+}
+function scheideAus(m: MitgliedschaftView) {
+  frage({
+    title: 'Zugehörigkeit beenden?', message: `${m.organisation} · ${m.rolle}`,
+    detail: 'Die Mitgliedschaft wird zum heutigen Tag historisiert (ausgeschieden), nicht gelöscht.',
+    confirmLabel: 'Ausscheiden', confirmColor: 'warning', confirmIcon: 'i-lucide-log-out',
+  }, () => mgAus.mutateAsync(m.id!));
+}
+function loescheWb(w: { id?: number; titel?: string }) {
+  frage({ title: 'Nachweis löschen?', message: w.titel ?? 'Weiterbildungsnachweis' },
+    () => wbDel.mutateAsync(w.id!));
+}
+function widerrufe(e: EinwilligungView) {
+  frage({
+    title: 'Einwilligung widerrufen?', message: `${e.zweck} · ${e.kanal}`,
+    detail: 'Der Widerruf wird mit Zeitstempel protokolliert (Art. 7 Abs. 3 DSGVO).',
+    confirmLabel: 'Widerrufen', confirmColor: 'error', confirmIcon: 'i-lucide-ban',
+  }, () => einwWiderrufen.mutateAsync(e.id!));
+}
+function sperren() {
+  frage({
+    title: 'Person sperren (Art. 18)?',
+    message: `${person.value?.anzeigeName}: Verarbeitung einschränken, Werbe-/Auskunftssperre setzen.`,
+    detail: 'Die Anonymisierung wird auf das Ende der Aufbewahrungsfrist terminiert. Reversibel-nah.',
+    confirmLabel: 'Sperren', confirmColor: 'warning', confirmIcon: 'i-lucide-lock',
+  }, () => a7Sperren.mutateAsync(props.id));
+}
+function anonymisieren() {
+  frage({
+    title: 'Endgültig anonymisieren (Art. 17)?',
+    message: `${person.value?.anzeigeName}: alle personenbezogenen Daten werden unwiderruflich gelöscht.`,
+    detail: 'Kontaktkanäle, Logins und die komplette Versionshistorie werden entfernt. Nicht umkehrbar!',
+    confirmLabel: 'Anonymisieren', confirmColor: 'error', confirmIcon: 'i-lucide-user-x',
+  }, () => a7Anon.mutateAsync(props.id));
+}
 
 const einwColor = (s?: string) =>
   s === 'ERTEILT' ? 'success' : s === 'WIDERRUFEN' ? 'error' : 'warning';
@@ -123,6 +188,7 @@ function kpText(k: KontaktpunktView): string {
     + [k.plz, k.ort].filter(Boolean).join(' ') + (k.landCode ? ` (${k.landCode})` : '');
 }
 const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
+const istAnonymisiert = computed(() => person.value?.loeschStatus === 'ANONYMISIERT');
 </script>
 
 <template>
@@ -170,7 +236,7 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
     <UCard v-if="tab === 'stammdaten'">
       <div class="flex justify-between items-center mb-3">
         <h3 class="font-semibold">Stammdaten</h3>
-        <UButton size="sm" icon="i-lucide-pencil" @click="editStamm = true">Bearbeiten</UButton>
+        <UButton size="sm" icon="i-lucide-pencil" :disabled="istAnonymisiert" @click="editStamm = true">Bearbeiten</UButton>
       </div>
       <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
         <div><dt class="text-muted">Vorname</dt><dd>{{ person.vorname }}</dd></div>
@@ -197,7 +263,7 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
             <div class="text-xs text-muted">{{ k.label }} <span v-if="k.primaer">· primär</span> · {{ k.status }}</div>
           </div>
           <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-pencil" @click="bearbeiteKp(k)" />
-          <UButton color="error" variant="ghost" size="xs" icon="i-lucide-trash-2" @click="kpDel.mutate(k.id!)" />
+          <UButton color="error" variant="ghost" size="xs" icon="i-lucide-trash-2" @click="loescheKp(k)" />
         </li>
       </ul>
     </UCard>
@@ -224,7 +290,7 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
           </div>
           <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-pencil" @click="bearbeiteMg(m)" />
           <UButton v-if="aktiv(m)" color="warning" variant="ghost" size="xs" icon="i-lucide-log-out"
-                   title="Ausscheiden (historisieren)" @click="mgAus.mutate(m.id!)" />
+                   title="Ausscheiden (historisieren)" @click="scheideAus(m)" />
         </li>
       </ul>
     </UCard>
@@ -233,16 +299,19 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
     <UCard v-else-if="tab === 'historie'">
       <div class="flex justify-between items-center mb-3">
         <h3 class="font-semibold">Kontakthistorie</h3>
-        <UButton size="sm" icon="i-lucide-plus" @click="notizDialog = true">Aktivität erfassen</UButton>
+        <UButton size="sm" icon="i-lucide-plus" @click="neueNotiz">Aktivität erfassen</UButton>
       </div>
       <p v-if="!historie?.length" class="text-sm text-muted">Noch keine Aktivitäten.</p>
       <ol class="relative border-s border-default ml-2">
-        <li v-for="a in historie" :key="a.id" class="ms-5 py-2">
+        <li v-for="a in historie" :key="a.id" class="ms-5 py-2 group">
           <span class="absolute -start-1.5 mt-1.5 w-3 h-3 rounded-full bg-primary-500" />
           <div class="flex items-center gap-2">
             <UIcon :name="richtungIcon(a.richtung)" class="text-dimmed" />
             <span class="text-sm font-medium">{{ a.betreff }}</span>
             <UBadge color="neutral" variant="soft" size="sm">{{ a.typ }}</UBadge>
+            <UButton color="neutral" variant="ghost" size="xs" icon="i-lucide-pencil"
+                     class="ml-auto opacity-0 group-hover:opacity-100" title="Bearbeiten"
+                     @click="bearbeiteNotiz(a)" />
           </div>
           <div class="text-xs text-muted">
             {{ a.zeitpunkt }} <span v-if="a.dauerMinuten">· {{ a.dauerMinuten }} Min.</span>
@@ -283,7 +352,7 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
           <UButton v-if="e.status === 'AUSSTEHEND'" color="success" variant="ghost" size="xs"
                    icon="i-lucide-check" title="Double-Opt-In bestätigen" @click="einwErteilen.mutate(e.id!)" />
           <UButton v-if="e.status !== 'WIDERRUFEN'" color="error" variant="ghost" size="xs"
-                   icon="i-lucide-ban" title="Widerrufen" @click="einwWiderrufen.mutate(e.id!)" />
+                   icon="i-lucide-ban" title="Widerrufen" @click="widerrufe(e)" />
         </li>
       </ul>
     </UCard>
@@ -321,20 +390,49 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
           </div>
           <UBadge color="neutral" variant="soft" size="sm">{{ w.stunden }} Std.</UBadge>
           <UBadge v-if="w.extern" color="info" variant="outline" size="sm">extern</UBadge>
+          <UButton color="error" variant="ghost" size="xs" icon="i-lucide-trash-2"
+                   title="Nachweis löschen" @click="loescheWb(w)" />
         </li>
       </ul>
     </UCard>
 
-    <!-- DSGVO -->
+    <!-- DSGVO (read-only Daten + bestätigte Betroffenenrechte A7) -->
     <UCard v-else-if="tab === 'dsgvo'">
       <h3 class="font-semibold mb-3">Sperren & Betroffenenrechte</h3>
       <dl class="grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
         <div><dt class="text-muted">Werbesperre</dt><dd>{{ person.werbesperre ? 'ja' : 'nein' }}</dd></div>
         <div><dt class="text-muted">Auskunftssperre</dt><dd>{{ person.auskunftssperre ? 'ja' : 'nein' }}</dd></div>
         <div><dt class="text-muted">Lösch-Status</dt><dd>{{ person.loeschStatus }}</dd></div>
-        <div><dt class="text-muted">E-Mail-Adressen</dt><dd>{{ person.emails?.join(', ') || '—' }}</dd></div>
+        <div><dt class="text-muted">Anonymisierung ab</dt><dd>{{ person.anonymisierenAb || '—' }}</dd></div>
+        <div class="col-span-2"><dt class="text-muted">E-Mail-Adressen</dt><dd>{{ person.emails?.join(', ') || '—' }}</dd></div>
       </dl>
-      <p class="text-xs text-dimmed mt-3">Werbe-/Auskunftssperre überstimmen jedes Marketing-Opt-In (Plan A1/A6).</p>
+      <p class="text-xs text-dimmed mt-3">
+        Diese Daten sind <strong>nicht inline editierbar</strong>. Werbe-/Auskunftssperre überstimmen jedes
+        Marketing-Opt-In (Plan A1/A6); Änderungen laufen ausschließlich über die bestätigten Pflege-Pfade.
+      </p>
+
+      <!-- Recht auf Vergessen (Art. 17/18 DSGVO) — nur mit Rolle crm-datenschutz -->
+      <div class="mt-4 pt-4 border-t border-default">
+        <h4 class="font-semibold text-sm mb-2 flex items-center gap-2">
+          <UIcon name="i-lucide-shield-x" class="text-error-500" /> Recht auf Vergessen (Art. 17 DSGVO)
+        </h4>
+        <UAlert v-if="!darfDatenschutz" color="neutral" variant="soft" icon="i-lucide-lock"
+                title="Vorbehalten für die Rolle „crm-datenschutz“."
+                description="Sperren und Anonymisieren sind nur dem Datenschutz vorbehalten." />
+        <template v-else-if="istAnonymisiert">
+          <UAlert color="neutral" variant="soft" icon="i-lucide-check"
+                  title="Datensatz ist anonymisiert." description="Es sind keine personenbezogenen Daten mehr vorhanden." />
+        </template>
+        <div v-else class="flex flex-wrap gap-2">
+          <UButton color="warning" variant="outline" size="sm" icon="i-lucide-lock"
+                   :disabled="person.loeschStatus === 'GESPERRT'" @click="sperren">
+            Sperren (Art. 18)
+          </UButton>
+          <UButton color="error" variant="solid" size="sm" icon="i-lucide-user-x" @click="anonymisieren">
+            Endgültig anonymisieren
+          </UButton>
+        </div>
+      </div>
     </UCard>
 
     <!-- Dialoge -->
@@ -342,8 +440,20 @@ const aktiv = (m: MitgliedschaftView) => !m.gueltigBis;
     <KontaktpunktDialog
       v-model:open="kpDialog" owner-type="person" :owner-id="id" :existing="kpEdit" @saved="reload" />
     <MitgliedschaftDialog v-model:open="mgDialog" :person-id="id" :existing="mgEdit" @saved="reload" />
-    <NotizDialog v-model:open="notizDialog" owner-type="person" :owner-id="id" @saved="reload" />
+    <NotizDialog v-model:open="notizDialog" owner-type="person" :owner-id="id" :existing="notizEdit" @saved="reload" />
     <EinwilligungDialog v-model:open="einwDialog" :person-id="id" @saved="reload" />
     <WeiterbildungDialog v-model:open="wbDialog" :person-id="id" @saved="reload" />
+
+    <ConfirmDialog
+      v-model:open="confirmState.open"
+      :title="confirmState.title"
+      :message="confirmState.message"
+      :detail="confirmState.detail"
+      :confirm-label="confirmState.confirmLabel"
+      :confirm-color="confirmState.confirmColor"
+      :confirm-icon="confirmState.confirmIcon"
+      :loading="confirmState.loading"
+      @confirm="confirmJa"
+    />
   </div>
 </template>

@@ -7,6 +7,8 @@
 import type {
   AktivitaetInput,
   AktivitaetView,
+  AnrufAnfrage,
+  AnrufEvent,
   DublettenKandidat,
   DublettenPruefInput,
   EinwilligungInput,
@@ -25,10 +27,12 @@ import type {
   PageViewPersonListItem,
   PersonDetail,
   PersonInput,
+  SperrenInput,
   Treffer,
   Uebersicht360View,
   WeiterbildungInput,
-  WeiterbildungKontoView
+  WeiterbildungKontoView,
+  WeiterbildungOrgZeileView
 } from '../../model';
 
 import { http } from '../../http';
@@ -45,6 +49,44 @@ export const postCrmAktivitaeten = (
       {url: `/crm/aktivitaeten`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
       data: aktivitaetInput
+    },
+      );
+    }
+  /**
+ * @summary Aktivitaet Loeschen
+ */
+export const deleteCrmAktivitaetenId = (
+    id: number,
+ ) => {
+      return http<unknown>(
+      {url: `/crm/aktivitaeten/${id}`, method: 'DELETE'
+    },
+      );
+    }
+  /**
+ * @summary Aktivitaet Aendern
+ */
+export const putCrmAktivitaetenId = (
+    id: number,
+    aktivitaetInput: AktivitaetInput,
+ ) => {
+      return http<AktivitaetView>(
+      {url: `/crm/aktivitaeten/${id}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: aktivitaetInput
+    },
+      );
+    }
+  /**
+ * @summary Cti Simuliere Anruf
+ */
+export const postCrmCtiSimuliereAnruf = (
+    anrufAnfrage: AnrufAnfrage,
+ ) => {
+      return http<AnrufEvent>(
+      {url: `/crm/cti/simuliere-anruf`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: anrufAnfrage
     },
       );
     }
@@ -232,6 +274,17 @@ export const getCrmOrganisationenIdAktivitaeten = (
       );
     }
   /**
+ * @summary Organisation Einwilligungen
+ */
+export const getCrmOrganisationenIdEinwilligungen = (
+    id: number,
+ ) => {
+      return http<EinwilligungView[]>(
+      {url: `/crm/organisationen/${id}/einwilligungen`, method: 'GET'
+    },
+      );
+    }
+  /**
  * @summary Organisation Uebersicht
  */
 export const getCrmOrganisationenIdUebersicht = (
@@ -239,6 +292,17 @@ export const getCrmOrganisationenIdUebersicht = (
  ) => {
       return http<Uebersicht360View>(
       {url: `/crm/organisationen/${id}/uebersicht`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * @summary Organisation Weiterbildung
+ */
+export const getCrmOrganisationenIdWeiterbildung = (
+    id: number,
+ ) => {
+      return http<WeiterbildungOrgZeileView[]>(
+      {url: `/crm/organisationen/${id}/weiterbildung`, method: 'GET'
     },
       );
     }
@@ -304,6 +368,17 @@ export const getCrmPersonenIdAktivitaeten = (
       );
     }
   /**
+ * @summary Person Anonymisieren
+ */
+export const postCrmPersonenIdAnonymisieren = (
+    id: number,
+ ) => {
+      return http<PersonDetail>(
+      {url: `/crm/personen/${id}/anonymisieren`, method: 'POST'
+    },
+      );
+    }
+  /**
  * @summary Person Einwilligungen
  */
 export const getCrmPersonenIdEinwilligungen = (
@@ -311,6 +386,20 @@ export const getCrmPersonenIdEinwilligungen = (
  ) => {
       return http<EinwilligungView[]>(
       {url: `/crm/personen/${id}/einwilligungen`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * @summary Person Sperren
+ */
+export const postCrmPersonenIdSperren = (
+    id: number,
+    sperrenInput: SperrenInput,
+ ) => {
+      return http<PersonDetail>(
+      {url: `/crm/personen/${id}/sperren`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: sperrenInput
     },
       );
     }
@@ -388,6 +477,9 @@ export const deleteCrmWeiterbildungId = (
       );
     }
   export type PostCrmAktivitaetenResult = NonNullable<Awaited<ReturnType<typeof postCrmAktivitaeten>>>
+export type DeleteCrmAktivitaetenIdResult = NonNullable<Awaited<ReturnType<typeof deleteCrmAktivitaetenId>>>
+export type PutCrmAktivitaetenIdResult = NonNullable<Awaited<ReturnType<typeof putCrmAktivitaetenId>>>
+export type PostCrmCtiSimuliereAnrufResult = NonNullable<Awaited<ReturnType<typeof postCrmCtiSimuliereAnruf>>>
 export type PostCrmDublettenPruefungResult = NonNullable<Awaited<ReturnType<typeof postCrmDublettenPruefung>>>
 export type PostCrmEinwilligungenResult = NonNullable<Awaited<ReturnType<typeof postCrmEinwilligungen>>>
 export type PostCrmEinwilligungenIdErteilenResult = NonNullable<Awaited<ReturnType<typeof postCrmEinwilligungenIdErteilen>>>
@@ -403,13 +495,17 @@ export type PostCrmOrganisationenResult = NonNullable<Awaited<ReturnType<typeof 
 export type PutCrmOrganisationenIdResult = NonNullable<Awaited<ReturnType<typeof putCrmOrganisationenId>>>
 export type GetCrmOrganisationenIdResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenId>>>
 export type GetCrmOrganisationenIdAktivitaetenResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenIdAktivitaeten>>>
+export type GetCrmOrganisationenIdEinwilligungenResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenIdEinwilligungen>>>
 export type GetCrmOrganisationenIdUebersichtResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenIdUebersicht>>>
+export type GetCrmOrganisationenIdWeiterbildungResult = NonNullable<Awaited<ReturnType<typeof getCrmOrganisationenIdWeiterbildung>>>
 export type GetCrmPersonenResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonen>>>
 export type PostCrmPersonenResult = NonNullable<Awaited<ReturnType<typeof postCrmPersonen>>>
 export type PutCrmPersonenIdResult = NonNullable<Awaited<ReturnType<typeof putCrmPersonenId>>>
 export type GetCrmPersonenIdResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenId>>>
 export type GetCrmPersonenIdAktivitaetenResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenIdAktivitaeten>>>
+export type PostCrmPersonenIdAnonymisierenResult = NonNullable<Awaited<ReturnType<typeof postCrmPersonenIdAnonymisieren>>>
 export type GetCrmPersonenIdEinwilligungenResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenIdEinwilligungen>>>
+export type PostCrmPersonenIdSperrenResult = NonNullable<Awaited<ReturnType<typeof postCrmPersonenIdSperren>>>
 export type GetCrmPersonenIdUebersichtResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenIdUebersicht>>>
 export type GetCrmPersonenIdWeiterbildungResult = NonNullable<Awaited<ReturnType<typeof getCrmPersonenIdWeiterbildung>>>
 export type PostCrmPersonenPersonIdOrganisationenOrgIdMitgliedschaftenResult = NonNullable<Awaited<ReturnType<typeof postCrmPersonenPersonIdOrganisationenOrgIdMitgliedschaften>>>

@@ -27,6 +27,69 @@ export const PostCrmAktivitaetenBody = zod.object({
 export const PostCrmAktivitaetenResponse = zod.unknown()
 
 /**
+ * @summary Aktivitaet Loeschen
+ */
+export const DeleteCrmAktivitaetenIdParams = zod.object({
+  "id": zod.number()
+})
+
+export const DeleteCrmAktivitaetenIdResponse = zod.unknown()
+
+/**
+ * @summary Aktivitaet Aendern
+ */
+export const PutCrmAktivitaetenIdParams = zod.object({
+  "id": zod.number()
+})
+
+export const putCrmAktivitaetenIdBodyTypCodeRegExp = new RegExp('\\S');
+export const putCrmAktivitaetenIdBodyBetreffRegExp = new RegExp('\\S');
+
+
+export const PutCrmAktivitaetenIdBody = zod.object({
+  "typCode": zod.string().regex(putCrmAktivitaetenIdBodyTypCodeRegExp),
+  "richtung": zod.string().optional(),
+  "betreff": zod.string().regex(putCrmAktivitaetenIdBodyBetreffRegExp),
+  "inhaltHtml": zod.string().optional(),
+  "personId": zod.number().optional(),
+  "organisationId": zod.number().optional(),
+  "dauerMinuten": zod.number().optional()
+})
+
+export const PutCrmAktivitaetenIdResponse = zod.object({
+  "id": zod.number().optional(),
+  "typCode": zod.string().optional(),
+  "typ": zod.string().optional(),
+  "richtung": zod.string().optional(),
+  "betreff": zod.string().optional(),
+  "inhaltHtml": zod.string().optional(),
+  "personId": zod.number().optional(),
+  "person": zod.string().optional(),
+  "organisationId": zod.number().optional(),
+  "organisation": zod.string().optional(),
+  "zeitpunkt": zod.string().datetime({"offset":true}).optional(),
+  "dauerMinuten": zod.number().optional()
+})
+
+/**
+ * @summary Cti Simuliere Anruf
+ */
+export const PostCrmCtiSimuliereAnrufBody = zod.object({
+  "nummerE164": zod.string().optional(),
+  "richtung": zod.string().optional()
+})
+
+export const PostCrmCtiSimuliereAnrufResponse = zod.object({
+  "nummerE164": zod.string().optional(),
+  "bekannt": zod.boolean().optional(),
+  "personId": zod.number().optional(),
+  "personName": zod.string().optional(),
+  "organisationId": zod.number().optional(),
+  "organisationName": zod.string().optional(),
+  "zeitpunkt": zod.string().optional()
+})
+
+/**
  * @summary Dubletten Pruefung
  */
 export const postCrmDublettenPruefungBodyArtRegExp = new RegExp('\\S');
@@ -84,6 +147,8 @@ export const PostCrmEinwilligungenIdErteilenResponse = zod.object({
   "status": zod.string().optional(),
   "rechtsgrundlage": zod.string().optional(),
   "quelleCode": zod.string().optional(),
+  "personId": zod.number().optional(),
+  "personName": zod.string().optional(),
   "organisationId": zod.number().optional(),
   "organisation": zod.string().optional(),
   "ausstehendSeit": zod.string().datetime({"offset":true}).optional(),
@@ -105,6 +170,8 @@ export const PostCrmEinwilligungenIdWiderrufenResponse = zod.object({
   "status": zod.string().optional(),
   "rechtsgrundlage": zod.string().optional(),
   "quelleCode": zod.string().optional(),
+  "personId": zod.number().optional(),
+  "personName": zod.string().optional(),
   "organisationId": zod.number().optional(),
   "organisation": zod.string().optional(),
   "ausstehendSeit": zod.string().datetime({"offset":true}).optional(),
@@ -452,6 +519,30 @@ export const GetCrmOrganisationenIdAktivitaetenResponseItem = zod.object({
 export const GetCrmOrganisationenIdAktivitaetenResponse = zod.array(GetCrmOrganisationenIdAktivitaetenResponseItem)
 
 /**
+ * @summary Organisation Einwilligungen
+ */
+export const GetCrmOrganisationenIdEinwilligungenParams = zod.object({
+  "id": zod.number()
+})
+
+export const GetCrmOrganisationenIdEinwilligungenResponseItem = zod.object({
+  "id": zod.number().optional(),
+  "kanal": zod.string().optional(),
+  "zweck": zod.string().optional(),
+  "status": zod.string().optional(),
+  "rechtsgrundlage": zod.string().optional(),
+  "quelleCode": zod.string().optional(),
+  "personId": zod.number().optional(),
+  "personName": zod.string().optional(),
+  "organisationId": zod.number().optional(),
+  "organisation": zod.string().optional(),
+  "ausstehendSeit": zod.string().datetime({"offset":true}).optional(),
+  "erteiltAm": zod.string().datetime({"offset":true}).optional(),
+  "widerrufenAm": zod.string().datetime({"offset":true}).optional()
+})
+export const GetCrmOrganisationenIdEinwilligungenResponse = zod.array(GetCrmOrganisationenIdEinwilligungenResponseItem)
+
+/**
  * @summary Organisation Uebersicht
  */
 export const GetCrmOrganisationenIdUebersichtParams = zod.object({
@@ -479,6 +570,23 @@ export const GetCrmOrganisationenIdUebersichtResponse = zod.object({
   "versandStatus": zod.string().optional()
 })).optional()
 })
+
+/**
+ * @summary Organisation Weiterbildung
+ */
+export const GetCrmOrganisationenIdWeiterbildungParams = zod.object({
+  "id": zod.number()
+})
+
+export const GetCrmOrganisationenIdWeiterbildungResponseItem = zod.object({
+  "personId": zod.number().optional(),
+  "personName": zod.string().optional(),
+  "summe": zod.number().optional(),
+  "soll": zod.number().optional(),
+  "erfuellt": zod.boolean().optional(),
+  "ampel": zod.string().optional()
+})
+export const GetCrmOrganisationenIdWeiterbildungResponse = zod.array(GetCrmOrganisationenIdWeiterbildungResponseItem)
 
 /**
  * @summary Personen
@@ -573,6 +681,7 @@ export const PutCrmPersonenIdResponse = zod.object({
   "auskunftssperre": zod.boolean().optional(),
   "status": zod.string().optional(),
   "loeschStatus": zod.string().optional(),
+  "anonymisierenAb": zod.string().date().optional(),
   "emails": zod.array(zod.string()).optional(),
   "kontaktpunkte": zod.array(zod.object({
   "id": zod.number().optional(),
@@ -630,6 +739,7 @@ export const GetCrmPersonenIdResponse = zod.object({
   "auskunftssperre": zod.boolean().optional(),
   "status": zod.string().optional(),
   "loeschStatus": zod.string().optional(),
+  "anonymisierenAb": zod.string().date().optional(),
   "emails": zod.array(zod.string()).optional(),
   "kontaktpunkte": zod.array(zod.object({
   "id": zod.number().optional(),
@@ -688,6 +798,64 @@ export const GetCrmPersonenIdAktivitaetenResponseItem = zod.object({
 export const GetCrmPersonenIdAktivitaetenResponse = zod.array(GetCrmPersonenIdAktivitaetenResponseItem)
 
 /**
+ * @summary Person Anonymisieren
+ */
+export const PostCrmPersonenIdAnonymisierenParams = zod.object({
+  "id": zod.number()
+})
+
+export const PostCrmPersonenIdAnonymisierenResponse = zod.object({
+  "id": zod.number().optional(),
+  "vorname": zod.string().optional(),
+  "nachname": zod.string().optional(),
+  "anzeigeName": zod.string().optional(),
+  "geschlecht": zod.string().optional(),
+  "titel": zod.string().optional(),
+  "briefanrede": zod.string().optional(),
+  "geburtsdatum": zod.string().date().optional(),
+  "geburtsort": zod.string().optional(),
+  "geburtslandCode": zod.string().optional(),
+  "korrespondenzspracheCode": zod.string().optional(),
+  "werbesperre": zod.boolean().optional(),
+  "auskunftssperre": zod.boolean().optional(),
+  "status": zod.string().optional(),
+  "loeschStatus": zod.string().optional(),
+  "anonymisierenAb": zod.string().date().optional(),
+  "emails": zod.array(zod.string()).optional(),
+  "kontaktpunkte": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "typ": zod.string().optional(),
+  "label": zod.string().optional(),
+  "primaer": zod.boolean().optional(),
+  "status": zod.string().optional(),
+  "email": zod.string().optional(),
+  "nummerAnzeige": zod.string().optional(),
+  "telefonart": zod.string().optional(),
+  "strasse": zod.string().optional(),
+  "hausnummer": zod.string().optional(),
+  "plz": zod.string().optional(),
+  "ort": zod.string().optional(),
+  "region": zod.string().optional(),
+  "landCode": zod.string().optional()
+})).optional(),
+  "mitgliedschaften": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "organisationId": zod.number().optional(),
+  "organisation": zod.string().optional(),
+  "rolleCode": zod.string().optional(),
+  "rolle": zod.string().optional(),
+  "position": zod.string().optional(),
+  "abteilung": zod.string().optional(),
+  "hauptzugehoerigkeit": zod.boolean().optional(),
+  "hauptansprechpartner": zod.boolean().optional(),
+  "buchungsberechtigt": zod.boolean().optional(),
+  "rechnungsempfaenger": zod.boolean().optional(),
+  "gueltigVon": zod.string().date().optional(),
+  "gueltigBis": zod.string().date().optional()
+})).optional()
+})
+
+/**
  * @summary Person Einwilligungen
  */
 export const GetCrmPersonenIdEinwilligungenParams = zod.object({
@@ -701,6 +869,8 @@ export const GetCrmPersonenIdEinwilligungenResponseItem = zod.object({
   "status": zod.string().optional(),
   "rechtsgrundlage": zod.string().optional(),
   "quelleCode": zod.string().optional(),
+  "personId": zod.number().optional(),
+  "personName": zod.string().optional(),
   "organisationId": zod.number().optional(),
   "organisation": zod.string().optional(),
   "ausstehendSeit": zod.string().datetime({"offset":true}).optional(),
@@ -708,6 +878,68 @@ export const GetCrmPersonenIdEinwilligungenResponseItem = zod.object({
   "widerrufenAm": zod.string().datetime({"offset":true}).optional()
 })
 export const GetCrmPersonenIdEinwilligungenResponse = zod.array(GetCrmPersonenIdEinwilligungenResponseItem)
+
+/**
+ * @summary Person Sperren
+ */
+export const PostCrmPersonenIdSperrenParams = zod.object({
+  "id": zod.number()
+})
+
+export const PostCrmPersonenIdSperrenBody = zod.object({
+  "aufbewahrungJahre": zod.number().optional()
+})
+
+export const PostCrmPersonenIdSperrenResponse = zod.object({
+  "id": zod.number().optional(),
+  "vorname": zod.string().optional(),
+  "nachname": zod.string().optional(),
+  "anzeigeName": zod.string().optional(),
+  "geschlecht": zod.string().optional(),
+  "titel": zod.string().optional(),
+  "briefanrede": zod.string().optional(),
+  "geburtsdatum": zod.string().date().optional(),
+  "geburtsort": zod.string().optional(),
+  "geburtslandCode": zod.string().optional(),
+  "korrespondenzspracheCode": zod.string().optional(),
+  "werbesperre": zod.boolean().optional(),
+  "auskunftssperre": zod.boolean().optional(),
+  "status": zod.string().optional(),
+  "loeschStatus": zod.string().optional(),
+  "anonymisierenAb": zod.string().date().optional(),
+  "emails": zod.array(zod.string()).optional(),
+  "kontaktpunkte": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "typ": zod.string().optional(),
+  "label": zod.string().optional(),
+  "primaer": zod.boolean().optional(),
+  "status": zod.string().optional(),
+  "email": zod.string().optional(),
+  "nummerAnzeige": zod.string().optional(),
+  "telefonart": zod.string().optional(),
+  "strasse": zod.string().optional(),
+  "hausnummer": zod.string().optional(),
+  "plz": zod.string().optional(),
+  "ort": zod.string().optional(),
+  "region": zod.string().optional(),
+  "landCode": zod.string().optional()
+})).optional(),
+  "mitgliedschaften": zod.array(zod.object({
+  "id": zod.number().optional(),
+  "organisationId": zod.number().optional(),
+  "organisation": zod.string().optional(),
+  "rolleCode": zod.string().optional(),
+  "rolle": zod.string().optional(),
+  "position": zod.string().optional(),
+  "abteilung": zod.string().optional(),
+  "hauptzugehoerigkeit": zod.boolean().optional(),
+  "hauptansprechpartner": zod.boolean().optional(),
+  "buchungsberechtigt": zod.boolean().optional(),
+  "rechnungsempfaenger": zod.boolean().optional(),
+  "gueltigVon": zod.string().date().optional(),
+  "gueltigBis": zod.string().date().optional()
+})).optional()
+})
 
 /**
  * @summary Person Uebersicht

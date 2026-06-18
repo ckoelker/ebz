@@ -305,6 +305,89 @@ class CrmResourceTest {
     }
 
     @Test
+    @TestSecurity(user = "sb", roles = "crm-pflege")
+    void aktivitaet_bearbeiten_undLoeschen() {
+        long n = uniq();
+        int personId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"vorname":"Edda","nachname":"Editier %d","geschlecht":"WEIBLICH","werbesperre":false,
+                         "auskunftssperre":false}""".formatted(n))
+                .when().post("/crm/personen").then().statusCode(201).extract().jsonPath().getInt("id");
+
+        int aktId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"typCode":"NOTIZ","richtung":"INTERN","betreff":"Erstfassung %d","personId":%d}"""
+                        .formatted(n, personId))
+                .when().post("/crm/aktivitaeten").then().statusCode(201).extract().jsonPath().getInt("id");
+
+        // Bearbeiten
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"typCode":"NOTIZ","richtung":"INTERN","betreff":"Korrigiert %d","personId":%d,
+                         "inhaltHtml":"neuer Text"}""".formatted(n, personId))
+                .when().put("/crm/aktivitaeten/" + aktId).then().statusCode(200)
+                .body("betreff", equalTo("Korrigiert " + n));
+
+        // Löschen → danach nicht mehr in der Historie
+        given().when().delete("/crm/aktivitaeten/" + aktId).then().statusCode(204);
+        given().when().get("/crm/personen/" + personId + "/aktivitaeten").then().statusCode(200)
+                .body("size()", equalTo(0));
+    }
+
+    @Test
+    @TestSecurity(user = "sb", roles = { "crm-pflege", "crm-datenschutz" })
+    void rechtAufVergessen_sperren_dannAnonymisieren() {
+        long n = uniq();
+        int personId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"vorname":"Vera","nachname":"Vergessen %d","geschlecht":"WEIBLICH","werbesperre":false,
+                         "auskunftssperre":false}""".formatted(n))
+                .when().post("/crm/personen").then().statusCode(201).extract().jsonPath().getInt("id");
+
+        // Sperren (Art. 18) + Anonymisierung terminieren
+        given().contentType(ContentType.JSON).body("{\"aufbewahrungJahre\":1}")
+                .when().post("/crm/personen/" + personId + "/sperren").then().statusCode(200)
+                .body("loeschStatus", equalTo("GESPERRT"))
+                .body("werbesperre", equalTo(true))
+                .body("anonymisierenAb", org.hamcrest.Matchers.notNullValue());
+
+        // Anonymisieren (Art. 17): Kernfelder überschrieben, Lösch-Status ANONYMISIERT
+        given().contentType(ContentType.JSON)
+                .when().post("/crm/personen/" + personId + "/anonymisieren").then().statusCode(200)
+                .body("loeschStatus", equalTo("ANONYMISIERT"))
+                .body("vorname", equalTo("Anonymisiert"));
+    }
+
+    @Test
+    @TestSecurity(user = "sb", roles = "crm-pflege")
+    void cti_simulierterAnruf_matchtBekannteNummer() {
+        long n = uniq();
+        int personId = given().contentType(ContentType.JSON)
+                .body("""
+                        {"vorname":"Carlo","nachname":"CTI %d","geschlecht":"MAENNLICH","werbesperre":false,
+                         "auskunftssperre":false}""".formatted(n))
+                .when().post("/crm/personen").then().statusCode(201).extract().jsonPath().getInt("id");
+
+        String e164 = "+49231" + (n % 1_000_000L);
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"typ":"TELEFON","personId":%d,"telefonart":"FESTNETZ","nummerAnzeige":"0231 %d",
+                         "nummerE164":"%s"}""".formatted(personId, n % 1_000_000L, e164))
+                .when().post("/crm/kontaktpunkte").then().statusCode(201);
+
+        // Bekannte Nummer → aufgelöst
+        given().contentType(ContentType.JSON).body("{\"nummerE164\":\"%s\"}".formatted(e164))
+                .when().post("/crm/cti/simuliere-anruf").then().statusCode(200)
+                .body("bekannt", equalTo(true))
+                .body("personId", equalTo(personId));
+
+        // Unbekannte Nummer → offen
+        given().contentType(ContentType.JSON).body("{\"nummerE164\":\"+49000000000\"}")
+                .when().post("/crm/cti/simuliere-anruf").then().statusCode(200)
+                .body("bekannt", equalTo(false));
+    }
+
+    @Test
     void schreibenOhneRolle_istVerboten() {
         given().contentType(ContentType.JSON)
                 .body("{\"vorname\":\"X\",\"nachname\":\"Y\"}")

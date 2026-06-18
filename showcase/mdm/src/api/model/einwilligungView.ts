@@ -13,6 +13,8 @@ export interface EinwilligungView {
   status?: string;
   rechtsgrundlage?: string;
   quelleCode?: string;
+  personId?: number;
+  personName?: string;
   organisationId?: number;
   organisation?: string;
   ausstehendSeit?: LocalDateTime;
