@@ -95,8 +95,11 @@ Ursprünglich geplant: Rollen „Katalog-Lesen"/„Katalog-Pflege"; `KeycloakAdm
 ### P6 — CMS „ContentPage" + Burger-Navigation  ✅ GEBAUT+verifiziert 2026-06-18 (Branch feature/produktkatalog-p1)
 Umgesetzt: Vendure-Plugin `content-page/` (Entity slug/titel/inhaltHtml/metaTitle/metaDescription/published/imMenu/menuTitel/menuSortierung + Service + Admin-API `contentPages`/`upsertContentPage`/`deleteContentPage` [ReadCatalog/UpdateCatalog/DeleteCatalog] + Shop-API `contentPage(slug)`/`menuPages`); Seed `ensureContentPages` (ueber-uns/kontakt im Menü, agb nicht). Nuxt: `server/api/content`+`navigation`, `app/pages/seite/[slug].vue` (SSR + canonical), Burger-/Hauptmenü in `app.vue` (USlideover: Collections + Menü-Seiten) + Footer-Links. e2e 10/10. **Offen (Nicety):** dedizierte React-Dashboard-UI — Pflege läuft vorerst über Admin-API/Seed.
 Ursprünglich geplant: ContentPage-Plugin (Entity + Dashboard-UI + Shop-API) + Nuxt-Navigation: Collections + `imMenu`-Seiten als responsives Burger-/Hauptmenü.
-### P7 — E-Learning-Kopplung + Promotions
-E-Learning-Produkte → bestehender LMS-Einschreibungspfad (OpenOLAT). Frühbucher = custom `PromotionCondition` (Tage vor `terminDatum`). CRM→Vendure-Personen-Sync.
+### P7 — E-Learning-Kopplung + Promotions  (P7a ✅ 2026-06-18)
+**P7a Frühbucher-Promotion ✅ GEBAUT+verifiziert** (Branch feature/produktkatalog-p1, Commit 5a9a513): custom `PromotionCondition` `fruehbucher` (Termin = Varianten-CF `terminDatum` ≥ daysBefore Tage in Zukunft) + eingebaute Aktion `order_percentage_discount`; Seed `ensureFruehbucherPromotion` (10 %, 30 Tage, idempotent); Storefront zeigt `order.discounts`. e2e 11/11.
+**P7b CRM→Vendure-Personen-Sync — OFFEN (Design-Klärung):** CRM-`party`-Modell hat keinen Dozent/Ansprechpartner-Diskriminator (`Person`/`Mitarbeiter`) → Quelle/Mapping + ggf. Schema-Berührung mit Nutzer klären.
+**P7c E-Learning-Kopplung — OFFEN:** E-Learning-Kauf → bestehender OpenOLAT-Einschreibungspfad (Order-Completion-Event → Einschreibungs-Outbox wiederverwenden).
+Ursprünglich: E-Learning-Produkte → bestehender LMS-Einschreibungspfad (OpenOLAT). Frühbucher = custom `PromotionCondition` (Tage vor `terminDatum`). CRM→Vendure-Personen-Sync.
 ### P8 — (später) Vollimport ~400 + Inhouse-Anfrage
 Massenmigration aus Sitemap/Bestand; Inhouse „Angebot anfragen" → HubSpot/Controlling.
 
