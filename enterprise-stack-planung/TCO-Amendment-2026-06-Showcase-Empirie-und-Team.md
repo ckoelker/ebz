@@ -196,11 +196,11 @@ Programme (Doppelpflege), interne Abstimmung über E-Mail (Medienbrüche), Kunde
 
 | Größe | Annahme (Band) | zentral |
 |---|---|---|
-| betroffene Verwaltungs-/Sachbearbeitungs-FTE (von 120 MA, ohne ~50 Lehrkräfte) | 45–65 | 55 |
+| betroffene Verwaltungs-/Sachbearbeitungs-FTE (Kundenangabe: nur so viele arbeiten überhaupt mit den aktuellen Software-Systemen) | 25–35 | 30 |
 | durch Konsolidierung + Automation + Self-Service **freisetzbarer Zeitanteil** | 15–25 % | 20 % |
 | vollkostete Verwaltungs-FTE p.a. | 55–65 k € | 60 k € |
-| **freigesetzte interne Kapazität p.a.** | **≈ 0,4–0,9 Mio. €** | **≈ 0,6 Mio. €** |
-| **über 5 Jahre** | **≈ 2,0–4,5 Mio. €** | **≈ 3,0 Mio. €** |
+| **freigesetzte interne Kapazität p.a.** | **≈ 0,2–0,5 Mio. €** | **≈ 0,35 Mio. €** |
+| **über 5 Jahre** | **≈ 1,0–2,5 Mio. €** | **≈ 1,8 Mio. €** |
 
 **Woher die Einsparung kommt (Hebel ↔ Architektur):**
 
@@ -218,18 +218,39 @@ Programme (Doppelpflege), interne Abstimmung über E-Mail (Medienbrüche), Kunde
 > ein **einmaliger Change-/Adoptions-Aufwand** (Prozessdefinition, Schulung — da heute kaum Prozesse
 > existieren: nennenswert), den der Partner-Build/die Begleitung mit abdeckt.
 
+### J-2. Wegfallende direkte IT-Kosten der heutigen Landschaft (Ist)
+
+Zusätzlich zur Kapazitätsfreisetzung (§J, „weiche" Einsparung) entfallen mit der Konsolidierung
+**harte, cash-wirksame Ist-Kosten** der heute betriebenen/abzulösenden Systeme:
+
+| Heutige direkte IT-Kosten (Ist) | p.a. | nach Konsolidierung |
+|---|---|---|
+| Anpassungen/Customizing der Altsysteme | ~50 k € | **entfällt** |
+| Software-Lizenzen der abzulösenden Systeme | ~50 k € | **entfällt** (mittelfristig) |
+| Administration/Betrieb (DevOps) der Systeme | (Ist-Basis) | **≈ −50 % (Halbierung geplant)** |
+| **direkt wegfallend (Lizenz + Anpassung)** | **≈ 100 k €/Jahr** | **≈ 0,5 Mio. € / 5 J** |
+
+> Diese **~0,10 Mio. €/Jahr** sind — anders als die Kapazitätsfreisetzung — **sofort cash-wirksam**
+> (keine Redeployment-Entscheidung nötig). Der **halbierte DevOps-/Administrationsaufwand** senkt
+> zusätzlich die laufenden Betriebskosten der neuen Lösung (§I) und ist im Netto unten konservativ
+> noch nicht voll angesetzt.
+
 ## K. Business Case — Kosten vs. Nutzen (5 Jahre)
 
 | | 5-Jahres-Größenordnung | annualisiert |
 |---|---|---|
 | **Kern-Investition** (§I, inkl. Betrieb) | 2,2–3,1 Mio. € | 0,45–0,65 Mio. €/Jahr |
-| **Freigesetzte interne Kapazität** (§J) | 2,0–4,5 Mio. € | 0,4–0,9 Mio. €/Jahr |
-| **Netto (Nutzen − Investition)** | von **−1 Mio. €** (konservativ) bis **+2,3 Mio. €** (optimistisch) | |
+| **Freigesetzte interne Kapazität** (§J) | 1,0–2,5 Mio. € | 0,2–0,5 Mio. €/Jahr |
+| **Wegfallende direkte IT-Kosten** (§J-2, Lizenz + Anpassung) | ~0,5 Mio. € | ~0,10 Mio. €/Jahr |
+| **Nutzen gesamt** | 1,5–3,0 Mio. € | 0,3–0,6 Mio. €/Jahr |
+| **Netto (Nutzen − Investition)** | von **−1,6 Mio. €** (konservativ) bis **+0,8 Mio. €** (optimistisch) | |
 
-**Lesart:** Schon im **konservativen** Fall deckt die freigesetzte interne Kapazität die laufenden
-Betriebskosten und einen großen Teil der Investition; im **zentralen** Fall trägt sich die
-Kern-Investition über die fünf Jahre **etwa selbst** (Break-even um **Jahr 3–4**); im optimistischen
-Fall klar positiv. **Und das vor** den nicht monetarisierten Effekten:
+**Lesart:** Mit der kleineren Anwenderbasis (**30 statt 55 FTE**) trägt die freigesetzte Kapazität
+allein die Investition nicht; **zusammen mit den ~0,10 Mio. €/Jahr direkt wegfallenden IT-Kosten**
+(Lizenzen + Anpassungen) und dem halbierten DevOps-Aufwand rückt der Break-even aber wieder in
+Reichweite: im **zentralen** Fall nahezu kostendeckend über fünf Jahre, im **optimistischen** klar
+positiv. Die rein monetäre Rechnung bleibt knapp — den Ausschlag geben die nicht monetarisierten
+Effekte:
 
 - **Compliance:** E-Rechnungs-Pflicht ist ohnehin verpflichtend (kein „Nice-to-have") — der Kern löst
   sie als Nebenprodukt (S11, im Showcase technisch nachgewiesen).
@@ -239,20 +260,23 @@ Fall klar positiv. **Und das vor** den nicht monetarisierten Effekten:
 
 ### Sensitivität — freisetzbarer Zeitanteil (der entscheidende Hebel)
 
-Basis: **55 betroffene Verwaltungs-FTE × 60 k € vollkostet**. Kern-Investition zentral ≈ **2,7 Mio. €**
-über 5 J (Upfront Build+Migration ~1,2 Mio. + Betrieb ~0,30 Mio. €/Jahr).
+Basis: **30 betroffene Verwaltungs-FTE × 60 k € vollkostet** (= 1,8 Mio. €/Jahr im Scope).
+Kern-Investition zentral ≈ **2,7 Mio. €** über 5 J (Upfront Build+Migration ~1,2 Mio. + Betrieb ~0,30 Mio. €/Jahr).
 
 | Freisetzbarer Anteil | Einsparung p.a. | Einsparung 5 J | **Netto 5 J** (− Invest. ~2,7 Mio.) | Payback |
 |---|---|---|---|---|
-| **10 %** (sehr konservativ) | ~0,33 Mio. € | ~1,65 Mio. € | **~ −1,0 Mio. €** | > 5 J (deckt nur den Betrieb) |
-| **20 %** (zentral) | ~0,66 Mio. € | ~3,3 Mio. € | **~ +0,6 Mio. €** | **~ Jahr 3–4** |
-| **30 %** (optimistisch) | ~0,99 Mio. € | ~4,95 Mio. € | **~ +2,3 Mio. €** | ~ Jahr 2 |
+| **10 %** (sehr konservativ) | ~0,18 Mio. € | ~0,9 Mio. € | **~ −1,8 Mio. €** | > 5 J (deckt nicht einmal den Betrieb) |
+| **20 %** (zentral) | ~0,36 Mio. € | ~1,8 Mio. € | **~ −0,9 Mio. €** | > 5 J (deckt Betrieb + Teil der Investition) |
+| **30 %** (optimistisch) | ~0,54 Mio. € | ~2,7 Mio. € | **~ ±0 Mio. €** | **~ Jahr 5 (Break-even)** |
 
-> Die Bandbreite entscheidet über das **Tempo** des Payback, kaum über die **Richtung**: Selbst im
-> 10 %-Fall trägt die freigesetzte Kapazität die laufenden Betriebskosten; ab ~20 % rechnet sich auch
-> die Investition innerhalb der fünf Jahre — **vor** den nicht monetarisierten Effekten (Compliance,
-> Skalierung ohne Kopfzahl-Wachstum, Tempo/Qualität). Diese drei Zahlen sind der zentrale Punkt für
-> den Verwaltungs-Workshop: nur der *freisetzbare Anteil* ist seriös vor Ort zu kalibrieren.
+> Die Tabelle zeigt **nur die weiche Kapazitätsfreisetzung**. Hinzu kommen die **~0,10 Mio. €/Jahr
+> direkt wegfallenden IT-Kosten** (§J-2: Lizenzen + Anpassungen) → **+0,5 Mio. € über 5 J in jeder
+> Zeile**, womit sich Netto/Payback verbessern: 10 % → ~ −1,3 Mio. €; 20 % → ~ −0,4 Mio. €
+> (Payback ~Jahr 4–5); 30 % → ~ +0,5 Mio. € (Payback ~Jahr 4). Der **halbierte DevOps-Aufwand** wirkt
+> obendrauf. Die **rein monetäre** Rechtfertigung bleibt knapp — tragend werden die nicht
+> monetarisierten Effekte (Pflicht-Compliance E-Rechnung, Skalierung ohne Kopfzahl-Wachstum,
+> Tempo/Qualität). Sowohl der *freisetzbare Anteil* als auch die *betroffene FTE-Zahl* sind im
+> Verwaltungs-Workshop seriös vor Ort zu kalibrieren.
 
 ---
 
@@ -260,8 +284,10 @@ Basis: **55 betroffene Verwaltungs-FTE × 60 k € vollkostet**. Kern-Investitio
 - Schätz-/Größenordnungen, keine Angebote; **relative Reihenfolge** belastbarer als absolute Zahlen
   ([TCO §1](TCO-Kostenaufstellung.md)).
 - **Einsparungs-Modell (§J/§K) ist eine Annahmen-Rechnung** — FTE-Zahl, freisetzbarer Anteil und
-  Vollkostensatz sind im Workshop mit der Verwaltungsleitung zu verifizieren; Einsparung ist
-  Kapazitätsfreisetzung, nicht zwingend Cash/Stellenabbau. Change-/Adoptionsaufwand gegenrechnen.
+  Vollkostensatz (§J) sowie die Ist-Kostenpositionen (Lizenzen/Anpassungen/DevOps-Aufwand, §J-2) sind
+  im Workshop mit der Verwaltungs-/IT-Leitung zu verifizieren; die Kapazitäts-Einsparung ist
+  Kapazitätsfreisetzung, nicht zwingend Cash/Stellenabbau (die §J-2-Positionen dagegen sofort
+  cash-wirksam). Change-/Adoptionsaufwand gegenrechnen.
 - Die Run/Maintain- und Governance-Risiken bleiben **bewusst konservativ** — der Showcase beweist sie nicht.
 - Dies ist **Entscheidungs-Input**, kein Beschluss; die Setzung gehört in den GF-Workshop
   ([Grobkonzept §11](Grobkonzept-IT-Konsolidierung.md)).
