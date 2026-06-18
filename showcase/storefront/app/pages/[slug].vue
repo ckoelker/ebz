@@ -130,10 +130,23 @@ const bloecke = computed(() => [
         </template>
 
         <div v-if="cf.ansprechpartner" class="mt-4 border-t border-(--ui-border) pt-3 text-sm">
-          <p class="font-medium text-(--ui-text-highlighted)">Ihre Ansprechpartnerin</p>
-          <p>{{ cf.ansprechpartner.name }}</p>
-          <p class="text-(--ui-text-muted)">{{ cf.ansprechpartner.telefon }}</p>
-          <p class="text-(--ui-text-muted)">{{ cf.ansprechpartner.email }}</p>
+          <p class="mb-2 font-medium text-(--ui-text-highlighted)">Ihre Ansprechpartnerin</p>
+          <div class="flex items-center gap-3">
+            <img
+              v-if="cf.ansprechpartner.foto?.preview"
+              :src="`${cf.ansprechpartner.foto.preview}?preset=thumb`"
+              :alt="cf.ansprechpartner.name"
+              class="size-12 shrink-0 rounded-full object-cover"
+            >
+            <span v-else class="flex size-12 shrink-0 items-center justify-center rounded-full bg-(--ui-bg-elevated) text-(--ui-text-dimmed)">
+              <UIcon name="i-lucide-user" class="size-6" />
+            </span>
+            <span>
+              <span class="block">{{ cf.ansprechpartner.name }}</span>
+              <span class="block text-(--ui-text-muted)">{{ cf.ansprechpartner.telefon }}</span>
+              <span class="block text-(--ui-text-muted)">{{ cf.ansprechpartner.email }}</span>
+            </span>
+          </div>
         </div>
       </UCard>
     </aside>

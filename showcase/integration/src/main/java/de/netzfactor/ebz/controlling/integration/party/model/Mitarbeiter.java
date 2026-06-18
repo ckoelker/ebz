@@ -38,6 +38,14 @@ public class Mitarbeiter extends PanacheEntity {
     @Column(name = "aktiv", nullable = false)
     public boolean aktiv = true;
 
+    /** Profilfoto (Binärdaten) — wird periodisch als Vendure-Asset für den Shop-Ansprechpartner gesynct. */
+    @Column(name = "foto")
+    public byte[] foto;
+
+    /** MIME-Typ des Fotos (z. B. image/png, image/jpeg). */
+    @Column(name = "foto_mime", length = 64)
+    public String fotoMime;
+
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "mitarbeiter_gruppe", schema = "mdm",
             joinColumns = @JoinColumn(name = "mitarbeiter_id"),

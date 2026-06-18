@@ -31,6 +31,9 @@ export class Ansprechpartner extends VendureEntity {
 
     /** ID eines hochgeladenen Vendure-Assets (Porträtfoto), optional. */
     @Column({ type: 'varchar', nullable: true }) fotoAssetId: string | null;
+
+    /** Hash des zuletzt gesyncten Fotos — idempotenter Foto-Sync (kein Re-Upload bei Gleichheit). */
+    @Column({ type: 'varchar', nullable: true }) fotoHash: string | null;
 }
 
 @Entity()

@@ -1,5 +1,5 @@
-import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
-import { Allow, Ctx, ID, Permission, Product, RequestContext, Transaction } from '@vendure/core';
+import { Args, Mutation, Parent, Query, ResolveField, Resolver } from '@nestjs/graphql';
+import { Allow, Asset, AssetService, Ctx, ID, Permission, Product, RequestContext, Transaction } from '@vendure/core';
 import { Ansprechpartner, Bewertung, Dozent } from './produktkatalog.entities';
 import { BewertungUebersicht, ProduktkatalogService } from './produktkatalog.service';
 
@@ -79,5 +79,19 @@ export class ProduktkatalogShopResolver {
     @Allow(Permission.Public)
     bewertungen(@Ctx() ctx: RequestContext, @Args() args: { productId: ID }): Promise<BewertungUebersicht> {
         return this.service.bewertungUebersicht(ctx, args.productId);
+    }
+}
+
+/**
+ * Feld-Resolver: löst {@code Ansprechpartner.foto} aus {@code fotoAssetId} zu einem Vendure-Asset auf
+ * (Preview-URL für die Storefront). Für Admin- UND Shop-API registriert.
+ */
+@Resolver('Ansprechpartner')
+export class AnsprechpartnerEntityResolver {
+    constructor(private assetService: AssetService) {}
+
+    @ResolveField()
+    foto(@Ctx() ctx: RequestContext, @Parent() ap: Ansprechpartner): Promise<Asset | undefined> | null {
+        return ap.fotoAssetId ? this.assetService.findOne(ctx, ap.fotoAssetId) : null;
     }
 }

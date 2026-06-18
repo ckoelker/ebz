@@ -13,6 +13,9 @@ const sharedTypes = gql`
         email: String
         telefon: String
         fotoAssetId: String
+        fotoHash: String
+        "Aufgelöstes Porträt-Asset (Preview-URL für die Storefront)."
+        foto: Asset
     }
 
     type Dozent {
@@ -57,6 +60,7 @@ export const adminApiExtensions = gql`
         email: String
         telefon: String
         fotoAssetId: String
+        fotoHash: String
     }
 
     input UpsertDozentInput {

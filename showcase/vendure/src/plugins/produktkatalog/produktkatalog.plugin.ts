@@ -1,7 +1,11 @@
 import { PluginCommonModule, VendurePlugin } from '@vendure/core';
 import { adminApiExtensions, shopApiExtensions } from './api-extensions';
 import { Ansprechpartner, Bewertung, Dozent } from './produktkatalog.entities';
-import { ProduktkatalogAdminResolver, ProduktkatalogShopResolver } from './produktkatalog.resolver';
+import {
+    AnsprechpartnerEntityResolver,
+    ProduktkatalogAdminResolver,
+    ProduktkatalogShopResolver,
+} from './produktkatalog.resolver';
 import { ProduktkatalogService } from './produktkatalog.service';
 
 /**
@@ -20,11 +24,11 @@ import { ProduktkatalogService } from './produktkatalog.service';
     providers: [ProduktkatalogService],
     adminApiExtensions: {
         schema: adminApiExtensions,
-        resolvers: [ProduktkatalogAdminResolver],
+        resolvers: [ProduktkatalogAdminResolver, AnsprechpartnerEntityResolver],
     },
     shopApiExtensions: {
         schema: shopApiExtensions,
-        resolvers: [ProduktkatalogShopResolver],
+        resolvers: [ProduktkatalogShopResolver, AnsprechpartnerEntityResolver],
     },
     compatibility: '^3.0.0',
 })

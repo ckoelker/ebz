@@ -21,7 +21,7 @@ export default defineEventHandler(async (event) => {
           inhalteHtml lernzieleHtml nutzenHtml methodikHtml voraussetzungenHtml
           foerderhinweisHtml ablaufHtml leistungenHtml faqHtml
           bestellbar anmeldungUrl
-          ansprechpartner { name email telefon }
+          ansprechpartner { name email telefon foto { preview } }
           dozenten { name vita }
         }
         variants {

@@ -15,6 +15,7 @@ interface UpsertAnsprechpartnerInput {
     email?: string;
     telefon?: string;
     fotoAssetId?: string;
+    fotoHash?: string;
 }
 
 interface UpsertDozentInput {
@@ -120,7 +121,11 @@ export class ProduktkatalogService {
         entity.name = input.name;
         entity.email = input.email ?? null;
         entity.telefon = input.telefon ?? null;
-        entity.fotoAssetId = input.fotoAssetId ?? null;
+        // Foto nur überschreiben, wenn explizit übergeben (Stammdaten-Sync ohne Foto bewahrt das Bild).
+        if (input.fotoAssetId !== undefined) {
+            entity.fotoAssetId = input.fotoAssetId || null;
+            entity.fotoHash = input.fotoHash || null;
+        }
         return repo.save(entity);
     }
 
