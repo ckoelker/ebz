@@ -3,7 +3,8 @@
 // Zahlung: Kauf auf Rechnung (B2B) ODER Karte/SEPA (Stripe-Stand-in). Beide settlen im Showcase
 // automatisch (dummyPaymentHandler) → Bestätigung mit Bestellnummer.
 const { order, refresh, clearLocal, isEmpty } = useCart()
-await refresh()
+const { customer, istAngemeldet, refresh: refreshAuth } = useAuth()
+await Promise.all([refresh(), refreshAuth()])
 
 useHead({ title: 'Kasse' })
 
@@ -17,6 +18,15 @@ const form = reactive({
   city: '',
   countryCode: 'DE',
   paymentMethod: 'rechnung',
+})
+
+// Eingeloggten Kunden vorausfüllen (E-Learning-Einschreibung greift dann automatisch).
+watchEffect(() => {
+  if (customer.value) {
+    form.email = customer.value.emailAddress
+    form.firstName = customer.value.firstName
+    form.lastName = customer.value.lastName
+  }
 })
 
 const zahlarten = [

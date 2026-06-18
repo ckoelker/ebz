@@ -19,14 +19,23 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Pflichtfelder fehlen' })
   }
 
-  // 0) Vorbedingung: nicht leerer, noch offener Warenkorb.
-  const active = await shopGql<{ activeOrder: (Order & { customer: { id: string } | null }) | null }>(
+  // 0) Vorbedingung: nicht leerer, noch offener Warenkorb. Produkt-IDs für die spätere
+  //    E-Learning-Einschreibung gleich mitlesen (Integration filtert Nicht-WBT selbst).
+  const active = await shopGql<{
+    activeOrder:
+      | (Order & {
+          customer: { id: string; emailAddress: string } | null
+          lines: Array<{ productVariant: { product: { id: string } } }>
+        })
+      | null
+  }>(
     event,
-    `query { activeOrder { id state totalQuantity customer { id } } }`,
+    `query { activeOrder { id state totalQuantity customer { id emailAddress } lines { productVariant { product { id } } } } }`,
   )
   if (!active.activeOrder || active.activeOrder.totalQuantity === 0) {
     throw createError({ statusCode: 409, statusMessage: 'Warenkorb ist leer' })
   }
+  const produktIds = [...new Set(active.activeOrder.lines.map((l) => l.productVariant.product.id))]
 
   // 1) Gast: provisorische Person an die Order binden (nur wenn noch kein Kunde gesetzt).
   if (!active.activeOrder.customer) {
@@ -98,6 +107,23 @@ export default defineEventHandler(async (event) => {
   )
   if (pay.addPaymentToOrder.errorCode) {
     throw createError({ statusCode: 400, statusMessage: pay.addPaymentToOrder.message || pay.addPaymentToOrder.errorCode })
+  }
+
+  // 6) E-Learning-Einschreibung (P7c): nur für eingeloggte Kunden (kc_sub vorhanden). Die Integration
+  //    löst WBT-Produkte auf und ignoriert den Rest; best-effort (darf die Bestellung nicht scheitern lassen).
+  const kcSub = getCookie(event, 'kc_sub')
+  if (kcSub && pay.addPaymentToOrder.code) {
+    try {
+      await einschreibenWbt(event, {
+        vendureOrderId: pay.addPaymentToOrder.code,
+        keycloakSub: kcSub,
+        email: active.activeOrder.customer?.emailAddress || b.email,
+        anzeigeName: `${b.firstName} ${b.lastName}`.trim(),
+        vendureProductIds: produktIds,
+      })
+    } catch (e) {
+      console.error('[checkout] E-Learning-Einschreibung fehlgeschlagen (best-effort):', e)
+    }
   }
 
   return { code: pay.addPaymentToOrder.code, state: pay.addPaymentToOrder.state }

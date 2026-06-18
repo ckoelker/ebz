@@ -133,6 +133,28 @@ test('Kunden-SSO: Keycloak-Login bindet Vendure-Customer an die Session', async 
   expect(await after.text()).not.toContain('Carla');
 });
 
+test('P7c: Eingeloggter WBT-Checkout läuft durch (Einschreibungs-Trigger best-effort)', async ({ request }) => {
+  const kc = process.env.KEYCLOAK_URL || 'http://localhost:8088';
+  const token = (await (await request.post(`${kc}/realms/ebz-customers/protocol/openid-connect/token`, {
+    form: { grant_type: 'password', client_id: 'shop-frontend', username: 'customer', password: 'customer' },
+  })).json()).access_token as string;
+  await request.post(`${STOREFRONT}/api/auth/keycloak`, { data: { token } });
+
+  const prod = await (await request.get(`${STOREFRONT}/api/product?slug=e-learning-grundlagen-mietrecht`)).json();
+  await request.post(`${STOREFRONT}/api/cart`, { data: { variantId: prod.variants[0].id } });
+
+  const res = await request.post(`${STOREFRONT}/api/checkout`, {
+    data: {
+      email: 'customer@ebz.de', firstName: 'Carla', lastName: 'Kundin',
+      address: { streetLine1: 'Teststr. 1', city: 'Bochum', postalCode: '44801', countryCode: 'DE' },
+      paymentMethod: 'rechnung',
+    },
+  });
+  // Der E-Learning-Trigger läuft serverseitig best-effort und darf die Bestellung nie scheitern lassen.
+  expect(res.status()).toBe(200);
+  expect((await res.json()).state).toBe('PaymentSettled');
+});
+
 test('Katalog P7: Frühbucherrabatt greift automatisch (Termin in der Zukunft)', async ({ request }) => {
   const prod = await (await request.get(`${STOREFRONT}/api/product?slug=online-seminar-betriebskostenabrechnung`)).json();
   const cart = await (await request.post(`${STOREFRONT}/api/cart`, { data: { variantId: prod.variants[0].id } })).json();

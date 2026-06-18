@@ -245,6 +245,12 @@ services:
         condition: service_healthy
     environment:
       NUXT_SHOP_API_URL: http://server:3000/shop-api
+      # E-Learning-Einschreibung (P7c): Integration + Keycloak-Service-Account. Token-Issuer
+      # keycloak.localhost:8080 = von der Integration erwartet (Container löst den Compose-Alias auf).
+      NUXT_INTEGRATION_URL: http://integration:8090
+      NUXT_KC_STAFF_TOKEN_URL: http://keycloak.localhost:8080/realms/ebz-staff/protocol/openid-connect/token
+      NUXT_KC_SERVICE_CLIENT_ID: storefront-service
+      NUXT_KC_SERVICE_CLIENT_SECRET: ${STOREFRONT_SERVICE_SECRET:-storefront-service-secret}
     ports:
       - "${STOREFRONT_PORT:-3001}:3000"
 

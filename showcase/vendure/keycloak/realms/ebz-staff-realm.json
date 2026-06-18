@@ -6,20 +6,43 @@
   "loginWithEmailAllowed": true,
   "roles": {
     "realm": [
-      { "name": "staff", "description": "EBZ Mitarbeiter:in" },
-      { "name": "controlling", "description": "Darf Controlling/Unternehmens-GuV sehen (L23: Gehälter in Gemeinkosten)" },
-      { "name": "katalog-pflege", "description": "Darf Bildungsangebote (MDM-Katalog) anlegen/ändern/archivieren (P1.2 RBAC, §11.5)" },
-      { "name": "rechnung-pflege", "description": "Darf Debitoren/Anmeldungen pflegen und Rechnungen erzeugen/ausstellen/stornieren (R1 RBAC)" },
-      { "name": "crm-lesen", "description": "Darf den CRM-Kundenstamm (Personen/Organisationen) lesen" },
-      { "name": "crm-pflege", "description": "Darf CRM-Stammdaten/Mitgliedschaften/Kontaktpunkte anlegen/ändern" },
-      { "name": "crm-datenschutz", "description": "Darf Betroffenenrechte ausüben (Recht auf Vergessen, Anonymisierung)" }
+      {
+        "name": "staff",
+        "description": "EBZ Mitarbeiter:in"
+      },
+      {
+        "name": "controlling",
+        "description": "Darf Controlling/Unternehmens-GuV sehen (L23: Gehälter in Gemeinkosten)"
+      },
+      {
+        "name": "katalog-pflege",
+        "description": "Darf Bildungsangebote (MDM-Katalog) anlegen/ändern/archivieren (P1.2 RBAC, §11.5)"
+      },
+      {
+        "name": "rechnung-pflege",
+        "description": "Darf Debitoren/Anmeldungen pflegen und Rechnungen erzeugen/ausstellen/stornieren (R1 RBAC)"
+      },
+      {
+        "name": "crm-lesen",
+        "description": "Darf den CRM-Kundenstamm (Personen/Organisationen) lesen"
+      },
+      {
+        "name": "crm-pflege",
+        "description": "Darf CRM-Stammdaten/Mitgliedschaften/Kontaktpunkte anlegen/ändern"
+      },
+      {
+        "name": "crm-datenschutz",
+        "description": "Darf Betroffenenrechte ausüben (Recht auf Vergessen, Anonymisierung)"
+      }
     ]
   },
   "groups": [
     {
       "name": "controlling",
       "path": "/controlling",
-      "realmRoles": ["controlling"]
+      "realmRoles": [
+        "controlling"
+      ]
     }
   ],
   "clients": [
@@ -31,8 +54,13 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "rootUrl": "http://localhost:5174",
-      "redirectUris": ["http://localhost:5174/*"],
-      "webOrigins": ["http://localhost:5174", "+"],
+      "redirectUris": [
+        "http://localhost:5174/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5174",
+        "+"
+      ],
       "protocol": "openid-connect",
       "attributes": {
         "pkce.code.challenge.method": "S256",
@@ -47,8 +75,15 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "rootUrl": "http://localhost:3000",
-      "redirectUris": ["http://localhost:3000/dashboard/*", "http://localhost:5173/dashboard/*"],
-      "webOrigins": ["http://localhost:3000", "http://localhost:5173", "+"],
+      "redirectUris": [
+        "http://localhost:3000/dashboard/*",
+        "http://localhost:5173/dashboard/*"
+      ],
+      "webOrigins": [
+        "http://localhost:3000",
+        "http://localhost:5173",
+        "+"
+      ],
       "protocol": "openid-connect",
       "attributes": {
         "pkce.code.challenge.method": "S256",
@@ -62,8 +97,13 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "rootUrl": "http://localhost:5173",
-      "redirectUris": ["http://localhost:5173/*"],
-      "webOrigins": ["http://localhost:5173", "+"],
+      "redirectUris": [
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5173",
+        "+"
+      ],
       "protocol": "openid-connect",
       "attributes": {
         "pkce.code.challenge.method": "S256",
@@ -78,8 +118,13 @@
       "secret": "lightdash-dev-secret",
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
-      "redirectUris": ["http://localhost:8084/*"],
-      "webOrigins": ["http://localhost:8084", "+"],
+      "redirectUris": [
+        "http://localhost:8084/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8084",
+        "+"
+      ],
       "protocol": "openid-connect",
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:8084/*"
@@ -99,6 +144,16 @@
           }
         }
       ]
+    },
+    {
+      "clientId": "storefront-service",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "secret": "storefront-service-secret",
+      "protocol": "openid-connect"
     }
   ],
   "users": [
@@ -109,9 +164,24 @@
       "enabled": true,
       "firstName": "Stefan",
       "lastName": "Mitarbeiter",
-      "credentials": [{ "type": "password", "value": "staff", "temporary": false }],
-      "realmRoles": ["staff", "katalog-pflege", "rechnung-pflege", "crm-lesen", "crm-pflege", "crm-datenschutz"],
-      "groups": ["/controlling"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "staff",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "staff",
+        "katalog-pflege",
+        "rechnung-pflege",
+        "crm-lesen",
+        "crm-pflege",
+        "crm-datenschutz"
+      ],
+      "groups": [
+        "/controlling"
+      ]
     },
     {
       "username": "staff2",
@@ -120,8 +190,27 @@
       "enabled": true,
       "firstName": "Sabine",
       "lastName": "Sachbearbeitung",
-      "credentials": [{ "type": "password", "value": "staff2", "temporary": false }],
-      "realmRoles": ["staff", "rechnung-pflege", "crm-lesen", "crm-pflege"]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "staff2",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "staff",
+        "rechnung-pflege",
+        "crm-lesen",
+        "crm-pflege"
+      ]
+    },
+    {
+      "username": "service-account-storefront-service",
+      "enabled": true,
+      "serviceAccountClientId": "storefront-service",
+      "realmRoles": [
+        "katalog-pflege"
+      ]
     }
   ]
 }
