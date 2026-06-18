@@ -7,6 +7,11 @@ export default defineNuxtConfig({
   ssr: true,
   modules: ['@nuxt/ui'],
   css: ['~/assets/css/main.css'],
+  // Light als Default-Theme (statt OS-`system`); Toggle bleibt möglich.
+  colorMode: {
+    preference: 'light',
+    fallback: 'light',
+  },
   runtimeConfig: {
     // Serverseitig: Container-URL (http://server:3000), Dev-Default localhost.
     shopApiUrl: process.env.SHOP_API_URL || 'http://localhost:3000/shop-api',
