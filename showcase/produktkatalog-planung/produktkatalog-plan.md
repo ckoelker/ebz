@@ -92,8 +92,9 @@ Detail rendert alle Blöcke bedingt je Veranstaltungsart; Durchführungs-Variant
 ### P5 — RBAC (global)  ✅ GEBAUT+verifiziert 2026-06-18 (Branch feature/produktkatalog-p1)
 Umgesetzt: globale Vendure-Rollen **`katalog-lesen`** (nur Read*) + **`katalog-pflege`** (ReadCatalog + Create/Update/Delete + Read Order/Customer/Settings), im Seed `ensureRole` (kein Channel-Scoping). `oidc-verifier` liest `realm_access.roles` (+ `groups`) → `VerifiedIdentity.roles`; `KeycloakAdminAuthStrategy` mappt Keycloak-Realm-Rolle `katalog-pflege`→`katalog-pflege`, sonst `katalog-lesen`, und **synchronisiert die Rolle bei jedem Login** (fremde Rollen am Nutzer bleiben unberührt). Live verifiziert über `authenticate`-Mutation: `staff`→ReadCatalog/CreateCatalog/UpdateCatalog/DeleteCatalog, `staff2`→nur ReadCatalog.
 Ursprünglich geplant: Rollen „Katalog-Lesen"/„Katalog-Pflege"; `KeycloakAdminAuthStrategy` mappt Keycloak-Gruppe→Rolle. (Keine Channels.)
-### P6 — CMS „ContentPage" + Burger-Navigation
-ContentPage-Plugin (Entity + Dashboard-UI + Shop-API) + Nuxt-Navigation: Collections + `imMenu`-Seiten als responsives Burger-/Hauptmenü.
+### P6 — CMS „ContentPage" + Burger-Navigation  ✅ GEBAUT+verifiziert 2026-06-18 (Branch feature/produktkatalog-p1)
+Umgesetzt: Vendure-Plugin `content-page/` (Entity slug/titel/inhaltHtml/metaTitle/metaDescription/published/imMenu/menuTitel/menuSortierung + Service + Admin-API `contentPages`/`upsertContentPage`/`deleteContentPage` [ReadCatalog/UpdateCatalog/DeleteCatalog] + Shop-API `contentPage(slug)`/`menuPages`); Seed `ensureContentPages` (ueber-uns/kontakt im Menü, agb nicht). Nuxt: `server/api/content`+`navigation`, `app/pages/seite/[slug].vue` (SSR + canonical), Burger-/Hauptmenü in `app.vue` (USlideover: Collections + Menü-Seiten) + Footer-Links. e2e 10/10. **Offen (Nicety):** dedizierte React-Dashboard-UI — Pflege läuft vorerst über Admin-API/Seed.
+Ursprünglich geplant: ContentPage-Plugin (Entity + Dashboard-UI + Shop-API) + Nuxt-Navigation: Collections + `imMenu`-Seiten als responsives Burger-/Hauptmenü.
 ### P7 — E-Learning-Kopplung + Promotions
 E-Learning-Produkte → bestehender LMS-Einschreibungspfad (OpenOLAT). Frühbucher = custom `PromotionCondition` (Tage vor `terminDatum`). CRM→Vendure-Personen-Sync.
 ### P8 — (später) Vollimport ~400 + Inhouse-Anfrage

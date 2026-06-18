@@ -98,6 +98,7 @@ public class ShopInitService {
             Map<String, String> personen = ensurePersonen(assets.imageId());
             ensureProdukte(tax, facetValues, personen, assets);
             ensureDemoF1F6(tax);
+            ensureContentPages();
             reindex();
             return new Ergebnis(angelegt, aktualisiert, uebersprungen, log);
         }
@@ -739,6 +740,38 @@ public class ShopInitService {
         }
 
         // ── Reindex ──
+
+        private void ensureContentPages() {
+            // Redaktionelle Seiten (CMS, P6) — idempotent über slug. imMenu-Seiten erscheinen im
+            // Burger-/Hauptmenü der Storefront (nach menuSortierung).
+            record CP(String slug, String titel, String html, boolean imMenu, int sort) {
+            }
+            List<CP> pages = List.of(
+                    new CP("ueber-uns", "Über die EBZ Akademie",
+                            "<p>Die EBZ Akademie ist der Bildungsdienstleister der Immobilienwirtschaft — "
+                                    + "Seminare, Lehrgänge, Tagungen und Studiengänge aus einer Hand.</p>", true, 10),
+                    new CP("kontakt", "Kontakt",
+                            "<p>EBZ Akademie · Springorumallee 20 · 44795 Bochum<br>"
+                                    + "Telefon: 0234 9447-0 · E-Mail: akademie@ebz-training.de</p>", true, 20),
+                    new CP("agb", "Allgemeine Geschäftsbedingungen",
+                            "<p>Es gelten die Allgemeinen Geschäftsbedingungen der EBZ Akademie (Showcase-Platzhalter).</p>",
+                            false, 90));
+            List<String> have = new ArrayList<>();
+            for (JsonValue jv : q(field("contentPages", field("slug"))).getJsonArray("contentPages")) {
+                have.add(jv.asJsonObject().getString("slug"));
+            }
+            for (CP cp : pages) {
+                Map<String, Object> input = obj("slug", cp.slug(), "titel", cp.titel(), "inhaltHtml", cp.html(),
+                        "published", true, "imMenu", cp.imMenu(), "menuSortierung", cp.sort());
+                m("upsertContentPage", "UpsertContentPageInput!", input, field("id"));
+                if (have.contains(cp.slug())) {
+                    aktualisiert++;
+                    log.add("• CMS-Seite " + cp.slug() + " (aktualisiert)");
+                } else {
+                    add("CMS-Seite " + cp.slug());
+                }
+            }
+        }
 
         private void reindex() {
             // reindex liefert einen Job (asynchron) — nur die Job-ID selektieren.

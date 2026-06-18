@@ -18,6 +18,7 @@ import { RecurringInvoicePlugin } from './plugins/recurring-invoice/recurring-in
 import { recurringInvoiceTask } from './plugins/recurring-invoice/recurring-invoice.task';
 import { SeminarCostPlugin } from './plugins/seminar-cost/seminar-cost.plugin';
 import { ProduktkatalogPlugin } from './plugins/produktkatalog/produktkatalog.plugin';
+import { ContentPagePlugin } from './plugins/content-page/content-page.plugin';
 import { Ansprechpartner, Dozent } from './plugins/produktkatalog/produktkatalog.entities';
 import { KeycloakShopAuthStrategy } from './plugins/keycloak/keycloak-shop.strategy';
 import { KeycloakAdminAuthStrategy } from './plugins/keycloak/keycloak-admin.strategy';
@@ -225,6 +226,7 @@ export const config: VendureConfig = {
         SeminarCostPlugin,
         // P1: Produktkatalog — Personen (CRM-Sync) + Bewertungen
         ProduktkatalogPlugin,
+        ContentPagePlugin,
         EmailPlugin.init({
             devMode: true,
             outputPath: path.join(__dirname, '../static/email/test-emails'),

@@ -110,6 +110,30 @@ test('Katalog P4: Detailseite zeigt aktiven Warenkorb-Button + Kasse leer (SSR)'
   expect(kasse).toMatch(/Warenkorb ist leer|Kontakt/);
 });
 
+test('Katalog P6: Navigation (Collections + CMS-Menüseiten)', async ({ request }) => {
+  const nav = await (await request.get(`${STOREFRONT}/api/navigation`)).json();
+  expect(nav.collections.length).toBeGreaterThan(0);
+  // Nur veröffentlichte imMenu-Seiten; „agb" (nicht im Menü) darf NICHT erscheinen.
+  const slugs = nav.pages.map((p: { slug: string }) => p.slug);
+  expect(slugs).toContain('ueber-uns');
+  expect(slugs).toContain('kontakt');
+  expect(slugs).not.toContain('agb');
+});
+
+test('Katalog P6: CMS-Seite wird serverseitig gerendert + Menü im Home-SSR', async ({ request }) => {
+  const seite = await (await request.get(`${STOREFRONT}/seite/ueber-uns`)).text();
+  expect(seite).toContain('Bildungsdienstleister');
+  expect(seite).toMatch(/rel="canonical"[^>]*seite\/ueber-uns/);
+
+  const home = await (await request.get(`${STOREFRONT}/`)).text();
+  expect(home).toContain('/seite/ueber-uns');
+  expect(home).toContain('/seite/kontakt');
+
+  // Nicht-Menü-Seite ist dennoch direkt erreichbar.
+  const agb = await request.get(`${STOREFRONT}/seite/agb`);
+  expect(agb.status()).toBe(200);
+});
+
 test('Vertragsangebot zeigt Anmelde-Deeplink statt Warenkorb', async ({ request }) => {
   const res = await request.get(`${STOREFRONT}/studiengang-bachelor-real-estate`);
   expect(res.status()).toBe(200);
