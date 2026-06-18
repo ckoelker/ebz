@@ -19,8 +19,8 @@ Geladene Tabellen (Ziel-Schema `vendure` in DB `controlling`):
 - Laufender Stack (`cd showcase && docker compose up -d`), Postgres auf Host-Port **6543**.
 - Vendure geseedet **inkl. Bewegungsdaten**:
   ```
+  # Katalog + Seminarkosten: POST /shop/init am Integrationsbackend (Rolle katalog-pflege)
   cd ../vendure
-  pnpm run seed              # Katalog + Beispiel-Seminarkosten
   node scripts/seed-demo-orders.mjs   # platzierte Orders + Ratenplan
   ```
 - Python (Plan-Pin 3.12; auf dieser Maschine 3.13 — dlt 1.27.2 läuft real auf 3.13).

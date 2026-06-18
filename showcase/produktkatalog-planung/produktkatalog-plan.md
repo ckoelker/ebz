@@ -96,6 +96,9 @@ E-Learning-Produkte → bestehender LMS-Einschreibungspfad (OpenOLAT). Frühbuch
 ### P8 — (später) Vollimport ~400 + Inhouse-Anfrage
 Massenmigration aus Sitemap/Bestand; Inhouse „Angebot anfragen" → HubSpot/Controlling.
 
+## P1 — Umsetzungsstand (GEBAUT + live verifiziert 2026-06-18)
+P1 ist gebaut und gegen das laufende Vendure verifiziert (uncommitted). **Abweichung von §A0:** Der GraphQL-Client wurde auf Nutzerwunsch NICHT mit graphql-java-codegen (kobylynskyi) realisiert, sondern mit **`quarkus-smallrye-graphql-client` (Dynamic Client)** — Quarkus-nativ, keine Fremd-Runtime, „nur genutzte Operationen". Transport `integration/.../shop/VendureAdmin` (Raw-Login behält das Header-Token `vendure-auth-token`, dann Dynamic Client mit Bearer; Dokumente per DSL + Variablen-Maps). Sonst wie geplant: §A Modell+Plugin (Ansprechpartner/Dozent/Bewertung), §B `POST /shop/init` (`ShopInitService`/`KatalogBeispiele`/Asset-Multipart über `quarkus-rest-client`), §C Projektion auf Nummern-Abgleich, **seed.mjs abgelöst+gelöscht**. Verifiziert: Init 2× idempotent, alle 5 Smokes grün, Such-/Relations-/Bewertungs-/Asset-Checks, Nummern-Match-Test (200/409). Gotchas: nullable-`@Column(type)`, `VendureAdmin.vt()` für `!`/`[]`, expliziter Asset-MIME, `reindex→Job`.
+
 ## P1-Detail — Ausführungsplan (abgestimmt + freigegeben 2026-06-18)
 
 ### Kontext & Schnitt

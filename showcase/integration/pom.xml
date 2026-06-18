@@ -132,10 +132,19 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-smallrye-jwt</artifactId>
     </dependency>
-    <!-- Naht zu Vendure (P1.3, §11.6): GraphQL-over-HTTP gegen die Admin-API zur Produkt-Projektion. -->
+    <!-- Naht zu Vendure (P1.3, §11.6): GraphQL-over-HTTP gegen die Admin-API.
+         Raw-RestClient (VendureAdminApi) wird weiter NUR für den Login genutzt, um das
+         Admin-Auth-Token aus dem Response-Header `vendure-auth-token` zu lesen. -->
     <dependency>
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-rest-client-jackson</artifactId>
+    </dependency>
+    <!-- Produktkatalog P1 §A0: Vendure-Admin-GraphQL-Client (Quarkus-nativ, SmallRye Dynamic Client).
+         Baut typisierte Dokumente per DSL (keine handgeschriebenen Query-Strings), keine Fremd-Runtime.
+         Bearer-Token wird beim Client-Bau gesetzt (Token aus dem Raw-Login). -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-graphql-client</artifactId>
     </dependency>
 
     <!-- Camel Quarkus: zeitgesteuerter Pull + Orchestrierung + realer HTTP-Pull -->

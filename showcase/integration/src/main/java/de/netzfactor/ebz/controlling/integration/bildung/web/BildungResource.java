@@ -85,7 +85,13 @@ public class BildungResource {
                     .entity(new Fehler("Nur Angebote im Status AKTIV werden in den Shop projiziert.")).build();
         }
         try {
+            // §C: reiner Nummern-Abgleich (Vendure = SoR des Katalogs). Kein Content-/Preis-Push mehr.
             VendureProjektion.Ergebnis r = vendure.projiziere(e); // dirty → Flush am Tx-Commit (Zurückschreiben)
+            if (r.productId() == null) {
+                return Response.status(Response.Status.CONFLICT).entity(new Fehler(
+                        "Keine Vendure-Nummer matcht (angebotsnummer/sku = '" + e.code
+                                + "'). Produkt zuerst in Vendure pflegen (z. B. POST /shop/init).")).build();
+            }
             e.vendureProductId = r.productId();
             e.vendureVariantId = r.variantId();
             return Response.ok(new ProjektionErgebnis(e.id, e.code, e.vendureProductId, e.vendureVariantId)).build();

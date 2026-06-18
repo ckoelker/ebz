@@ -44,7 +44,8 @@ Das Vendure-Image baut via Corepack + `pnpm install --frozen-lockfile` (Node 22)
 cd showcase
 cp .env.example .env              # optional: Werte anpassen (sonst gelten Compose-Defaults)
 docker compose up -d --build      # postgres · server · worker · keycloak · adminer
-(cd vendure && pnpm run seed)     # Katalog seeden (idempotent; nur nötig nach Volume-Reset)
+# Shop initialisieren (idempotent; nur nötig nach Volume-Reset): POST /shop/init am
+# Integrationsbackend (Rolle katalog-pflege) — baut Katalog/Steuern/Facetten/Produkte in Vendure auf.
 ```
 
 Storefront lokal:
@@ -139,7 +140,8 @@ Code liegt flach in `integration/`, `dlt/`, `dbt/`, `lightdash/`. Plan & Version
   aus DB `vendure` (read-only `controlling_reader`, **ohne PII**) ins Warehouse-Schema
   `controlling.vendure`. Idempotent (Merge auf `id` + Watermark `updatedAt`).
   ```bash
-  cd vendure && pnpm run seed && node scripts/seed-demo-orders.mjs   # Katalog+Kosten+Bewegungsdaten
+  # Katalog/Kosten: POST /shop/init am Integrationsbackend (Rolle katalog-pflege), dann Bewegungsdaten:
+  cd vendure && node scripts/seed-demo-orders.mjs                     # Beispiel-Bestellungen
   cd ../dlt  && python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt
   .venv/Scripts/python vendure_to_warehouse.py                       # Load → DB controlling
   ```

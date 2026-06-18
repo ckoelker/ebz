@@ -59,7 +59,7 @@ export class KeycloakAdminAuthStrategy implements AuthenticationStrategy<Keycloa
         // Rolle per Repository lesen (kein Permission-Check im anonymen authenticate-Kontext).
         const role = await this.connection.getRepository(ctx, Role).findOne({ where: { code: STAFF_ROLE_CODE } });
         if (!role) {
-            return `Staff-Rolle '${STAFF_ROLE_CODE}' fehlt — bitte 'npm run seed' ausführen`;
+            return `Staff-Rolle '${STAFF_ROLE_CODE}' fehlt — bitte Shop initialisieren (POST /shop/init am Integrationsbackend)`;
         }
 
         return this.externalAuthService.createAdministratorAndUser(ctx, {

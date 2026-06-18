@@ -12,8 +12,7 @@
     "build:dashboard": "vite build",
     "start:server": "node ./dist/index.js",
     "start:worker": "node ./dist/index-worker.js",
-    "start": "concurrently \"pnpm start:server\" \"pnpm start:worker\"",
-    "seed": "node scripts/seed.mjs"
+    "start": "concurrently \"pnpm start:server\" \"pnpm start:worker\""
   },
   "dependencies": {
     "@pinelab/vendure-plugin-stripe-subscription": "^2.10.0",

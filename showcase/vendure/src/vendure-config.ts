@@ -5,6 +5,7 @@ import {
     DefaultSearchPlugin,
     LanguageCode,
     NativeAuthenticationStrategy,
+    Product,
     VendureConfig,
 } from '@vendure/core';
 import { defaultEmailHandlers, EmailPlugin, FileBasedTemplateLoader } from '@vendure/email-plugin';
@@ -16,6 +17,8 @@ import { ShowcaseSubscriptionStrategy } from './subscription-strategy';
 import { RecurringInvoicePlugin } from './plugins/recurring-invoice/recurring-invoice.plugin';
 import { recurringInvoiceTask } from './plugins/recurring-invoice/recurring-invoice.task';
 import { SeminarCostPlugin } from './plugins/seminar-cost/seminar-cost.plugin';
+import { ProduktkatalogPlugin } from './plugins/produktkatalog/produktkatalog.plugin';
+import { Ansprechpartner, Dozent } from './plugins/produktkatalog/produktkatalog.entities';
 import { KeycloakShopAuthStrategy } from './plugins/keycloak/keycloak-shop.strategy';
 import { KeycloakAdminAuthStrategy } from './plugins/keycloak/keycloak-admin.strategy';
 import { KeycloakDashboardPlugin } from './plugins/keycloak/keycloak-dashboard.plugin';
@@ -90,6 +93,62 @@ export const config: VendureConfig = {
     // (Schüler-/Studien-/Seminardaten). Erscheinen automatisch in Admin-API
     // und Shop-API → das Vue-Frontend liest/schreibt sie über GraphQL.
     customFields: {
+        // Produktkatalog (P1): Detailinhalt + MDM-Link + Personen-Relationen.
+        // Vendure ist alleinige Quelle des Katalog-/Detailinhalts; der MDM-Kern ist
+        // NUR über die Nummer (angebotsnummer / SKU) verknüpft — keine neuen MDM-Tabellen.
+        Product: [
+            { name: 'angebotsnummer', type: 'string', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Angebotsnummer (MDM-Link)' }] },
+            // Rich-Text-Detailblöcke — die Storefront rendert je Veranstaltungsart bedingt.
+            { name: 'inhalteHtml', type: 'text', nullable: true, ui: { component: 'rich-text-form-input' },
+              label: [{ languageCode: LanguageCode.de, value: 'Inhalte' }] },
+            { name: 'lernzieleHtml', type: 'text', nullable: true, ui: { component: 'rich-text-form-input' },
+              label: [{ languageCode: LanguageCode.de, value: 'Lernziele' }] },
+            { name: 'nutzenHtml', type: 'text', nullable: true, ui: { component: 'rich-text-form-input' },
+              label: [{ languageCode: LanguageCode.de, value: 'Ihr Nutzen' }] },
+            { name: 'methodikHtml', type: 'text', nullable: true, ui: { component: 'rich-text-form-input' },
+              label: [{ languageCode: LanguageCode.de, value: 'Methodik' }] },
+            { name: 'voraussetzungenHtml', type: 'text', nullable: true, ui: { component: 'rich-text-form-input' },
+              label: [{ languageCode: LanguageCode.de, value: 'Voraussetzungen' }] },
+            { name: 'foerderhinweisHtml', type: 'text', nullable: true, ui: { component: 'rich-text-form-input' },
+              label: [{ languageCode: LanguageCode.de, value: 'Förderhinweis' }] },
+            // ablaufHtml = Programm/Module mehrtägiger Angebote (Lehrgang/Tagung)
+            { name: 'ablaufHtml', type: 'text', nullable: true, ui: { component: 'rich-text-form-input' },
+              label: [{ languageCode: LanguageCode.de, value: 'Ablauf / Programm' }] },
+            // leistungenHtml = Übernachtung/Verpflegung u. Ä. (v. a. Tagungen)
+            { name: 'leistungenHtml', type: 'text', nullable: true, ui: { component: 'rich-text-form-input' },
+              label: [{ languageCode: LanguageCode.de, value: 'Im Preis enthaltene Leistungen' }] },
+            { name: 'faqHtml', type: 'text', nullable: true, ui: { component: 'rich-text-form-input' },
+              label: [{ languageCode: LanguageCode.de, value: 'FAQ' }] },
+            { name: 'zielgruppe', type: 'string', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Zielgruppe' }] },
+            { name: 'abschluss', type: 'string', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Abschluss' }] },
+            // Typ-spezifisch (Lehrgang/Studium)
+            { name: 'dauerUE', type: 'int', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Dauer (Unterrichtseinheiten)' }] },
+            { name: 'studienform', type: 'string', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Studienform' }] },
+            { name: 'regelstudienzeitSemester', type: 'int', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Regelstudienzeit (Semester)' }] },
+            { name: 'akkreditierungBis', type: 'datetime', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Akkreditiert bis' }] },
+            // Vertragsangebot (Berufsschule/Studium): im Katalog sichtbar, aber NICHT bestellbar
+            // → Storefront zeigt „Anmeldung/Vertragserstellung"-Deeplink statt Warenkorb.
+            { name: 'bestellbar', type: 'boolean', nullable: true, defaultValue: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Im Shop bestellbar' }] },
+            { name: 'anmeldungUrl', type: 'string', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Anmeldung/Vertrag (Deeplink)' }] },
+            // Personen-Relationen (CRM-Sync) + Querverweise
+            { name: 'ansprechpartner', type: 'relation', entity: Ansprechpartner, nullable: true,
+              graphQLType: 'Ansprechpartner',
+              label: [{ languageCode: LanguageCode.de, value: 'Ansprechpartner:in' }] },
+            { name: 'dozenten', type: 'relation', list: true, entity: Dozent, nullable: true,
+              graphQLType: 'Dozent',
+              label: [{ languageCode: LanguageCode.de, value: 'Dozent:innen' }] },
+            { name: 'verwandteProdukte', type: 'relation', list: true, entity: Product, nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Verwandte Angebote' }] },
+        ],
         // Kunde: Stammdaten für Berufsschule/Studium
         Customer: [
             { name: 'studentNumber', type: 'string', nullable: true,
@@ -118,6 +177,14 @@ export const config: VendureConfig = {
             { name: 'fulfillmentType', type: 'string', nullable: true, defaultValue: 'physical',
               options: [{ value: 'physical' }, { value: 'digital' }, { value: 'seminar' }, { value: 'subscription' }],
               label: [{ languageCode: LanguageCode.de, value: 'Abwicklungsart' }] },
+            // Durchführung (P1): eine Variante = ein buchbarer Termin/Ort/Format.
+            { name: 'terminDatum', type: 'datetime', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Termin (Beginn)' }] },
+            { name: 'ort', type: 'string', nullable: true,
+              label: [{ languageCode: LanguageCode.de, value: 'Veranstaltungsort' }] },
+            { name: 'veranstaltungsformat', type: 'string', nullable: true,
+              options: [{ value: 'PRAESENZ' }, { value: 'ONLINE' }, { value: 'HYBRID' }],
+              label: [{ languageCode: LanguageCode.de, value: 'Veranstaltungsformat' }] },
             // Subscription-Plan: gesetzt = Variante ist eine Subscription (siehe ShowcaseSubscriptionStrategy)
             { name: 'subscriptionInterval', type: 'string', nullable: true,
               options: [{ value: 'week' }, { value: 'month' }, { value: 'year' }],
@@ -156,6 +223,8 @@ export const config: VendureConfig = {
         RecurringInvoicePlugin,
         // M2: Seminar-Kosten / Deckungsbeitragsrechnung (Erlöse liegen in den Orders)
         SeminarCostPlugin,
+        // P1: Produktkatalog — Personen (CRM-Sync) + Bewertungen
+        ProduktkatalogPlugin,
         EmailPlugin.init({
             devMode: true,
             outputPath: path.join(__dirname, '../static/email/test-emails'),
