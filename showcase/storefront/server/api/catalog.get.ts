@@ -44,6 +44,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const data = await shopGql<{ search: SearchResult }>(
+    event,
     `query($input: SearchInput!) {
       search(input: $input) {
         totalItems

@@ -7,6 +7,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'slug fehlt' })
   }
   const data = await shopGql<{ product: unknown }>(
+    event,
     `query($slug: String!) {
       product(slug: $slug) {
         id

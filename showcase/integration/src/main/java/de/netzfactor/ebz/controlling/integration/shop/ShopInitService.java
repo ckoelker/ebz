@@ -84,6 +84,7 @@ public class ShopInitService {
         }
 
         Ergebnis run() {
+            ensureGlobalSettings();
             String countryId = ensureCountry();
             String zoneId = ensureZone(countryId);
             ensureChannel(zoneId);
@@ -102,6 +103,18 @@ public class ShopInitService {
         }
 
         // ── Grundkonfiguration ──
+
+        // Keine Kapazitäts-/Bestandslogik im Showcase (Plätze max. informativ) → globales
+        // Inventory-Tracking aus, damit jede Durchführung buchbar ist (sonst „insufficient stock").
+        private void ensureGlobalSettings() {
+            JsonObject d = q(field("globalSettings", field("trackInventory")));
+            if (!d.getJsonObject("globalSettings").getBoolean("trackInventory", false)) {
+                skip("GlobalSettings trackInventory=false");
+                return;
+            }
+            m("updateGlobalSettings", "UpdateGlobalSettingsInput!", obj("trackInventory", false), field("__typename"));
+            add("GlobalSettings trackInventory=false");
+        }
 
         private String ensureCountry() {
             JsonObject d = q(field("countries", List.of(arg("options", inputObject(prop("take", 300)))),
@@ -367,21 +380,32 @@ public class ShopInitService {
         }
 
         private void ensurePayment() {
+            // Zwei Checkout-Wege (P4): Kauf auf Rechnung (B2B) + Kreditkarte/SEPA (Stripe).
+            // Beide laufen im Showcase über den dummyPaymentHandler (automaticSettle) — der
+            // echte Stripe-PSP-Anschluss bleibt ein späterer Schritt.
+            record PM(String code, String name, String desc) {
+            }
+            List<PM> methods = List.of(
+                    new PM("rechnung", "Rechnung", "Kauf auf Rechnung (B2B, Showcase)"),
+                    new PM("stripe-sepa", "Kreditkarte / SEPA-Lastschrift", "Zahlung per Karte/SEPA über Stripe (Showcase-Stand-in)"));
+            List<String> have = new ArrayList<>();
             for (JsonValue jv : q(field("paymentMethods", List.of(arg("options", inputObject(prop("take", 100)))),
                     field("items", field("code")))).getJsonObject("paymentMethods").getJsonArray("items")) {
-                if ("rechnung".equals(jv.asJsonObject().getString("code"))) {
-                    skip("Zahlart rechnung");
-                    return;
-                }
+                have.add(jv.asJsonObject().getString("code"));
             }
-            Map<String, Object> handler = obj("code", "dummy-payment-handler");
-            handler.put("arguments", List.of(obj("name", "automaticSettle", "value", "true")));
-            Map<String, Object> input = obj("code", "rechnung", "enabled", true);
-            input.put("handler", handler);
-            input.put("translations", List.of(obj("languageCode", "de", "name", "Rechnung",
-                    "description", "Zahlung per Rechnung (Showcase)")));
-            m("createPaymentMethod", "CreatePaymentMethodInput!", input, field("id"));
-            add("Zahlart rechnung");
+            for (PM pm : methods) {
+                if (have.contains(pm.code())) {
+                    skip("Zahlart " + pm.code());
+                    continue;
+                }
+                Map<String, Object> handler = obj("code", "dummy-payment-handler");
+                handler.put("arguments", List.of(obj("name", "automaticSettle", "value", "true")));
+                Map<String, Object> input = obj("code", pm.code(), "enabled", true);
+                input.put("handler", handler);
+                input.put("translations", List.of(obj("languageCode", "de", "name", pm.name(), "description", pm.desc())));
+                m("createPaymentMethod", "CreatePaymentMethodInput!", input, field("id"));
+                add("Zahlart " + pm.code());
+            }
         }
 
         // ── Platzhalter-Assets (best-effort) ──

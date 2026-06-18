@@ -75,6 +75,41 @@ test('Katalog P3: Sortierung nach Titel (API)', async ({ request }) => {
   expect(namen).toEqual(sortiert);
 });
 
+test('Katalog P4: Gast-Checkout end-to-end (Warenkorb → Bestellung)', async ({ request }) => {
+  // request-Fixture hält Cookies (vendure_token) über die Aufrufe → eine Session.
+  const prod = await (await request.get(`${STOREFRONT}/api/product?slug=online-seminar-betriebskostenabrechnung`)).json();
+  const variantId = prod.variants[0].id;
+
+  const added = await (await request.post(`${STOREFRONT}/api/cart`, { data: { variantId } })).json();
+  expect(added.totalQuantity).toBeGreaterThan(0);
+
+  const cart = await (await request.get(`${STOREFRONT}/api/cart`)).json();
+  expect(cart.lines.length).toBeGreaterThan(0);
+  expect(cart.state).toBe('AddingItems');
+
+  const res = await request.post(`${STOREFRONT}/api/checkout`, {
+    data: {
+      email: 'gast@example.de',
+      firstName: 'Gabi',
+      lastName: 'Gast',
+      address: { streetLine1: 'Teststr. 1', city: 'Bochum', postalCode: '44801', countryCode: 'DE' },
+      paymentMethod: 'rechnung',
+    },
+  });
+  expect(res.status()).toBe(200);
+  const order = await res.json();
+  expect(order.code).toBeTruthy();
+  expect(order.state).toBe('PaymentSettled');
+});
+
+test('Katalog P4: Detailseite zeigt aktiven Warenkorb-Button + Kasse leer (SSR)', async ({ request }) => {
+  const detail = await (await request.get(`${STOREFRONT}/online-seminar-betriebskostenabrechnung?termin=SVA015729`)).text();
+  expect(detail).toContain('In den Warenkorb');
+  // Frische Session (eigener request-Context ohne Cookies) → leere Kasse.
+  const kasse = await (await request.get(`${STOREFRONT}/kasse`)).text();
+  expect(kasse).toMatch(/Warenkorb ist leer|Kontakt/);
+});
+
 test('Vertragsangebot zeigt Anmelde-Deeplink statt Warenkorb', async ({ request }) => {
   const res = await request.get(`${STOREFRONT}/studiengang-bachelor-real-estate`);
   expect(res.status()).toBe(200);

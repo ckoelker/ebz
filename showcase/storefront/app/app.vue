@@ -1,5 +1,8 @@
 <script setup lang="ts">
 // App-Shell der EBZ-Akademie-Storefront. Burger-/Hauptmenü (Collections + CMS-Seiten) folgt in P6.
+const { count, refresh } = useCart()
+// Warenkorb-Stand initial laden (client) → Badge im Header.
+onMounted(() => { refresh() })
 </script>
 
 <template>
@@ -12,6 +15,9 @@
         </NuxtLink>
         <nav class="flex items-center gap-2 text-sm">
           <UButton to="/" variant="ghost" color="neutral">Katalog</UButton>
+          <UChip :text="count" :show="count > 0" color="primary" size="2xl">
+            <UButton to="/warenkorb" variant="ghost" color="neutral" icon="i-lucide-shopping-cart" aria-label="Warenkorb" />
+          </UChip>
         </nav>
       </UContainer>
     </header>

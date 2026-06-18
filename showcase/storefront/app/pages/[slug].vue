@@ -20,6 +20,15 @@ watchEffect(() => {
   const t = typeof route.query.termin === 'string' ? route.query.termin : ''
   gewaehlt.value = t && variants.value.some((v) => v.sku === t) ? t : variants.value[0]?.sku ?? ''
 })
+const gewaehlteVariante = computed(() => variants.value.find((v) => v.sku === gewaehlt.value))
+
+const { add, busy } = useCart()
+async function inDenWarenkorb() {
+  const v = gewaehlteVariante.value
+  if (!v) return
+  await add(v.id)
+  await navigateTo('/warenkorb')
+}
 
 const url = useRequestURL()
 useHead(() => ({
@@ -100,8 +109,16 @@ const bloecke = computed(() => [
               </span>
             </label>
           </div>
-          <UButton block class="mt-3" color="primary" icon="i-lucide-shopping-cart" disabled>
-            In den Warenkorb (P4)
+          <UButton
+            block
+            class="mt-3"
+            color="primary"
+            icon="i-lucide-shopping-cart"
+            :loading="busy"
+            :disabled="!gewaehlteVariante"
+            @click="inDenWarenkorb"
+          >
+            In den Warenkorb
           </UButton>
         </template>
 
