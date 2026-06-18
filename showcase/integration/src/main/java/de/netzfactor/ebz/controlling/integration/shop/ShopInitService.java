@@ -331,20 +331,34 @@ public class ShopInitService {
         // ── Versand / Zahlung / Rolle (Ablösung seed.mjs) ──
 
         private void ensureRole() {
+            // Globale Vendure-Rollen (P5/RBAC), kein Channel-Scoping. Der Admin-SSO-Strategy mappt
+            // die Keycloak-Realm-Rolle `katalog-pflege` → 'katalog-pflege' (CRUD), sonst 'katalog-lesen'.
+            record R(String code, String desc, List<String> perms) {
+            }
+            List<R> rollen = List.of(
+                    new R("katalog-lesen", "Katalog-Lesen (SSO, nur Read*)",
+                            List.of("ReadCatalog", "ReadOrder", "ReadCustomer", "ReadSettings")),
+                    new R("katalog-pflege", "Katalog-Pflege (SSO, Create/Update/Delete)",
+                            List.of("ReadCatalog", "CreateCatalog", "UpdateCatalog", "DeleteCatalog",
+                                    "ReadOrder", "ReadCustomer", "ReadSettings")));
             JsonObject d = q(field("roles", List.of(arg("options", inputObject(prop("take", 100)))),
                     field("items", field("code"))), field("activeChannel", field("id")));
+            List<String> have = new ArrayList<>();
             for (JsonValue jv : d.getJsonObject("roles").getJsonArray("items")) {
-                if ("sso-staff".equals(jv.asJsonObject().getString("code"))) {
-                    skip("Rolle sso-staff");
-                    return;
-                }
+                have.add(jv.asJsonObject().getString("code"));
             }
-            Map<String, Object> input = obj("code", "sso-staff",
-                    "description", "SSO Staff (Keycloak ebz-staff) — read-only Showcase-Rolle");
-            input.put("permissions", List.of("ReadCatalog", "ReadOrder", "ReadCustomer", "ReadSettings"));
-            input.put("channelIds", List.of(d.getJsonObject("activeChannel").getString("id")));
-            m("createRole", "CreateRoleInput!", input, field("id"));
-            add("Rolle sso-staff");
+            String channelId = d.getJsonObject("activeChannel").getString("id");
+            for (R r : rollen) {
+                if (have.contains(r.code())) {
+                    skip("Rolle " + r.code());
+                    continue;
+                }
+                Map<String, Object> input = obj("code", r.code(), "description", r.desc());
+                input.put("permissions", r.perms());
+                input.put("channelIds", List.of(channelId));
+                m("createRole", "CreateRoleInput!", input, field("id"));
+                add("Rolle " + r.code());
+            }
         }
 
         private void ensureShipping() {

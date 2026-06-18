@@ -12,16 +12,18 @@ import gql from 'graphql-tag';
 import { KeycloakStrategyOptions, KeycloakAuthData } from './keycloak-shop.strategy';
 import { makeOidcVerifier, VerifiedIdentity } from './oidc-verifier';
 
-const STAFF_ROLE_CODE = 'sso-staff';
+const ROLLE_PFLEGE = 'katalog-pflege';
+const ROLLE_LESEN = 'katalog-lesen';
+// Vom SSO verwaltete Katalog-Rollen (werden bei jedem Login mit Keycloak synchronisiert;
+// fremde Rollen am Nutzer bleiben unberührt). `sso-staff` = Altbestand → mit migrieren.
+const VERWALTETE_ROLLEN = [ROLLE_PFLEGE, ROLLE_LESEN, 'sso-staff'];
 
 /**
- * Admin-/Staff-SSO über Keycloak-Realm `ebz-staff`.
- * Strikt vom Kunden-Realm getrennt (eigener Issuer/JWKS). Mappt den Nutzer
- * (find-or-create) auf einen Vendure-Administrator mit der read-only
- * Showcase-Rolle `sso-staff` (wird vom Seed angelegt).
- *
- * Sicherheitshinweis (Produktion): hier sollten Keycloak-Rollen/Gruppen-Claims
- * auf konkrete Vendure-Rollen gemappt werden — NICHT pauschal eine feste Rolle.
+ * Admin-/Staff-SSO über Keycloak-Realm `ebz-staff` (strikt vom Kunden-Realm getrennt).
+ * Mappt die **Keycloak-Realm-Rolle/Gruppe** des Nutzers auf eine globale Vendure-Rolle:
+ * `katalog-pflege` (Create/Update/Delete) bzw. sonst `katalog-lesen` (nur Read*).
+ * Die Zuordnung wird bei **jedem Login** synchronisiert, sodass Änderungen in Keycloak
+ * sofort wirken. (Keine Channel-Skopierung — bewusst globale Rollen.)
  */
 export class KeycloakAdminAuthStrategy implements AuthenticationStrategy<KeycloakAuthData> {
     readonly name = 'keycloak';
@@ -53,13 +55,17 @@ export class KeycloakAdminAuthStrategy implements AuthenticationStrategy<Keycloa
             return 'Keycloak-Token ungültig: ' + (e?.message ?? 'unbekannt');
         }
 
-        const existing = await this.externalAuthService.findAdministratorUser(ctx, this.name, id.sub);
-        if (existing) return existing;
-
-        // Rolle per Repository lesen (kein Permission-Check im anonymen authenticate-Kontext).
-        const role = await this.connection.getRepository(ctx, Role).findOne({ where: { code: STAFF_ROLE_CODE } });
+        // Keycloak-Rolle → globale Vendure-Rolle (Pflege schlägt Lesen).
+        const ziel = id.roles.includes(ROLLE_PFLEGE) ? ROLLE_PFLEGE : ROLLE_LESEN;
+        const role = await this.connection.getRepository(ctx, Role).findOne({ where: { code: ziel } });
         if (!role) {
-            return `Staff-Rolle '${STAFF_ROLE_CODE}' fehlt — bitte Shop initialisieren (POST /shop/init am Integrationsbackend)`;
+            return `Vendure-Rolle '${ziel}' fehlt — bitte Shop initialisieren (POST /shop/init am Integrationsbackend)`;
+        }
+
+        const existing = await this.externalAuthService.findAdministratorUser(ctx, this.name, id.sub);
+        if (existing) {
+            await this.syncRollen(ctx, existing.id, role);
+            return existing;
         }
 
         return this.externalAuthService.createAdministratorAndUser(ctx, {
@@ -71,5 +77,20 @@ export class KeycloakAdminAuthStrategy implements AuthenticationStrategy<Keycloa
             lastName: id.lastName ?? id.username ?? 'Mitarbeiter',
             roles: [role],
         });
+    }
+
+    /** Hält die SSO-verwalteten Katalog-Rollen des Nutzers mit Keycloak im Gleichstand. */
+    private async syncRollen(ctx: RequestContext, userId: string | number, ziel: Role): Promise<void> {
+        const repo = this.connection.getRepository(ctx, User);
+        const user = await repo.findOne({ where: { id: userId as any }, relations: { roles: true } });
+        if (!user) return;
+        const behalten = user.roles.filter(r => !VERWALTETE_ROLLEN.includes(r.code));
+        const neu = [...behalten, ziel];
+        const vorher = new Set(user.roles.map(r => r.id));
+        const nachher = new Set(neu.map(r => r.id));
+        const gleich = vorher.size === nachher.size && [...vorher].every(idv => nachher.has(idv));
+        if (gleich) return;
+        user.roles = neu;
+        await repo.save(user, { reload: false });
     }
 }

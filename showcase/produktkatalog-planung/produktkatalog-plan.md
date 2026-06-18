@@ -89,8 +89,9 @@ Umgesetzt: Server-Route `server/api/catalog` nutzt `search` mit `facetValueFilte
 Ursprünglich geplant: `search`-Query (term, facetValueFilters, collectionSlug, skip/take, sort) → Trefferliste + Facetten-Sidebar (Thema/Branche/Region/Veranstaltungsart) + Freitext-/Angebotsnr-Suche + Pagination/Trefferzahl, SSR.
 ### P4 — Detailseite + Durchführungs-Auswahl + Warenkorb/Checkout (MVP-Abschluss)
 Detail rendert alle Blöcke bedingt je Veranstaltungsart; Durchführungs-Varianten wählbar → Warenkorb (Sammelbuchung mit Teilnehmerliste) → Checkout (Kauf auf Rechnung **und** Stripe/SEPA), Gastbuchung. **Vertragsangebote**: „Anmeldung/Vertragserstellung"-Deeplink statt Warenkorb.
-### P5 — RBAC (global)
-Rollen „Katalog-Lesen"/„Katalog-Pflege"; `KeycloakAdminAuthStrategy` mappt Keycloak-Gruppe→Rolle. (Keine Channels.)
+### P5 — RBAC (global)  ✅ GEBAUT+verifiziert 2026-06-18 (Branch feature/produktkatalog-p1)
+Umgesetzt: globale Vendure-Rollen **`katalog-lesen`** (nur Read*) + **`katalog-pflege`** (ReadCatalog + Create/Update/Delete + Read Order/Customer/Settings), im Seed `ensureRole` (kein Channel-Scoping). `oidc-verifier` liest `realm_access.roles` (+ `groups`) → `VerifiedIdentity.roles`; `KeycloakAdminAuthStrategy` mappt Keycloak-Realm-Rolle `katalog-pflege`→`katalog-pflege`, sonst `katalog-lesen`, und **synchronisiert die Rolle bei jedem Login** (fremde Rollen am Nutzer bleiben unberührt). Live verifiziert über `authenticate`-Mutation: `staff`→ReadCatalog/CreateCatalog/UpdateCatalog/DeleteCatalog, `staff2`→nur ReadCatalog.
+Ursprünglich geplant: Rollen „Katalog-Lesen"/„Katalog-Pflege"; `KeycloakAdminAuthStrategy` mappt Keycloak-Gruppe→Rolle. (Keine Channels.)
 ### P6 — CMS „ContentPage" + Burger-Navigation
 ContentPage-Plugin (Entity + Dashboard-UI + Shop-API) + Nuxt-Navigation: Collections + `imMenu`-Seiten als responsives Burger-/Hauptmenü.
 ### P7 — E-Learning-Kopplung + Promotions
