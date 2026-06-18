@@ -110,6 +110,16 @@ test('Katalog P4: Detailseite zeigt aktiven Warenkorb-Button + Kasse leer (SSR)'
   expect(kasse).toMatch(/Warenkorb ist leer|Kontakt/);
 });
 
+test('Katalog P7: Frühbucherrabatt greift automatisch (Termin in der Zukunft)', async ({ request }) => {
+  const prod = await (await request.get(`${STOREFRONT}/api/product?slug=online-seminar-betriebskostenabrechnung`)).json();
+  const cart = await (await request.post(`${STOREFRONT}/api/cart`, { data: { variantId: prod.variants[0].id } })).json();
+  // Zukünftiger Termin → Frühbucher-Condition erfüllt → 10 % Order-Rabatt automatisch.
+  expect(cart.discounts.length).toBeGreaterThan(0);
+  expect(cart.discounts[0].description).toMatch(/Frühbucher/);
+  expect(cart.discounts[0].amountWithTax).toBeLessThan(0);
+  expect(cart.totalWithTax).toBeLessThan(cart.lines[0].linePriceWithTax + 1);
+});
+
 test('Katalog P6: Navigation (Collections + CMS-Menüseiten)', async ({ request }) => {
   const nav = await (await request.get(`${STOREFRONT}/api/navigation`)).json();
   expect(nav.collections.length).toBeGreaterThan(0);

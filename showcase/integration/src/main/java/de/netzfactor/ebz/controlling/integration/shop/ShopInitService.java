@@ -99,6 +99,7 @@ public class ShopInitService {
             ensureProdukte(tax, facetValues, personen, assets);
             ensureDemoF1F6(tax);
             ensureContentPages();
+            ensureFruehbucherPromotion();
             reindex();
             return new Ergebnis(angelegt, aktualisiert, uebersprungen, log);
         }
@@ -771,6 +772,36 @@ public class ShopInitService {
                     add("CMS-Seite " + cp.slug());
                 }
             }
+        }
+
+        private void ensureFruehbucherPromotion() {
+            // Frühbucher (P7): 10 % Rabatt, wenn der Termin (Varianten-Custom-Field terminDatum)
+            // mind. 30 Tage in der Zukunft liegt — eigene Condition `fruehbucher` + eingebaute
+            // Aktion order_percentage_discount. Idempotent über den Promotion-Namen.
+            String name = "Frühbucherrabatt 10 %";
+            for (JsonValue jv : q(field("promotions", List.of(arg("options", inputObject(prop("take", 100)))),
+                    field("items", field("name")))).getJsonObject("promotions").getJsonArray("items")) {
+                if (name.equals(jv.asJsonObject().getString("name"))) {
+                    skip("Promotion Frühbucher");
+                    return;
+                }
+            }
+            Map<String, Object> bedingung = obj("code", "fruehbucher");
+            bedingung.put("arguments", List.of(obj("name", "daysBefore", "value", "30")));
+            Map<String, Object> aktion = obj("code", "order_percentage_discount");
+            aktion.put("arguments", List.of(obj("name", "discount", "value", "10")));
+            Map<String, Object> input = obj("enabled", true);
+            input.put("conditions", List.of(bedingung));
+            input.put("actions", List.of(aktion));
+            input.put("translations", List.of(obj("languageCode", "de", "name", name,
+                    "description", "10 % Rabatt bei Buchung mind. 30 Tage vor Veranstaltungsbeginn")));
+            // createPromotion liefert eine Union (Promotion | MissingConditionsError) → __typename selektieren.
+            JsonObject d = m("createPromotion", "CreatePromotionInput!", input, field("__typename"));
+            String typ = d.getJsonObject("createPromotion").getString("__typename");
+            if (!"Promotion".equals(typ)) {
+                throw new VendureException("Frühbucher-Promotion abgelehnt: " + typ);
+            }
+            add("Promotion Frühbucher");
         }
 
         private void reindex() {

@@ -10,6 +10,7 @@ export const ORDER_FIELDS = `
     shippingWithTax
     totalWithTax
     currencyCode
+    discounts { description amountWithTax }
     lines {
       id
       quantity
@@ -31,6 +32,7 @@ export interface Order {
   shippingWithTax: number
   totalWithTax: number
   currencyCode: string
+  discounts: Array<{ description: string; amountWithTax: number }>
   lines: Array<{
     id: string
     quantity: number

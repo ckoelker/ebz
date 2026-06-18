@@ -1,5 +1,6 @@
 import {
     dummyPaymentHandler,
+    defaultPromotionConditions,
     DefaultJobQueuePlugin,
     DefaultSchedulerPlugin,
     DefaultSearchPlugin,
@@ -8,6 +9,7 @@ import {
     Product,
     VendureConfig,
 } from '@vendure/core';
+import { fruehbucherCondition } from './plugins/promotion/fruehbucher.condition';
 import { defaultEmailHandlers, EmailPlugin, FileBasedTemplateLoader } from '@vendure/email-plugin';
 import { AssetServerPlugin } from '@vendure/asset-server-plugin';
 import { DashboardPlugin } from '@vendure/dashboard/plugin';
@@ -87,6 +89,10 @@ export const config: VendureConfig = {
     },
     paymentOptions: {
         paymentMethodHandlers: [dummyPaymentHandler],
+    },
+    // Frühbucher-Promotion (P7): eigene Condition + eingebaute Default-Conditions/-Actions.
+    promotionOptions: {
+        promotionConditions: [...defaultPromotionConditions, fruehbucherCondition],
     },
     // When adding or altering custom field definitions, the database will
     // need to be updated. See the "Migrations" section in README.md.

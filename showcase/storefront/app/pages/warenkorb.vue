@@ -108,6 +108,9 @@ async function entfernenBestaetigen() {
         <dl class="space-y-1 text-sm">
           <div class="flex justify-between"><dt class="text-(--ui-text-muted)">Zwischensumme</dt><dd>{{ euro(order.subTotalWithTax, order.currencyCode) }}</dd></div>
           <div class="flex justify-between"><dt class="text-(--ui-text-muted)">Versand</dt><dd>{{ euro(order.shippingWithTax, order.currencyCode) }}</dd></div>
+          <div v-for="d in order.discounts" :key="d.description" class="flex justify-between text-(--ui-primary)">
+            <dt>{{ d.description }}</dt><dd>{{ euro(d.amountWithTax, order.currencyCode) }}</dd>
+          </div>
           <div class="mt-2 flex justify-between border-t border-(--ui-border) pt-2 text-base font-semibold">
             <dt>Gesamt (inkl. USt.)</dt><dd class="text-(--ui-primary)">{{ euro(order.totalWithTax, order.currencyCode) }}</dd>
           </div>
