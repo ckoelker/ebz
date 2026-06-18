@@ -26,6 +26,8 @@ export default defineNuxtConfig({
       kcUrl: process.env.NUXT_PUBLIC_KC_URL || 'http://localhost:8088',
       kcRealm: process.env.NUXT_PUBLIC_KC_REALM || 'ebz-customers',
       kcClientId: process.env.NUXT_PUBLIC_KC_CLIENT_ID || 'shop-frontend',
+      // Kunden-Self-Service-Portal (eigene SPA, geteilte Keycloak-SSO ebz-customers) — „Mein Konto".
+      portalUrl: process.env.NUXT_PUBLIC_PORTAL_URL || 'http://localhost:5175',
     },
   },
   app: {

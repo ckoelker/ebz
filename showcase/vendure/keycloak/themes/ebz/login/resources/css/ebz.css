@@ -1,0 +1,93 @@
+/* EBZ-Branding für die Keycloak-Login-/Registrierungsseiten (Realm ebz-customers).
+   EBZ-Navy #0F2140, Akzent-Gold #C69C4A. Überschreibt nur Farben/Hintergrund/Logo des
+   Eltern-PatternFly-Themes — Layout/Struktur bleiben unangetastet. */
+
+:root {
+  --ebz-navy: #0f2140;
+  --ebz-navy-700: #16305c;
+  --ebz-gold: #c69c4a;
+  --ebz-bg: #eef1f6;
+}
+
+/* Seitenhintergrund: dezenter EBZ-Navy-Verlauf */
+body.login-pf,
+.login-pf body,
+.pf-v5-c-background-image,
+html {
+  background: linear-gradient(160deg, var(--ebz-navy) 0%, var(--ebz-navy-700) 55%, #24467e 100%) !important;
+  background-attachment: fixed !important;
+}
+
+/* Kopfbereich → EBZ-Wortmarke statt Keycloak-Logo */
+#kc-header,
+#kc-header-wrapper {
+  color: #fff !important;
+  font-size: 0 !important;            /* Original-Text „Keycloak" ausblenden */
+  padding: 24px 0 10px !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+}
+#kc-header-wrapper::before {
+  content: "EBZ";
+  display: block;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  color: #fff;
+  line-height: 1;
+}
+#kc-header-wrapper::after {
+  content: "Akademie der Immobilienwirtschaft";
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  margin-top: 6px;
+  color: var(--ebz-gold);
+}
+
+/* Login-Karte */
+.card-pf,
+.pf-v5-c-card,
+#kc-content-wrapper .pf-v5-c-login__main,
+.pf-v5-c-login__main {
+  border-top: 4px solid var(--ebz-gold) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.28) !important;
+}
+
+/* Primär-Buttons in EBZ-Navy */
+.btn-primary,
+.pf-v5-c-button.pf-m-primary,
+input[type="submit"].pf-m-primary,
+#kc-login {
+  background-color: var(--ebz-navy) !important;
+  border-color: var(--ebz-navy) !important;
+  color: #fff !important;
+}
+.btn-primary:hover,
+.pf-v5-c-button.pf-m-primary:hover,
+#kc-login:hover {
+  background-color: var(--ebz-navy-700) !important;
+  border-color: var(--ebz-navy-700) !important;
+}
+
+/* Links + Fokus in EBZ-Navy */
+a,
+#kc-registration a,
+#kc-info a {
+  color: var(--ebz-navy-700) !important;
+}
+.pf-v5-c-form-control:focus,
+input:focus {
+  border-color: var(--ebz-navy-700) !important;
+  box-shadow: 0 0 0 2px rgba(22, 48, 92, 0.25) !important;
+}
+
+/* Social-Login-Buttons (Google) klarer abheben */
+#kc-social-providers .pf-v5-c-button,
+#kc-social-providers a {
+  border: 1px solid #d2d6dc !important;
+}
+#kc-social-providers .kc-social-provider-name {
+  font-weight: 600;
+}

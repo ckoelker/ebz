@@ -122,6 +122,22 @@ services:
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
       KC_HOSTNAME_STRICT: "false"
       KC_HTTP_ENABLED: "true"
+      # Eigenes EBZ-Login-Theme (vendure/keycloak/themes) aktivieren; Cache aus für Dev.
+      KC_SPI_THEME_WELCOME_THEME: keycloak
+      KC_SPI_THEME_CACHE_THEMES: "false"
+      KC_SPI_THEME_CACHE_TEMPLATES: "false"
+      # Google-IdP (Realm ebz-customers) — echte OAuth-Credentials per .env eintragen.
+      # Die Realm-JSON referenziert sie als ${GOOGLE_CLIENT_ID}/${GOOGLE_CLIENT_SECRET}.
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-google-client-id-nicht-konfiguriert}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-google-client-secret-nicht-konfiguriert}
+      # Twilio-SMS-OTP (SPI). Account-SID (AC…) steht immer in der API-URL; Auth wahlweise per
+      # Auth-Token ODER API-Key (SK…)+Secret; Absender = Nummer (+49…) ODER Messaging-Service (MG…).
+      # Ohne Werte protokolliert der Authenticator den Code (Dev-Fallback) statt echt zu senden.
+      SMS_TWILIO_ACCOUNT_SID: ${SMS_TWILIO_ACCOUNT_SID:-}
+      SMS_TWILIO_AUTH_TOKEN: ${SMS_TWILIO_AUTH_TOKEN:-}
+      SMS_TWILIO_API_KEY_SID: ${SMS_TWILIO_API_KEY_SID:-}
+      SMS_TWILIO_API_KEY_SECRET: ${SMS_TWILIO_API_KEY_SECRET:-}
+      SMS_TWILIO_SENDER: ${SMS_TWILIO_SENDER:-}
     ports:
       - "${KEYCLOAK_PORT:-8088}:8080"
       # Zusätzlicher Port für die EINE OIDC-URL, die Browser UND Container teilen
@@ -135,6 +151,9 @@ services:
           - keycloak.localhost
     volumes:
       - ./vendure/keycloak/realms:/opt/keycloak/data/import:ro
+      # EBZ-Login-Theme + SMS-OTP-SPI-JAR (providers) einhängen.
+      - ./vendure/keycloak/themes:/opt/keycloak/themes:ro
+      - ./vendure/keycloak/providers:/opt/keycloak/providers:ro
 
   adminer:
     image: adminer:latest

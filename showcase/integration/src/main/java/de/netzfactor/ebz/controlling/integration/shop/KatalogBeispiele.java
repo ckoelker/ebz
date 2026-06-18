@@ -71,8 +71,8 @@ public final class KatalogBeispiele {
     // ───────────────────────── Personen (CRM-Sync) ─────────────────────────
 
     public static final List<Person> ANSPRECHPARTNER = List.of(
-            new Person("crm-2001", "Sabine Brinkmann", "s.brinkmann@ebz-training.de", "+492311089800", "foto-brinkmann.png"),
-            new Person("crm-2002", "Thomas Reuter", "t.reuter@ebz-training.de", "+492311089810", "foto-reuter.png"));
+            new Person("crm-2001", "Sabine Brinkmann", "s.brinkmann@ebz-training.de", "+492311089800", "portrait-brinkmann.png"),
+            new Person("crm-2002", "Thomas Reuter", "t.reuter@ebz-training.de", "+492311089810", "portrait-reuter.png"));
 
     public static final List<Referent> DOZENTEN = List.of(
             new Referent("crm-3001", "Prof. Dr. Andrea Lindner",

@@ -14,6 +14,12 @@ interface CheckoutBody {
 }
 
 export default defineEventHandler(async (event) => {
+  // Login-Pflicht: der Checkout ist nur für angemeldete Kund:innen (kc_sub wird beim Login gesetzt).
+  // Keine Gastbuchung mehr — die Anmeldung erfolgt über die gebrandete Keycloak-Seite.
+  if (!getCookie(event, 'kc_sub')) {
+    throw createError({ statusCode: 401, statusMessage: 'Anmeldung erforderlich' })
+  }
+
   const b = await readBody<CheckoutBody>(event)
   if (!b?.email || !b.firstName || !b.lastName || !b.address?.streetLine1 || !b.paymentMethod) {
     throw createError({ statusCode: 400, statusMessage: 'Pflichtfelder fehlen' })

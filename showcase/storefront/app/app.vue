@@ -1,19 +1,9 @@
 <script setup lang="ts">
 // App-Shell der EBZ-Akademie-Storefront mit Burger-/Hauptmenü (P6): Collections + CMS-Seiten.
 const { count, refresh } = useCart()
-const { customer, istAngemeldet, fehler, busy, refresh: refreshAuth, login, logout } = useAuth()
+const { customer, istAngemeldet, refresh: refreshAuth, login, register, logout } = useAuth()
 // Warenkorb- + Login-Stand initial laden (client).
 onMounted(() => { refresh(); refreshAuth() })
-
-// Login-Dialog.
-const loginOffen = ref(false)
-const loginForm = reactive({ username: '', password: '' })
-async function anmelden() {
-  if (await login(loginForm.username, loginForm.password)) {
-    loginOffen.value = false
-    loginForm.password = ''
-  }
-}
 
 // Navigation serverseitig laden (Collections + veröffentlichte Menü-Seiten).
 const { data: nav } = await useFetch('/api/navigation')
@@ -21,6 +11,8 @@ const menuOffen = ref(false)
 // Menü bei Navigation schließen.
 const route = useRoute()
 watch(() => route.fullPath, () => { menuOffen.value = false })
+// „Mein Konto" → Kunden-Self-Service-Portal (eigene SPA, geteilte Keycloak-SSO).
+const portalUrl = useRuntimeConfig().public.portalUrl
 </script>
 
 <template>
@@ -41,15 +33,18 @@ watch(() => route.fullPath, () => { menuOffen.value = false })
           </NuxtLink>
         </div>
         <nav class="flex items-center gap-2 text-sm">
-          <UButton to="/" variant="ghost" color="neutral" class="hidden sm:inline-flex">Katalog</UButton>
+          <UButton v-if="route.path !== '/'" to="/" variant="ghost" color="neutral" class="hidden sm:inline-flex">Katalog</UButton>
           <UChip :text="count" :show="count > 0" color="primary" size="2xl">
             <UButton to="/warenkorb" variant="ghost" color="neutral" icon="i-lucide-shopping-cart" aria-label="Warenkorb" />
           </UChip>
           <template v-if="istAngemeldet">
-            <span class="hidden text-(--ui-text-muted) sm:inline">{{ customer?.firstName }}</span>
+            <UButton :to="portalUrl" target="_blank" variant="ghost" color="neutral" icon="i-lucide-user" :label="customer?.firstName" title="Mein Konto (Kundenportal)" />
             <UButton variant="ghost" color="neutral" icon="i-lucide-log-out" aria-label="Abmelden" @click="logout" />
           </template>
-          <UButton v-else variant="ghost" color="neutral" icon="i-lucide-user" @click="loginOffen = true">Anmelden</UButton>
+          <template v-else>
+            <UButton variant="ghost" color="neutral" icon="i-lucide-user" @click="login()">Anmelden</UButton>
+            <UButton variant="subtle" color="primary" class="hidden sm:inline-flex" @click="register()">Registrieren</UButton>
+          </template>
         </nav>
       </UContainer>
     </header>
@@ -98,21 +93,5 @@ watch(() => route.fullPath, () => { menuOffen.value = false })
       </UContainer>
     </footer>
 
-    <UModal v-model:open="loginOffen" title="Kunden-Login">
-      <template #body>
-        <form class="space-y-3" @submit.prevent="anmelden">
-          <UFormField label="Benutzername"><UInput v-model="loginForm.username" autocomplete="username" /></UFormField>
-          <UFormField label="Passwort"><UInput v-model="loginForm.password" type="password" autocomplete="current-password" /></UFormField>
-          <UAlert v-if="fehler" color="error" variant="subtle" :title="fehler" />
-          <p class="text-xs text-(--ui-text-muted)">Showcase-Login: customer / customer</p>
-        </form>
-      </template>
-      <template #footer>
-        <div class="flex justify-end gap-2">
-          <UButton variant="ghost" color="neutral" @click="loginOffen = false">Abbrechen</UButton>
-          <UButton color="primary" :loading="busy" @click="anmelden">Anmelden</UButton>
-        </div>
-      </template>
-    </UModal>
   </UApp>
 </template>

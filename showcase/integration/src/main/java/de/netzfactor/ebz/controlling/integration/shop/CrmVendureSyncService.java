@@ -74,7 +74,9 @@ public class CrmVendureSyncService {
     List<MA> ladeAktiveMitarbeiter() {
         List<MA> out = new ArrayList<>();
         for (Mitarbeiter m : Mitarbeiter.<Mitarbeiter>list("aktiv", true)) {
-            out.add(new MA("mitarbeiter-" + m.id, m.anzeigeName, m.email, m.foto));
+            // Stabiler Schlüssel = Keycloak-sub (Identitäts-Anker des Mitarbeiters); Fallback auf die DB-Id.
+            String key = m.keycloakSub != null && !m.keycloakSub.isBlank() ? m.keycloakSub : "mitarbeiter-" + m.id;
+            out.add(new MA(key, m.anzeigeName, m.email, m.foto));
         }
         return out;
     }

@@ -493,11 +493,10 @@ public class ShopInitService {
             Map<String, String> ids = new LinkedHashMap<>();
             List<String> apVorhanden = crmIds("ansprechpartner");
             for (Person p : KatalogBeispiele.ANSPRECHPARTNER) {
+                // Kein fotoAssetId: die Ansprechpartner-Fotos liefert der CRM→Vendure-Sync (Porträts aus
+                // mdm.mitarbeiter). fotoAssetId ausgelassen => der Upsert bewahrt ein bereits gesyncetes Foto.
                 Map<String, Object> input = obj("crmPersonId", p.crmPersonId(), "name", p.name(),
                         "email", p.email(), "telefon", p.telefon());
-                if (imageId != null) {
-                    input.put("fotoAssetId", imageId);
-                }
                 String id = m("upsertAnsprechpartner", "UpsertAnsprechpartnerInput!", input, field("id"))
                         .getJsonObject("upsertAnsprechpartner").getString("id");
                 ids.put(p.crmPersonId(), id);

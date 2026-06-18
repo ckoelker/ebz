@@ -1,73 +1,22 @@
 <script setup lang="ts">
-// Warenkorb (P4 + Teilnehmer-Erfassung): je Position eine Durchführung mit n Plätzen.
-// Pro Platz wird ein:e Teilnehmer:in strukturiert wie im MDM erfasst (Geschlecht/Titel/Vorname/
-// Nachname + Namensschild-Freitext). Menge = Anzahl Teilnehmer:innen. Entfernen mit Bestätigung.
-import type { Teilnehmer } from '~~/server/utils/order'
-
+// Warenkorb (öffentlich, ohne Login): Positionen + Menge/Plätze + Entfernen. Die Teilnehmer:innen-
+// Erfassung wandert in den Checkout (erst nach Login), ebenso die Pflichtprüfung. „Zur Kasse" ist
+// hier immer möglich — die Kasse erzwingt Anmeldung und Teilnehmerdaten.
 const { order, refresh, adjust, remove, busy } = useCart()
 await refresh()
 useHead({ title: 'Warenkorb' })
 
-const geschlechtOptions = [
-  { value: 'WEIBLICH', label: 'weiblich' },
-  { value: 'MAENNLICH', label: 'männlich' },
-  { value: 'DIVERS', label: 'divers' },
-  { value: 'KEINE_ANGABE', label: 'keine Angabe' },
-]
-
-function leer(): Teilnehmer {
-  return { geschlecht: '', titel: '', vorname: '', nachname: '', namensschild: '', email: '' }
-}
-
-// Teilnehmer:innen nur bei Seminaren/Veranstaltungen erfassen — nicht bei physischer Ware (Buch)
-// oder Digitalprodukten (Skript/WBT): dort ist der/die Besteller:in der/die Empfänger:in.
-function brauchtTeilnehmer(l: { productVariant: { customFields: { fulfillmentType: string | null } } }): boolean {
+// Seminare = je Platz später ein:e Teilnehmer:in; Buch/Skript/WBT = einfache Menge.
+function istSeminar(l: { productVariant: { customFields: { fulfillmentType: string | null } } }): boolean {
   return l.productVariant.customFields.fulfillmentType === 'seminar'
 }
 
-// Lokale Teilnehmer:innen-Liste je Seminar-Position (Länge = Menge), aus dem JSON-Feld initialisiert.
-const felder = reactive<Record<string, Teilnehmer[]>>({})
-watchEffect(() => {
-  for (const l of order.value?.lines ?? []) {
-    if (brauchtTeilnehmer(l) && !felder[l.id]) {
-      let liste: Teilnehmer[] = []
-      try {
-        liste = l.customFields.teilnehmer ? JSON.parse(l.customFields.teilnehmer) : []
-      } catch { liste = [] }
-      while (liste.length < l.quantity) liste.push(leer())
-      felder[l.id] = liste.slice(0, l.quantity)
-    }
-  }
-})
-
-async function speichern(lineId: string) {
-  await adjust(lineId, felder[lineId]!.length, felder[lineId])
-}
-async function teilnehmerHinzufuegen(lineId: string) {
-  felder[lineId]!.push(leer())
-  await speichern(lineId)
-}
-async function teilnehmerEntfernen(lineId: string) {
-  if (felder[lineId]!.length <= 1) return
-  felder[lineId]!.pop()
-  await speichern(lineId)
-}
-// Menge für Nicht-Seminar-Positionen (Buch/Skript/WBT) — ohne Teilnehmer:innen.
 async function mengeAendern(lineId: string, quantity: number) {
   if (quantity < 1) return
   await adjust(lineId, quantity)
 }
 
-function tnVollstaendig(t: Teilnehmer): boolean {
-  return !!(t.geschlecht && t.vorname?.trim() && t.nachname?.trim())
-}
-const allesVollstaendig = computed(() =>
-  (order.value?.lines ?? [])
-    .filter(brauchtTeilnehmer)
-    .every((l) => (felder[l.id] ?? []).length > 0 && (felder[l.id] ?? []).every(tnVollstaendig)),
-)
-
-// Entfernen (Position) mit Bestätigung.
+// Entfernen mit Bestätigung.
 const zuEntfernen = ref<string | null>(null)
 const modalOffen = computed({
   get: () => zuEntfernen.value !== null,
@@ -98,58 +47,22 @@ async function entfernenBestaetigen() {
             </div>
             <div class="text-right">
               <p class="font-semibold text-(--ui-primary)">{{ euro(l.linePriceWithTax, order.currencyCode) }}</p>
-              <p class="text-xs text-(--ui-text-muted)">{{ euro(l.unitPriceWithTax, order.currencyCode) }} / Platz</p>
-            </div>
-          </div>
-
-          <!-- Teilnehmer:innen (je Platz eine:r) — nur bei Seminaren/Veranstaltungen -->
-          <div v-if="brauchtTeilnehmer(l)" class="mt-4 space-y-4">
-            <div
-              v-for="(t, i) in felder[l.id] ?? []"
-              :key="i"
-              class="rounded-lg border border-(--ui-border) p-3"
-            >
-              <div class="mb-2 flex items-center justify-between">
-                <span class="text-sm font-medium text-(--ui-text-highlighted)">Teilnehmer:in {{ i + 1 }}</span>
-                <span v-if="!tnVollstaendig(t)" class="text-xs text-(--ui-warning)">Pflichtfelder offen</span>
-              </div>
-              <div class="grid gap-2 sm:grid-cols-2">
-                <UFormField label="Geschlecht *" size="sm">
-                  <USelect v-model="t.geschlecht" :items="geschlechtOptions" value-key="value" placeholder="bitte wählen" class="w-full" @update:model-value="speichern(l.id)" />
-                </UFormField>
-                <UFormField label="Titel" size="sm">
-                  <UInput v-model="t.titel" placeholder="z. B. Dr." @blur="speichern(l.id)" />
-                </UFormField>
-                <UFormField label="Vorname *" size="sm">
-                  <UInput v-model="t.vorname" @blur="speichern(l.id)" />
-                </UFormField>
-                <UFormField label="Nachname *" size="sm">
-                  <UInput v-model="t.nachname" @blur="speichern(l.id)" />
-                </UFormField>
-                <UFormField label="E-Mail" size="sm">
-                  <UInput v-model="t.email" type="email" @blur="speichern(l.id)" />
-                </UFormField>
-                <UFormField label="Namensschild (Freitext)" size="sm" help="z. B. Wunschname fürs Namensschild">
-                  <UInput v-model="t.namensschild" @blur="speichern(l.id)" />
-                </UFormField>
-              </div>
+              <p class="text-xs text-(--ui-text-muted)">{{ euro(l.unitPriceWithTax, order.currencyCode) }} / {{ istSeminar(l) ? 'Platz' : 'Stück' }}</p>
             </div>
           </div>
 
           <div class="mt-3 flex items-center justify-between">
-            <div v-if="brauchtTeilnehmer(l)" class="flex items-center gap-2">
-              <UButton size="xs" variant="outline" color="neutral" icon="i-lucide-user-minus" :disabled="busy || (felder[l.id]?.length ?? 1) <= 1" @click="teilnehmerEntfernen(l.id)" />
-              <span class="text-sm text-(--ui-text-muted)">{{ felder[l.id]?.length ?? l.quantity }} Teilnehmer:in(nen)</span>
-              <UButton size="xs" variant="outline" color="neutral" icon="i-lucide-user-plus" :disabled="busy" @click="teilnehmerHinzufuegen(l.id)" />
-            </div>
-            <div v-else class="flex items-center gap-2">
-              <span class="text-sm text-(--ui-text-muted)">Menge</span>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-(--ui-text-muted)">{{ istSeminar(l) ? 'Plätze' : 'Menge' }}</span>
               <UButton size="xs" variant="outline" color="neutral" icon="i-lucide-minus" :disabled="busy || l.quantity <= 1" @click="mengeAendern(l.id, l.quantity - 1)" />
               <span class="w-6 text-center text-sm">{{ l.quantity }}</span>
               <UButton size="xs" variant="outline" color="neutral" icon="i-lucide-plus" :disabled="busy" @click="mengeAendern(l.id, l.quantity + 1)" />
             </div>
             <UButton size="xs" variant="ghost" color="error" icon="i-lucide-trash-2" @click="zuEntfernen = l.id">Entfernen</UButton>
           </div>
+          <p v-if="istSeminar(l)" class="mt-2 text-xs text-(--ui-text-muted)">
+            Teilnehmer:innen geben Sie nach der Anmeldung im Checkout an.
+          </p>
         </UCard>
       </div>
 
@@ -165,8 +78,7 @@ async function entfernenBestaetigen() {
             <dt>Gesamt (inkl. USt.)</dt><dd class="text-(--ui-primary)">{{ euro(order.totalWithTax, order.currencyCode) }}</dd>
           </div>
         </dl>
-        <UButton to="/kasse" block class="mt-4" color="primary" icon="i-lucide-arrow-right" trailing :disabled="!allesVollstaendig">Zur Kasse</UButton>
-        <p v-if="!allesVollstaendig" class="mt-2 text-xs text-(--ui-warning)">Bitte für alle Teilnehmer:innen Geschlecht, Vor- und Nachname ausfüllen.</p>
+        <UButton to="/kasse" block class="mt-4" color="primary" icon="i-lucide-arrow-right" trailing>Zur Kasse</UButton>
         <UButton to="/" block class="mt-2" variant="ghost" color="neutral">Weiter einkaufen</UButton>
       </UCard>
     </div>

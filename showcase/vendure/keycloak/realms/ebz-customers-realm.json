@@ -3,8 +3,40 @@
   "enabled": true,
   "sslRequired": "none",
   "registrationAllowed": true,
+  "registrationEmailAsUsername": true,
   "loginWithEmailAllowed": true,
   "duplicateEmailsAllowed": false,
+  "verifyEmail": true,
+  "resetPasswordAllowed": true,
+  "loginTheme": "ebz",
+  "smtpServer": {
+    "host": "mailpit",
+    "port": "1025",
+    "from": "no-reply@ebz-training.de",
+    "fromDisplayName": "EBZ Akademie",
+    "ssl": "false",
+    "starttls": "false",
+    "auth": "false"
+  },
+  "identityProviders": [
+    {
+      "alias": "google",
+      "displayName": "Google",
+      "providerId": "google",
+      "enabled": true,
+      "trustEmail": true,
+      "storeToken": false,
+      "addReadTokenRoleOnCreate": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "config": {
+        "clientId": "${GOOGLE_CLIENT_ID:google-client-id-nicht-konfiguriert}",
+        "clientSecret": "${GOOGLE_CLIENT_SECRET:google-client-secret-nicht-konfiguriert}",
+        "useJwksUrl": "true",
+        "syncMode": "IMPORT",
+        "defaultScope": "openid profile email"
+      }
+    }
+  ],
   "clients": [
     {
       "clientId": "shop-frontend",
@@ -25,7 +57,7 @@
       "protocol": "openid-connect",
       "attributes": {
         "pkce.code.challenge.method": "S256",
-        "post.logout.redirect.uris": "http://localhost:5173/*"
+        "post.logout.redirect.uris": "http://localhost:3001/*##http://localhost:5173/*"
       }
     },
     {

@@ -41,3 +41,31 @@ export async function einschreibenWbt(
     body: payload,
   })
 }
+
+export interface TeilnehmerVorschlag {
+  vorname: string
+  nachname: string
+  titel: string | null
+  geschlecht: string | null
+  email: string | null
+}
+
+/**
+ * Teilnehmer-Vorschläge (Personen der Käufer-Organisation) aus dem Integration-Backend holen.
+ * Identifikation der Besteller:in über Login-E-Mail bzw. Keycloak-sub. Best-effort: bei Fehler [].
+ */
+export async function teilnehmerVorschlaege(email: string | null, sub: string | null): Promise<TeilnehmerVorschlag[]> {
+  if (!email && !sub) return []
+  const cfg = useRuntimeConfig()
+  try {
+    const token = await serviceToken()
+    const query = new URLSearchParams()
+    if (email) query.set('email', email)
+    if (sub) query.set('sub', sub)
+    return await $fetch<TeilnehmerVorschlag[]>(`${cfg.integrationUrl}/shop/teilnehmer-vorschlaege?${query}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  } catch {
+    return []
+  }
+}

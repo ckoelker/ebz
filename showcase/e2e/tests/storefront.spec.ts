@@ -75,8 +75,15 @@ test('Katalog P3: Sortierung nach Titel (API)', async ({ request }) => {
   expect(namen).toEqual(sortiert);
 });
 
-test('Katalog P4: Gast-Checkout end-to-end (Warenkorb → Bestellung)', async ({ request }) => {
-  // request-Fixture hält Cookies (vendure_token) über die Aufrufe → eine Session.
+test('Katalog P4: Checkout end-to-end nur angemeldet (Warenkorb → Bestellung)', async ({ request }) => {
+  // request-Fixture hält Cookies (vendure_token, kc_sub) über die Aufrufe → eine Session.
+  // Checkout erzwingt Login: zuerst Kunden-SSO binden (kc_sub-Cookie), sonst 401.
+  const kc = process.env.KEYCLOAK_URL || 'http://localhost:8088';
+  const token = (await (await request.post(`${kc}/realms/ebz-customers/protocol/openid-connect/token`, {
+    form: { grant_type: 'password', client_id: 'shop-frontend', username: 'customer', password: 'customer' },
+  })).json()).access_token as string;
+  await request.post(`${STOREFRONT}/api/auth/keycloak`, { data: { token } });
+
   const prod = await (await request.get(`${STOREFRONT}/api/product?slug=online-seminar-betriebskostenabrechnung`)).json();
   const variantId = prod.variants[0].id;
 
@@ -89,9 +96,9 @@ test('Katalog P4: Gast-Checkout end-to-end (Warenkorb → Bestellung)', async ({
 
   const res = await request.post(`${STOREFRONT}/api/checkout`, {
     data: {
-      email: 'gast@example.de',
-      firstName: 'Gabi',
-      lastName: 'Gast',
+      email: 'customer@ebz.de',
+      firstName: 'Carla',
+      lastName: 'Kundin',
       address: { streetLine1: 'Teststr. 1', city: 'Bochum', postalCode: '44801', countryCode: 'DE' },
       paymentMethod: 'rechnung',
     },
@@ -102,12 +109,25 @@ test('Katalog P4: Gast-Checkout end-to-end (Warenkorb → Bestellung)', async ({
   expect(order.state).toBe('PaymentSettled');
 });
 
-test('Katalog P4: Detailseite zeigt aktiven Warenkorb-Button + Kasse leer (SSR)', async ({ request }) => {
+test('Katalog P4: Checkout ohne Login wird abgewiesen (401)', async ({ request }) => {
+  const prod = await (await request.get(`${STOREFRONT}/api/product?slug=online-seminar-betriebskostenabrechnung`)).json();
+  await request.post(`${STOREFRONT}/api/cart`, { data: { variantId: prod.variants[0].id } });
+  const res = await request.post(`${STOREFRONT}/api/checkout`, {
+    data: {
+      email: 'gast@example.de', firstName: 'Gabi', lastName: 'Gast',
+      address: { streetLine1: 'Teststr. 1', city: 'Bochum', postalCode: '44801', countryCode: 'DE' },
+      paymentMethod: 'rechnung',
+    },
+  });
+  expect(res.status()).toBe(401);
+});
+
+test('Katalog P4: Detailseite zeigt Warenkorb-Button + Kasse verlangt Login (SSR)', async ({ request }) => {
   const detail = await (await request.get(`${STOREFRONT}/online-seminar-betriebskostenabrechnung?termin=SVA015729`)).text();
   expect(detail).toContain('In den Warenkorb');
-  // Frische Session (eigener request-Context ohne Cookies) → leere Kasse.
+  // Frische Session (ohne Cookies) → Kasse zeigt die Login-Pflicht.
   const kasse = await (await request.get(`${STOREFRONT}/kasse`)).text();
-  expect(kasse).toMatch(/Warenkorb ist leer|Kontakt/);
+  expect(kasse).toContain('Anmeldung erforderlich');
 });
 
 test('Kunden-SSO: Keycloak-Login bindet Vendure-Customer an die Session', async ({ request }) => {
@@ -155,6 +175,26 @@ test('P7c: Eingeloggter WBT-Checkout läuft durch (Einschreibungs-Trigger best-e
   expect((await res.json()).state).toBe('PaymentSettled');
 });
 
+test('Checkout: Teilnehmer-Picker liefert Personen der Käufer-Organisation', async ({ request }) => {
+  const kc = process.env.KEYCLOAK_URL || 'http://localhost:8088';
+  const token = (await (await request.post(`${kc}/realms/ebz-customers/protocol/openid-connect/token`, {
+    form: { grant_type: 'password', client_id: 'shop-frontend', username: 'customer', password: 'customer' },
+  })).json()).access_token as string;
+  await request.post(`${STOREFRONT}/api/auth/keycloak`, { data: { token } });
+
+  const liste = await (await request.get(`${STOREFRONT}/api/participants`)).json();
+  const namen = liste.map((p: { vorname: string; nachname: string }) => `${p.vorname} ${p.nachname}`);
+  expect(namen).toContain('Carla Kundin');
+  expect(namen).toContain('Jens Hofmann');
+  expect(namen).toContain('Petra Albrecht');
+});
+
+test('Checkout: Teilnehmer-Picker ohne Login ist leer', async ({ request }) => {
+  const liste = await (await request.get(`${STOREFRONT}/api/participants`)).json();
+  expect(Array.isArray(liste)).toBeTruthy();
+  expect(liste.length).toBe(0);
+});
+
 test('Katalog P7: Frühbucherrabatt greift automatisch (Termin in der Zukunft)', async ({ request }) => {
   const prod = await (await request.get(`${STOREFRONT}/api/product?slug=online-seminar-betriebskostenabrechnung`)).json();
   const cart = await (await request.post(`${STOREFRONT}/api/cart`, { data: { variantId: prod.variants[0].id } })).json();
@@ -187,6 +227,20 @@ test('Katalog P6: CMS-Seite wird serverseitig gerendert + Menü im Home-SSR', as
   // Nicht-Menü-Seite ist dennoch direkt erreichbar.
   const agb = await request.get(`${STOREFRONT}/seite/agb`);
   expect(agb.status()).toBe(200);
+});
+
+test('Login-Redirect: Anmelden → gebrandete Keycloak-Seite → zurück angemeldet', async ({ page }) => {
+  await page.goto(`${STOREFRONT}/`, { waitUntil: 'networkidle' });
+  await page.getByRole('button', { name: 'Anmelden' }).click();
+  // Auf der Keycloak-Login-Seite (EBZ-Theme lädt ebz.css).
+  await page.waitForURL(/\/realms\/ebz-customers\/.*\/auth/);
+  await expect(page.locator('link[href*="login/ebz/css/ebz.css"]')).toHaveCount(1);
+  await page.locator('#username').fill('customer@ebz.de');
+  await page.locator('#password').fill('customer');
+  await page.locator('#kc-login').click();
+  // Zurück in der Storefront, angemeldet (Vorname im Header).
+  await page.waitForURL(`${STOREFRONT}/**`);
+  await expect(page.getByText('Carla')).toBeVisible({ timeout: 15000 });
 });
 
 test('Vertragsangebot zeigt Anmelde-Deeplink statt Warenkorb', async ({ request }) => {

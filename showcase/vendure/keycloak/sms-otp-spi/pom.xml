@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>de.netzfactor.ebz</groupId>
+  <artifactId>keycloak-sms-otp</artifactId>
+  <version>1.0.0</version>
+  <packaging>jar</packaging>
+  <name>EBZ Keycloak SMS-OTP Authenticator (Twilio)</name>
+
+  <!--
+    SMS-OTP-Authenticator für die Registrierungs-Verifizierung (Twilio). Bewusst OHNE Twilio-SDK:
+    der Versand läuft über den JDK-HttpClient direkt gegen die Twilio-REST-API → keine zusätzlichen
+    Abhängigkeiten, kein Shading/Klassenpfad-Konflikt in Keycloak. Alle Keycloak-Deps sind `provided`
+    (vom Server zur Laufzeit gestellt). Ergebnis-JAR wird nach ../providers gelegt.
+  -->
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <keycloak.version>26.2.5</keycloak.version>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-server-spi</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-server-spi-private</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.keycloak</groupId>
+      <artifactId>keycloak-services</artifactId>
+      <version>${keycloak.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <finalName>keycloak-sms-otp</finalName>
+  </build>
+</project>
