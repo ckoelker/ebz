@@ -13,8 +13,15 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "rootUrl": "http://localhost:5173",
-      "redirectUris": ["http://localhost:5173/*"],
-      "webOrigins": ["http://localhost:5173", "+"],
+      "redirectUris": [
+        "http://localhost:3001/*",
+        "http://localhost:5173/*"
+      ],
+      "webOrigins": [
+        "+",
+        "http://localhost:3001",
+        "http://localhost:5173"
+      ],
       "protocol": "openid-connect",
       "attributes": {
         "pkce.code.challenge.method": "S256",
@@ -28,8 +35,13 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": true,
       "rootUrl": "http://localhost:5175",
-      "redirectUris": ["http://localhost:5175/*"],
-      "webOrigins": ["http://localhost:5175", "+"],
+      "redirectUris": [
+        "http://localhost:5175/*"
+      ],
+      "webOrigins": [
+        "http://localhost:5175",
+        "+"
+      ],
       "protocol": "openid-connect",
       "attributes": {
         "pkce.code.challenge.method": "S256",
@@ -44,8 +56,13 @@
       "standardFlowEnabled": true,
       "directAccessGrantsEnabled": false,
       "rootUrl": "http://localhost:8089",
-      "redirectUris": ["http://localhost:8089/*"],
-      "webOrigins": ["http://localhost:8089", "+"],
+      "redirectUris": [
+        "http://localhost:8089/*"
+      ],
+      "webOrigins": [
+        "http://localhost:8089",
+        "+"
+      ],
       "protocol": "openid-connect",
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:8089/*"
@@ -60,7 +77,13 @@
       "enabled": true,
       "firstName": "Carla",
       "lastName": "Kundin",
-      "credentials": [{ "type": "password", "value": "customer", "temporary": false }]
+      "credentials": [
+        {
+          "type": "password",
+          "value": "customer",
+          "temporary": false
+        }
+      ]
     }
   ]
 }

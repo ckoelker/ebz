@@ -110,6 +110,29 @@ test('Katalog P4: Detailseite zeigt aktiven Warenkorb-Button + Kasse leer (SSR)'
   expect(kasse).toMatch(/Warenkorb ist leer|Kontakt/);
 });
 
+test('Kunden-SSO: Keycloak-Login bindet Vendure-Customer an die Session', async ({ request }) => {
+  const kc = process.env.KEYCLOAK_URL || 'http://localhost:8088';
+  // Token im „Browser" (hier: Test) holen (Realm ebz-customers, Direct Grant).
+  const tokRes = await request.post(`${kc}/realms/ebz-customers/protocol/openid-connect/token`, {
+    form: { grant_type: 'password', client_id: 'shop-frontend', username: 'customer', password: 'customer' },
+  });
+  const token = (await tokRes.json()).access_token as string;
+  expect(token).toBeTruthy();
+
+  const login = await request.post(`${STOREFRONT}/api/auth/keycloak`, { data: { token } });
+  expect(login.status()).toBe(200);
+  const cust = await login.json();
+  expect(cust.emailAddress).toBe('customer@ebz.de');
+
+  // Session bleibt bestehen (vendure_token-Cookie via request-Fixture).
+  const me = await (await request.get(`${STOREFRONT}/api/auth/me`)).json();
+  expect(me.firstName).toBe('Carla');
+
+  await request.post(`${STOREFRONT}/api/auth/logout`);
+  const after = await request.get(`${STOREFRONT}/api/auth/me`);
+  expect(await after.text()).not.toContain('Carla');
+});
+
 test('Katalog P7: Frühbucherrabatt greift automatisch (Termin in der Zukunft)', async ({ request }) => {
   const prod = await (await request.get(`${STOREFRONT}/api/product?slug=online-seminar-betriebskostenabrechnung`)).json();
   const cart = await (await request.post(`${STOREFRONT}/api/cart`, { data: { variantId: prod.variants[0].id } })).json();

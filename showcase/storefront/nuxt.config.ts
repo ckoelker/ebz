@@ -15,6 +15,18 @@ export default defineNuxtConfig({
   runtimeConfig: {
     // Serverseitig: Container-URL (http://server:3000), Dev-Default localhost.
     shopApiUrl: process.env.SHOP_API_URL || 'http://localhost:3000/shop-api',
+    // Integration-Backend (server-only) für die E-Learning-Einschreibung (P7c).
+    integrationUrl: process.env.INTEGRATION_URL || 'http://localhost:8090',
+    // Service-Account (client_credentials) im Staff-Realm für den Einschreibungs-Trigger.
+    kcStaffTokenUrl: process.env.KC_STAFF_TOKEN_URL || 'http://localhost:8088/realms/ebz-staff/protocol/openid-connect/token',
+    kcServiceClientId: process.env.KC_SERVICE_CLIENT_ID || 'storefront-service',
+    kcServiceClientSecret: process.env.KC_SERVICE_CLIENT_SECRET || '',
+    public: {
+      // Browser-seitiges Kunden-SSO (Keycloak ebz-customers); localhost:8088 = korrekter Token-Issuer.
+      kcUrl: process.env.NUXT_PUBLIC_KC_URL || 'http://localhost:8088',
+      kcRealm: process.env.NUXT_PUBLIC_KC_REALM || 'ebz-customers',
+      kcClientId: process.env.NUXT_PUBLIC_KC_CLIENT_ID || 'shop-frontend',
+    },
   },
   app: {
     head: {

@@ -1,8 +1,19 @@
 <script setup lang="ts">
 // App-Shell der EBZ-Akademie-Storefront mit Burger-/Hauptmenü (P6): Collections + CMS-Seiten.
 const { count, refresh } = useCart()
-// Warenkorb-Stand initial laden (client) → Badge im Header.
-onMounted(() => { refresh() })
+const { customer, istAngemeldet, fehler, busy, refresh: refreshAuth, login, logout } = useAuth()
+// Warenkorb- + Login-Stand initial laden (client).
+onMounted(() => { refresh(); refreshAuth() })
+
+// Login-Dialog.
+const loginOffen = ref(false)
+const loginForm = reactive({ username: '', password: '' })
+async function anmelden() {
+  if (await login(loginForm.username, loginForm.password)) {
+    loginOffen.value = false
+    loginForm.password = ''
+  }
+}
 
 // Navigation serverseitig laden (Collections + veröffentlichte Menü-Seiten).
 const { data: nav } = await useFetch('/api/navigation')
@@ -34,6 +45,11 @@ watch(() => route.fullPath, () => { menuOffen.value = false })
           <UChip :text="count" :show="count > 0" color="primary" size="2xl">
             <UButton to="/warenkorb" variant="ghost" color="neutral" icon="i-lucide-shopping-cart" aria-label="Warenkorb" />
           </UChip>
+          <template v-if="istAngemeldet">
+            <span class="hidden text-(--ui-text-muted) sm:inline">{{ customer?.firstName }}</span>
+            <UButton variant="ghost" color="neutral" icon="i-lucide-log-out" aria-label="Abmelden" @click="logout" />
+          </template>
+          <UButton v-else variant="ghost" color="neutral" icon="i-lucide-user" @click="loginOffen = true">Anmelden</UButton>
         </nav>
       </UContainer>
     </header>
@@ -81,5 +97,22 @@ watch(() => route.fullPath, () => { menuOffen.value = false })
         </span>
       </UContainer>
     </footer>
+
+    <UModal v-model:open="loginOffen" title="Kunden-Login">
+      <template #body>
+        <form class="space-y-3" @submit.prevent="anmelden">
+          <UFormField label="Benutzername"><UInput v-model="loginForm.username" autocomplete="username" /></UFormField>
+          <UFormField label="Passwort"><UInput v-model="loginForm.password" type="password" autocomplete="current-password" /></UFormField>
+          <UAlert v-if="fehler" color="error" variant="subtle" :title="fehler" />
+          <p class="text-xs text-(--ui-text-muted)">Showcase-Login: customer / customer</p>
+        </form>
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2">
+          <UButton variant="ghost" color="neutral" @click="loginOffen = false">Abbrechen</UButton>
+          <UButton color="primary" :loading="busy" @click="anmelden">Anmelden</UButton>
+        </div>
+      </template>
+    </UModal>
   </UApp>
 </template>

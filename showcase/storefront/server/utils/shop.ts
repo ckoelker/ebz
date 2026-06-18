@@ -16,7 +16,9 @@ export async function shopGql<T>(
   variables: Record<string, unknown> = {},
 ): Promise<T> {
   const config = useRuntimeConfig()
-  const token = getCookie(event, TOKEN_COOKIE)
+  // In-Request-Kontinuität: ein zuvor (im selben Request) rotiertes Token steht in der Cookie noch
+  // nicht zur Verfügung → über event.context durchreichen, damit Folge-Calls dieselbe Session nutzen.
+  const token = (event.context.vendureToken as string | undefined) ?? getCookie(event, TOKEN_COOKIE)
   const headers: Record<string, string> = { 'content-type': 'application/json' }
   if (token) headers.Authorization = `Bearer ${token}`
 
@@ -29,6 +31,7 @@ export async function shopGql<T>(
   // Token-Erneuerung übernehmen (neuer/rotierter Session-Token).
   const newToken = res.headers.get('vendure-auth-token')
   if (newToken && newToken !== token) {
+    event.context.vendureToken = newToken
     setCookie(event, TOKEN_COOKIE, newToken, {
       httpOnly: true,
       sameSite: 'lax',
