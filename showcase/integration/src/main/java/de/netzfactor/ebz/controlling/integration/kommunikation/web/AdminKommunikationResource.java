@@ -126,8 +126,12 @@ public class AdminKommunikationResource {
     public record GruppeView(Long id, String name, String beschreibung, String quelle, int anzahl) {
     }
 
-    /** Anlegen/Pflege: {@code quelle}=MANUELL|ORGANISATION; {@code organisationId} nur bei ORGANISATION. */
-    public record GruppeDto(String name, String beschreibung, String quelle, Long organisationId) {
+    /**
+     * Anlegen/Pflege: {@code quelle}=MANUELL|ORGANISATION|BILDUNGSANGEBOT; {@code organisationId} nur bei
+     * ORGANISATION, {@code bildungsangebotId} nur bei BILDUNGSANGEBOT (Kohorte).
+     */
+    public record GruppeDto(String name, String beschreibung, String quelle, Long organisationId,
+            Long bildungsangebotId) {
     }
 
     public record MitgliedDto(Long personId) {
@@ -153,9 +157,11 @@ public class AdminKommunikationResource {
     @Transactional
     public GruppeView gruppeAnlegen(GruppeDto dto) {
         Quelle q = dto.quelle() == null ? Quelle.MANUELL : Quelle.valueOf(dto.quelle());
-        Personengruppe g = q == Quelle.ORGANISATION
-                ? gruppen.anlegenOrganisation(dto.name(), dto.beschreibung(), dto.organisationId())
-                : gruppen.anlegenManuell(dto.name(), dto.beschreibung());
+        Personengruppe g = switch (q) {
+            case ORGANISATION -> gruppen.anlegenOrganisation(dto.name(), dto.beschreibung(), dto.organisationId());
+            case BILDUNGSANGEBOT -> gruppen.anlegenKohorte(dto.name(), dto.beschreibung(), dto.bildungsangebotId());
+            case MANUELL -> gruppen.anlegenManuell(dto.name(), dto.beschreibung());
+        };
         return toGruppeView(g);
     }
 

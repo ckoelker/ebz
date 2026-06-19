@@ -46,6 +46,12 @@ public class GruppenService {
         return anlegen(name, beschreibung, Quelle.ORGANISATION, organisationId);
     }
 
+    /** Abgeleitete Kohorte (K3b): alle Teilnehmenden eines Bildungsangebots (Seminar/Berufsschulklasse). */
+    @Transactional
+    public Personengruppe anlegenKohorte(String name, String beschreibung, Long bildungsangebotId) {
+        return anlegen(name, beschreibung, Quelle.BILDUNGSANGEBOT, bildungsangebotId);
+    }
+
     private Personengruppe anlegen(String name, String beschreibung, Quelle quelle, Long refId) {
         Personengruppe g = new Personengruppe();
         g.name = name;

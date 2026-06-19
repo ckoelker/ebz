@@ -19,8 +19,15 @@ const busy = ref(false);
 
 // Anlegen
 const dialogOffen = ref(false);
-const neu = ref({ name: '', beschreibung: '', quelle: 'MANUELL', organisationId: undefined as number | undefined });
-const quellen = [{ label: 'Manuell', value: 'MANUELL' }, { label: 'Organisations-Kreis', value: 'ORGANISATION' }];
+const neu = ref({
+  name: '', beschreibung: '', quelle: 'MANUELL',
+  organisationId: undefined as number | undefined, bildungsangebotId: undefined as number | undefined,
+});
+const quellen = [
+  { label: 'Manuell', value: 'MANUELL' },
+  { label: 'Organisations-Kreis', value: 'ORGANISATION' },
+  { label: 'Kohorte (Bildungsangebot)', value: 'BILDUNGSANGEBOT' },
+];
 
 // Mitglied hinzufügen
 const neuesMitglied = ref<number | undefined>(undefined);
@@ -53,6 +60,9 @@ async function anlegen() {
   if (neu.value.quelle === 'ORGANISATION' && !neu.value.organisationId) {
     meldung.value = { text: 'Bitte die Organisations-ID angeben.', severity: 'error' }; return;
   }
+  if (neu.value.quelle === 'BILDUNGSANGEBOT' && !neu.value.bildungsangebotId) {
+    meldung.value = { text: 'Bitte die Bildungsangebot-ID angeben.', severity: 'error' }; return;
+  }
   busy.value = true;
   try {
     await gruppeAnlegen({
@@ -60,9 +70,10 @@ async function anlegen() {
       beschreibung: neu.value.beschreibung.trim() || undefined,
       quelle: neu.value.quelle,
       organisationId: neu.value.quelle === 'ORGANISATION' ? neu.value.organisationId : undefined,
+      bildungsangebotId: neu.value.quelle === 'BILDUNGSANGEBOT' ? neu.value.bildungsangebotId : undefined,
     });
     dialogOffen.value = false;
-    neu.value = { name: '', beschreibung: '', quelle: 'MANUELL', organisationId: undefined };
+    neu.value = { name: '', beschreibung: '', quelle: 'MANUELL', organisationId: undefined, bildungsangebotId: undefined };
     await neuLaden();
   } catch (e) { fehler(e); } finally { busy.value = false; }
 }
@@ -107,6 +118,15 @@ function fehler(e: unknown) {
 }
 
 const istManuell = computed(() => aktiv.value?.quelle === 'MANUELL');
+
+function quelleKurz(q?: string): string {
+  return q === 'ORGANISATION' ? 'Org' : q === 'BILDUNGSANGEBOT' ? 'Kohorte' : 'manuell';
+}
+function quelleLang(q?: string): string {
+  return q === 'ORGANISATION' ? 'Organisations-Kreis (dynamisch)'
+    : q === 'BILDUNGSANGEBOT' ? 'Bildungsangebot-Kohorte (dynamisch)'
+    : 'Manueller Verteiler';
+}
 </script>
 
 <template>
@@ -136,8 +156,8 @@ const istManuell = computed(() => aktiv.value?.quelle === 'MANUELL');
             @click="aktiv = g">
             <div class="flex items-center gap-2">
               <span class="font-semibold truncate">{{ g.name }}</span>
-              <UBadge :color="g.quelle === 'ORGANISATION' ? 'info' : 'neutral'" variant="soft" size="xs">
-                {{ g.quelle === 'ORGANISATION' ? 'Org' : 'manuell' }}
+              <UBadge :color="g.quelle === 'MANUELL' ? 'neutral' : 'info'" variant="soft" size="xs">
+                {{ quelleKurz(g.quelle) }}
               </UBadge>
               <span class="ml-auto text-dimmed text-xs shrink-0">{{ g.anzahl }} Mitgl.</span>
             </div>
@@ -152,8 +172,7 @@ const istManuell = computed(() => aktiv.value?.quelle === 'MANUELL');
               <div>
                 <div class="font-semibold text-lg">{{ aktiv.name }}</div>
                 <div class="text-sm text-dimmed">
-                  {{ aktiv.quelle === 'ORGANISATION' ? 'Organisations-Kreis (dynamisch)' : 'Manueller Verteiler' }}
-                  · {{ aktiv.anzahl }} Empfänger
+                  {{ quelleLang(aktiv.quelle) }} · {{ aktiv.anzahl }} Empfänger
                 </div>
               </div>
               <UButton color="error" variant="ghost" size="sm" icon="i-lucide-trash-2"
@@ -173,7 +192,9 @@ const istManuell = computed(() => aktiv.value?.quelle === 'MANUELL');
               </div>
             </div>
             <UAlert v-else color="info" variant="soft" class="mb-5"
-              title="Organisations-Kreis: die Mitglieder werden zum Sendezeitpunkt aus den Mitgliedschaften aufgelöst." />
+              :title="aktiv.quelle === 'BILDUNGSANGEBOT'
+                ? 'Kohorte: die Teilnehmenden werden zum Sendezeitpunkt aus den Anmeldungen aufgelöst.'
+                : 'Organisations-Kreis: die Mitglieder werden zum Sendezeitpunkt aus den Mitgliedschaften aufgelöst.'" />
 
             <!-- Broadcast -->
             <h3 class="font-semibold text-sm mb-2">Broadcast senden</h3>
@@ -202,6 +223,10 @@ const istManuell = computed(() => aktiv.value?.quelle === 'MANUELL');
           <UFormField v-if="neu.quelle === 'ORGANISATION'" label="Organisations-ID"
             help="Alle Personen mit Mitgliedschaft in dieser Organisation.">
             <UInputNumber v-model="neu.organisationId" :min="1" class="w-full" />
+          </UFormField>
+          <UFormField v-if="neu.quelle === 'BILDUNGSANGEBOT'" label="Bildungsangebot-ID"
+            help="Alle Teilnehmenden dieses Angebots (Seminar/Berufsschulklasse), zum Sendezeitpunkt aufgelöst.">
+            <UInputNumber v-model="neu.bildungsangebotId" :min="1" class="w-full" />
           </UFormField>
         </div>
       </template>

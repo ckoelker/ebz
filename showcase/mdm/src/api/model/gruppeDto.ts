@@ -10,4 +10,5 @@ export interface GruppeDto {
   beschreibung?: string;
   quelle?: string;
   organisationId?: number;
+  bildungsangebotId?: number;
 }

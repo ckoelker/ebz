@@ -3,11 +3,13 @@ package de.netzfactor.ebz.controlling.integration.kommunikation.adapter;
 import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Personengruppe;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Personengruppe.Mitglied;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.EmpfaengerAufloesung;
+import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.KohortenAuskunft;
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 
 /**
@@ -22,6 +24,9 @@ import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 @ApplicationScoped
 public class GruppenAufloesungAdapter implements EmpfaengerAufloesung {
 
+    @Inject
+    KohortenAuskunft kohorten;
+
     @Override
     @Transactional
     public List<Long> mitglieder(Long gruppeId) {
@@ -35,7 +40,8 @@ public class GruppenAufloesungAdapter implements EmpfaengerAufloesung {
             case ORGANISATION -> g.quelleRefId == null ? List.of()
                     : Mitgliedschaft.<Mitgliedschaft>list("organisation.id", g.quelleRefId).stream()
                             .map(m -> m.person.id).distinct().toList();
-            case BILDUNGSANGEBOT -> List.of(); // K3b: Auflösung über inbound-SPI aus dem rechnung-Modul
+            // K3b: Kohorte aus dem rechnung-Modul über die inbound-SPI (rechnung implementiert sie).
+            case BILDUNGSANGEBOT -> kohorten.teilnehmerPersonIds(g.quelleRefId);
         };
     }
 }

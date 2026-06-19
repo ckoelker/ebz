@@ -52,6 +52,20 @@ public final class Ports {
         List<Long> mitglieder(Long gruppeId);
     }
 
+    /**
+     * <b>Inbound-SPI</b> (K3b): die Auflösung einer Bildungsangebot-Kohorte (Seminar-TN/Berufsschulklasse)
+     * hängt an {@code rechnung.Anmeldung} — was {@code kommunikation} per ArchUnit nicht importieren darf
+     * (keine Kopplung an volatile Domänenmodule). Deshalb <i>definiert</i> {@code kommunikation} nur diesen
+     * Vertrag; das {@code rechnung}-Modul <i>implementiert</i> ihn (erlaubte Richtung {@code rechnung→kommunikation}).
+     * Fehlt eine Implementierung, bleibt die Kohorte leer (Default-Methode), ohne den Kern zu brechen.
+     */
+    public interface KohortenAuskunft {
+        /** Person-IDs der Teilnehmenden eines Bildungsangebots (zum Sendezeitpunkt, ohne stornierte). */
+        default List<Long> teilnehmerPersonIds(Long bildungsangebotId) {
+            return List.of();
+        }
+    }
+
     /** Auflösung Token-{@code sub} ↔ Party-Identität (ACL→party/keycloak) für die Sicht-Autorisierung (ab K1). */
     public interface IdentitaetsPort {
         /** Person-ID zum Keycloak-{@code sub} (oder {@code null}). */

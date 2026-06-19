@@ -26,7 +26,8 @@ export const PostKommunikationAdminGruppenBody = zod.object({
   "name": zod.string().optional(),
   "beschreibung": zod.string().optional(),
   "quelle": zod.string().optional(),
-  "organisationId": zod.number().optional()
+  "organisationId": zod.number().optional(),
+  "bildungsangebotId": zod.number().optional()
 })
 
 export const PostKommunikationAdminGruppenResponse = zod.object({
