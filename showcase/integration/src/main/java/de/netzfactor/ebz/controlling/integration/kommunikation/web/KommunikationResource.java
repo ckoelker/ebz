@@ -1,6 +1,7 @@
 package de.netzfactor.ebz.controlling.integration.kommunikation.web;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.List;
 
 import io.quarkus.security.Authenticated;
@@ -14,6 +15,7 @@ import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
+import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Context;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
@@ -23,9 +25,12 @@ import org.eclipse.microprofile.openapi.annotations.Operation;
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 
+import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp.Kategorie;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.BenachrichtigungsEinstellung;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.EinstellungService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.KommunikationApi;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.PraeferenzService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.IdentitaetsPort;
@@ -48,6 +53,9 @@ public class KommunikationResource {
 
     @Inject
     PraeferenzService praeferenzen;
+
+    @Inject
+    EinstellungService einstellungen;
 
     @Inject
     IdentitaetsPort identitaet;
@@ -122,10 +130,10 @@ public class KommunikationResource {
         return realtime.stream(personId);
     }
 
-    public record PraeferenzView(String kanal, boolean aktiv) {
+    public record PraeferenzView(String kanal, String kategorie, boolean aktiv) {
     }
 
-    /** Kanal-Präferenzen der Person (nicht gesetzte Kanäle gelten als aktiv). */
+    /** Kanal-Präferenzen der Person ({@code kategorie=null} = global; gesetzt = Override je Kategorie). */
     @Authenticated
     @GET
     @Path("/praeferenzen")
@@ -133,25 +141,55 @@ public class KommunikationResource {
     public List<PraeferenzView> praeferenzen(@Context SecurityContext ctx) {
         Long personId = mussAufrufer(ctx);
         return praeferenzen.fuer(personId).stream()
-                .map(p -> new PraeferenzView(p.kanal.name(), p.aktiv)).toList();
+                .map(p -> new PraeferenzView(p.kanal.name(), p.kategorie == null ? null : p.kategorie.name(), p.aktiv))
+                .toList();
     }
 
-    /** Schaltet einen Kanal (EMAIL/SMS) an/aus. PORTAL ist nicht abschaltbar (400). */
+    /**
+     * Schaltet einen Kanal (EMAIL/SMS) an/aus — ohne {@code kategorie} global, mit {@code kategorie} als
+     * Override für genau diese Kategorie. PORTAL ist nicht abschaltbar (400).
+     */
     @Authenticated
     @PUT
     @Path("/praeferenzen/{kanal}")
     @Transactional
-    public Response setzePraeferenz(@PathParam("kanal") Kanal kanal, PraeferenzDto dto,
-            @Context SecurityContext ctx) {
+    public Response setzePraeferenz(@PathParam("kanal") Kanal kanal,
+            @QueryParam("kategorie") Kategorie kategorie, PraeferenzDto dto, @Context SecurityContext ctx) {
         Long personId = mussAufrufer(ctx);
         if (kanal == Kanal.PORTAL) {
             return Response.status(Response.Status.BAD_REQUEST).build();
         }
-        praeferenzen.setze(personId, kanal, dto != null && dto.aktiv());
+        praeferenzen.setze(personId, kanal, kategorie, dto != null && dto.aktiv());
         return Response.noContent().build();
     }
 
     public record PraeferenzDto(boolean aktiv) {
+    }
+
+    public record EinstellungView(boolean digest, LocalTime quietVon, LocalTime quietBis, int maxProStunde) {
+    }
+
+    /** Komfort-Einstellungen der Person (Digest/Quiet-Hours/Rate-Limit); Defaults, falls nicht gesetzt. */
+    @Authenticated
+    @GET
+    @Path("/einstellungen")
+    @Transactional
+    public EinstellungView einstellungen(@Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        BenachrichtigungsEinstellung e = einstellungen.fuer(personId);
+        return e == null ? new EinstellungView(false, null, null, 0)
+                : new EinstellungView(e.digest, e.quietVon, e.quietBis, e.maxProStunde);
+    }
+
+    /** Setzt die Komfort-Einstellungen (Digest, Quiet-Hours von/bis, Rate-Limit). */
+    @Authenticated
+    @PUT
+    @Path("/einstellungen")
+    @Transactional
+    public Response setzeEinstellungen(EinstellungView dto, @Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        einstellungen.setze(personId, dto.digest(), dto.quietVon(), dto.quietBis(), dto.maxProStunde());
+        return Response.noContent().build();
     }
 
     /** Token-{@code sub} → bekannte Party-ID; 403, wenn keine Identität dahinter steht. */

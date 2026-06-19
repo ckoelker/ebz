@@ -78,7 +78,7 @@ class KommunikationK1Test {
         Person p = party.selbstRegistrieren("k1-pref-sub", "k1-pref@ebz.de", "Pia Pref");
 
         // E-Mail abschalten → RECHNUNG_VERSANDT (PORTAL+EMAIL) darf nur noch ins Portal
-        praeferenzen.setze(p.id, Kanal.EMAIL, false);
+        praeferenzen.setze(p.id, Kanal.EMAIL, null, false);
         mailbox.clear();
         String betreffOff = "Ihre Rechnung steht bereit " + System.nanoTime();
         spine.fire(KommunikationsEreignis.mitKontext(EreignisTyp.RECHNUNG_VERSANDT, p.id,
@@ -89,7 +89,7 @@ class KommunikationK1Test {
                 .body("betreff", hasItem(betreffOff));
 
         // E-Mail wieder an → jetzt wird zugestellt, Body kommt aus dem Qute-Template
-        praeferenzen.setze(p.id, Kanal.EMAIL, true);
+        praeferenzen.setze(p.id, Kanal.EMAIL, null, true);
         mailbox.clear();
         spine.fire(KommunikationsEreignis.mitKontext(EreignisTyp.RECHNUNG_VERSANDT, p.id,
                 "Ihre Rechnung steht bereit " + System.nanoTime(), KontextTyp.RECHNUNG, null, null,

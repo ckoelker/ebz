@@ -51,6 +51,15 @@ public class ZustellService {
      */
     @Transactional
     public ZustellAuftrag enqueue(Zustellung zustellung) {
+        return enqueue(zustellung, Instant.now());
+    }
+
+    /**
+     * Wie {@link #enqueue(Zustellung)}, aber mit explizitem frühesten Versandzeitpunkt {@code faelligAb}
+     * (K1b Deferred-Send: Quiet-Hours/Rate-Limit) — der Dispatcher zieht den Auftrag erst dann.
+     */
+    @Transactional
+    public ZustellAuftrag enqueue(Zustellung zustellung, Instant faelligAb) {
         String schluessel = zustellung.kanal.name() + ":" + zustellung.id;
         ZustellAuftrag vorhanden = ZustellAuftrag.find("idempotenzSchluessel", schluessel).firstResult();
         if (vorhanden != null) {
@@ -61,7 +70,7 @@ public class ZustellService {
         a.status = Status.OFFEN;
         a.versuche = 0;
         a.erstelltAm = Instant.now();
-        a.naechsterVersuchAm = a.erstelltAm;
+        a.naechsterVersuchAm = faelligAb == null ? a.erstelltAm : faelligAb;
         a.idempotenzSchluessel = schluessel;
         a.prozessFall = aktuellerFall();
         a.persist();

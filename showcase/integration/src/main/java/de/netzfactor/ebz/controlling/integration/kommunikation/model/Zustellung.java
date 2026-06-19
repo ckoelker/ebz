@@ -53,4 +53,12 @@ public class Zustellung extends PanacheEntity {
     /** Lese-Zeitstempel (PORTAL-Ansicht setzt ihn); {@code null} = ungelesen → Badge. */
     @Column(name = "gelesen_am")
     public LocalDateTime gelesenAm;
+
+    /**
+     * K1b-Digest: {@code TRUE} = externe Zustellung wartet auf den gebündelten Sammel-Versand
+     * (kein sofortiger {@link ZustellAuftrag}); der {@code DigestScheduler} versendet sie gebündelt und
+     * setzt sie auf {@code ZUGESTELLT}. {@code null}/{@code FALSE} = normaler Sofort-/Outbox-Pfad.
+     */
+    @Column(name = "digest_ausstehend")
+    public Boolean digestAusstehend;
 }

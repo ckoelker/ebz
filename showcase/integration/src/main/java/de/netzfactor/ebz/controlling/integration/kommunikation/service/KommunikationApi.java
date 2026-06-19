@@ -1,5 +1,6 @@
 package de.netzfactor.ebz.controlling.integration.kommunikation.service;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -44,6 +45,9 @@ public class KommunikationApi {
     PraeferenzService praeferenz;
 
     @Inject
+    EinstellungService einstellung;
+
+    @Inject
     RealtimePort realtime;
 
     /**
@@ -83,9 +87,10 @@ public class KommunikationApi {
         pe.idempotenzSchluessel = ev.idempotenzSchluessel();
         pe.persist();
 
+        boolean digest = einstellung.istDigest(pe.empfaengerPersonId);
         for (Kanal kanal : kanaele) {
-            if (!praeferenz.erlaubt(pe.empfaengerPersonId, kanal)) {
-                continue; // Person hat diesen Kanal abgeschaltet (PORTAL bleibt immer erlaubt)
+            if (!praeferenz.erlaubt(pe.empfaengerPersonId, kanal, typ.kategorie)) {
+                continue; // Kanal×Kategorie abgeschaltet (PORTAL bleibt immer erlaubt)
             }
             Zustellung z = new Zustellung();
             z.personEreignis = pe;
@@ -94,8 +99,11 @@ public class KommunikationApi {
             z.persist();
             if (kanal == Kanal.PORTAL) {
                 zustellService.zustelleSofort(z); // synchron in der Geschäfts-Tx (unverlierbar)
+            } else if (digest) {
+                z.digestAusstehend = true; // K1b: wartet auf den gebündelten DigestScheduler-Versand
             } else {
-                zustellService.enqueue(z); // EMAIL/SMS async über die Outbox
+                // K1b: Quiet-Hours/Rate-Limit verschieben den frühesten Versand (Deferred-Send).
+                zustellService.enqueue(z, einstellung.faelligAb(pe.empfaengerPersonId, Instant.now()));
             }
         }
         // Echtzeit-Signal (SSE): die Person bekommt sofort einen Badge-/Feed-Hinweis (best effort).
