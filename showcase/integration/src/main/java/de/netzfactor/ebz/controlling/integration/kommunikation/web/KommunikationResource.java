@@ -4,10 +4,12 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import io.quarkus.security.Authenticated;
+import io.smallrye.mutiny.Multi;
 
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.PUT;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 import jakarta.ws.rs.PathParam;
@@ -17,11 +19,15 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 
+import org.jboss.resteasy.reactive.RestStreamElementType;
+
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.KommunikationApi;
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.PraeferenzService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.IdentitaetsPort;
+import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.RealtimePort;
 
 /**
  * Personenseitiger Zugriff auf den <b>Aktivitätslog</b> im Außenportal (Realm {@code ebz-customers}, via
@@ -38,7 +44,13 @@ public class KommunikationResource {
     KommunikationApi kommunikation;
 
     @Inject
+    PraeferenzService praeferenzen;
+
+    @Inject
     IdentitaetsPort identitaet;
+
+    @Inject
+    RealtimePort realtime;
 
     /** Lese-Sicht eines Aktivitätslog-Eintrags (ohne interne Felder). */
     public record EreignisView(Long id, String ereignisTyp, String kategorie, String betreff,
@@ -92,6 +104,49 @@ public class KommunikationResource {
         String sub = ctx.getUserPrincipal() == null ? null : ctx.getUserPrincipal().getName();
         kommunikation.bestaetige(id, sub, null);
         return Response.noContent().build();
+    }
+
+    /** Live-Feed (SSE): neue Inbox-Signale der eingeloggten Person — ohne Polling. Nicht transaktional. */
+    @Authenticated
+    @GET
+    @Path("/stream")
+    @Produces(MediaType.SERVER_SENT_EVENTS)
+    @RestStreamElementType(MediaType.TEXT_PLAIN)
+    public Multi<String> stream(@Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        return realtime.stream(personId);
+    }
+
+    public record PraeferenzView(String kanal, boolean aktiv) {
+    }
+
+    /** Kanal-Präferenzen der Person (nicht gesetzte Kanäle gelten als aktiv). */
+    @Authenticated
+    @GET
+    @Path("/praeferenzen")
+    @Transactional
+    public List<PraeferenzView> praeferenzen(@Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        return praeferenzen.fuer(personId).stream()
+                .map(p -> new PraeferenzView(p.kanal.name(), p.aktiv)).toList();
+    }
+
+    /** Schaltet einen Kanal (EMAIL/SMS) an/aus. PORTAL ist nicht abschaltbar (400). */
+    @Authenticated
+    @PUT
+    @Path("/praeferenzen/{kanal}")
+    @Transactional
+    public Response setzePraeferenz(@PathParam("kanal") Kanal kanal, PraeferenzDto dto,
+            @Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        if (kanal == Kanal.PORTAL) {
+            return Response.status(Response.Status.BAD_REQUEST).build();
+        }
+        praeferenzen.setze(personId, kanal, dto != null && dto.aktiv());
+        return Response.noContent().build();
+    }
+
+    public record PraeferenzDto(boolean aktiv) {
     }
 
     /** Token-{@code sub} → bekannte Party-ID; 403, wenn keine Identität dahinter steht. */

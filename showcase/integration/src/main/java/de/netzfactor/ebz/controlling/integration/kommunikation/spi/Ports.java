@@ -19,10 +19,14 @@ public final class Ports {
     private Ports() {
     }
 
-    /** Liefert Templates (Qute) für Betreff/Inhalt je {@link EreignisTyp} (versionierte Registry, ab K1). */
+    /** Liefert gerenderte Templates (Qute) für Betreff/Inhalt je {@link EreignisTyp} (versionierte Registry). */
     public interface TemplatePort {
-        /** Gerenderter Betreff/Text für einen Ereignistyp mit Variablen. */
-        String render(EreignisTyp typ, java.util.Map<String, Object> variablen);
+        /** Gerendertes Ergebnis: Betreff + Klartext-Body. */
+        record Gerendert(String betreff, String body) {
+        }
+
+        /** Rendert Betreff + Body für einen Ereignistyp mit Variablen (z. B. anrede, betreff). */
+        Gerendert render(EreignisTyp typ, java.util.Map<String, Object> variablen);
     }
 
     /** Erreichbarkeit + Consent (ACL→party): welche Kanäle für die Person zulässig sind + Versanddaten. */
@@ -56,8 +60,11 @@ public final class Ports {
 
     /** Echtzeit-Push (SSE ab K1, WebSocket ab K2); kapselt den Transport (später Gateway-Tier + Backplane). */
     public interface RealtimePort {
-        /** Signalisiert der Person ein neues Inbox-Ereignis (Badge/Feed-Update). */
+        /** Signalisiert der Person ein neues Inbox-Ereignis (Badge/Feed-Update); best effort, wirft nie. */
         void signalisiere(Long personId, String ereignisRef);
+
+        /** Live-Strom der Inbox-Signale dieser Person (SSE-Abonnement im Portal). */
+        io.smallrye.mutiny.Multi<String> stream(Long personId);
     }
 
     /** KI-Agent als Teilnehmer (langchain4j/HITL/MCP, ab K2): Antwortentwurf bzw. autonome Antwort. */

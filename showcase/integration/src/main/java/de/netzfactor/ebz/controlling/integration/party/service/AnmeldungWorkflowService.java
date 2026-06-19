@@ -3,12 +3,16 @@ package de.netzfactor.ebz.controlling.integration.party.service;
 import java.time.Instant;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 
+import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
+import de.netzfactor.ebz.controlling.integration.kommunikation.event.KommunikationsEreignis;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
 import de.netzfactor.ebz.controlling.integration.outbox.model.OutboxAuftrag.Ereignis;
 import de.netzfactor.ebz.controlling.integration.outbox.model.OutboxAuftrag.Zielsystem;
 import de.netzfactor.ebz.controlling.integration.outbox.service.OutboxService;
@@ -38,6 +42,14 @@ public class AnmeldungWorkflowService {
 
     @Inject
     OutboxService outbox;
+
+    /**
+     * Event-Spine (K1): die Bestätigungs-Übergänge feuern ein {@link KommunikationsEreignis}; der
+     * {@code BenachrichtigungService} (@Observes) projiziert es in den personenseitigen Aktivitätslog
+     * (Portal-Zeitstrahl + Badge). Reine Richtung party→kommunikation-Vertrag (kein Modul-Interna-Zugriff).
+     */
+    @Inject
+    Event<KommunikationsEreignis> benachrichtigung;
 
     /**
      * EBZ bestätigt eine angefragte Anmeldung ({@code ANGEFRAGT → BESTAETIGT_EBZ}) und benachrichtigt
@@ -91,6 +103,15 @@ public class AnmeldungWorkflowService {
             prozess.schritt("Bestätigungsmail an Firma", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
                     Phase.EBZ_BESTAETIGUNG);
         }
+
+        // Event-Spine: Portal-Aktivitätslog für den Besteller (E-Mail versendet vorerst der Inline-Pfad oben).
+        Long besteller = a.bestellerPersonId();
+        if (besteller != null) {
+            benachrichtigung.fire(KommunikationsEreignis.mitKontext(
+                    EreignisTyp.ANMELDUNG_BESTAETIGT, besteller,
+                    "Anmeldebestätigung: " + a.teilnehmerName, KontextTyp.ANMELDUNG, a.id, null,
+                    "anmeldung-bestaetigt:" + a.id));
+        }
         return a;
     }
 
@@ -121,6 +142,14 @@ public class AnmeldungWorkflowService {
         // - Suite8:   Konto + Bezahlkarte für Kiosk & Kantine
         outbox.enqueue(a, Zielsystem.WEBUNTIS, Ereignis.AZUBI_VERTRAG_BESTAETIGT);
         outbox.enqueue(a, Zielsystem.SUITE8, Ereignis.AZUBI_VERTRAG_BESTAETIGT);
+
+        // Event-Spine: Portal-Benachrichtigung an den Bestätiger (Kenntnisnahme-Pflicht, K5-Durchsetzung).
+        if (bestaetigerPersonId != null) {
+            benachrichtigung.fire(KommunikationsEreignis.mitKontext(
+                    EreignisTyp.AZUBI_VERTRAG_BESTAETIGT, bestaetigerPersonId,
+                    "Ausbildungsvertrag bestätigt: " + a.teilnehmerName, KontextTyp.ANMELDUNG, a.id, null,
+                    "vertrag-bestaetigt:" + a.id));
+        }
         return a;
     }
 

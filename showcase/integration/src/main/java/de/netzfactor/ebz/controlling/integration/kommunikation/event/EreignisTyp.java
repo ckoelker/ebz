@@ -17,12 +17,14 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.
  */
 public enum EreignisTyp {
 
-    /** Berufsschul-Anmeldung des Azubis bestätigt (transaktional). */
-    ANMELDUNG_BESTAETIGT(Kategorie.ANMELDUNG, true, Set.of(Kanal.PORTAL, Kanal.EMAIL),
+    /** Berufsschul-Anmeldung des Azubis bestätigt (transaktional). Vorerst PORTAL-only: die E-Mail
+     *  versendet noch der Bestands-Flow inline; die EMAIL-Migration in die Spine folgt schrittweise (K1b). */
+    ANMELDUNG_BESTAETIGT(Kategorie.ANMELDUNG, true, Set.of(Kanal.PORTAL),
             Rechtsgrundlage.VERTRAG_6_1_B, "anmeldung-bestaetigt", false),
 
-    /** Ausbildungsvertrag final bestätigt → Anmeldung abrechenbar (transaktional, Kenntnisnahme erbeten). */
-    AZUBI_VERTRAG_BESTAETIGT(Kategorie.ANMELDUNG, true, Set.of(Kanal.PORTAL, Kanal.EMAIL),
+    /** Ausbildungsvertrag final bestätigt → Anmeldung abrechenbar (transaktional, Kenntnisnahme erbeten).
+     *  Vorerst PORTAL-only (s. {@link #ANMELDUNG_BESTAETIGT}). */
+    AZUBI_VERTRAG_BESTAETIGT(Kategorie.ANMELDUNG, true, Set.of(Kanal.PORTAL),
             Rechtsgrundlage.VERTRAG_6_1_B, "vertrag-bestaetigt", true),
 
     /** Rechnung erstellt/versandt (transaktional). */

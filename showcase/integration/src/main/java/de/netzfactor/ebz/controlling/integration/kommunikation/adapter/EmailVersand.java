@@ -8,18 +8,21 @@ import jakarta.inject.Inject;
 import io.quarkus.mailer.Mail;
 import io.quarkus.mailer.Mailer;
 
+import java.util.Map;
+
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.KanalVersand;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.ErreichbarkeitPort;
+import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.TemplatePort;
 
 /**
  * {@link KanalVersand}-Adapter für <b>E-Mail</b> über den Quarkus-{@link Mailer} (Dev → Mailpit; Test →
  * MockMailbox). Läuft async aus dem {@code ZustellDispatcher} (eigene Transaktion); bei fehlender
  * Empfänger-Adresse oder SMTP-Fehler wirft er → Backoff/Retry/Dead-Letter. Empfänger-Adresse/Anrede
- * kommen über den {@link ErreichbarkeitPort} (kein direkter Party-Zugriff). In K0 ein schlanker Text-
- * Body (Betreff aus dem {@code PersonEreignis}); die versionierte Template-Registry (Qute) folgt in K1.
+ * kommen über den {@link ErreichbarkeitPort}, Betreff/Body über die {@link TemplatePort Template-Registry}
+ * (Qute) — kein direkter Party-Zugriff, keine hartkodierten Texte.
  */
 @ApplicationScoped
 public class EmailVersand implements KanalVersand {
@@ -29,6 +32,9 @@ public class EmailVersand implements KanalVersand {
 
     @Inject
     ErreichbarkeitPort erreichbarkeit;
+
+    @Inject
+    TemplatePort templates;
 
     @Override
     public Kanal kanal() {
@@ -43,16 +49,10 @@ public class EmailVersand implements KanalVersand {
         if (email == null || email.isBlank()) {
             throw new IllegalStateException("Keine E-Mail-Adresse für Person " + personId);
         }
-        mailer.send(Mail.withText(email, ev.betreff, """
-                %s,
-
-                %s
-
-                Diese Nachricht finden Sie auch jederzeit in Ihrem EBZ-Portal unter „Meine Aktivitäten".
-
-                Viele Grüße
-                Ihr EBZ-Team
-                """.formatted(erreichbarkeit.anrede(personId), ev.betreff)));
+        TemplatePort.Gerendert g = templates.render(ev.ereignisTyp, Map.of(
+                "anrede", erreichbarkeit.anrede(personId),
+                "betreff", ev.betreff));
+        mailer.send(Mail.withText(email, g.betreff(), g.body()));
         zustellung.status = Zustellung.Status.ZUGESTELLT;
         zustellung.zeitpunkt = LocalDateTime.now();
     }

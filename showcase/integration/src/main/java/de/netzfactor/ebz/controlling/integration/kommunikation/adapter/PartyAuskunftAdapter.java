@@ -5,6 +5,7 @@ import java.util.Set;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
+import jakarta.transaction.Transactional;
 
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
@@ -27,6 +28,7 @@ public class PartyAuskunftAdapter implements IdentitaetsPort, ErreichbarkeitPort
     PartyHoheitService party;
 
     @Override
+    @Transactional
     public Long personIdFuerSub(String keycloakSub) {
         Person p = party.findeNachSub(keycloakSub);
         return p == null ? null : p.id;

@@ -16,6 +16,7 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreig
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.ErreichbarkeitPort;
+import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.RealtimePort;
 
 /**
  * <b>Veröffentlichte Fassade</b> des Kommunikations-Moduls ({@code KommunikationApi}) — das Einzige, was
@@ -38,6 +39,12 @@ public class KommunikationApi {
 
     @Inject
     ErreichbarkeitPort erreichbarkeit;
+
+    @Inject
+    PraeferenzService praeferenz;
+
+    @Inject
+    RealtimePort realtime;
 
     /**
      * Projiziert ein Ereignis: legt (idempotent, nur wenn {@link EreignisTyp#sichtbar}) ein
@@ -77,6 +84,9 @@ public class KommunikationApi {
         pe.persist();
 
         for (Kanal kanal : kanaele) {
+            if (!praeferenz.erlaubt(pe.empfaengerPersonId, kanal)) {
+                continue; // Person hat diesen Kanal abgeschaltet (PORTAL bleibt immer erlaubt)
+            }
             Zustellung z = new Zustellung();
             z.personEreignis = pe;
             z.kanal = kanal;
@@ -88,6 +98,8 @@ public class KommunikationApi {
                 zustellService.enqueue(z); // EMAIL/SMS async über die Outbox
             }
         }
+        // Echtzeit-Signal (SSE): die Person bekommt sofort einen Badge-/Feed-Hinweis (best effort).
+        realtime.signalisiere(pe.empfaengerPersonId, String.valueOf(pe.id));
         return pe;
     }
 
