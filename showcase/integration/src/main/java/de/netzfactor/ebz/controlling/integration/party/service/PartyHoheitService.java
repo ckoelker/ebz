@@ -438,7 +438,7 @@ public class PartyHoheitService {
     }
 
     /** Primäre Kommunikations-E-Mail (Kontaktpunkt), Fallback beliebige E-Mail, Fallback Login-Adresse. */
-    static String primaerEmail(Long personId) {
+    public static String primaerEmail(Long personId) {
         Kontaktpunkt k = Kontaktpunkt.find(
                 "person.id = ?1 and typ = ?2 and primaer = true", personId, Kontaktpunkt.Typ.EMAIL).firstResult();
         if (k == null) {

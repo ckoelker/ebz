@@ -57,4 +57,11 @@ psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${LIGHTDASH_DB}" \
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
   -c "CREATE SCHEMA IF NOT EXISTS mdm AUTHORIZATION \"${CONTROLLING_USER}\";"
 
-echo "initdb: DBs 'controlling' + 'lightdash', Schema 'mdm' und User (controlling/lightdash/${READER_USER}) sichergestellt."
+# Kommunikations-System: eigenes Schema `kommunikation` (bewusst getrennt vom Stammdaten-Kern `mdm`).
+# Voll split-ready geschnitten — der Kern hält KEINE FKs in den Party-Kern, sondern nur personId/
+# mitarbeiterId (Auflösung über Ports). So lässt sich der Communication-Core später mit eigener DB
+# herauslösen; getrennte Retention/Anonymisierung (DSGVO) und Grants liegen schema-lokal.
+psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" --dbname "${CONTROLLING_DB}" \
+  -c "CREATE SCHEMA IF NOT EXISTS kommunikation AUTHORIZATION \"${CONTROLLING_USER}\";"
+
+echo "initdb: DBs 'controlling' + 'lightdash', Schemas 'mdm'+'kommunikation' und User (controlling/lightdash/${READER_USER}) sichergestellt."

@@ -269,6 +269,15 @@
       <artifactId>opentelemetry-sdk-testing</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Kommunikations-Modul K0: ArchUnit-Fitness-Functions sichern die Modulgrenzen ab
+         (kommunikation koppelt nicht an die volatilen Domänenmodule rechnung/bildung, Adapter nur am Port,
+         web nur über die Fassade) — laufen als JUnit-Test in `mvn test`. -->
+    <dependency>
+      <groupId>com.tngtech.archunit</groupId>
+      <artifactId>archunit-junit5</artifactId>
+      <version>1.3.0</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
