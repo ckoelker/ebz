@@ -3,3 +3,7 @@ dist/
 *.local
 .DS_Store
 *.tsbuildinfo
+
+# Von @nuxt/ui/vite generiert
+auto-imports.d.ts
+components.d.ts

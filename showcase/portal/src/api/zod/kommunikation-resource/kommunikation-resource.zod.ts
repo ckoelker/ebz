@@ -8,6 +8,28 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Setze Einstellungen
+ */
+export const PutKommunikationPortalEinstellungenBody = zod.object({
+  "digest": zod.boolean().optional(),
+  "quietVon": zod.string().optional(),
+  "quietBis": zod.string().optional(),
+  "maxProStunde": zod.number().optional()
+})
+
+export const PutKommunikationPortalEinstellungenResponse = zod.unknown()
+
+/**
+ * @summary Einstellungen
+ */
+export const GetKommunikationPortalEinstellungenResponse = zod.object({
+  "digest": zod.boolean().optional(),
+  "quietVon": zod.string().optional(),
+  "quietBis": zod.string().optional(),
+  "maxProStunde": zod.number().optional()
+})
+
+/**
  * @summary Ereignisse
  */
 export const GetKommunikationPortalEreignisseResponseItem = zod.object({
@@ -47,6 +69,7 @@ export const PostKommunikationPortalEreignisseIdGelesenResponse = zod.unknown()
  */
 export const GetKommunikationPortalPraeferenzenResponseItem = zod.object({
   "kanal": zod.string().optional(),
+  "kategorie": zod.string().optional(),
   "aktiv": zod.boolean().optional()
 })
 export const GetKommunikationPortalPraeferenzenResponse = zod.array(GetKommunikationPortalPraeferenzenResponseItem)
@@ -56,6 +79,10 @@ export const GetKommunikationPortalPraeferenzenResponse = zod.array(GetKommunika
  */
 export const PutKommunikationPortalPraeferenzenKanalParams = zod.object({
   "kanal": zod.enum(['PORTAL', 'EMAIL', 'SMS'])
+})
+
+export const PutKommunikationPortalPraeferenzenKanalQueryParams = zod.object({
+  "kategorie": zod.enum(['ANMELDUNG', 'RECHNUNG', 'EINSCHREIBUNG', 'PRUEFUNG', 'SYSTEM', 'INTERN']).optional()
 })
 
 export const PutKommunikationPortalPraeferenzenKanalBody = zod.object({

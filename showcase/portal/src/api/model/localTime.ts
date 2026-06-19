@@ -5,8 +5,4 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface PraeferenzView {
-  kanal?: string;
-  kategorie?: string;
-  aktiv?: boolean;
-}
+export type LocalTime = string;

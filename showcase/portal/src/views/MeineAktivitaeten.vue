@@ -3,10 +3,6 @@
 // markiert Einträge als gelesen, quittiert kenntnisnahmepflichtige Benachrichtigungen und schaltet die
 // Kanäle (E-Mail/SMS) an/aus. Eigen-skopiert über den Token (kein Fremdzugriff). Threads folgen ab K2.
 import { ref, onMounted, computed } from 'vue';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
-import Message from 'primevue/message';
-import ToggleSwitch from 'primevue/toggleswitch';
 import {
   partyLogin, meineAktivitaeten, ungelesenAnzahl, ereignisGelesen, ereignisBestaetigen,
   kanalPraeferenzen, setzeKanalPraeferenz, ApiFehler, Kanal,
@@ -38,8 +34,9 @@ async function laden_() {
     ]);
     ereignisse.value = evs;
     ungelesen.value = anz;
-    emailAktiv.value = prefs.find((p) => p.kanal === 'EMAIL')?.aktiv ?? true;
-    smsAktiv.value = prefs.find((p) => p.kanal === 'SMS')?.aktiv ?? true;
+    // nur die globalen (kategorielosen) Kanal-Schalter steuern die Toggles
+    emailAktiv.value = prefs.find((p) => p.kanal === 'EMAIL' && !p.kategorie)?.aktiv ?? true;
+    smsAktiv.value = prefs.find((p) => p.kanal === 'SMS' && !p.kategorie)?.aktiv ?? true;
   } catch (e) {
     fehler(e);
   } finally {
@@ -81,7 +78,6 @@ async function kanalUmschalten(kanal: Kanal, wert: boolean) {
     await setzeKanalPraeferenz(kanal, wert);
   } catch (e) {
     fehler(e);
-    // Zustand zurücksetzen bei Fehler
     if (kanal === Kanal.EMAIL) emailAktiv.value = !wert; else smsAktiv.value = !wert;
   }
 }
@@ -97,58 +93,72 @@ function zeit(iso?: string): string {
   return isNaN(d.getTime()) ? iso : d.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
-const kategorieSchwere: Record<string, 'info' | 'success' | 'warn' | 'secondary'> = {
+const kategorieFarbe: Record<string, 'info' | 'success' | 'warning' | 'neutral'> = {
   RECHNUNG: 'info',
   ANMELDUNG: 'success',
   EINSCHREIBUNG: 'success',
-  PRUEFUNG: 'warn',
-  SYSTEM: 'secondary',
+  PRUEFUNG: 'warning',
+  SYSTEM: 'neutral',
 };
 </script>
 
 <template>
   <section>
-    <div class="kopf">
-      <h2>Meine Aktivitäten
-        <Tag v-if="ungelesen > 0" :value="`${ungelesen} neu`" severity="danger" rounded />
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold flex items-center gap-2">
+        Meine Aktivitäten
+        <UBadge v-if="ungelesen > 0" color="error" variant="solid" size="sm">{{ ungelesen }} neu</UBadge>
       </h2>
-      <Button v-if="angemeldet" label="Aktualisieren" icon="pi pi-refresh" size="small" text
-        :loading="laden" @click="laden_" />
+      <UButton v-if="angemeldet" color="neutral" variant="ghost" size="sm" icon="i-lucide-refresh-cw"
+        :loading="laden" @click="laden_">Aktualisieren</UButton>
     </div>
 
-    <Message v-if="!angemeldet" severity="warn">
-      Bitte <a href="#" @click.prevent="login">anmelden</a>, um Ihre Aktivitäten zu sehen.
-    </Message>
+    <UAlert v-if="!angemeldet" color="warning" variant="soft" title="Anmeldung erforderlich">
+      <template #description>
+        Bitte <a href="#" class="underline" @click.prevent="login">anmelden</a>, um Ihre Aktivitäten zu sehen.
+      </template>
+    </UAlert>
 
     <template v-else>
-      <Message v-if="meldung" :severity="meldung.severity" closable @close="meldung = null">{{ meldung.text }}</Message>
+      <UAlert v-if="meldung" :color="meldung.severity === 'success' ? 'success' : 'error'" variant="soft"
+        :title="meldung.text" close class="mb-4" @update:open="meldung = null" />
 
-      <div class="kanaele">
-        <span class="kanaele-titel">Benachrichtigungen per</span>
-        <label class="kanal"><ToggleSwitch v-model="emailAktiv" @change="kanalUmschalten(Kanal.EMAIL, emailAktiv)" /> E-Mail</label>
-        <label class="kanal"><ToggleSwitch v-model="smsAktiv" @change="kanalUmschalten(Kanal.SMS, smsAktiv)" /> SMS</label>
-        <span class="hinweis">Das Portal-Postfach bleibt immer aktiv.</span>
+      <div class="flex items-center gap-5 mb-5 px-4 py-3 rounded-lg bg-elevated text-sm">
+        <span class="font-semibold">Benachrichtigungen per</span>
+        <label class="inline-flex items-center gap-2">
+          <USwitch v-model="emailAktiv" @update:model-value="(v: boolean) => kanalUmschalten(Kanal.EMAIL, v)" /> E-Mail
+        </label>
+        <label class="inline-flex items-center gap-2">
+          <USwitch v-model="smsAktiv" @update:model-value="(v: boolean) => kanalUmschalten(Kanal.SMS, v)" /> SMS
+        </label>
+        <span class="text-dimmed text-xs">Das Portal-Postfach bleibt immer aktiv.</span>
       </div>
 
-      <Message v-if="!laden && ereignisse.length === 0" severity="info">
-        Sie haben noch keine Aktivitäten.
-      </Message>
+      <UAlert v-if="!laden && ereignisse.length === 0" color="info" variant="soft"
+        title="Sie haben noch keine Aktivitäten." />
 
-      <ul class="zeitstrahl">
-        <li v-for="ev in ereignisse" :key="ev.id" :class="{ ungelesen: !ev.gelesen }">
-          <span class="punkt" />
-          <div class="eintrag">
-            <div class="zeile1">
-              <Tag :value="ev.kategorie" :severity="kategorieSchwere[ev.kategorie ?? ''] ?? 'secondary'" />
-              <strong class="betreff">{{ ev.betreff }}</strong>
-              <span class="zeitpunkt">{{ zeit(ev.zeitpunkt) }}</span>
+      <ul class="border-l-2 border-default ml-1.5">
+        <li v-for="ev in ereignisse" :key="ev.id" class="relative pl-5 py-2.5">
+          <span
+            class="absolute -left-[7px] top-3.5 w-3 h-3 rounded-full"
+            :class="ev.gelesen ? 'bg-default border border-muted' : 'bg-primary-500'"
+          />
+          <div class="flex flex-col gap-1.5">
+            <div class="flex items-center gap-2 flex-wrap">
+              <UBadge :color="kategorieFarbe[ev.kategorie ?? ''] ?? 'neutral'" variant="soft" size="sm">
+                {{ ev.kategorie }}
+              </UBadge>
+              <span :class="ev.gelesen ? 'font-medium' : 'font-bold'">{{ ev.betreff }}</span>
+              <span class="ml-auto text-dimmed text-xs">{{ zeit(ev.zeitpunkt) }}</span>
             </div>
-            <div class="aktionen">
-              <Tag v-if="ev.bestaetigtAm" value="bestätigt" severity="success" icon="pi pi-check" />
-              <Button v-else-if="ev.bestaetigungErforderlich" label="Zur Kenntnis genommen" size="small"
-                icon="pi pi-check" :loading="busy === ev.id" @click="bestaetigen(ev)" />
-              <Button v-if="!ev.gelesen" label="Als gelesen markieren" size="small" text
-                icon="pi pi-eye" :loading="busy === ev.id" @click="gelesen(ev)" />
+            <div class="flex items-center gap-2">
+              <UBadge v-if="ev.bestaetigtAm" color="success" variant="soft" size="sm" icon="i-lucide-check">
+                bestätigt
+              </UBadge>
+              <UButton v-else-if="ev.bestaetigungErforderlich" size="sm" icon="i-lucide-check"
+                :loading="busy === ev.id" @click="bestaetigen(ev)">Zur Kenntnis genommen</UButton>
+              <UButton v-if="!ev.gelesen" color="neutral" variant="ghost" size="sm" icon="i-lucide-eye"
+                :loading="busy === ev.id" @click="gelesen(ev)">Als gelesen markieren</UButton>
             </div>
           </div>
         </li>
@@ -156,87 +166,3 @@ const kategorieSchwere: Record<string, 'info' | 'success' | 'warn' | 'secondary'
     </template>
   </section>
 </template>
-
-<style scoped>
-.kopf {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.kopf h2 {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-.kanaele {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-  margin: 0.5rem 0 1rem;
-  padding: 0.6rem 0.9rem;
-  background: var(--p-content-hover-background, #f4f6f8);
-  border-radius: 8px;
-  font-size: 0.9rem;
-}
-.kanaele-titel {
-  font-weight: 600;
-}
-.kanal {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-.hinweis {
-  color: #888;
-  font-size: 0.82rem;
-}
-.zeitstrahl {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  border-left: 2px solid var(--p-content-border-color, #e3e7ec);
-}
-.zeitstrahl li {
-  position: relative;
-  padding: 0.55rem 0 0.55rem 1.1rem;
-}
-.punkt {
-  position: absolute;
-  left: -7px;
-  top: 0.95rem;
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: var(--p-content-border-color, #cbd5e1);
-}
-.zeitstrahl li.ungelesen .punkt {
-  background: var(--p-primary-color, #0ea5e9);
-}
-.eintrag {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-.zeile1 {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-  flex-wrap: wrap;
-}
-.betreff {
-  font-weight: 500;
-}
-.zeitstrahl li.ungelesen .betreff {
-  font-weight: 700;
-}
-.zeitpunkt {
-  color: #888;
-  font-size: 0.82rem;
-  margin-left: auto;
-}
-.aktionen {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-}
-</style>

@@ -3,19 +3,14 @@
 // eine buchungsberechtigte Firma) und sieht dessen festgeschriebene Belege; je Beleg lädt er die
 // ZUGFeRD-E-Rechnung als PDF. Der Aufrufer wird serverseitig über den Token aufgelöst (kein Fremdzugriff).
 import { ref, onMounted, computed } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Select from 'primevue/select';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
-import Message from 'primevue/message';
+import type { TableColumn } from '@nuxt/ui';
 import {
   partyLogin, rechnungsKontexte, meineRechnungen, rechnungPdf, ApiFehler,
   type PortalRechnungView,
 } from '@/portal';
 import { auth, login } from '@/auth';
 
-type KontextOption = { key: string; label: string; organisationId?: number };
+type KontextOption = { label: string; value: string; organisationId?: number };
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -33,11 +28,11 @@ onMounted(async () => {
     await partyLogin({ email: auth.email, anzeigeName: auth.name || auth.benutzer });
     const ctx = await rechnungsKontexte();
     kontexte.value = ctx.map((k) => ({
-      key: k.organisationId == null ? 'privat' : `org-${k.organisationId}`,
+      value: k.organisationId == null ? 'privat' : `org-${k.organisationId}`,
       label: k.bezeichnung ?? (k.organisationId == null ? 'Privat' : `Organisation ${k.organisationId}`),
       organisationId: k.organisationId ?? undefined,
     }));
-    gewaehlt.value = kontexte.value[0]?.key ?? null;
+    gewaehlt.value = kontexte.value[0]?.value ?? null;
     await ladeBelege();
   } catch (e) {
     fehler(e);
@@ -53,7 +48,7 @@ async function ladeBelege() {
   }
   laden.value = true;
   try {
-    const k = kontexte.value.find((o) => o.key === gewaehlt.value);
+    const k = kontexte.value.find((o) => o.value === gewaehlt.value);
     belege.value = await meineRechnungen(k?.organisationId);
   } catch (e) {
     fehler(e);
@@ -82,8 +77,6 @@ async function pdfLaden(z: PortalRechnungView) {
 }
 
 function fehler(e: unknown) {
-  // Nur neu anmelden, wenn KEINE Session besteht — sonst (Token gültig, aber 401 vom Backend) Fehler
-  // zeigen statt in eine Redirect-Schleife zu laufen.
   if (e instanceof ApiFehler && e.status === 401 && !auth.angemeldet) return login();
   meldung.value = { text: (e as Error).message, severity: 'error' };
 }
@@ -92,73 +85,59 @@ function euro(cent: number): string {
   return (cent / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 }
 
-const statusSchwere: Record<string, 'warn' | 'info' | 'success' | 'secondary'> = {
+const statusFarbe: Record<string, 'info' | 'success' | 'neutral'> = {
   AUSGESTELLT: 'info',
   BEZAHLT: 'success',
-  STORNIERT: 'secondary',
+  STORNIERT: 'neutral',
 };
+
+const columns: TableColumn<PortalRechnungView>[] = [
+  { accessorKey: 'nummer', header: 'Beleg-Nr.' },
+  { accessorKey: 'ausstellungsdatum', header: 'Datum' },
+  { id: 'betrag', header: 'Betrag' },
+  { accessorKey: 'status', header: 'Status' },
+  { accessorKey: 'zeitraumBezeichnung', header: 'Zeitraum' },
+  { id: 'pdf', header: '' },
+];
 </script>
 
 <template>
   <section>
-    <h2>Meine Rechnungen</h2>
+    <h2 class="text-xl font-bold mb-4">Meine Rechnungen</h2>
 
-    <Message v-if="!angemeldet" severity="warn">
-      Bitte <a href="#" @click.prevent="login">anmelden</a>, um Ihre Rechnungen zu sehen.
-    </Message>
+    <UAlert v-if="!angemeldet" color="warning" variant="soft" title="Anmeldung erforderlich">
+      <template #description>
+        Bitte <a href="#" class="underline" @click.prevent="login">anmelden</a>, um Ihre Rechnungen zu sehen.
+      </template>
+    </UAlert>
 
     <template v-else>
-      <Message v-if="meldung" :severity="meldung.severity" closable @close="meldung = null">{{ meldung.text }}</Message>
+      <UAlert v-if="meldung" :color="meldung.severity === 'success' ? 'success' : 'error'" variant="soft"
+        :title="meldung.text" close class="mb-4" @update:open="meldung = null" />
 
-      <Message v-if="!laden && kontexte.length === 0" severity="info">
-        Ihrem Login sind noch keine Rechnungskontexte zugeordnet.
-      </Message>
+      <UAlert v-if="!laden && kontexte.length === 0" color="info" variant="soft"
+        title="Ihrem Login sind noch keine Rechnungskontexte zugeordnet." />
 
       <template v-else>
-        <div class="kopf">
-          <label class="kontextwahl">
-            Kontext
-            <Select v-model="gewaehlt" :options="kontexte" optionLabel="label" optionValue="key"
-              @change="ladeBelege" />
-          </label>
+        <div class="flex items-end gap-3 mb-4">
+          <UFormField label="Kontext">
+            <USelect v-model="gewaehlt" :items="kontexte" class="w-64" @update:model-value="ladeBelege" />
+          </UFormField>
         </div>
 
-        <DataTable :value="belege" dataKey="id" :loading="laden" stripedRows size="small">
-          <Column field="nummer" header="Beleg-Nr." sortable />
-          <Column field="ausstellungsdatum" header="Datum" sortable style="width: 9rem" />
-          <Column header="Betrag" style="width: 9rem">
-            <template #body="{ data: z }">{{ euro(z.summeCent) }}</template>
-          </Column>
-          <Column header="Status" style="width: 9rem">
-            <template #body="{ data: z }"><Tag :value="z.status" :severity="statusSchwere[z.status] ?? 'secondary'" /></template>
-          </Column>
-          <Column header="Zeitraum" field="zeitraumBezeichnung" />
-          <Column header="" style="width: 8rem">
-            <template #body="{ data: z }">
-              <Button label="PDF" size="small" icon="pi pi-file-pdf" text
-                :loading="pdfAktiv === z.id" @click="pdfLaden(z)" />
-            </template>
-          </Column>
-          <template #empty><div class="leer">Keine Rechnungen in diesem Kontext.</div></template>
-        </DataTable>
+        <UTable :data="belege" :columns="columns" :loading="laden" :empty="'Keine Rechnungen in diesem Kontext.'">
+          <template #betrag-cell="{ row }">{{ euro(row.original.summeCent) }}</template>
+          <template #status-cell="{ row }">
+            <UBadge :color="statusFarbe[row.original.status ?? ''] ?? 'neutral'" variant="soft" size="sm">
+              {{ row.original.status }}
+            </UBadge>
+          </template>
+          <template #pdf-cell="{ row }">
+            <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-file-text"
+              :loading="pdfAktiv === row.original.id" @click="pdfLaden(row.original)">PDF</UButton>
+          </template>
+        </UTable>
       </template>
     </template>
   </section>
 </template>
-
-<style scoped>
-.kopf {
-  margin: 0.5rem 0 0.75rem;
-}
-.kontextwahl {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-  color: #444;
-}
-.leer {
-  padding: 1rem;
-  color: #888;
-}
-</style>

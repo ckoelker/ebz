@@ -1,14 +1,10 @@
 <script setup lang="ts">
 // Self-Service-WBT-Zugang: der eingeloggte Lernende sieht seine eigenen Kurs-Einschreibungen und
 // startet einen freigeschalteten Kurs per SSO-Deeplink in OpenOLAT (neuer Tab → Keycloak-SSO → Kurs).
-// Der Aufrufer wird serverseitig über den Token-sub aufgelöst (kein Fremdzugriff); launchUrl liefert
-// das Backend nur für EINGESCHRIEBENe Trainings.
+// Der Aufrufer wird serverseitig über den Token-sub aufgelöst; launchUrl liefert das Backend nur für
+// EINGESCHRIEBENe Trainings.
 import { ref, onMounted, computed } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
-import Message from 'primevue/message';
+import type { TableColumn } from '@nuxt/ui';
 import { partyLogin, meineTrainings, ApiFehler, type MeinTrainingView } from '@/portal';
 import { auth, login } from '@/auth';
 
@@ -22,7 +18,6 @@ onMounted(async () => {
   if (!auth.angemeldet) return;
   laden.value = true;
   try {
-    // Person zum Token claimen (wie beim Rechnungsabruf) — stellt sicher, dass eine Identität existiert.
     await partyLogin({ email: auth.email, anzeigeName: auth.name || auth.benutzer });
     trainings.value = await meineTrainings();
   } catch (e) {
@@ -43,56 +38,51 @@ function fehler(e: unknown) {
   meldung.value = { text: (e as Error).message, severity: 'error' };
 }
 
-// Status → Anzeige (Tag-Schwere) + erklärender Hinweis.
-const statusSchwere: Record<string, 'warn' | 'info' | 'success' | 'danger' | 'secondary'> = {
-  ANGEFORDERT: 'warn',
+const statusFarbe: Record<string, 'warning' | 'success' | 'error' | 'neutral'> = {
+  ANGEFORDERT: 'warning',
   EINGESCHRIEBEN: 'success',
-  FEHLGESCHLAGEN: 'danger',
+  FEHLGESCHLAGEN: 'error',
 };
 const statusText: Record<string, string> = {
   ANGEFORDERT: 'wird bereitgestellt …',
   EINGESCHRIEBEN: 'verfügbar',
   FEHLGESCHLAGEN: 'Problem — bitte EBZ kontaktieren',
 };
+
+const columns: TableColumn<MeinTrainingView>[] = [
+  { accessorKey: 'kursTitel', header: 'Training' },
+  { accessorKey: 'status', header: 'Status' },
+  { id: 'aktion', header: '' },
+];
 </script>
 
 <template>
   <section>
-    <h2>Meine Trainings</h2>
+    <h2 class="text-xl font-bold mb-4">Meine Trainings</h2>
 
-    <Message v-if="!angemeldet" severity="warn">
-      Bitte <a href="#" @click.prevent="login">anmelden</a>, um Ihre Trainings zu sehen.
-    </Message>
+    <UAlert v-if="!angemeldet" color="warning" variant="soft" title="Anmeldung erforderlich">
+      <template #description>
+        Bitte <a href="#" class="underline" @click.prevent="login">anmelden</a>, um Ihre Trainings zu sehen.
+      </template>
+    </UAlert>
 
     <template v-else>
-      <Message v-if="meldung" :severity="meldung.severity" closable @close="meldung = null">{{ meldung.text }}</Message>
+      <UAlert v-if="meldung" :color="meldung.severity === 'success' ? 'success' : 'error'" variant="soft"
+        :title="meldung.text" close class="mb-4" @update:open="meldung = null" />
 
-      <DataTable :value="trainings" dataKey="einschreibungId" :loading="laden" stripedRows size="small">
-        <Column field="kursTitel" header="Training" sortable />
-        <Column header="Status" style="width: 16rem">
-          <template #body="{ data: t }">
-            <Tag :value="statusText[t.status] ?? t.status" :severity="statusSchwere[t.status] ?? 'secondary'" />
-          </template>
-        </Column>
-        <Column header="" style="width: 11rem">
-          <template #body="{ data: t }">
-            <Button v-if="t.launchUrl" label="Kurs starten" size="small" icon="pi pi-external-link"
-              @click="starten(t)" />
-            <span v-else class="wartet">—</span>
-          </template>
-        </Column>
-        <template #empty><div class="leer">Sie haben noch keine Trainings gebucht.</div></template>
-      </DataTable>
+      <UTable :data="trainings" :columns="columns" :loading="laden"
+        :empty="'Sie haben noch keine Trainings gebucht.'">
+        <template #status-cell="{ row }">
+          <UBadge :color="statusFarbe[row.original.status ?? ''] ?? 'neutral'" variant="soft" size="sm">
+            {{ statusText[row.original.status ?? ''] ?? row.original.status }}
+          </UBadge>
+        </template>
+        <template #aktion-cell="{ row }">
+          <UButton v-if="row.original.launchUrl" size="sm" icon="i-lucide-external-link"
+            @click="starten(row.original)">Kurs starten</UButton>
+          <span v-else class="text-dimmed">—</span>
+        </template>
+      </UTable>
     </template>
   </section>
 </template>
-
-<style scoped>
-.leer {
-  padding: 1rem;
-  color: #888;
-}
-.wartet {
-  color: #aaa;
-}
-</style>

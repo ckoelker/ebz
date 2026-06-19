@@ -3,14 +3,7 @@
 // meldet neue an (Status ANGEFRAGT) und bestätigt nach EBZ-Prüfung den Vertrag (→ AKTIV, abrechenbar).
 // Der Aufrufer wird über den Token aufgelöst (party-Login claimt/aktiviert die Person).
 import { ref, reactive, onMounted, computed } from 'vue';
-import DataTable from 'primevue/datatable';
-import Column from 'primevue/column';
-import InputText from 'primevue/inputtext';
-import InputNumber from 'primevue/inputnumber';
-import Select from 'primevue/select';
-import Button from 'primevue/button';
-import Tag from 'primevue/tag';
-import Message from 'primevue/message';
+import type { TableColumn } from '@nuxt/ui';
 import {
   partyLogin, kontexte, firmensicht, azubiAnmelden, vertragBestaetigen, ApiFehler,
   type KontextView, type BuchungZeile,
@@ -23,10 +16,8 @@ const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null
 const personId = ref<number | null>(null);
 const firmen = ref<KontextView[]>([]);
 const orgId = ref<number | null>(null);
-const zeilen = ref<BuchungScreenZeile[]>([]);
+const zeilen = ref<BuchungZeile[]>([]);
 const aktiv = ref<number | null>(null);
-
-type BuchungScreenZeile = BuchungZeile;
 
 const neu = reactive({
   azubiEmail: '',
@@ -39,6 +30,8 @@ const neu = reactive({
 });
 
 const angemeldet = computed(() => auth.angemeldet);
+const firmenItems = computed(() =>
+  firmen.value.map((f) => ({ label: f.bezeichnung ?? `Organisation ${f.organisationId}`, value: f.organisationId })));
 
 onMounted(async () => {
   if (!auth.angemeldet) return;
@@ -95,7 +88,7 @@ async function anmelden() {
   }
 }
 
-async function bestaetigen(z: BuchungScreenZeile) {
+async function bestaetigen(z: BuchungZeile) {
   if (!z.anmeldungId) return;
   meldung.value = null;
   aktiv.value = z.anmeldungId;
@@ -111,134 +104,93 @@ async function bestaetigen(z: BuchungScreenZeile) {
 }
 
 function fehler(e: unknown) {
-  // Nur neu anmelden, wenn KEINE Session besteht — sonst (Token gültig, aber 401 vom Backend) Fehler
-  // zeigen statt in eine Redirect-Schleife zu laufen.
   if (e instanceof ApiFehler && e.status === 401 && !auth.angemeldet) return login();
   meldung.value = { text: (e as Error).message, severity: 'error' };
 }
 
-const statusSchwere: Record<string, 'warn' | 'info' | 'success' | 'secondary'> = {
-  ANGEFRAGT: 'warn',
+const statusFarbe: Record<string, 'warning' | 'info' | 'success' | 'neutral'> = {
+  ANGEFRAGT: 'warning',
   BESTAETIGT_EBZ: 'info',
   AKTIV: 'success',
 };
+
+const halbjahrItems = [{ label: '1', value: 1 }, { label: '2', value: 2 }];
+const zimmerItems = ['KEINE', 'DOPPEL', 'EINZEL'];
+
+const columns: TableColumn<BuchungZeile>[] = [
+  { accessorKey: 'teilnehmerName', header: 'Azubi' },
+  { accessorKey: 'schuljahr', header: 'Schuljahr' },
+  { accessorKey: 'halbjahr', header: 'HJ' },
+  { accessorKey: 'status', header: 'Status' },
+  { id: 'aktion', header: '' },
+];
 </script>
 
 <template>
   <section>
-    <h2>Meine Azubis</h2>
+    <h2 class="text-xl font-bold mb-4">Meine Azubis</h2>
 
-    <Message v-if="!angemeldet" severity="warn">
-      Bitte <a href="#" @click.prevent="login">anmelden</a>, um die Azubis Ihres Betriebs zu sehen und anzumelden.
-    </Message>
+    <UAlert v-if="!angemeldet" color="warning" variant="soft" title="Anmeldung erforderlich">
+      <template #description>
+        Bitte <a href="#" class="underline" @click.prevent="login">anmelden</a>, um die Azubis Ihres Betriebs
+        zu sehen und anzumelden.
+      </template>
+    </UAlert>
 
     <template v-else>
-      <Message v-if="meldung" :severity="meldung.severity" closable @close="meldung = null">{{ meldung.text }}</Message>
+      <UAlert v-if="meldung" :color="meldung.severity === 'success' ? 'success' : 'error'" variant="soft"
+        :title="meldung.text" close class="mb-4" @update:open="meldung = null" />
 
-      <Message v-if="!laden && firmen.length === 0" severity="info">
-        Ihrem Login ist noch kein buchungsberechtigter Betrieb zugeordnet. Bitte wenden Sie sich an den EBZ.
-      </Message>
+      <UAlert v-if="!laden && firmen.length === 0" color="info" variant="soft"
+        title="Ihrem Login ist noch kein buchungsberechtigter Betrieb zugeordnet. Bitte wenden Sie sich an den EBZ." />
 
       <template v-else>
-        <div class="kopf">
-          <label v-if="firmen.length > 1" class="orgwahl">
-            Betrieb
-            <Select v-model="orgId" :options="firmen" optionLabel="bezeichnung" optionValue="organisationId"
-              @change="ladeFirmensicht" />
-          </label>
-          <span v-else-if="firmen[0]" class="orgname">{{ firmen[0].bezeichnung }}</span>
+        <div class="mb-4">
+          <UFormField v-if="firmen.length > 1" label="Betrieb">
+            <USelect v-model="orgId" :items="firmenItems" class="w-72" @update:model-value="ladeFirmensicht" />
+          </UFormField>
+          <span v-else-if="firmen[0]" class="font-bold">{{ firmen[0].bezeichnung }}</span>
         </div>
 
-        <h3>Neuen Azubi anmelden</h3>
-        <form class="formular" @submit.prevent="anmelden">
-          <div class="zeile">
-            <label>Name<InputText v-model="neu.azubiName" /></label>
-            <label>E-Mail<InputText v-model="neu.azubiEmail" type="email" /></label>
+        <h3 class="font-semibold mb-2">Neuen Azubi anmelden</h3>
+        <form class="flex flex-col gap-3 max-w-2xl mb-6" @submit.prevent="anmelden">
+          <div class="flex gap-3">
+            <UFormField label="Name" class="flex-1"><UInput v-model="neu.azubiName" class="w-full" /></UFormField>
+            <UFormField label="E-Mail" class="flex-1"><UInput v-model="neu.azubiEmail" type="email" class="w-full" /></UFormField>
           </div>
-          <div class="zeile">
-            <label>Schuljahr<InputText v-model="neu.schuljahr" placeholder="2025/2026" /></label>
-            <label class="schmal">Halbjahr<Select v-model="neu.halbjahr" :options="[1, 2]" /></label>
-            <label>Zimmer<Select v-model="neu.zimmerart" :options="['KEINE', 'DOPPEL', 'EINZEL']" /></label>
+          <div class="flex gap-3">
+            <UFormField label="Schuljahr" class="flex-1"><UInput v-model="neu.schuljahr" placeholder="2025/2026" class="w-full" /></UFormField>
+            <UFormField label="Halbjahr" class="w-24"><USelect v-model="neu.halbjahr" :items="halbjahrItems" class="w-full" /></UFormField>
+            <UFormField label="Zimmer" class="w-32"><USelect v-model="neu.zimmerart" :items="zimmerItems" class="w-full" /></UFormField>
           </div>
-          <div class="zeile">
-            <label>Unterricht (Cent)<InputNumber v-model="neu.unterrichtBetragCent" :min="0" /></label>
-            <label v-if="neu.zimmerart !== 'KEINE'">Übernachtung (Cent)<InputNumber v-model="neu.uebernachtungBetragCent" :min="0" /></label>
+          <div class="flex gap-3">
+            <UFormField label="Unterricht (Cent)" class="flex-1"><UInputNumber v-model="neu.unterrichtBetragCent" :min="0" class="w-full" /></UFormField>
+            <UFormField v-if="neu.zimmerart !== 'KEINE'" label="Übernachtung (Cent)" class="flex-1">
+              <UInputNumber v-model="neu.uebernachtungBetragCent" :min="0" class="w-full" />
+            </UFormField>
           </div>
-          <div class="aktionen">
-            <Button type="submit" label="Azubi anmelden" icon="pi pi-user-plus" :loading="aktiv === -1" />
+          <div>
+            <UButton type="submit" icon="i-lucide-user-plus" :loading="aktiv === -1">Azubi anmelden</UButton>
           </div>
         </form>
 
-        <h3>Angemeldete Azubis</h3>
-        <DataTable :value="zeilen" dataKey="anmeldungId" :loading="laden" stripedRows size="small">
-          <Column field="teilnehmerName" header="Azubi" sortable />
-          <Column field="schuljahr" header="Schuljahr" sortable />
-          <Column field="halbjahr" header="HJ" style="width: 4rem" />
-          <Column header="Status" style="width: 11rem">
-            <template #body="{ data: z }"><Tag :value="z.status" :severity="statusSchwere[z.status] ?? 'secondary'" /></template>
-          </Column>
-          <Column header="" style="width: 12rem">
-            <template #body="{ data: z }">
-              <Button v-if="z.status === 'BESTAETIGT_EBZ'" label="Vertrag bestätigen" size="small" icon="pi pi-file-check"
-                :loading="aktiv === z.anmeldungId" @click="bestaetigen(z)" />
-              <span v-else-if="z.status === 'AKTIV'" class="aktiv"><i class="pi pi-check-circle" /> aktiv</span>
-              <span v-else class="wartet">wartet auf EBZ</span>
-            </template>
-          </Column>
-          <template #empty><div class="leer">Noch keine Azubis angemeldet.</div></template>
-        </DataTable>
+        <h3 class="font-semibold mb-2">Angemeldete Azubis</h3>
+        <UTable :data="zeilen" :columns="columns" :loading="laden" :empty="'Noch keine Azubis angemeldet.'">
+          <template #status-cell="{ row }">
+            <UBadge :color="statusFarbe[row.original.status ?? ''] ?? 'neutral'" variant="soft" size="sm">
+              {{ row.original.status }}
+            </UBadge>
+          </template>
+          <template #aktion-cell="{ row }">
+            <UButton v-if="row.original.status === 'BESTAETIGT_EBZ'" size="sm" icon="i-lucide-file-check"
+              :loading="aktiv === row.original.anmeldungId" @click="bestaetigen(row.original)">Vertrag bestätigen</UButton>
+            <span v-else-if="row.original.status === 'AKTIV'" class="inline-flex items-center gap-1 text-success">
+              <UIcon name="i-lucide-check-circle" /> aktiv
+            </span>
+            <span v-else class="text-dimmed text-sm">wartet auf EBZ</span>
+          </template>
+        </UTable>
       </template>
     </template>
   </section>
 </template>
-
-<style scoped>
-.kopf {
-  margin: 0.5rem 0;
-}
-.orgwahl {
-  display: inline-flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-  color: #444;
-}
-.orgname {
-  font-weight: 700;
-}
-.formular {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
-  max-width: 620px;
-}
-.zeile {
-  display: flex;
-  gap: 0.75rem;
-}
-.zeile label {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-  color: #444;
-}
-.zeile .schmal {
-  max-width: 6rem;
-}
-.aktionen {
-  margin-top: 0.25rem;
-}
-.aktiv {
-  color: #16a34a;
-}
-.wartet {
-  color: #999;
-  font-size: 0.9rem;
-}
-.leer {
-  padding: 1rem;
-  color: #888;
-}
-</style>

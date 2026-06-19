@@ -3,9 +3,6 @@
 // prüft (HITL/KI-Dubletten) und lädt anschließend per E-Mail zum Login ein. `website` ist ein
 // verstecktes Honeypot-Feld (Bot-Schutz); echte Nutzer lassen es leer.
 import { reactive, ref } from 'vue';
-import InputText from 'primevue/inputtext';
-import Button from 'primevue/button';
-import Message from 'primevue/message';
 import { anfrageStellen, ApiFehler, type AusbildungsbetriebAnfrage } from '@/portal';
 
 const form = reactive<AusbildungsbetriebAnfrage>({
@@ -50,84 +47,69 @@ async function absenden() {
 
 <template>
   <section>
-    <h2>Als Ausbildungsbetrieb anmelden</h2>
+    <h2 class="text-xl font-bold mb-4">Als Ausbildungsbetrieb anmelden</h2>
 
-    <Message v-if="erfolg" severity="success">
-      Vielen Dank! Ihre Anfrage ist eingegangen. Der EBZ prüft Ihre Angaben und sendet Ihrem
-      Ansprechpartner eine E-Mail mit dem Zugang zum Portal.
-    </Message>
+    <UAlert
+      v-if="erfolg"
+      color="success"
+      variant="soft"
+      icon="i-lucide-check-circle"
+      title="Vielen Dank!"
+      description="Ihre Anfrage ist eingegangen. Der EBZ prüft Ihre Angaben und sendet Ihrem Ansprechpartner eine E-Mail mit dem Zugang zum Portal."
+    />
 
     <template v-else>
-      <p class="hinweis">
+      <p class="text-sm text-muted mb-4 max-w-xl">
         Erfassen Sie Ihren Betrieb und einen Ansprechpartner. Nach der Prüfung durch den EBZ erhalten
         Sie eine Einladung zum Login und können anschließend Ihre Auszubildenden anmelden.
       </p>
-      <Message v-if="fehler" severity="error" closable @close="fehler = null">{{ fehler }}</Message>
 
-      <form class="formular" @submit.prevent="absenden">
-        <h3>Betrieb</h3>
-        <label>Firmenname *<InputText v-model="form.name" /></label>
-        <div class="zeile">
-          <label>Straße<InputText v-model="form.strasse" /></label>
-          <label class="plz">PLZ<InputText v-model="form.plz" /></label>
-          <label>Ort<InputText v-model="form.ort" /></label>
+      <UAlert
+        v-if="fehler"
+        color="error"
+        variant="soft"
+        :title="fehler"
+        close
+        class="mb-4"
+        @update:open="fehler = null"
+      />
+
+      <form class="flex flex-col gap-4 max-w-xl" @submit.prevent="absenden">
+        <h3 class="font-semibold">Betrieb</h3>
+        <UFormField label="Firmenname" required>
+          <UInput v-model="form.name" class="w-full" />
+        </UFormField>
+        <div class="flex gap-3">
+          <UFormField label="Straße" class="flex-1">
+            <UInput v-model="form.strasse" class="w-full" />
+          </UFormField>
+          <UFormField label="PLZ" class="w-28">
+            <UInput v-model="form.plz" class="w-full" />
+          </UFormField>
+          <UFormField label="Ort" class="flex-1">
+            <UInput v-model="form.ort" class="w-full" />
+          </UFormField>
         </div>
-        <label>USt-IdNr.<InputText v-model="form.ustId" placeholder="z. B. DE123456789" /></label>
+        <UFormField label="USt-IdNr.">
+          <UInput v-model="form.ustId" placeholder="z. B. DE123456789" class="w-full" />
+        </UFormField>
 
-        <h3>Ansprechpartner</h3>
-        <label>Name *<InputText v-model="form.ansprechpartnerName" /></label>
-        <label>E-Mail *<InputText v-model="form.ansprechpartnerEmail" type="email" /></label>
+        <h3 class="font-semibold mt-2">Ansprechpartner</h3>
+        <UFormField label="Name" required>
+          <UInput v-model="form.ansprechpartnerName" class="w-full" />
+        </UFormField>
+        <UFormField label="E-Mail" required>
+          <UInput v-model="form.ansprechpartnerEmail" type="email" class="w-full" />
+        </UFormField>
 
         <!-- Honeypot: für Menschen unsichtbar -->
-        <input v-model="form.website" class="honeypot" tabindex="-1" autocomplete="off" aria-hidden="true" />
+        <input v-model="form.website" class="absolute -left-[9999px] w-px h-px opacity-0" tabindex="-1"
+          autocomplete="off" aria-hidden="true" />
 
-        <div class="aktionen">
-          <Button type="submit" label="Anfrage absenden" icon="pi pi-send" :loading="busy" />
+        <div class="mt-1">
+          <UButton type="submit" icon="i-lucide-send" :loading="busy">Anfrage absenden</UButton>
         </div>
       </form>
     </template>
   </section>
 </template>
-
-<style scoped>
-.hinweis {
-  color: #555;
-  font-size: 0.95rem;
-}
-.formular {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  max-width: 560px;
-}
-.formular h3 {
-  margin: 0.75rem 0 0;
-}
-.formular label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-  color: #444;
-}
-.zeile {
-  display: flex;
-  gap: 0.75rem;
-}
-.zeile label {
-  flex: 1;
-}
-.zeile .plz {
-  max-width: 7rem;
-}
-.aktionen {
-  margin-top: 0.5rem;
-}
-.honeypot {
-  position: absolute;
-  left: -9999px;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-}
-</style>

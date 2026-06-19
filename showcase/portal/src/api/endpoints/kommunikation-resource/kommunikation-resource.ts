@@ -5,10 +5,12 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  EinstellungView,
   EreignisView,
   Kanal,
   PraeferenzDto,
   PraeferenzView,
+  PutKommunikationPortalPraeferenzenKanalParams,
   UngelesenView
 } from '../../model';
 
@@ -16,6 +18,30 @@ import { http } from '../../http';
 
 
 
+  /**
+ * @summary Setze Einstellungen
+ */
+export const putKommunikationPortalEinstellungen = (
+    einstellungView: EinstellungView,
+ ) => {
+      return http<unknown>(
+      {url: `/kommunikation/portal/einstellungen`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: einstellungView
+    },
+      );
+    }
+  /**
+ * @summary Einstellungen
+ */
+export const getKommunikationPortalEinstellungen = (
+
+ ) => {
+      return http<EinstellungView>(
+      {url: `/kommunikation/portal/einstellungen`, method: 'GET'
+    },
+      );
+    }
   /**
  * @summary Ereignisse
  */
@@ -66,11 +92,13 @@ export const getKommunikationPortalPraeferenzen = (
 export const putKommunikationPortalPraeferenzenKanal = (
     kanal: Kanal,
     praeferenzDto: PraeferenzDto,
+    params?: PutKommunikationPortalPraeferenzenKanalParams,
  ) => {
       return http<unknown>(
       {url: `/kommunikation/portal/praeferenzen/${kanal}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
-      data: praeferenzDto
+      data: praeferenzDto,
+        params
     },
       );
     }
@@ -85,7 +113,9 @@ export const getKommunikationPortalUngelesen = (
     },
       );
     }
-  export type GetKommunikationPortalEreignisseResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalEreignisse>>>
+  export type PutKommunikationPortalEinstellungenResult = NonNullable<Awaited<ReturnType<typeof putKommunikationPortalEinstellungen>>>
+export type GetKommunikationPortalEinstellungenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalEinstellungen>>>
+export type GetKommunikationPortalEreignisseResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalEreignisse>>>
 export type PostKommunikationPortalEreignisseIdBestaetigenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalEreignisseIdBestaetigen>>>
 export type PostKommunikationPortalEreignisseIdGelesenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalEreignisseIdGelesen>>>
 export type GetKommunikationPortalPraeferenzenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalPraeferenzen>>>
