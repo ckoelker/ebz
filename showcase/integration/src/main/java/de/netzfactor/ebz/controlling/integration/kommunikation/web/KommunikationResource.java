@@ -27,14 +27,21 @@ import org.jboss.resteasy.reactive.RestStreamElementType;
 
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp.Kategorie;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.BenachrichtigungsEinstellung;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.Konversation;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.Nachricht;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.EinstellungService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.KommunikationApi;
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.KonversationService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.PraeferenzService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.IdentitaetsPort;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.RealtimePort;
+import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.StaffIdentitaetsPort;
+import de.netzfactor.ebz.controlling.integration.kommunikation.web.KommunikationViews.KonversationView;
+import de.netzfactor.ebz.controlling.integration.kommunikation.web.KommunikationViews.NachrichtView;
+import de.netzfactor.ebz.controlling.integration.kommunikation.web.KommunikationViews.SendenDto;
 
 /**
  * Personenseitiger Zugriff auf den <b>Aktivitätslog</b> im Außenportal (Realm {@code ebz-customers}, via
@@ -62,6 +69,12 @@ public class KommunikationResource {
 
     @Inject
     RealtimePort realtime;
+
+    @Inject
+    KonversationService konversationen;
+
+    @Inject
+    StaffIdentitaetsPort staff;
 
     /** Lese-Sicht eines Aktivitätslog-Eintrags (ohne interne Felder). */
     public record EreignisView(Long id, String ereignisTyp, String kategorie, String betreff,
@@ -190,6 +203,72 @@ public class KommunikationResource {
         Long personId = mussAufrufer(ctx);
         einstellungen.setze(personId, dto.digest(), dto.quietVon(), dto.quietBis(), dto.maxProStunde());
         return Response.noContent().build();
+    }
+
+    // ───────────────────────── Nachrichten / Threads (K2, Admin↔Person aus Personensicht) ─────────────────────────
+
+    /** Eigene Threads der Person (Nachrichten-Inbox), neueste Aktivität zuerst. */
+    @Authenticated
+    @GET
+    @Path("/konversationen")
+    @Transactional
+    public List<KonversationView> konversationen(@Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        return konversationen.konversationenFuerPerson(personId).stream()
+                .map(k -> toPersonView(k, personId)).toList();
+    }
+
+    /** Anzahl Threads mit ungelesenen Nachrichten (Badge der Nachrichten-Inbox). */
+    @Authenticated
+    @GET
+    @Path("/konversationen/ungelesen")
+    @Transactional
+    public UngelesenView konversationenUngelesen(@Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        return new UngelesenView(konversationen.ungelesenFuerPerson(personId));
+    }
+
+    /** Nachrichten eines eigenen Threads (chronologisch); 403 bei fremdem Thread. */
+    @Authenticated
+    @GET
+    @Path("/konversationen/{id}/nachrichten")
+    @Transactional
+    public List<NachrichtView> nachrichten(@PathParam("id") Long id, @Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        if (!konversationen.istTeilnehmerPerson(id, personId)) {
+            throw new jakarta.ws.rs.ForbiddenException("Diese Konversation gehört nicht zu Ihrem Konto.");
+        }
+        return KommunikationViews.toViews(konversationen.nachrichten(id), staff);
+    }
+
+    /** Eigene Antwort in einem Thread. */
+    @Authenticated
+    @POST
+    @Path("/konversationen/{id}/nachrichten")
+    @Transactional
+    public NachrichtView antworten(@PathParam("id") Long id, SendenDto dto, @Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        Nachricht n = konversationen.antworteAlsPerson(id, personId, dto == null ? null : dto.inhaltHtml());
+        return KommunikationViews.toView(n, staff);
+    }
+
+    /** Markiert einen Thread für die Person als gelesen. */
+    @Authenticated
+    @POST
+    @Path("/konversationen/{id}/gelesen")
+    @Transactional
+    public Response konversationGelesen(@PathParam("id") Long id, @Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        konversationen.markiereGelesenPerson(id, personId);
+        return Response.noContent().build();
+    }
+
+    private KonversationView toPersonView(Konversation k, Long personId) {
+        Nachricht letzte = konversationen.letzteNachricht(k.id);
+        boolean ungelesen = konversationen.ungelesenImThreadPerson(k.id, personId);
+        return new KonversationView(k.id, k.typ.name(), k.betreff, k.status.name(), k.kontextTyp.name(),
+                k.kontextId, KommunikationViews.partnerFuerPerson(k, staff), KommunikationViews.vorschau(letzte),
+                letzte == null ? k.erstelltAm : letzte.zeitpunkt, ungelesen);
     }
 
     /** Token-{@code sub} → bekannte Party-ID; 403, wenn keine Identität dahinter steht. */

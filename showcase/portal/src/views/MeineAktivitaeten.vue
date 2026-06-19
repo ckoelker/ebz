@@ -90,7 +90,9 @@ function fehler(e: unknown) {
 function zeit(iso?: string): string {
   if (!iso) return '';
   const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso : d.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' });
+  // DACH-Strategie: konsequent in Europe/Berlin ausgeben (der Server erfasst bereits in Berlin).
+  return isNaN(d.getTime()) ? iso
+    : d.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
 }
 
 const kategorieFarbe: Record<string, 'info' | 'success' | 'warning' | 'neutral'> = {

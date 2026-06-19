@@ -65,6 +65,80 @@ export const PostKommunikationPortalEreignisseIdGelesenParams = zod.object({
 export const PostKommunikationPortalEreignisseIdGelesenResponse = zod.unknown()
 
 /**
+ * @summary Konversationen
+ */
+export const GetKommunikationPortalKonversationenResponseItem = zod.object({
+  "id": zod.number().optional(),
+  "typ": zod.string().optional(),
+  "betreff": zod.string().optional(),
+  "status": zod.string().optional(),
+  "kontextTyp": zod.string().optional(),
+  "kontextId": zod.number().optional(),
+  "partner": zod.string().optional(),
+  "letzteVorschau": zod.string().optional(),
+  "letzteZeit": zod.string().datetime({"offset":true}).optional(),
+  "ungelesen": zod.boolean().optional()
+})
+export const GetKommunikationPortalKonversationenResponse = zod.array(GetKommunikationPortalKonversationenResponseItem)
+
+/**
+ * @summary Konversationen Ungelesen
+ */
+export const GetKommunikationPortalKonversationenUngelesenResponse = zod.object({
+  "anzahl": zod.number().optional()
+})
+
+/**
+ * @summary Konversation Gelesen
+ */
+export const PostKommunikationPortalKonversationenIdGelesenParams = zod.object({
+  "id": zod.number()
+})
+
+export const PostKommunikationPortalKonversationenIdGelesenResponse = zod.unknown()
+
+/**
+ * @summary Nachrichten
+ */
+export const GetKommunikationPortalKonversationenIdNachrichtenParams = zod.object({
+  "id": zod.number()
+})
+
+export const GetKommunikationPortalKonversationenIdNachrichtenResponseItem = zod.object({
+  "id": zod.number().optional(),
+  "absenderTyp": zod.string().optional(),
+  "absender": zod.string().optional(),
+  "kiGeneriert": zod.boolean().optional(),
+  "inhaltHtml": zod.string().optional(),
+  "zeitpunkt": zod.string().datetime({"offset":true}).optional()
+})
+export const GetKommunikationPortalKonversationenIdNachrichtenResponse = zod.array(GetKommunikationPortalKonversationenIdNachrichtenResponseItem)
+
+/**
+ * @summary Antworten
+ */
+export const PostKommunikationPortalKonversationenIdNachrichtenParams = zod.object({
+  "id": zod.number()
+})
+
+export const PostKommunikationPortalKonversationenIdNachrichtenBody = zod.object({
+  "personId": zod.number().optional(),
+  "betreff": zod.string().optional(),
+  "inhaltHtml": zod.string().optional(),
+  "kontextTyp": zod.string().optional(),
+  "kontextId": zod.number().optional()
+})
+
+export const PostKommunikationPortalKonversationenIdNachrichtenResponse = zod.object({
+  "id": zod.number().optional(),
+  "absenderTyp": zod.string().optional(),
+  "absender": zod.string().optional(),
+  "kiGeneriert": zod.boolean().optional(),
+  "inhaltHtml": zod.string().optional(),
+  "zeitpunkt": zod.string().datetime({"offset":true}).optional()
+})
+
+/**
  * @summary Praeferenzen
  */
 export const GetKommunikationPortalPraeferenzenResponseItem = zod.object({

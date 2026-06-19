@@ -13,9 +13,12 @@ import io.quarkus.runtime.StartupEvent;
 
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.KommunikationsEreignis;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.Konversation;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.KommunikationApi;
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.KonversationService;
 import de.netzfactor.ebz.controlling.integration.party.model.Login;
+import de.netzfactor.ebz.controlling.integration.party.model.Mitarbeiter;
 
 /**
  * Seedet beim Start idempotent ein paar personenseitige Aktivitätslog-Einträge für die Beispielkundin
@@ -34,6 +37,9 @@ public class KommunikationDemoSeeder {
 
     @Inject
     KommunikationApi kommunikation;
+
+    @Inject
+    KonversationService konversationen;
 
     @Transactional
     void seed(@Observes @Priority(Interceptor.Priority.APPLICATION + 1100) StartupEvent ev) {
@@ -57,6 +63,29 @@ public class KommunikationDemoSeeder {
                 "Bitte bestätigen Sie die Kenntnisnahme Ihres Ausbildungsvertrags",
                 KontextTyp.ANMELDUNG, null, null, "seed:carla:vertrag"));
 
+        // Admin↔Person-Thread (K2): ein Vorgang vom EBZ-Service an Carla, damit Portal (Carla) und
+        // mdm-Cockpit (Staff) den Thread sofort zeigen. Idempotent über den eindeutigen Betreff.
+        String betreff = "Rückfrage zu Ihrer Anmeldung";
+        if (Konversation.count("betreff = ?1", betreff) == 0) {
+            Long mitarbeiterId = serviceMitarbeiter();
+            konversationen.eroeffneVorgang(mitarbeiterId, personId, betreff, KontextTyp.ANMELDUNG, null,
+                    "<p>Guten Tag, für Ihre Anmeldung fehlt uns noch eine Angabe. "
+                            + "Könnten Sie uns bitte Ihr gewünschtes Startdatum mitteilen?</p>");
+        }
+
         LOG.infof("Kommunikations-Demo geseedet für %s (Person %d)", KAEUFER_LOGIN, personId);
+    }
+
+    /** Idempotenter Demo-Sachbearbeiter als Absender des geseedeten Vorgangs. */
+    private static Long serviceMitarbeiter() {
+        Mitarbeiter m = Mitarbeiter.find("keycloakSub", "seed-ebz-service").firstResult();
+        if (m == null) {
+            m = new Mitarbeiter();
+            m.keycloakSub = "seed-ebz-service";
+            m.anzeigeName = "EBZ Service-Team";
+            m.email = "service@ebz.de";
+            m.persist();
+        }
+        return m.id;
     }
 }

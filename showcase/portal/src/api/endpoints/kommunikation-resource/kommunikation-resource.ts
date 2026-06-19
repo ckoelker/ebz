@@ -8,9 +8,12 @@ import type {
   EinstellungView,
   EreignisView,
   Kanal,
+  KonversationView,
+  NachrichtView,
   PraeferenzDto,
   PraeferenzView,
   PutKommunikationPortalPraeferenzenKanalParams,
+  SendenDto,
   UngelesenView
 } from '../../model';
 
@@ -76,6 +79,64 @@ export const postKommunikationPortalEreignisseIdGelesen = (
       );
     }
   /**
+ * @summary Konversationen
+ */
+export const getKommunikationPortalKonversationen = (
+
+ ) => {
+      return http<KonversationView[]>(
+      {url: `/kommunikation/portal/konversationen`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * @summary Konversationen Ungelesen
+ */
+export const getKommunikationPortalKonversationenUngelesen = (
+
+ ) => {
+      return http<UngelesenView>(
+      {url: `/kommunikation/portal/konversationen/ungelesen`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * @summary Konversation Gelesen
+ */
+export const postKommunikationPortalKonversationenIdGelesen = (
+    id: number,
+ ) => {
+      return http<unknown>(
+      {url: `/kommunikation/portal/konversationen/${id}/gelesen`, method: 'POST'
+    },
+      );
+    }
+  /**
+ * @summary Nachrichten
+ */
+export const getKommunikationPortalKonversationenIdNachrichten = (
+    id: number,
+ ) => {
+      return http<NachrichtView[]>(
+      {url: `/kommunikation/portal/konversationen/${id}/nachrichten`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * @summary Antworten
+ */
+export const postKommunikationPortalKonversationenIdNachrichten = (
+    id: number,
+    sendenDto: SendenDto,
+ ) => {
+      return http<NachrichtView>(
+      {url: `/kommunikation/portal/konversationen/${id}/nachrichten`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: sendenDto
+    },
+      );
+    }
+  /**
  * @summary Praeferenzen
  */
 export const getKommunikationPortalPraeferenzen = (
@@ -118,6 +179,11 @@ export type GetKommunikationPortalEinstellungenResult = NonNullable<Awaited<Retu
 export type GetKommunikationPortalEreignisseResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalEreignisse>>>
 export type PostKommunikationPortalEreignisseIdBestaetigenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalEreignisseIdBestaetigen>>>
 export type PostKommunikationPortalEreignisseIdGelesenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalEreignisseIdGelesen>>>
+export type GetKommunikationPortalKonversationenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalKonversationen>>>
+export type GetKommunikationPortalKonversationenUngelesenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalKonversationenUngelesen>>>
+export type PostKommunikationPortalKonversationenIdGelesenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalKonversationenIdGelesen>>>
+export type GetKommunikationPortalKonversationenIdNachrichtenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalKonversationenIdNachrichten>>>
+export type PostKommunikationPortalKonversationenIdNachrichtenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalKonversationenIdNachrichten>>>
 export type GetKommunikationPortalPraeferenzenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalPraeferenzen>>>
 export type PutKommunikationPortalPraeferenzenKanalResult = NonNullable<Awaited<ReturnType<typeof putKommunikationPortalPraeferenzenKanal>>>
 export type GetKommunikationPortalUngelesenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalUngelesen>>>

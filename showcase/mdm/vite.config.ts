@@ -34,6 +34,8 @@ export default defineConfig({
       '/bildung': { target: INTEGRATION, changeOrigin: true },
       '/crm': { target: INTEGRATION, changeOrigin: true },
       '/party': { target: INTEGRATION, changeOrigin: true },
+      // K2: Admin↔Person-Nachrichten (Threads + Co-Pilot).
+      '/kommunikation': { target: INTEGRATION, changeOrigin: true },
       '/q': { target: INTEGRATION, changeOrigin: true },
       // A15: WebSocket-Anreicherung (ws: true für das Upgrade).
       '/ws': { target: INTEGRATION, changeOrigin: true, ws: true },

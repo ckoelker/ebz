@@ -58,6 +58,32 @@ public final class Ports {
         Long personIdFuerSub(String keycloakSub);
     }
 
+    /**
+     * Auflösung Token-{@code sub} ↔ <b>Mitarbeiter</b>-Identität (Realm {@code ebz-staff}) für die
+     * Admin-Seite der zweiseitigen Threads (ab K2, Cross-Realm). Getrennt vom personenseitigen
+     * {@link IdentitaetsPort} (anderer Realm, anderer Tenant).
+     */
+    public interface StaffIdentitaetsPort {
+        /** Mitarbeiter-ID zum Keycloak-{@code sub} (oder {@code null}). */
+        Long mitarbeiterIdFuerSub(String keycloakSub);
+
+        /** Anzeigename des Mitarbeiters (für die Nachrichten-Sicht); neutraler Fallback, nie {@code null}. */
+        String mitarbeiterName(Long mitarbeiterId);
+
+        /** Anzeigename einer Person (für die Admin-Nachrichten-Sicht); neutraler Fallback, nie {@code null}. */
+        String personName(Long personId);
+    }
+
+    /**
+     * Spiegelt eine vom Mitarbeiter gesendete Thread-Nachricht zusätzlich ins <b>staff-interne CRM-Log</b>
+     * ({@code party.Aktivitaet}) — „kein Doppelsystem" (K2): die Konversation ist die Live-Kommunikation,
+     * das CRM-Kontaktlog bleibt die kuratierte Historie. ACL→party (nur im Adapter); best effort.
+     */
+    public interface CrmSpiegelPort {
+        /** Schreibt eine ausgehende {@code Aktivitaet} (Mitarbeiter→Person) als CRM-Kontaktnachweis. */
+        void spiegleStaffNachricht(Long mitarbeiterId, Long personId, String betreff, String inhaltText);
+    }
+
     /** Echtzeit-Push (SSE ab K1, WebSocket ab K2); kapselt den Transport (später Gateway-Tier + Backplane). */
     public interface RealtimePort {
         /** Signalisiert der Person ein neues Inbox-Ereignis (Badge/Feed-Update); best effort, wirft nie. */
@@ -65,6 +91,20 @@ public final class Ports {
 
         /** Live-Strom der Inbox-Signale dieser Person (SSE-Abonnement im Portal). */
         io.smallrye.mutiny.Multi<String> stream(Long personId);
+    }
+
+    /**
+     * Interaktiver Thread-Transport (WebSocket ab K2): signalisiert den in einem Thread verbundenen
+     * Teilnehmern, dass eine neue Nachricht vorliegt. Bewusst <b>nur ein Signal</b> (Konversations-ID),
+     * kein Inhalt über den Socket — der Inhalt wird über das autorisierte REST nachgeladen (der WS ist
+     * im Showcase wie die Bestands-Sockets noch offen; RBAC am Handshake folgt mit der Realm-Konfiguration).
+     */
+    public interface ThreadRealtimePort {
+        /** Endpoint-Id des Thread-WebSockets (von Socket und Adapter geteilt, damit beide ohne Web↔Adapter-Kopplung auskommen). */
+        String ENDPOINT_ID = "komm-thread";
+
+        /** Signalisiert „neue Nachricht im Thread" an die verbundenen Clients dieses Threads; best effort, wirft nie. */
+        void signalisiereThread(Long konversationId);
     }
 
     /** KI-Agent als Teilnehmer (langchain4j/HITL/MCP, ab K2): Antwortentwurf bzw. autonome Antwort. */

@@ -4,6 +4,7 @@ import AngeboteListe from '@/views/AngeboteListe.vue';
 import AngebotPflege from '@/views/AngebotPflege.vue';
 import DublettenReview from '@/views/DublettenReview.vue';
 import AnmeldungenBestaetigung from '@/views/AnmeldungenBestaetigung.vue';
+import AdminNachrichten from '@/views/AdminNachrichten.vue';
 
 // MDM-Cockpit. Startseite = CRM-Kernmaske (m:n-Kundenstamm, über die Storybook-Abnahme abgestimmt).
 // Die übrigen Masken (Bildungsangebote, HITL „Anmeldung Berufsschule") sind funktionale Prototypen
@@ -16,5 +17,6 @@ export const router = createRouter({
     { path: '/pflege/:typ/:id?', name: 'pflege', component: AngebotPflege, props: true },
     { path: '/reviews', name: 'reviews', component: DublettenReview },
     { path: '/anmeldungen', name: 'anmeldungen', component: AnmeldungenBestaetigung },
+    { path: '/nachrichten', name: 'nachrichten', component: AdminNachrichten },
   ],
 });

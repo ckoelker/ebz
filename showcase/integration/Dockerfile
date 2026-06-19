@@ -16,4 +16,6 @@ COPY --from=build /build/target/quarkus-app/*.jar ./
 COPY --from=build /build/target/quarkus-app/app/ ./app/
 COPY --from=build /build/target/quarkus-app/quarkus/ ./quarkus/
 EXPOSE 8090
-ENTRYPOINT ["java", "-jar", "quarkus-run.jar"]
+# Zeitzonen-Strategie (DACH): JVM-Default-Zone fest auf Europe/Berlin → LocalDateTime.now() = Berlin-
+# Wanduhr (Exec-Form ignoriert JAVA_OPTS_APPEND, daher hier explizit). TZ-Env setzt zusätzlich OS/Logs.
+ENTRYPOINT ["java", "-Duser.timezone=Europe/Berlin", "-jar", "quarkus-run.jar"]

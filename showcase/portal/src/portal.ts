@@ -17,17 +17,22 @@ import {
   getKommunikationPortalEreignisse, getKommunikationPortalUngelesen,
   postKommunikationPortalEreignisseIdGelesen, postKommunikationPortalEreignisseIdBestaetigen,
   getKommunikationPortalPraeferenzen, putKommunikationPortalPraeferenzenKanal,
+  getKommunikationPortalKonversationen, getKommunikationPortalKonversationenUngelesen,
+  getKommunikationPortalKonversationenIdNachrichten, postKommunikationPortalKonversationenIdNachrichten,
+  postKommunikationPortalKonversationenIdGelesen,
 } from '@/api/endpoints/kommunikation-resource/kommunikation-resource';
 import { Kanal } from '@/api/model';
 import type {
   AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, Login, PersonView,
   PortalRechnungView, RechnungsKontextView, MeinTrainingView, EreignisView, PraeferenzView,
+  KonversationView, NachrichtView,
 } from '@/api/model';
 
 export { Kanal };
 export type {
   AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, PersonView,
   PortalRechnungView, RechnungsKontextView, MeinTrainingView, EreignisView, PraeferenzView,
+  KonversationView, NachrichtView,
 };
 
 /** Fehler mit HTTP-Status, damit Views 401 (→ Login) / 403 / 429 unterscheiden können. */
@@ -110,3 +115,24 @@ export const kanalPraeferenzen = async (): Promise<PraeferenzView[]> =>
 /** Schaltet einen Kanal (EMAIL/SMS) an/aus (PORTAL ist nicht abschaltbar). */
 export const setzeKanalPraeferenz = (kanal: Kanal, aktiv: boolean) =>
   run(() => putKommunikationPortalPraeferenzenKanal(kanal, { aktiv }));
+
+// ── Meine Nachrichten (Admin↔Person-Threads, K2): eigene Vorgänge, Verlauf, Antwort, Read-Receipt ──
+/** Eigene Threads (Nachrichten-Inbox), neueste Aktivität zuerst. */
+export const meineKonversationen = async (): Promise<KonversationView[]> =>
+  ((await run(() => getKommunikationPortalKonversationen())) as KonversationView[]) ?? [];
+
+/** Anzahl Threads mit ungelesenen Nachrichten (Inbox-Badge). */
+export const konversationenUngelesen = async (): Promise<number> =>
+  (await run(() => getKommunikationPortalKonversationenUngelesen()))?.anzahl ?? 0;
+
+/** Verlauf eines eigenen Threads (chronologisch). */
+export const threadNachrichten = async (id: number): Promise<NachrichtView[]> =>
+  ((await run(() => getKommunikationPortalKonversationenIdNachrichten(id))) as NachrichtView[]) ?? [];
+
+/** Eigene Antwort in einem Thread. */
+export const threadAntworten = (id: number, inhaltHtml: string) =>
+  run(() => postKommunikationPortalKonversationenIdNachrichten(id, { inhaltHtml }));
+
+/** Markiert einen Thread als gelesen. */
+export const threadGelesen = (id: number) =>
+  run(() => postKommunikationPortalKonversationenIdGelesen(id));

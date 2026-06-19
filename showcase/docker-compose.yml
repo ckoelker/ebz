@@ -226,6 +226,9 @@ services:
       minio:
         condition: service_started
     environment:
+      # Zeitzonen-Strategie (DACH): der ganze Showcase erfasst & gibt in Europe/Berlin aus. TZ setzt OS/Logs;
+      # die JVM-Default-Zone verankert der Entrypoint via -Duser.timezone (LocalDateTime.now() = Berlin).
+      TZ: Europe/Berlin
       DB_HOST: postgres
       DB_PORT: "5432"
       # GoBD-Archiv (R2, §4 Säule 4): validiertes ZUGFeRD revisionssicher in MinIO-WORM ablegen.

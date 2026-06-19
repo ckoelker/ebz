@@ -10,6 +10,7 @@ const nav = [
   { to: '/rechnungen', label: 'Meine Rechnungen' },
   { to: '/trainings', label: 'Meine Trainings' },
   { to: '/aktivitaeten', label: 'Meine Aktivitäten' },
+  { to: '/nachrichten', label: 'Meine Nachrichten' },
 ];
 </script>
 
