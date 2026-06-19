@@ -5,9 +5,9 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface KontextView {
-  art?: string;
+export interface MitgliedschaftView1 {
   organisationId?: number;
-  bezeichnung?: string;
-  rollen?: string[];
+  organisation?: string;
+  rolle?: string;
+  buchungsberechtigt?: boolean;
 }

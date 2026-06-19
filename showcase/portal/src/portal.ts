@@ -13,14 +13,21 @@ import {
   getPartyPortalRechnungsKontexte, getPartyPortalRechnungen, getPartyPortalRechnungenIdZugferd,
 } from '@/api/endpoints/rechnung-portal-resource/rechnung-portal-resource';
 import { getLmsPortalTrainings } from '@/api/endpoints/lms-portal/lms-portal';
+import {
+  getKommunikationPortalEreignisse, getKommunikationPortalUngelesen,
+  postKommunikationPortalEreignisseIdGelesen, postKommunikationPortalEreignisseIdBestaetigen,
+  getKommunikationPortalPraeferenzen, putKommunikationPortalPraeferenzenKanal,
+} from '@/api/endpoints/kommunikation-resource/kommunikation-resource';
+import { Kanal } from '@/api/model';
 import type {
   AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, Login, PersonView,
-  PortalRechnungView, RechnungsKontextView, MeinTrainingView,
+  PortalRechnungView, RechnungsKontextView, MeinTrainingView, EreignisView, PraeferenzView,
 } from '@/api/model';
 
+export { Kanal };
 export type {
   AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, PersonView,
-  PortalRechnungView, RechnungsKontextView, MeinTrainingView,
+  PortalRechnungView, RechnungsKontextView, MeinTrainingView, EreignisView, PraeferenzView,
 };
 
 /** Fehler mit HTTP-Status, damit Views 401 (→ Login) / 403 / 429 unterscheiden können. */
@@ -78,3 +85,28 @@ export const rechnungPdf = (id: number): Promise<Blob> =>
 /** WBT-Einschreibungen des eingeloggten Lernenden (eigen-skopiert über den Token-sub). */
 export const meineTrainings = async (): Promise<MeinTrainingView[]> =>
   ((await run(() => getLmsPortalTrainings())) as MeinTrainingView[]) ?? [];
+
+// ── Meine Aktivitäten (System→Person): Aktivitätslog/Zeitstrahl, Ungelesen-Badge, Quittierung, Kanäle ──
+/** Personenseitiger Aktivitätslog (neueste zuerst), eigen-skopiert über den Token-sub. */
+export const meineAktivitaeten = async (): Promise<EreignisView[]> =>
+  ((await run(() => getKommunikationPortalEreignisse())) as EreignisView[]) ?? [];
+
+/** Anzahl ungelesener Portal-Benachrichtigungen (Badge). */
+export const ungelesenAnzahl = async (): Promise<number> =>
+  (await run(() => getKommunikationPortalUngelesen()))?.anzahl ?? 0;
+
+/** Markiert ein Ereignis als gelesen (Lese-Zeitstempel). */
+export const ereignisGelesen = (id: number) =>
+  run(() => postKommunikationPortalEreignisseIdGelesen(id));
+
+/** Pflicht-Bestätigung „zur Kenntnis genommen" (Nachweis). */
+export const ereignisBestaetigen = (id: number) =>
+  run(() => postKommunikationPortalEreignisseIdBestaetigen(id));
+
+/** Kanal-Präferenzen (gesetzte Zeilen; nicht gesetzte Kanäle gelten als aktiv). */
+export const kanalPraeferenzen = async (): Promise<PraeferenzView[]> =>
+  ((await run(() => getKommunikationPortalPraeferenzen())) as PraeferenzView[]) ?? [];
+
+/** Schaltet einen Kanal (EMAIL/SMS) an/aus (PORTAL ist nicht abschaltbar). */
+export const setzeKanalPraeferenz = (kanal: Kanal, aktiv: boolean) =>
+  run(() => putKommunikationPortalPraeferenzenKanal(kanal, { aktiv }));

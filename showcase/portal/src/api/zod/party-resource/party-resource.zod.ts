@@ -146,12 +146,13 @@ export const PostPartyOrganisationenIdTeilnehmerParams = zod.object({
 
 export const postPartyOrganisationenIdTeilnehmerBodyEmailRegExp = new RegExp('\\S');
 export const postPartyOrganisationenIdTeilnehmerBodyAnzeigeNameRegExp = new RegExp('\\S');
+export const postPartyOrganisationenIdTeilnehmerBodyRolleRegExp = new RegExp('\\S');
 
 
 export const PostPartyOrganisationenIdTeilnehmerBody = zod.object({
   "email": zod.string().regex(postPartyOrganisationenIdTeilnehmerBodyEmailRegExp),
   "anzeigeName": zod.string().regex(postPartyOrganisationenIdTeilnehmerBodyAnzeigeNameRegExp),
-  "rolle": zod.enum(['AUSBILDER', 'ANSPRECHPARTNER_STUDIUM', 'SEMINAR_BUCHER', 'AZUBI', 'STUDENT', 'AUFSICHTSRAT']),
+  "rolle": zod.string().regex(postPartyOrganisationenIdTeilnehmerBodyRolleRegExp),
   "buchungsberechtigt": zod.boolean().optional()
 })
 
@@ -191,7 +192,7 @@ export const PostPartyPersonenMergeResponse = zod.object({
   "mitgliedschaften": zod.array(zod.object({
   "organisationId": zod.number().optional(),
   "organisation": zod.string().optional(),
-  "rolle": zod.enum(['AUSBILDER', 'ANSPRECHPARTNER_STUDIUM', 'SEMINAR_BUCHER', 'AZUBI', 'STUDENT', 'AUFSICHTSRAT']).optional(),
+  "rolle": zod.string().optional(),
   "buchungsberechtigt": zod.boolean().optional()
 })).optional()
 })
@@ -294,7 +295,7 @@ export const GetPartyPersonenIdKandidatenResponseItem = zod.object({
   "mitgliedschaften": zod.array(zod.object({
   "organisationId": zod.number().optional(),
   "organisation": zod.string().optional(),
-  "rolle": zod.enum(['AUSBILDER', 'ANSPRECHPARTNER_STUDIUM', 'SEMINAR_BUCHER', 'AZUBI', 'STUDENT', 'AUFSICHTSRAT']).optional(),
+  "rolle": zod.string().optional(),
   "buchungsberechtigt": zod.boolean().optional()
 })).optional()
 })
@@ -311,7 +312,7 @@ export const GetPartyPersonenIdKontexteResponseItem = zod.object({
   "art": zod.string().optional(),
   "organisationId": zod.number().optional(),
   "bezeichnung": zod.string().optional(),
-  "rollen": zod.array(zod.enum(['AUSBILDER', 'ANSPRECHPARTNER_STUDIUM', 'SEMINAR_BUCHER', 'AZUBI', 'STUDENT', 'AUFSICHTSRAT'])).optional()
+  "rollen": zod.array(zod.string()).optional()
 })
 export const GetPartyPersonenIdKontexteResponse = zod.array(GetPartyPersonenIdKontexteResponseItem)
 

@@ -11,7 +11,8 @@ const input = {
   target,
   filters: {
     mode: 'include' as const,
-    tags: ['Party Resource', 'Portal Resource', 'Rechnung Portal Resource', 'LMS Portal'],
+    tags: ['Party Resource', 'Portal Resource', 'Rechnung Portal Resource', 'LMS Portal',
+      'Kommunikation Resource'],
   },
 };
 

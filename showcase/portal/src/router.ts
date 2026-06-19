@@ -3,9 +3,11 @@ import Anfrage from '@/views/Anfrage.vue';
 import MeineAzubis from '@/views/MeineAzubis.vue';
 import MeineRechnungen from '@/views/MeineRechnungen.vue';
 import MeineTrainings from '@/views/MeineTrainings.vue';
+import MeineAktivitaeten from '@/views/MeineAktivitaeten.vue';
 
 // EBZ Außenportal: öffentliche Ausbildungsbetrieb-Anfrage (/) + Login-Bereich „Meine Azubis"
-// (/azubis), „Meine Rechnungen" (/rechnungen) und „Meine Trainings" (/trainings: WBT starten via SSO).
+// (/azubis), „Meine Rechnungen" (/rechnungen), „Meine Trainings" (/trainings: WBT via SSO) und
+// „Meine Aktivitäten" (/aktivitaeten: System→Person-Benachrichtigungen, Zeitstrahl + Quittierung).
 export const router = createRouter({
   history: createWebHistory(),
   routes: [
@@ -13,5 +15,6 @@ export const router = createRouter({
     { path: '/azubis', name: 'azubis', component: MeineAzubis },
     { path: '/rechnungen', name: 'rechnungen', component: MeineRechnungen },
     { path: '/trainings', name: 'trainings', component: MeineTrainings },
+    { path: '/aktivitaeten', name: 'aktivitaeten', component: MeineAktivitaeten },
   ],
 });

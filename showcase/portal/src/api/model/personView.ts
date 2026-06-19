@@ -4,7 +4,7 @@
  * EBZ MDM — Bildungsangebote
  * OpenAPI spec version: 0.1.0
  */
-import type { MitgliedschaftView } from './mitgliedschaftView';
+import type { MitgliedschaftView1 } from './mitgliedschaftView1';
 
 export interface PersonView {
   id?: number;
@@ -15,5 +15,5 @@ export interface PersonView {
   status?: string;
   goldenPersonId?: number;
   emails?: string[];
-  mitgliedschaften?: MitgliedschaftView[];
+  mitgliedschaften?: MitgliedschaftView1[];
 }

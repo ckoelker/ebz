@@ -4,13 +4,13 @@
  * EBZ MDM — Bildungsangebote
  * OpenAPI spec version: 0.1.0
  */
-import type { Rolle } from './rolle';
 
 export interface TeilnehmerAnlage {
   /** @pattern \S */
   email: string;
   /** @pattern \S */
   anzeigeName: string;
-  rolle: Rolle;
+  /** @pattern \S */
+  rolle: string;
   buchungsberechtigt?: boolean;
 }

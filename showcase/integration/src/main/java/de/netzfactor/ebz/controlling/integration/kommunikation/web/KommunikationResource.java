@@ -19,6 +19,8 @@ import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.SecurityContext;
 
+import org.eclipse.microprofile.openapi.annotations.Operation;
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import org.jboss.resteasy.reactive.RestStreamElementType;
 
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis;
@@ -38,6 +40,7 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.Realtim
  */
 @Path("/kommunikation/portal")
 @Produces(MediaType.APPLICATION_JSON)
+@Tag(name = "Kommunikation Resource")
 public class KommunikationResource {
 
     @Inject
@@ -106,7 +109,9 @@ public class KommunikationResource {
         return Response.noContent().build();
     }
 
-    /** Live-Feed (SSE): neue Inbox-Signale der eingeloggten Person — ohne Polling. Nicht transaktional. */
+    /** Live-Feed (SSE): neue Inbox-Signale der eingeloggten Person — ohne Polling. Nicht transaktional.
+     *  Aus der OpenAPI ausgeblendet (kein orval-Client) — der Browser-Stream läuft über EventSource. */
+    @Operation(hidden = true)
     @Authenticated
     @GET
     @Path("/stream")

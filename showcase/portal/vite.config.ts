@@ -19,6 +19,7 @@ export default defineConfig({
     proxy: {
       '/party': { target: INTEGRATION, changeOrigin: true },
       '/lms': { target: INTEGRATION, changeOrigin: true },
+      '/kommunikation': { target: INTEGRATION, changeOrigin: true },
       '/q': { target: INTEGRATION, changeOrigin: true },
     },
   },

@@ -5,9 +5,6 @@
  * OpenAPI spec version: 0.1.0
  */
 
-export interface KontextView {
-  art?: string;
-  organisationId?: number;
-  bezeichnung?: string;
-  rollen?: string[];
+export interface UngelesenView {
+  anzahl?: number;
 }
