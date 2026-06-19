@@ -5,8 +5,13 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  BroadcastDto,
+  BroadcastErgebnis,
   EntwurfView,
+  GruppeDto,
+  GruppeView,
   KonversationView,
+  MitgliedDto,
   NachrichtView,
   SendenDto
 } from '../../model';
@@ -15,6 +20,81 @@ import { http } from '../../http';
 
 
 
+  /**
+ * @summary Gruppen
+ */
+export const getKommunikationAdminGruppen = (
+
+ ) => {
+      return http<GruppeView[]>(
+      {url: `/kommunikation/admin/gruppen`, method: 'GET'
+    },
+      );
+    }
+  /**
+ * @summary Gruppe Anlegen
+ */
+export const postKommunikationAdminGruppen = (
+    gruppeDto: GruppeDto,
+ ) => {
+      return http<GruppeView>(
+      {url: `/kommunikation/admin/gruppen`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: gruppeDto
+    },
+      );
+    }
+  /**
+ * @summary Gruppe Loeschen
+ */
+export const deleteKommunikationAdminGruppenId = (
+    id: number,
+ ) => {
+      return http<unknown>(
+      {url: `/kommunikation/admin/gruppen/${id}`, method: 'DELETE'
+    },
+      );
+    }
+  /**
+ * @summary Broadcast
+ */
+export const postKommunikationAdminGruppenIdBroadcast = (
+    id: number,
+    broadcastDto: BroadcastDto,
+ ) => {
+      return http<BroadcastErgebnis>(
+      {url: `/kommunikation/admin/gruppen/${id}/broadcast`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: broadcastDto
+    },
+      );
+    }
+  /**
+ * @summary Mitglied Hinzu
+ */
+export const postKommunikationAdminGruppenIdMitglieder = (
+    id: number,
+    mitgliedDto: MitgliedDto,
+ ) => {
+      return http<unknown>(
+      {url: `/kommunikation/admin/gruppen/${id}/mitglieder`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: mitgliedDto
+    },
+      );
+    }
+  /**
+ * @summary Mitglied Entfernen
+ */
+export const deleteKommunikationAdminGruppenIdMitgliederPersonId = (
+    id: number,
+    personId: number,
+ ) => {
+      return http<unknown>(
+      {url: `/kommunikation/admin/gruppen/${id}/mitglieder/${personId}`, method: 'DELETE'
+    },
+      );
+    }
   /**
  * @summary Konversationen
  */
@@ -86,7 +166,13 @@ export const postKommunikationAdminVorgaenge = (
     },
       );
     }
-  export type GetKommunikationAdminKonversationenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationAdminKonversationen>>>
+  export type GetKommunikationAdminGruppenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationAdminGruppen>>>
+export type PostKommunikationAdminGruppenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationAdminGruppen>>>
+export type DeleteKommunikationAdminGruppenIdResult = NonNullable<Awaited<ReturnType<typeof deleteKommunikationAdminGruppenId>>>
+export type PostKommunikationAdminGruppenIdBroadcastResult = NonNullable<Awaited<ReturnType<typeof postKommunikationAdminGruppenIdBroadcast>>>
+export type PostKommunikationAdminGruppenIdMitgliederResult = NonNullable<Awaited<ReturnType<typeof postKommunikationAdminGruppenIdMitglieder>>>
+export type DeleteKommunikationAdminGruppenIdMitgliederPersonIdResult = NonNullable<Awaited<ReturnType<typeof deleteKommunikationAdminGruppenIdMitgliederPersonId>>>
+export type GetKommunikationAdminKonversationenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationAdminKonversationen>>>
 export type PostKommunikationAdminKonversationenIdEntwurfResult = NonNullable<Awaited<ReturnType<typeof postKommunikationAdminKonversationenIdEntwurf>>>
 export type PostKommunikationAdminKonversationenIdGelesenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationAdminKonversationenIdGelesen>>>
 export type GetKommunikationAdminKonversationenIdNachrichtenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationAdminKonversationenIdNachrichten>>>

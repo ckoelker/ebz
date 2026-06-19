@@ -39,6 +39,11 @@ public enum EreignisTyp {
     SYSTEM_HINWEIS(Kategorie.SYSTEM, true, Set.of(Kanal.PORTAL),
             Rechtsgrundlage.BERECHTIGTES_INTERESSE_6_1_F, "system-hinweis", false),
 
+    /** Gruppen-Broadcast an einen Verteiler (K3, berechtigtes Interesse). PORTAL immer; EMAIL nur ohne
+     *  Werbe-/Auskunftssperre (nicht transaktional → Consent/werbesperre greift im ErreichbarkeitPort). */
+    GRUPPEN_INFO(Kategorie.SYSTEM, true, Set.of(Kanal.PORTAL, Kanal.EMAIL),
+            Rechtsgrundlage.BERECHTIGTES_INTERESSE_6_1_F, "gruppen-info", false),
+
     /** Interner Vermerk — bewusst NICHT personenseitig sichtbar (Allowlist-Disziplin), keine Zustellung. */
     INTERNER_VERMERK(Kategorie.INTERN, false, Set.of(),
             Rechtsgrundlage.BERECHTIGTES_INTERESSE_6_1_F, null, false);

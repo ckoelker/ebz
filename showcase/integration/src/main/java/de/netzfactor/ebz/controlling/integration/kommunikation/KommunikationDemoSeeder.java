@@ -15,6 +15,8 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.KommunikationsEreignis;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Konversation;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.Personengruppe;
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.GruppenService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.KommunikationApi;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.KonversationService;
 import de.netzfactor.ebz.controlling.integration.party.model.Login;
@@ -40,6 +42,9 @@ public class KommunikationDemoSeeder {
 
     @Inject
     KonversationService konversationen;
+
+    @Inject
+    GruppenService gruppen;
 
     @Transactional
     void seed(@Observes @Priority(Interceptor.Priority.APPLICATION + 1100) StartupEvent ev) {
@@ -71,6 +76,14 @@ public class KommunikationDemoSeeder {
             konversationen.eroeffneVorgang(mitarbeiterId, personId, betreff, KontextTyp.ANMELDUNG, null,
                     "<p>Guten Tag, für Ihre Anmeldung fehlt uns noch eine Angabe. "
                             + "Könnten Sie uns bitte Ihr gewünschtes Startdatum mitteilen?</p>");
+        }
+
+        // Demo-Verteiler (K3): ein manueller Verteiler mit Carla, damit die Broadcast-Maske gefüllt ist
+        // (kein Broadcast geseedet → keine spurious Log-Einträge). Idempotent über den eindeutigen Namen.
+        String gruppenName = "EBZ-Infoverteiler";
+        if (Personengruppe.count("name = ?1", gruppenName) == 0) {
+            Personengruppe g = gruppen.anlegenManuell(gruppenName, "Allgemeine Hinweise an Teilnehmende");
+            gruppen.mitgliedHinzu(g.id, personId);
         }
 
         LOG.infof("Kommunikations-Demo geseedet für %s (Person %d)", KAEUFER_LOGIN, personId);

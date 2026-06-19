@@ -11,6 +11,7 @@ const prototypen = [
   { to: '/reviews', label: 'Dubletten-Review', icon: 'i-lucide-copy-check' },
   { to: '/anmeldungen', label: 'Anmeldungen', icon: 'i-lucide-clipboard-check' },
   { to: '/nachrichten', label: 'Nachrichten', icon: 'i-lucide-messages-square' },
+  { to: '/verteiler', label: 'Verteiler', icon: 'i-lucide-megaphone' },
 ];
 </script>
 

@@ -5,6 +5,7 @@ import java.util.List;
 import jakarta.annotation.security.RolesAllowed;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
+import jakarta.ws.rs.DELETE;
 import jakarta.ws.rs.GET;
 import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
@@ -20,6 +21,9 @@ import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Konversation;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Nachricht;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.Personengruppe;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.Personengruppe.Quelle;
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.GruppenService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.KonversationService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.AgentPort;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.StaffIdentitaetsPort;
@@ -49,6 +53,9 @@ public class AdminKommunikationResource {
 
     @Inject
     AgentPort coPilot;
+
+    @Inject
+    GruppenService gruppen;
 
     /** KI-Antwortvorschlag (EU-AI-Act Art. 50: in der UI als „KI-Vorschlag" zu kennzeichnen). */
     public record EntwurfView(String entwurf, boolean kiGeneriert) {
@@ -112,6 +119,84 @@ public class AdminKommunikationResource {
         Long mid = mussMitarbeiter(ctx);
         konversationen.markiereGelesenStaff(id, mid);
         return Response.noContent().build();
+    }
+
+    // ───────────────────────── Verteiler & Broadcast (K3, Person→Gruppe) ─────────────────────────
+
+    public record GruppeView(Long id, String name, String beschreibung, String quelle, int anzahl) {
+    }
+
+    /** Anlegen/Pflege: {@code quelle}=MANUELL|ORGANISATION; {@code organisationId} nur bei ORGANISATION. */
+    public record GruppeDto(String name, String beschreibung, String quelle, Long organisationId) {
+    }
+
+    public record MitgliedDto(Long personId) {
+    }
+
+    public record BroadcastDto(String nachricht) {
+    }
+
+    public record BroadcastErgebnis(int erreicht) {
+    }
+
+    /** Alle Verteiler mit aufgelöster Empfängerzahl. */
+    @GET
+    @Path("/gruppen")
+    @Transactional
+    public List<GruppeView> gruppen() {
+        return gruppen.gruppen().stream().map(this::toGruppeView).toList();
+    }
+
+    /** Verteiler anlegen (manuell oder als Organisations-Kreis). */
+    @POST
+    @Path("/gruppen")
+    @Transactional
+    public GruppeView gruppeAnlegen(GruppeDto dto) {
+        Quelle q = dto.quelle() == null ? Quelle.MANUELL : Quelle.valueOf(dto.quelle());
+        Personengruppe g = q == Quelle.ORGANISATION
+                ? gruppen.anlegenOrganisation(dto.name(), dto.beschreibung(), dto.organisationId())
+                : gruppen.anlegenManuell(dto.name(), dto.beschreibung());
+        return toGruppeView(g);
+    }
+
+    /** Verteiler löschen (UI bestätigt vorher). */
+    @DELETE
+    @Path("/gruppen/{id}")
+    @Transactional
+    public Response gruppeLoeschen(@PathParam("id") Long id) {
+        gruppen.loeschen(id);
+        return Response.noContent().build();
+    }
+
+    /** Manuelles Mitglied hinzufügen. */
+    @POST
+    @Path("/gruppen/{id}/mitglieder")
+    @Transactional
+    public Response mitgliedHinzu(@PathParam("id") Long id, MitgliedDto dto) {
+        gruppen.mitgliedHinzu(id, dto.personId());
+        return Response.noContent().build();
+    }
+
+    /** Manuelles Mitglied entfernen. */
+    @DELETE
+    @Path("/gruppen/{id}/mitglieder/{personId}")
+    @Transactional
+    public Response mitgliedEntfernen(@PathParam("id") Long id, @PathParam("personId") Long personId) {
+        gruppen.mitgliedEntfernen(id, personId);
+        return Response.noContent().build();
+    }
+
+    /** Broadcast an alle (aufgelösten) Mitglieder; liefert die Anzahl erreichter Empfänger. */
+    @POST
+    @Path("/gruppen/{id}/broadcast")
+    @Transactional
+    public BroadcastErgebnis broadcast(@PathParam("id") Long id, BroadcastDto dto) {
+        return new BroadcastErgebnis(gruppen.broadcast(id, dto == null ? null : dto.nachricht()));
+    }
+
+    private GruppeView toGruppeView(Personengruppe g) {
+        return new GruppeView(g.id, g.name, g.beschreibung, g.quelle.name(),
+                gruppen.mitglieder(g.id).size());
     }
 
     private KonversationView toStaffView(Konversation k, Long mitarbeiterId) {

@@ -8,6 +8,83 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Gruppen
+ */
+export const GetKommunikationAdminGruppenResponseItem = zod.object({
+  "id": zod.number().optional(),
+  "name": zod.string().optional(),
+  "beschreibung": zod.string().optional(),
+  "quelle": zod.string().optional(),
+  "anzahl": zod.number().optional()
+})
+export const GetKommunikationAdminGruppenResponse = zod.array(GetKommunikationAdminGruppenResponseItem)
+
+/**
+ * @summary Gruppe Anlegen
+ */
+export const PostKommunikationAdminGruppenBody = zod.object({
+  "name": zod.string().optional(),
+  "beschreibung": zod.string().optional(),
+  "quelle": zod.string().optional(),
+  "organisationId": zod.number().optional()
+})
+
+export const PostKommunikationAdminGruppenResponse = zod.object({
+  "id": zod.number().optional(),
+  "name": zod.string().optional(),
+  "beschreibung": zod.string().optional(),
+  "quelle": zod.string().optional(),
+  "anzahl": zod.number().optional()
+})
+
+/**
+ * @summary Gruppe Loeschen
+ */
+export const DeleteKommunikationAdminGruppenIdParams = zod.object({
+  "id": zod.number()
+})
+
+export const DeleteKommunikationAdminGruppenIdResponse = zod.unknown()
+
+/**
+ * @summary Broadcast
+ */
+export const PostKommunikationAdminGruppenIdBroadcastParams = zod.object({
+  "id": zod.number()
+})
+
+export const PostKommunikationAdminGruppenIdBroadcastBody = zod.object({
+  "nachricht": zod.string().optional()
+})
+
+export const PostKommunikationAdminGruppenIdBroadcastResponse = zod.object({
+  "erreicht": zod.number().optional()
+})
+
+/**
+ * @summary Mitglied Hinzu
+ */
+export const PostKommunikationAdminGruppenIdMitgliederParams = zod.object({
+  "id": zod.number()
+})
+
+export const PostKommunikationAdminGruppenIdMitgliederBody = zod.object({
+  "personId": zod.number().optional()
+})
+
+export const PostKommunikationAdminGruppenIdMitgliederResponse = zod.unknown()
+
+/**
+ * @summary Mitglied Entfernen
+ */
+export const DeleteKommunikationAdminGruppenIdMitgliederPersonIdParams = zod.object({
+  "id": zod.number(),
+  "personId": zod.number()
+})
+
+export const DeleteKommunikationAdminGruppenIdMitgliederPersonIdResponse = zod.unknown()
+
+/**
  * @summary Konversationen
  */
 export const GetKommunikationAdminKonversationenResponseItem = zod.object({
