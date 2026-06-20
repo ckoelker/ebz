@@ -13,6 +13,8 @@ import org.jboss.logging.Logger;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import io.opentelemetry.api.baggage.Baggage;
+
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.KommunikationsEreignis;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis;
@@ -20,6 +22,7 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.ErreichbarkeitPort;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.RealtimePort;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 
 /**
  * <b>Veröffentlichte Fassade</b> des Kommunikations-Moduls ({@code KommunikationApi}) — das Einzige, was
@@ -98,7 +101,9 @@ public class KommunikationApi {
         pe.betreff = ev.betreff();
         pe.kontextTyp = ev.kontextTyp() == null ? PersonEreignis.KontextTyp.KEINER : ev.kontextTyp();
         pe.kontextId = ev.kontextId();
-        pe.prozessFall = ev.prozessFall();
+        // Trace-/BPMN-Korrelation: explizit am Event ODER aus dem aktuellen W3C-Baggage (der @Observes-
+        // Consumer läuft synchron im Auslöser-Kontext) → Support springt Benachrichtigung ↔ Trace/BPMN.
+        pe.prozessFall = ev.prozessFall() != null ? ev.prozessFall() : aktuellerFall();
         // Portal-Log nur für eine bekannte Person bei sichtbarem Typ; Direkt-E-Mail bleibt unsichtbar.
         pe.sichtbar = typ.sichtbar && personErreichbar;
         if (personErreichbar) {
@@ -144,6 +149,12 @@ public class KommunikationApi {
         z.status = Zustellung.Status.NEU;
         z.persist();
         return z;
+    }
+
+    /** Aktuelle Prozess-/Trace-Fall-ID aus dem W3C-Baggage (vom {@code Prozessspur.schritt} gesetzt); {@code null} ohne Kontext. */
+    private static String aktuellerFall() {
+        String fall = Baggage.current().getEntryValue(Prozessspur.BAGGAGE_FALL);
+        return (fall == null || fall.isBlank()) ? null : fall;
     }
 
     private String variablenJson(java.util.Map<String, Object> variablen) {
