@@ -38,6 +38,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungPositionDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.HochschulLaufRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungslaufRequest;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.SonderrechnungDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.ZahlungseingangDto;
 import de.netzfactor.ebz.controlling.integration.bildung.model.Bildungsangebot;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
@@ -376,6 +377,21 @@ public class RechnungResource {
             alle = Rechnung.listAll();
         }
         return alle.stream().map(RechnungResource::toRechnung).toList();
+    }
+
+    /**
+     * Legt eine freie <b>Sonderrechnung</b> an (leerer Entwurf außerhalb der Standard-Läufe); danach über
+     * {@code /positionen} bestücken und {@code /ausstellen} festschreiben. {@code bereich}/
+     * {@code zahlungszielTage} optional (Default Debitor-Bereich / 14 Tage).
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/rechnungen")
+    @Transactional
+    public Response erstelleSonderrechnung(@Valid SonderrechnungDto dto) {
+        Rechnung r = rechnungService.erstelleSonderrechnung(dto.debitorId(), dto.bereich(),
+                dto.zeitraumBezeichnung(), dto.zahlungszielTage());
+        return created("/rechnung/rechnungen/" + r.id, toRechnung(r));
     }
 
     @GET

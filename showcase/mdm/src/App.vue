@@ -13,6 +13,7 @@ const prototypen = [
   { to: '/nachrichten', label: 'Nachrichten', icon: 'i-lucide-messages-square' },
   { to: '/verteiler', label: 'Verteiler', icon: 'i-lucide-megaphone' },
   { to: '/bestaetigungen', label: 'Kenntnisnahmen', icon: 'i-lucide-clipboard-signature' },
+  { to: '/rechnungen', label: 'Rechnungen', icon: 'i-lucide-receipt' },
 ];
 </script>
 

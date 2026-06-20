@@ -7,6 +7,8 @@ import AnmeldungenBestaetigung from '@/views/AnmeldungenBestaetigung.vue';
 import AdminNachrichten from '@/views/AdminNachrichten.vue';
 import AdminVerteiler from '@/views/AdminVerteiler.vue';
 import AdminBestaetigungen from '@/views/AdminBestaetigungen.vue';
+import RechnungenListe from '@/views/RechnungenListe.vue';
+import RechnungDetail from '@/views/RechnungDetail.vue';
 
 // MDM-Cockpit. Startseite = CRM-Kernmaske (m:n-Kundenstamm, über die Storybook-Abnahme abgestimmt).
 // Die übrigen Masken (Bildungsangebote, HITL „Anmeldung Berufsschule") sind funktionale Prototypen
@@ -22,5 +24,7 @@ export const router = createRouter({
     { path: '/nachrichten', name: 'nachrichten', component: AdminNachrichten },
     { path: '/verteiler', name: 'verteiler', component: AdminVerteiler },
     { path: '/bestaetigungen', name: 'bestaetigungen', component: AdminBestaetigungen },
+    { path: '/rechnungen', name: 'rechnungen', component: RechnungenListe },
+    { path: '/rechnungen/:id', name: 'rechnung', component: RechnungDetail },
   ],
 });

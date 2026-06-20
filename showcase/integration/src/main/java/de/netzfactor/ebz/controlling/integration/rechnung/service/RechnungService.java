@@ -10,6 +10,8 @@ import jakarta.transaction.Transactional;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.ManuellePositionDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Belegart;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
+import de.netzfactor.ebz.controlling.integration.rechnung.model.Debitor;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Leistungsart;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Rechnung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungPosition;
@@ -29,6 +31,32 @@ public class RechnungService {
 
     @Inject
     de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur prozess;
+
+    /**
+     * Legt eine freie <b>Sonderrechnung</b> als leeren {@code ENTWURF} an (Belegart {@code RECHNUNG},
+     * noch ohne Nummer) — für Ad-hoc-Belege außerhalb der Standard-Läufe. Bestückung über
+     * {@link #addManuellePosition} und Festschreibung über {@link #ausstellen}. {@code bereich} default =
+     * Bereich des Debitors, {@code zahlungszielTage} default = 14.
+     */
+    @Transactional
+    public Rechnung erstelleSonderrechnung(Long debitorId, Bereich bereich, String zeitraumBezeichnung,
+            Integer zahlungszielTage) {
+        Debitor debitor = Debitor.findById(debitorId);
+        if (debitor == null) {
+            throw RegelVerletzung.nichtGefunden("Debitor nicht gefunden: " + debitorId);
+        }
+        Rechnung r = new Rechnung();
+        r.belegart = Belegart.RECHNUNG;
+        r.bereich = bereich != null ? bereich : debitor.bereich;
+        r.debitor = debitor;
+        r.zeitraumBezeichnung = zeitraumBezeichnung;
+        r.zahlungszielTage = zahlungszielTage != null && zahlungszielTage > 0 ? zahlungszielTage : 14;
+        r.status = RechnungStatus.ENTWURF;
+        r.persist();
+        prozess.schritt("Sonderrechnung anlegen", Prozess.Akteur.EBZ, Prozess.System.COCKPIT,
+                Prozess.Typ.USER_TASK, Prozess.Phase.RECHNUNGSLAUF);
+        return r;
+    }
 
     /**
      * Verbucht einen manuellen Zahlungseingang zu einem festgeschriebenen Forderungs-Beleg
