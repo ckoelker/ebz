@@ -3,11 +3,15 @@ import { Page, expect } from '@playwright/test';
 export const URLS = {
   openolat: process.env.OPENOLAT_URL ?? 'http://localhost:8089',
   portal: process.env.PORTAL_URL ?? 'http://localhost:5175',
+  mdm: process.env.MDM_URL ?? 'http://localhost:5174',
   keycloak: process.env.KEYCLOAK_URL ?? 'http://keycloak.localhost:8080',
 };
 
 /** Default-Testkunde im Realm ebz-customers (Carla Kundin). */
 export const CUSTOMER = { username: 'customer', password: 'customer' };
+
+/** Default-Sachbearbeiter im Realm ebz-staff (Cockpit, Rolle rechnung-pflege/katalog-pflege). */
+export const STAFF = { username: 'staff', password: 'staff' };
 
 /**
  * Füllt das Keycloak-Login-Formular aus, falls die aktuelle Seite eines ist, und wartet,
