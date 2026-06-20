@@ -17,22 +17,23 @@ import {
   getKommunikationPortalEreignisse, getKommunikationPortalUngelesen,
   postKommunikationPortalEreignisseIdGelesen, postKommunikationPortalEreignisseIdBestaetigen,
   getKommunikationPortalPraeferenzen, putKommunikationPortalPraeferenzenKanal,
+  getKommunikationPortalEinstellungen, putKommunikationPortalEinstellungen,
   getKommunikationPortalKonversationen, getKommunikationPortalKonversationenUngelesen,
   getKommunikationPortalKonversationenIdNachrichten, postKommunikationPortalKonversationenIdNachrichten,
   postKommunikationPortalKonversationenIdGelesen, postKommunikationPortalBeratung,
 } from '@/api/endpoints/kommunikation-resource/kommunikation-resource';
-import { Kanal } from '@/api/model';
+import { Kanal, Kategorie } from '@/api/model';
 import type {
   AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, Login, PersonView,
   PortalRechnungView, RechnungsKontextView, MeinTrainingView, EreignisView, PraeferenzView,
-  KonversationView, NachrichtView,
+  EinstellungView, KonversationView, NachrichtView,
 } from '@/api/model';
 
-export { Kanal };
+export { Kanal, Kategorie };
 export type {
   AusbildungsbetriebAnfrage, AzubiAnmeldungDto, BuchungZeile, KontextView, PersonView,
   PortalRechnungView, RechnungsKontextView, MeinTrainingView, EreignisView, PraeferenzView,
-  KonversationView, NachrichtView,
+  EinstellungView, KonversationView, NachrichtView,
 };
 
 /** Fehler mit HTTP-Status, damit Views 401 (→ Login) / 403 / 429 unterscheiden können. */
@@ -112,9 +113,18 @@ export const ereignisBestaetigen = (id: number) =>
 export const kanalPraeferenzen = async (): Promise<PraeferenzView[]> =>
   ((await run(() => getKommunikationPortalPraeferenzen())) as PraeferenzView[]) ?? [];
 
-/** Schaltet einen Kanal (EMAIL/SMS) an/aus (PORTAL ist nicht abschaltbar). */
-export const setzeKanalPraeferenz = (kanal: Kanal, aktiv: boolean) =>
-  run(() => putKommunikationPortalPraeferenzenKanal(kanal, { aktiv }));
+/** Schaltet einen Kanal (EMAIL/SMS) an/aus — ohne {@code kategorie} global, mit als Kategorie-Override
+ *  (PORTAL ist nicht abschaltbar). */
+export const setzeKanalPraeferenz = (kanal: Kanal, aktiv: boolean, kategorie?: Kategorie) =>
+  run(() => putKommunikationPortalPraeferenzenKanal(kanal, { aktiv }, kategorie ? { kategorie } : undefined));
+
+/** Komfort-Einstellungen (Digest/Quiet-Hours/Rate-Limit) der Person; Defaults, falls nicht gesetzt. */
+export const kommunikationEinstellungen = async (): Promise<EinstellungView> =>
+  ((await run(() => getKommunikationPortalEinstellungen())) as EinstellungView) ?? {};
+
+/** Setzt die Komfort-Einstellungen (Digest, Quiet-Hours von/bis, Rate-Limit pro Stunde). */
+export const setzeEinstellungen = (view: EinstellungView) =>
+  run(() => putKommunikationPortalEinstellungen(view));
 
 // ── Meine Nachrichten (Admin↔Person-Threads, K2): eigene Vorgänge, Verlauf, Antwort, Read-Receipt ──
 /** Eigene Threads (Nachrichten-Inbox), neueste Aktivität zuerst. */

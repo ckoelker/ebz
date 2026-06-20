@@ -11,6 +11,7 @@ const nav = [
   { to: '/trainings', label: 'Meine Trainings' },
   { to: '/aktivitaeten', label: 'Meine Aktivitäten' },
   { to: '/nachrichten', label: 'Meine Nachrichten' },
+  { to: '/einstellungen', label: 'Einstellungen' },
 ];
 </script>
 
