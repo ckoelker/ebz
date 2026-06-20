@@ -180,6 +180,14 @@
       <artifactId>quarkus-langchain4j-openai</artifactId>
     </dependency>
 
+    <!-- KI-Urteils-Cache: gleiche (abstrahierte) Merkmals-Paare → genau ein LLM-Call (deterministische
+         String-Keys). Kappt die HITL-Queue-Last (identische Dubletten-Kandidaten kollabieren) und hält den
+         teuren OpenAI-Aufruf aus der Request-Transaktion fern. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-cache</artifactId>
+    </dependency>
+
     <!-- Kommunikation K4 (MCP-Demo): eigener MCP-Server (HTTP/SSE-Transport), der den sichtbaren
          Aktivitätslog als Tool für externe KI-Agenten anbietet (Zukunfts-Showcase, RBAC/DSGVO-gefiltert).
          1.13.0 ist gegen Quarkus 3.33.2 gebaut (= unsere Platform); zieht nur quarkus-vertx-http + mcp-core. -->

@@ -29,7 +29,7 @@ public class DublettenBerater {
     private static final Logger LOG = Logger.getLogger(DublettenBerater.class);
 
     @Inject
-    DublettenKlassifikator klassifikator;
+    KiUrteilCache klassifikator;
 
     @ConfigProperty(name = "anmeldung.dubletten.ki.enabled", defaultValue = "true")
     boolean kiEnabled;

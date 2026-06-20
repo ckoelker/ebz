@@ -44,11 +44,17 @@ public class DublettenReviewResource {
             Double kiAehnlichkeit, String kiEinschaetzung, String kiBegruendung, String entschiedenVon) {
     }
 
-    /** Queue offener Dubletten-Fälle (Firmen + Personen) mit KI-Bewertung je Merge-Ziel. */
+    /**
+     * Queue offener Dubletten-Fälle (Firmen + Personen) mit KI-Bewertung je Merge-Ziel.
+     * <b>Bewusst nicht {@code @Transactional}</b>: der Fan-out ruft pro Kandidatenpaar das LLM (langes
+     * externes I/O); in einer Request-JTA-Transaktion würde die Summe der Aufrufe das Tx-Timeout reißen
+     * (Rollback). Die DB-Zugriffe sind reine, id-basierte Lesezugriffe (auto-commit), der LLM-Aufruf läuft
+     * ohne gehaltene Transaktion und ist über {@link de.netzfactor.ebz.controlling.integration.party.service.KiUrteilCache}
+     * gecacht. Schreibende Entscheidungen bleiben in {@code entscheide(...)} transaktional.
+     */
     @RolesAllowed("rechnung-pflege")
     @GET
     @Path("/queue")
-    @Transactional
     public List<Fall> queue() {
         return service.offeneFaelle();
     }
