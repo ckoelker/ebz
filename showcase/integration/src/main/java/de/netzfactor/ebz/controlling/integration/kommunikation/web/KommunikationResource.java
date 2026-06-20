@@ -143,9 +143,12 @@ public class KommunikationResource {
     }
 
     /** Live-Feed (SSE): neue Inbox-Signale der eingeloggten Person — ohne Polling. Nicht transaktional.
-     *  Aus der OpenAPI ausgeblendet (kein orval-Client) — der Browser-Stream läuft über EventSource. */
+     *  Aus der OpenAPI ausgeblendet (kein orval-Client) — der Browser-Stream läuft über EventSource.
+     *  {@code @Blocking}: die Subject→Person-Auflösung ({@link #mussAufrufer}) ist ein transaktionaler
+     *  DB-Zugriff und darf nicht auf dem IO-Thread laufen — die SSE-Subscription bleibt davon unberührt. */
     @Operation(hidden = true)
     @Authenticated
+    @io.smallrye.common.annotation.Blocking
     @GET
     @Path("/stream")
     @Produces(MediaType.SERVER_SENT_EVENTS)

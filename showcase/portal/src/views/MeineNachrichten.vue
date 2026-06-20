@@ -8,7 +8,7 @@ import {
   partyLogin, meineKonversationen, threadNachrichten, threadAntworten, threadGelesen, kiBeratung,
   ApiFehler, type KonversationView, type NachrichtView,
 } from '@/portal';
-import { auth, login } from '@/auth';
+import { auth, login, getAccessToken } from '@/auth';
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -99,10 +99,15 @@ async function frageStellen() {
 }
 
 // ── Live: Thread-WebSocket (nur ID-Signal → Verlauf neu laden) ──
-function verbindeSocket(konversationId: number) {
+// RBAC am Handshake: der Browser kann keinen Authorization-Header setzen → das OIDC-access_token (Realm
+// ebz-customers) als ?access_token; der RealtimeAuthRouteFilter hebt es serverseitig in den Header, der
+// KonversationSocket prüft Token + Thread-Mitgliedschaft.
+async function verbindeSocket(konversationId: number) {
   trenneSocket();
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  socket = new WebSocket(`${proto}://${location.host}/ws/kommunikation/konversationen/${konversationId}`);
+  const token = await getAccessToken();
+  const auth_ = token ? `?access_token=${encodeURIComponent(token)}` : '';
+  socket = new WebSocket(`${proto}://${location.host}/ws/kommunikation/konversationen/${konversationId}${auth_}`);
   socket.onmessage = () => { ladeVerlauf(); ladeThreads(); };
   socket.onerror = () => { /* best effort — REST/Reload bleibt korrekt */ };
 }

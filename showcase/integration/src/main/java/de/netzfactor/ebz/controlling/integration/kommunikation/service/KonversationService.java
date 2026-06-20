@@ -242,6 +242,17 @@ public class KonversationService {
         return Teilnehmer.count("konversation.id = ?1 and personId = ?2", konversationId, personId) > 0;
     }
 
+    /** Ist der Mitarbeiter Teilnehmer des Threads? Der Support-Pool darf alle Vorgänge sehen (Pickup-Modell). */
+    public boolean istTeilnehmerStaff(Long konversationId, Long mitarbeiterId) {
+        if (Teilnehmer.count("konversation.id = ?1 and mitarbeiterId = ?2", konversationId, mitarbeiterId) > 0) {
+            return true;
+        }
+        // ADMIN-Vorgänge sind dem Backoffice-Pool zugeordnet (vgl. konversationenFuerStaff) → noch nicht
+        // „gepickte" Vorgänge bleiben für jeden Mitarbeiter sichtbar; reine Direkt-/Bot-Threads nicht.
+        Konversation k = Konversation.findById(konversationId);
+        return k != null && k.typ == Konversation.Typ.ADMIN;
+    }
+
     /** Hat die Person in diesem Thread ungelesene fremde Nachrichten? (Listen-Flag) */
     public boolean ungelesenImThreadPerson(Long konversationId, Long personId) {
         Teilnehmer t = Teilnehmer.find("konversation.id = ?1 and personId = ?2", konversationId, personId)

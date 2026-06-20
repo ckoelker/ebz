@@ -8,7 +8,7 @@ import {
   adminKonversationen, adminNachrichten, adminAntworten, adminEntwurf, adminEroeffne, adminGelesen,
   ApiFehler, type KonversationView, type NachrichtView,
 } from '@/kommunikation';
-import { auth, login } from '@/auth';
+import { auth, login, getAccessToken } from '@/auth';
 import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
 
 const laden = ref(false);
@@ -114,10 +114,15 @@ async function vorgangEroeffnen() {
   }
 }
 
-function verbindeSocket(konversationId: number) {
+// RBAC am Handshake: Browser-WebSocket kann keinen Authorization-Header → das Staff-access_token (Realm
+// ebz-staff) als ?access_token; serverseitig hebt es der RealtimeAuthRouteFilter in den Header, der
+// KonversationSocket prüft Token (Cross-Realm per Issuer) + Thread-Mitgliedschaft.
+async function verbindeSocket(konversationId: number) {
   trenneSocket();
   const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-  socket = new WebSocket(`${proto}://${location.host}/ws/kommunikation/konversationen/${konversationId}`);
+  const token = await getAccessToken();
+  const auth_ = token ? `?access_token=${encodeURIComponent(token)}` : '';
+  socket = new WebSocket(`${proto}://${location.host}/ws/kommunikation/konversationen/${konversationId}${auth_}`);
   socket.onmessage = () => { ladeVerlauf(); ladeThreads(); };
   socket.onerror = () => { /* best effort */ };
 }

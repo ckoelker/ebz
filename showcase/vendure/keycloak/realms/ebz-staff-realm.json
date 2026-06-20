@@ -33,6 +33,10 @@
       {
         "name": "crm-datenschutz",
         "description": "Darf Betroffenenrechte ausüben (Recht auf Vergessen, Anonymisierung)"
+      },
+      {
+        "name": "mcp-zugriff",
+        "description": "Darf den hauseigenen MCP-Server (/mcp) aufrufen (Agent-/M2M-Zugriff, Scope)"
       }
     ]
   },
@@ -154,9 +158,28 @@
       "directAccessGrantsEnabled": false,
       "secret": "storefront-service-secret",
       "protocol": "openid-connect"
+    },
+    {
+      "clientId": "mcp-client",
+      "name": "MCP-Client (Agent/M2M-Zugriff auf den Aktivitätslog-MCP-Server)",
+      "enabled": true,
+      "publicClient": false,
+      "serviceAccountsEnabled": true,
+      "standardFlowEnabled": false,
+      "directAccessGrantsEnabled": false,
+      "secret": "mcp-client-secret",
+      "protocol": "openid-connect"
     }
   ],
   "users": [
+    {
+      "username": "service-account-mcp-client",
+      "enabled": true,
+      "serviceAccountClientId": "mcp-client",
+      "realmRoles": [
+        "mcp-zugriff"
+      ]
+    },
     {
       "username": "staff",
       "email": "staff@ebz.de",

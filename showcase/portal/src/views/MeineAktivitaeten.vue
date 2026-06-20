@@ -2,13 +2,13 @@
 // System→Person: der eingeloggte Kunde sieht seinen Aktivitätslog (Zeitstrahl) mit Ungelesen-Badge,
 // markiert Einträge als gelesen, quittiert kenntnisnahmepflichtige Benachrichtigungen und schaltet die
 // Kanäle (E-Mail/SMS) an/aus. Eigen-skopiert über den Token (kein Fremdzugriff). Threads folgen ab K2.
-import { ref, onMounted, computed } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import {
   partyLogin, meineAktivitaeten, ungelesenAnzahl, ereignisGelesen, ereignisBestaetigen,
   kanalPraeferenzen, setzeKanalPraeferenz, ApiFehler, Kanal,
   type EreignisView,
 } from '@/portal';
-import { auth, login } from '@/auth';
+import { auth, login, getAccessToken } from '@/auth';
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -27,11 +27,32 @@ const offenePflicht = computed(() =>
 const ueberfaellig = computed(() =>
   offenePflicht.value.some((e) => e.status === 'UEBERFAELLIG' || e.status === 'ESKALIERT'));
 
+let stream: EventSource | null = null;
+
 onMounted(async () => {
   if (!auth.angemeldet) return;
   await partyLogin({ email: auth.email, anzeigeName: auth.name || auth.benutzer }).catch(() => {});
   await laden_();
+  await verbindeStream();
 });
+
+onUnmounted(() => trenneStream());
+
+// Live-Feed (SSE): bei jedem neuen Inbox-Signal Liste + Badge neu laden — ohne Polling. Der Browser kann
+// keinen Authorization-Header setzen → das OIDC-access_token als ?access_token; der RealtimeAuthRouteFilter
+// hebt es serverseitig in den Header, der @Authenticated-Stream-Endpunkt bleibt voll abgesichert.
+async function verbindeStream() {
+  trenneStream();
+  const token = await getAccessToken();
+  if (!token) return;
+  stream = new EventSource(`/kommunikation/portal/stream?access_token=${encodeURIComponent(token)}`);
+  stream.onmessage = () => { laden_(); };
+  stream.onerror = () => { /* best effort — der Pull-Zeitstrahl bleibt über „Aktualisieren" korrekt */ };
+}
+
+function trenneStream() {
+  if (stream) { stream.onmessage = null; stream.close(); stream = null; }
+}
 
 async function laden_() {
   laden.value = true;
