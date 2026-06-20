@@ -6,17 +6,15 @@
  */
 import type { LocalDateTime } from './localDateTime';
 
-export interface EreignisView {
-  id?: number;
-  ereignisTyp?: string;
-  kategorie?: string;
+export interface BestaetigungReportView {
+  ereignisId?: number;
+  personId?: number;
+  personName?: string;
   betreff?: string;
   zeitpunkt?: LocalDateTime;
-  kontextTyp?: string;
-  kontextId?: number;
-  gelesen?: boolean;
-  bestaetigungErforderlich?: boolean;
-  bestaetigtAm?: LocalDateTime;
   bestaetigenBis?: LocalDateTime;
+  bestaetigtAm?: LocalDateTime;
+  eskaliertAm?: LocalDateTime;
+  erinnerungen?: number;
   status?: string;
 }

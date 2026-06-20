@@ -76,10 +76,11 @@ public class KommunikationResource {
     @Inject
     StaffIdentitaetsPort staff;
 
-    /** Lese-Sicht eines Aktivitätslog-Eintrags (ohne interne Felder). */
+    /** Lese-Sicht eines Aktivitätslog-Eintrags (ohne interne Felder); {@code status} = K5-Bestätigungsstatus. */
     public record EreignisView(Long id, String ereignisTyp, String kategorie, String betreff,
             LocalDateTime zeitpunkt, String kontextTyp, Long kontextId, boolean gelesen,
-            boolean bestaetigungErforderlich, LocalDateTime bestaetigtAm) {
+            boolean bestaetigungErforderlich, LocalDateTime bestaetigtAm, LocalDateTime bestaetigenBis,
+            String status) {
     }
 
     @Authenticated
@@ -128,6 +129,17 @@ public class KommunikationResource {
         String sub = ctx.getUserPrincipal() == null ? null : ctx.getUserPrincipal().getName();
         kommunikation.bestaetige(id, sub, null);
         return Response.noContent().build();
+    }
+
+    /** K5-Gate (Selbstauskunft): offene Pflicht-Kenntnisnahmen der Person — das Portal blendet einen
+     *  Hinweis-Banner ein, solange welche ausstehen (und kann Aktionen blockieren). */
+    @Authenticated
+    @GET
+    @Path("/bestaetigungen/offen")
+    @Transactional
+    public List<EreignisView> offeneBestaetigungen(@Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        return kommunikation.offeneBestaetigungen(personId).stream().map(KommunikationResource::toView).toList();
     }
 
     /** Live-Feed (SSE): neue Inbox-Signale der eingeloggten Person — ohne Polling. Nicht transaktional.
@@ -319,6 +331,6 @@ public class KommunikationResource {
                 "personEreignis.id = ?1 and kanal = ?2 and gelesenAm is not null", pe.id, Kanal.PORTAL) > 0;
         return new EreignisView(pe.id, pe.ereignisTyp.name(), pe.ereignisTyp.kategorie.name(), pe.betreff,
                 pe.zeitpunkt, pe.kontextTyp.name(), pe.kontextId, gelesen, pe.bestaetigungErforderlich,
-                pe.bestaetigtAm);
+                pe.bestaetigtAm, pe.bestaetigenBis, pe.status(LocalDateTime.now()).name());
     }
 }

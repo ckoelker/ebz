@@ -8,6 +8,23 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Bestaetigungs Report
+ */
+export const GetKommunikationAdminBestaetigungenResponseItem = zod.object({
+  "ereignisId": zod.number().optional(),
+  "personId": zod.number().optional(),
+  "personName": zod.string().optional(),
+  "betreff": zod.string().optional(),
+  "zeitpunkt": zod.string().datetime({"offset":true}).optional(),
+  "bestaetigenBis": zod.string().datetime({"offset":true}).optional(),
+  "bestaetigtAm": zod.string().datetime({"offset":true}).optional(),
+  "eskaliertAm": zod.string().datetime({"offset":true}).optional(),
+  "erinnerungen": zod.number().optional(),
+  "status": zod.string().optional()
+})
+export const GetKommunikationAdminBestaetigungenResponse = zod.array(GetKommunikationAdminBestaetigungenResponseItem)
+
+/**
  * @summary Gruppen
  */
 export const GetKommunikationAdminGruppenResponseItem = zod.object({

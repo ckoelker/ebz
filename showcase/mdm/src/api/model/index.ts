@@ -17,6 +17,7 @@ export * from './anrufEvent';
 export * from './art';
 export * from './bereich';
 export * from './berufsschuljahrDto';
+export * from './bestaetigungReportView';
 export * from './bildungsangebotTyp';
 export * from './broadcastDto';
 export * from './broadcastErgebnis';

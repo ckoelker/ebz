@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  BestaetigungReportView,
   BroadcastDto,
   BroadcastErgebnis,
   EntwurfView,
@@ -20,6 +21,17 @@ import { http } from '../../http';
 
 
 
+  /**
+ * @summary Bestaetigungs Report
+ */
+export const getKommunikationAdminBestaetigungen = (
+
+ ) => {
+      return http<BestaetigungReportView[]>(
+      {url: `/kommunikation/admin/bestaetigungen`, method: 'GET'
+    },
+      );
+    }
   /**
  * @summary Gruppen
  */
@@ -166,7 +178,8 @@ export const postKommunikationAdminVorgaenge = (
     },
       );
     }
-  export type GetKommunikationAdminGruppenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationAdminGruppen>>>
+  export type GetKommunikationAdminBestaetigungenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationAdminBestaetigungen>>>
+export type GetKommunikationAdminGruppenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationAdminGruppen>>>
 export type PostKommunikationAdminGruppenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationAdminGruppen>>>
 export type DeleteKommunikationAdminGruppenIdResult = NonNullable<Awaited<ReturnType<typeof deleteKommunikationAdminGruppenId>>>
 export type PostKommunikationAdminGruppenIdBroadcastResult = NonNullable<Awaited<ReturnType<typeof postKommunikationAdminGruppenIdBroadcast>>>

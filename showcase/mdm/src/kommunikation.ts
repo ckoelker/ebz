@@ -8,11 +8,13 @@ import {
   postKommunikationAdminKonversationenIdEntwurf, postKommunikationAdminKonversationenIdGelesen,
   getKommunikationAdminGruppen, postKommunikationAdminGruppen, deleteKommunikationAdminGruppenId,
   postKommunikationAdminGruppenIdMitglieder, deleteKommunikationAdminGruppenIdMitgliederPersonId,
-  postKommunikationAdminGruppenIdBroadcast,
+  postKommunikationAdminGruppenIdBroadcast, getKommunikationAdminBestaetigungen,
 } from '@/api/endpoints/admin-kommunikation-resource/admin-kommunikation-resource';
-import type { KonversationView, NachrichtView, SendenDto, GruppeView, GruppeDto } from '@/api/model';
+import type {
+  KonversationView, NachrichtView, SendenDto, GruppeView, GruppeDto, BestaetigungReportView,
+} from '@/api/model';
 
-export type { KonversationView, NachrichtView, SendenDto, GruppeView, GruppeDto };
+export type { KonversationView, NachrichtView, SendenDto, GruppeView, GruppeDto, BestaetigungReportView };
 
 /** Fehler mit HTTP-Status, damit die Views 401 (→ Login) / 403 unterscheiden können. */
 export class ApiFehler extends Error {
@@ -79,3 +81,8 @@ export const mitgliedEntfernen = (gruppeId: number, personId: number) =>
 /** Broadcast an alle Mitglieder; liefert die Anzahl erreichter Empfänger. */
 export const broadcast = async (gruppeId: number, nachricht: string): Promise<number> =>
   (await run(() => postKommunikationAdminGruppenIdBroadcast(gruppeId, { nachricht })))?.erreicht ?? 0;
+
+// ── Pflicht-Bestätigungs-Report (K5, Cockpit) ──
+/** Report über alle Pflicht-Kenntnisnahmen (offen/bestätigt/überfällig/eskaliert), neueste zuerst. */
+export const bestaetigungsReport = async (): Promise<BestaetigungReportView[]> =>
+  ((await run(() => getKommunikationAdminBestaetigungen())) as BestaetigungReportView[]) ?? [];

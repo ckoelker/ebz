@@ -20,6 +20,13 @@ const busy = ref<number | null>(null);
 
 const angemeldet = computed(() => auth.angemeldet);
 
+// K5-Gate: noch offene Pflicht-Kenntnisnahmen (abgeleitet aus dem Log) — das Portal blendet einen
+// Hinweis-Banner ein, solange welche ausstehen; überfällige/eskalierte werden hervorgehoben.
+const offenePflicht = computed(() =>
+  ereignisse.value.filter((e) => e.bestaetigungErforderlich && !e.bestaetigtAm));
+const ueberfaellig = computed(() =>
+  offenePflicht.value.some((e) => e.status === 'UEBERFAELLIG' || e.status === 'ESKALIERT'));
+
 onMounted(async () => {
   if (!auth.angemeldet) return;
   await partyLogin({ email: auth.email, anzeigeName: auth.name || auth.benutzer }).catch(() => {});
@@ -125,6 +132,16 @@ const kategorieFarbe: Record<string, 'info' | 'success' | 'warning' | 'neutral'>
       <UAlert v-if="meldung" :color="meldung.severity === 'success' ? 'success' : 'error'" variant="soft"
         :title="meldung.text" close class="mb-4" @update:open="meldung = null" />
 
+      <!-- K5-Gate: solange Pflicht-Kenntnisnahmen offen sind, ein deutlicher Hinweis-Banner (überfällig rot). -->
+      <UAlert v-if="offenePflicht.length > 0" :color="ueberfaellig ? 'error' : 'warning'" variant="soft"
+        :icon="ueberfaellig ? 'i-lucide-alarm-clock' : 'i-lucide-bell-ring'" class="mb-4"
+        :title="offenePflicht.length === 1 ? 'Eine Kenntnisnahme steht noch aus'
+          : `${offenePflicht.length} Kenntnisnahmen stehen noch aus`">
+        <template #description>
+          Bitte bestätigen Sie die markierten Einträge{{ ueberfaellig ? ' — eine Frist ist bereits abgelaufen.' : '.' }}
+        </template>
+      </UAlert>
+
       <div class="flex items-center gap-5 mb-5 px-4 py-3 rounded-lg bg-elevated text-sm">
         <span class="font-semibold">Benachrichtigungen per</span>
         <label class="inline-flex items-center gap-2">
@@ -157,8 +174,14 @@ const kategorieFarbe: Record<string, 'info' | 'success' | 'warning' | 'neutral'>
               <UBadge v-if="ev.bestaetigtAm" color="success" variant="soft" size="sm" icon="i-lucide-check">
                 bestätigt
               </UBadge>
-              <UButton v-else-if="ev.bestaetigungErforderlich" size="sm" icon="i-lucide-check"
-                :loading="busy === ev.id" @click="bestaetigen(ev)">Zur Kenntnis genommen</UButton>
+              <template v-else-if="ev.bestaetigungErforderlich">
+                <UBadge v-if="ev.status === 'UEBERFAELLIG' || ev.status === 'ESKALIERT'" color="error"
+                  variant="soft" size="sm" icon="i-lucide-alarm-clock">überfällig</UBadge>
+                <UButton size="sm" icon="i-lucide-check"
+                  :color="ev.status === 'UEBERFAELLIG' || ev.status === 'ESKALIERT' ? 'error' : 'primary'"
+                  :loading="busy === ev.id" @click="bestaetigen(ev)">Zur Kenntnis genommen</UButton>
+                <span v-if="ev.bestaetigenBis" class="text-dimmed text-xs">Frist: {{ zeit(ev.bestaetigenBis) }}</span>
+              </template>
               <UButton v-if="!ev.gelesen" color="neutral" variant="ghost" size="sm" icon="i-lucide-eye"
                 :loading="busy === ev.id" @click="gelesen(ev)">Als gelesen markieren</UButton>
             </div>

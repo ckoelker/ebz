@@ -28,6 +28,25 @@ export const PostKommunikationPortalBeratungResponse = zod.object({
 })
 
 /**
+ * @summary Offene Bestaetigungen
+ */
+export const GetKommunikationPortalBestaetigungenOffenResponseItem = zod.object({
+  "id": zod.number().optional(),
+  "ereignisTyp": zod.string().optional(),
+  "kategorie": zod.string().optional(),
+  "betreff": zod.string().optional(),
+  "zeitpunkt": zod.string().datetime({"offset":true}).optional(),
+  "kontextTyp": zod.string().optional(),
+  "kontextId": zod.number().optional(),
+  "gelesen": zod.boolean().optional(),
+  "bestaetigungErforderlich": zod.boolean().optional(),
+  "bestaetigtAm": zod.string().datetime({"offset":true}).optional(),
+  "bestaetigenBis": zod.string().datetime({"offset":true}).optional(),
+  "status": zod.string().optional()
+})
+export const GetKommunikationPortalBestaetigungenOffenResponse = zod.array(GetKommunikationPortalBestaetigungenOffenResponseItem)
+
+/**
  * @summary Direkt
  */
 export const PostKommunikationPortalDirektBody = zod.object({
@@ -86,7 +105,9 @@ export const GetKommunikationPortalEreignisseResponseItem = zod.object({
   "kontextId": zod.number().optional(),
   "gelesen": zod.boolean().optional(),
   "bestaetigungErforderlich": zod.boolean().optional(),
-  "bestaetigtAm": zod.string().datetime({"offset":true}).optional()
+  "bestaetigtAm": zod.string().datetime({"offset":true}).optional(),
+  "bestaetigenBis": zod.string().datetime({"offset":true}).optional(),
+  "status": zod.string().optional()
 })
 export const GetKommunikationPortalEreignisseResponse = zod.array(GetKommunikationPortalEreignisseResponseItem)
 

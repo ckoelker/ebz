@@ -36,6 +36,17 @@ export const postKommunikationPortalBeratung = (
       );
     }
   /**
+ * @summary Offene Bestaetigungen
+ */
+export const getKommunikationPortalBestaetigungenOffen = (
+
+ ) => {
+      return http<EreignisView[]>(
+      {url: `/kommunikation/portal/bestaetigungen/offen`, method: 'GET'
+    },
+      );
+    }
+  /**
  * @summary Direkt
  */
 export const postKommunikationPortalDirekt = (
@@ -202,6 +213,7 @@ export const getKommunikationPortalUngelesen = (
       );
     }
   export type PostKommunikationPortalBeratungResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalBeratung>>>
+export type GetKommunikationPortalBestaetigungenOffenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalBestaetigungenOffen>>>
 export type PostKommunikationPortalDirektResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalDirekt>>>
 export type PutKommunikationPortalEinstellungenResult = NonNullable<Awaited<ReturnType<typeof putKommunikationPortalEinstellungen>>>
 export type GetKommunikationPortalEinstellungenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalEinstellungen>>>

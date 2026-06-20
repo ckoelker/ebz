@@ -14,6 +14,7 @@ import io.quarkus.runtime.StartupEvent;
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.KommunikationsEreignis;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Konversation;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Personengruppe;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.GruppenService;
@@ -72,6 +73,21 @@ public class KommunikationDemoSeeder {
                 EreignisTyp.AZUBI_VERTRAG_BESTAETIGT, personId,
                 "Bitte bestätigen Sie die Kenntnisnahme Ihres Ausbildungsvertrags",
                 KontextTyp.ANMELDUNG, null, null, "seed:carla:vertrag"));
+
+        // K5-Demo: ein bewusst ÜBERFÄLLIGER Pflicht-Vertrag für eine zweite Person, damit das Cockpit den
+        // Pflicht-Bestätigungs-Report (überfällig/eskaliert) und das Portal den Mahn-Banner sofort zeigen.
+        // Frist rückdatiert (der BestaetigungService eskaliert sie dann im ersten Lauf). Idempotent.
+        Person mareike = party.selbstRegistrieren("seed-k5-overdue", "mareike.mahnung@ebz.de", "Mareike Mahnung");
+        PersonEreignis faellig = kommunikation.protokolliere(KommunikationsEreignis.mitKontext(
+                EreignisTyp.AZUBI_VERTRAG_BESTAETIGT, mareike.id,
+                "Bitte bestätigen Sie die Kenntnisnahme Ihres Ausbildungsvertrags",
+                KontextTyp.ANMELDUNG, null, null, "seed:k5:overdue"));
+        if (faellig != null && faellig.bestaetigtAm == null && faellig.eskaliertAm == null
+                && (faellig.bestaetigenBis == null
+                        || faellig.bestaetigenBis.isAfter(java.time.LocalDateTime.now()))) {
+            faellig.zeitpunkt = java.time.LocalDateTime.now().minusDays(17);
+            faellig.bestaetigenBis = java.time.LocalDateTime.now().minusDays(3); // Frist abgelaufen → überfällig
+        }
 
         // Admin↔Person-Thread (K2): ein Vorgang vom EBZ-Service an Carla, damit Portal (Carla) und
         // mdm-Cockpit (Staff) den Thread sofort zeigen. Idempotent über den eindeutigen Betreff.

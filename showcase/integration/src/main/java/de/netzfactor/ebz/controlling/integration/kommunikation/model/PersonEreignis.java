@@ -71,7 +71,7 @@ public class PersonEreignis extends PanacheEntity {
     @Column(name = "sichtbar", nullable = false)
     public boolean sichtbar = false;
 
-    // ── Quittierung / Pflicht-Bestätigung (Felder jetzt, Durchsetzungs-Workflow später K5) ──
+    // ── Quittierung / Pflicht-Bestätigung (Felder seit K1; Durchsetzungs-Workflow K5) ──
     @Column(name = "bestaetigung_erforderlich", nullable = false)
     public boolean bestaetigungErforderlich = false;
 
@@ -87,6 +87,45 @@ public class PersonEreignis extends PanacheEntity {
 
     @Column(name = "nachweis_zeit")
     public LocalDateTime nachweisZeit;
+
+    // ── K5 Pflicht-Bestätigungs-Workflow: Frist, Erinnerung, Eskalation ──
+    /** Frist für die Kenntnisnahme (aus {@code EreignisTyp.bestaetigungFristTage} bei Projektion); {@code null} = ohne Frist. */
+    @Column(name = "bestaetigen_bis")
+    public LocalDateTime bestaetigenBis;
+
+    /** Zeitpunkt der zuletzt versendeten Erinnerung (Drosselung des Nachfass-Intervalls). */
+    @Column(name = "erinnert_am")
+    public LocalDateTime erinnertAm;
+
+    /** Anzahl bereits versendeter Erinnerungen (Reporting/Idempotenz der Erinnerungs-Ereignisse). */
+    @Column(name = "erinnerungen", nullable = false)
+    public int erinnerungen = 0;
+
+    /** Zeitpunkt der Eskalation (Frist überschritten, weiterhin unbestätigt) — sichtbar im Cockpit-Report. */
+    @Column(name = "eskaliert_am")
+    public LocalDateTime eskaliertAm;
+
+    /** Status der Pflicht-Kenntnisnahme (für Gate & Cockpit-Report) — abgeleitet, nicht persistiert. */
+    public enum BestaetigungsStatus {
+        NICHT_ERFORDERLICH, BESTAETIGT, OFFEN, UEBERFAELLIG, ESKALIERT
+    }
+
+    /** Abgeleiteter Bestätigungs-Status zum gegebenen Zeitpunkt (Single Source für Gate & Reporting). */
+    public BestaetigungsStatus status(LocalDateTime jetzt) {
+        if (!bestaetigungErforderlich) {
+            return BestaetigungsStatus.NICHT_ERFORDERLICH;
+        }
+        if (bestaetigtAm != null) {
+            return BestaetigungsStatus.BESTAETIGT;
+        }
+        if (eskaliertAm != null) {
+            return BestaetigungsStatus.ESKALIERT;
+        }
+        if (bestaetigenBis != null && jetzt.isAfter(bestaetigenBis)) {
+            return BestaetigungsStatus.UEBERFAELLIG;
+        }
+        return BestaetigungsStatus.OFFEN;
+    }
 
     /** Dedupe-Schlüssel (wie in der Outbox) — verhindert Doppel-Projektion bei Retry/Re-Delivery. */
     @Column(name = "idempotenz_schluessel", unique = true, length = 160)

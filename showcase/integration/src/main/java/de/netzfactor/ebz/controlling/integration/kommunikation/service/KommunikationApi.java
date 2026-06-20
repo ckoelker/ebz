@@ -84,6 +84,9 @@ public class KommunikationApi {
         pe.prozessFall = ev.prozessFall();
         pe.sichtbar = true;
         pe.bestaetigungErforderlich = typ.bestaetigungErforderlich;
+        if (typ.bestaetigungErforderlich && typ.bestaetigungFristTage > 0) {
+            pe.bestaetigenBis = pe.zeitpunkt.plusDays(typ.bestaetigungFristTage); // K5: Frist ab Eingang
+        }
         pe.idempotenzSchluessel = ev.idempotenzSchluessel();
         pe.persist();
 
@@ -134,7 +137,7 @@ public class KommunikationApi {
         }
     }
 
-    /** Pflicht-Bestätigung („zur Kenntnis genommen") mit Nachweis-Trio (Felder jetzt; Durchsetzung K5). */
+    /** Pflicht-Bestätigung („zur Kenntnis genommen") mit Nachweis-Trio; beendet Erinnerung/Eskalation (K5). */
     @Transactional
     public void bestaetige(Long personEreignisId, String sub, String ip) {
         PersonEreignis pe = PersonEreignis.findById(personEreignisId);
@@ -144,5 +147,23 @@ public class KommunikationApi {
             pe.nachweisIp = ip;
             pe.nachweisZeit = LocalDateTime.now();
         }
+    }
+
+    /**
+     * K5-<b>Gate</b>: noch nicht quittierte Pflicht-Kenntnisnahmen der Person (neueste zuerst). Andere
+     * Domänen-Flows können hierauf blockieren („solange Pflicht-Bestätigungen offen sind, kein X").
+     */
+    public List<PersonEreignis> offeneBestaetigungen(Long personId) {
+        return PersonEreignis.list(
+                "empfaengerPersonId = ?1 and bestaetigungErforderlich = true and bestaetigtAm is null "
+                        + "order by zeitpunkt desc", personId);
+    }
+
+    /** K5-Gate (hart): die Person hat mindestens eine <b>überfällige</b> Pflicht-Kenntnisnahme. */
+    public boolean hatUeberfaelligeBestaetigung(Long personId) {
+        return PersonEreignis.count(
+                "empfaengerPersonId = ?1 and bestaetigungErforderlich = true and bestaetigtAm is null "
+                        + "and bestaetigenBis is not null and bestaetigenBis < ?2",
+                personId, LocalDateTime.now()) > 0;
     }
 }

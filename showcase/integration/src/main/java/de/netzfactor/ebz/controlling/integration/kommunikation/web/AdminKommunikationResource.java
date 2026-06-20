@@ -18,11 +18,14 @@ import jakarta.ws.rs.core.SecurityContext;
 
 import org.eclipse.microprofile.openapi.annotations.tags.Tag;
 
+import java.time.LocalDateTime;
+
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Konversation;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Nachricht;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Personengruppe;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Personengruppe.Quelle;
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.BestaetigungService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.GruppenService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.KonversationService;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.AgentPort;
@@ -56,6 +59,9 @@ public class AdminKommunikationResource {
 
     @Inject
     GruppenService gruppen;
+
+    @Inject
+    BestaetigungService bestaetigungen;
 
     /** KI-Antwortvorschlag (EU-AI-Act Art. 50: in der UI als „KI-Vorschlag" zu kennzeichnen). */
     public record EntwurfView(String entwurf, boolean kiGeneriert) {
@@ -119,6 +125,30 @@ public class AdminKommunikationResource {
         Long mid = mussMitarbeiter(ctx);
         konversationen.markiereGelesenStaff(id, mid);
         return Response.noContent().build();
+    }
+
+    // ───────────────────────── Pflicht-Bestätigungs-Report (K5, Cockpit) ─────────────────────────
+
+    /** Cockpit-Zeile: Stand einer Pflicht-Kenntnisnahme (wer/was/Frist/Status/Anzahl Erinnerungen). */
+    public record BestaetigungReportView(Long ereignisId, Long personId, String personName, String betreff,
+            LocalDateTime zeitpunkt, LocalDateTime bestaetigenBis, LocalDateTime bestaetigtAm,
+            LocalDateTime eskaliertAm, int erinnerungen, String status) {
+    }
+
+    /**
+     * Reporting über alle Pflicht-Kenntnisnahmen (offen/bestätigt/überfällig/eskaliert) — die Cockpit-Sicht
+     * des K5-Workflows: das Backoffice sieht, wer was noch nicht quittiert hat und wo die Frist abgelaufen ist.
+     */
+    @GET
+    @Path("/bestaetigungen")
+    @Transactional
+    public List<BestaetigungReportView> bestaetigungsReport() {
+        LocalDateTime jetzt = LocalDateTime.now();
+        return bestaetigungen.bestaetigungspflichtige().stream()
+                .map(pe -> new BestaetigungReportView(pe.id, pe.empfaengerPersonId,
+                        staff.personName(pe.empfaengerPersonId), pe.betreff, pe.zeitpunkt, pe.bestaetigenBis,
+                        pe.bestaetigtAm, pe.eskaliertAm, pe.erinnerungen, pe.status(jetzt).name()))
+                .toList();
     }
 
     // ───────────────────────── Verteiler & Broadcast (K3, Person→Gruppe) ─────────────────────────
