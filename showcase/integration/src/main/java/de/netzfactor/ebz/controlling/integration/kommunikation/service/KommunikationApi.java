@@ -11,6 +11,8 @@ import jakarta.transaction.Transactional;
 
 import org.jboss.logging.Logger;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.KommunikationsEreignis;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis;
@@ -50,16 +52,27 @@ public class KommunikationApi {
     @Inject
     RealtimePort realtime;
 
+    @Inject
+    ObjectMapper objectMapper;
+
     /**
-     * Projiziert ein Ereignis: legt (idempotent, nur wenn {@link EreignisTyp#sichtbar}) ein
-     * {@link PersonEreignis} an und fächert die <b>erlaubten</b> Push-Kanäle auf (PORTAL synchron; EMAIL/SMS
-     * in die Outbox). Nicht sichtbare Typen (interne Vermerke) sowie unbekannte Personen erzeugen nichts.
-     * Liefert das Log-Ereignis bzw. {@code null}.
+     * Projiziert ein Ereignis. Zwei Pfade:
+     * <ul>
+     *   <li><b>Person-Empfänger</b> (Default): legt — idempotent, nur wenn {@link EreignisTyp#sichtbar} — ein
+     *       {@link PersonEreignis} an und fächert die <b>erlaubten</b> Push-Kanäle auf (PORTAL synchron;
+     *       EMAIL/SMS über die Outbox, Consent/Präferenz/Digest greifen).</li>
+     *   <li><b>Direkt-Empfänger</b> ({@code ev.anEmail()} gesetzt, keine Person auflösbar — Bestands-Mail-
+     *       Migration für Azubi-/Debitor-Adressen): rein transaktionale E-Mail über Template + Zustell-Outbox,
+     *       <b>ohne</b> Portal-Log/Consent (der Eintrag dient nur als Zustell-/Audit-Anker, {@code sichtbar=false}).</li>
+     * </ul>
+     * Interne Vermerke (nicht sichtbar, ohne {@code anEmail}) sowie unbekannte Person ohne {@code anEmail}
+     * erzeugen nichts. Liefert das Log-/Anker-Ereignis bzw. {@code null}.
      */
     @Transactional
     public PersonEreignis protokolliere(KommunikationsEreignis ev) {
         EreignisTyp typ = ev.ereignisTyp();
-        if (!typ.sichtbar) {
+        boolean direktEmail = ev.anEmail() != null && !ev.anEmail().isBlank();
+        if (!typ.sichtbar && !direktEmail) {
             return null; // interner Vermerk → gehört in das staff-interne CRM-Log (Aktivitaet), nicht hierher
         }
         if (ev.idempotenzSchluessel() != null) {
@@ -68,38 +81,48 @@ public class KommunikationApi {
                 return vorhanden; // Dedupe (Retry/Re-Delivery)
             }
         }
-        Set<Kanal> kanaele = erreichbarkeit.erlaubteKanaele(ev.empfaengerPersonId(), typ);
-        if (kanaele.isEmpty()) {
-            LOG.warnf("Kommunikations-Ereignis ohne erreichbare/auflösbare Person %d verworfen",
+        Set<Kanal> kanaele = ev.empfaengerPersonId() == null ? Set.of()
+                : erreichbarkeit.erlaubteKanaele(ev.empfaengerPersonId(), typ);
+        boolean personErreichbar = !kanaele.isEmpty();
+        if (!personErreichbar && !direktEmail) {
+            LOG.warnf("Kommunikations-Ereignis ohne erreichbare/auflösbare Person %s verworfen",
                     ev.empfaengerPersonId());
             return null;
         }
 
         PersonEreignis pe = new PersonEreignis();
         pe.empfaengerPersonId = ev.empfaengerPersonId();
+        pe.anEmail = direktEmail ? ev.anEmail() : null;
+        pe.variablenJson = variablenJson(ev.variablen());
         pe.ereignisTyp = typ;
         pe.betreff = ev.betreff();
         pe.kontextTyp = ev.kontextTyp() == null ? PersonEreignis.KontextTyp.KEINER : ev.kontextTyp();
         pe.kontextId = ev.kontextId();
         pe.prozessFall = ev.prozessFall();
-        pe.sichtbar = true;
-        pe.bestaetigungErforderlich = typ.bestaetigungErforderlich;
-        if (typ.bestaetigungErforderlich && typ.bestaetigungFristTage > 0) {
-            pe.bestaetigenBis = pe.zeitpunkt.plusDays(typ.bestaetigungFristTage); // K5: Frist ab Eingang
+        // Portal-Log nur für eine bekannte Person bei sichtbarem Typ; Direkt-E-Mail bleibt unsichtbar.
+        pe.sichtbar = typ.sichtbar && personErreichbar;
+        if (personErreichbar) {
+            pe.bestaetigungErforderlich = typ.bestaetigungErforderlich;
+            if (typ.bestaetigungErforderlich && typ.bestaetigungFristTage > 0) {
+                pe.bestaetigenBis = pe.zeitpunkt.plusDays(typ.bestaetigungFristTage); // K5: Frist ab Eingang
+            }
         }
         pe.idempotenzSchluessel = ev.idempotenzSchluessel();
         pe.persist();
+
+        if (!personErreichbar) {
+            // Direkt-Empfänger: nur die E-Mail über die Outbox (kein PORTAL/Consent/Realtime).
+            Zustellung z = neueZustellung(pe, Kanal.EMAIL);
+            zustellService.enqueue(z, Instant.now());
+            return pe;
+        }
 
         boolean digest = einstellung.istDigest(pe.empfaengerPersonId);
         for (Kanal kanal : kanaele) {
             if (!praeferenz.erlaubt(pe.empfaengerPersonId, kanal, typ.kategorie)) {
                 continue; // Kanal×Kategorie abgeschaltet (PORTAL bleibt immer erlaubt)
             }
-            Zustellung z = new Zustellung();
-            z.personEreignis = pe;
-            z.kanal = kanal;
-            z.status = Zustellung.Status.NEU;
-            z.persist();
+            Zustellung z = neueZustellung(pe, kanal);
             if (kanal == Kanal.PORTAL) {
                 zustellService.zustelleSofort(z); // synchron in der Geschäfts-Tx (unverlierbar)
             } else if (digest) {
@@ -112,6 +135,27 @@ public class KommunikationApi {
         // Echtzeit-Signal (SSE): die Person bekommt sofort einen Badge-/Feed-Hinweis (best effort).
         realtime.signalisiere(pe.empfaengerPersonId, String.valueOf(pe.id));
         return pe;
+    }
+
+    private static Zustellung neueZustellung(PersonEreignis pe, Kanal kanal) {
+        Zustellung z = new Zustellung();
+        z.personEreignis = pe;
+        z.kanal = kanal;
+        z.status = Zustellung.Status.NEU;
+        z.persist();
+        return z;
+    }
+
+    private String variablenJson(java.util.Map<String, Object> variablen) {
+        if (variablen == null || variablen.isEmpty()) {
+            return null;
+        }
+        try {
+            return objectMapper.writeValueAsString(variablen);
+        } catch (Exception e) {
+            LOG.warnf("Template-Variablen nicht serialisierbar, ignoriert: %s", e.getMessage());
+            return null;
+        }
     }
 
     /** Sichtbarer Aktivitätslog einer Person (neueste zuerst) — der Pull-Zeitstrahl im Portal. */

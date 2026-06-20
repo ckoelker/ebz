@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Set;
 
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
 
 /**
@@ -143,6 +144,24 @@ public final class Ports {
 
         /** Autonome Antwort auf den bisherigen Verlauf des Bot-Threads (jüngste Personen-Frage zuletzt). */
         String beantworteThread(Long konversationId);
+    }
+
+    /**
+     * Liefert <b>E-Mail-Anhänge</b> zu einem Kontext (Bestands-Mail-Migration): der {@code EmailVersand}-
+     * Adapter holt sie beim async Versand über diesen Port, statt den Anhang im Event (DTO) mitzuschleppen.
+     * Implementiert vom fachlichen Modul (erlaubte Richtung {@code rechnung→kommunikation}, wie
+     * {@link KohortenAuskunft}); ohne passende Implementierung bleibt die Mail anhanglos (Default).
+     * Beispiel: {@code RECHNUNG}-Kontext → validiertes ZUGFeRD-PDF des Belegs.
+     */
+    public interface AnhangPort {
+        /** Ein E-Mail-Anhang: Dateiname, Roh-Bytes, MIME-Typ. */
+        record Anhang(String dateiname, byte[] inhalt, String contentType) {
+        }
+
+        /** Anhänge für das Kontextobjekt; leere Liste, wenn der Kontext keine Anhänge hat. */
+        default List<Anhang> anhaenge(KontextTyp kontextTyp, Long kontextId) {
+            return List.of();
+        }
     }
 
     /** Übergabe einer {@code Zustellung} an die asynchrone Auslieferung (Outbox-Enqueue); Impl: ZustellService. */

@@ -1,16 +1,18 @@
 package de.netzfactor.ebz.controlling.integration.rechnung.service;
 
 import java.time.Instant;
+import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import org.jboss.logging.Logger;
 
-import io.quarkus.mailer.Mail;
-import io.quarkus.mailer.Mailer;
-
+import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
+import de.netzfactor.ebz.controlling.integration.kommunikation.event.KommunikationsEreignis;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase;
@@ -41,8 +43,13 @@ public class RechnungVersandService {
     @Inject
     de.netzfactor.ebz.controlling.integration.rechnung.zugferd.RechnungZugferdMapper mapper;
 
+    /**
+     * Event-Spine: der Versand fährt über ein {@link KommunikationsEreignis} (Direkt-Empfänger Debitor-
+     * Postfach, kein Person-Bezug) → Template + Zustell-Outbox (Retry/Dead-Letter); das ZUGFeRD-PDF hängt
+     * der {@code RechnungAnhangAdapter} (AnhangPort) beim Versand an. Das Validierungs-Tor bleibt hier synchron.
+     */
     @Inject
-    Mailer mailer;
+    Event<KommunikationsEreignis> benachrichtigung;
 
     @Inject
     Prozessspur prozess;
@@ -83,19 +90,14 @@ public class RechnungVersandService {
                     + " nicht versendet — ZUGFeRD-Validierung fehlgeschlagen. Report: " + erg.report());
         }
 
-        String dateiname = "beleg-" + r.nummer + ".pdf";
-        mailer.send(Mail.withText(email,
-                "Ihre Rechnung " + r.nummer + " vom EBZ",
-                """
-                Guten Tag,
-
-                anbei erhalten Sie Ihre Rechnung %s (Kunden-Nr. %s) als ZUGFeRD-E-Rechnung im Anhang.
-                Bitte begleichen Sie den Betrag innerhalb von %d Tagen unter Angabe der Belegnummer.
-
-                Viele Grüße
-                Ihr EBZ-Rechnungswesen
-                """.formatted(r.nummer, r.debitor.debitorNr, r.zahlungszielTage))
-                .addAttachment(dateiname, erg.pdf(), "application/pdf"));
+        // Versand über die Spine: Direkt-Empfänger Debitor-Postfach (kein Person-Bezug) → Template +
+        // Zustell-Outbox; das validierte ZUGFeRD-PDF hängt der RechnungAnhangAdapter (AnhangPort) beim
+        // Versand an (Kontext RECHNUNG/Beleg-ID). Re-Send erlaubt → kein Dedupe-Schlüssel.
+        benachrichtigung.fire(KommunikationsEreignis.anEmpfaenger(
+                EreignisTyp.RECHNUNG_VERSANDT, email, "Ihre Rechnung " + r.nummer + " vom EBZ",
+                KontextTyp.RECHNUNG, r.id, null,
+                Map.of("nummer", r.nummer, "debitorNr", r.debitor.debitorNr,
+                        "zahlungszielTage", r.zahlungszielTage)));
 
         r.versandStatus = RechnungVersandStatus.VERSENDET;
         r.versendetAm = Instant.now();

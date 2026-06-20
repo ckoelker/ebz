@@ -64,10 +64,11 @@ public class KommunikationDemoSeeder {
                 EreignisTyp.SYSTEM_HINWEIS, personId,
                 "Willkommen in Ihrem EBZ-Portal", "seed:carla:willkommen"));
 
-        kommunikation.protokolliere(KommunikationsEreignis.mitKontext(
+        kommunikation.protokolliere(KommunikationsEreignis.mitVariablen(
                 EreignisTyp.RECHNUNG_VERSANDT, personId,
-                "Ihre Rechnung steht im Portal bereit", KontextTyp.RECHNUNG, null, null,
-                "seed:carla:rechnung"));
+                "Ihre Rechnung steht im Portal bereit", KontextTyp.RECHNUNG, null,
+                "seed:carla:rechnung",
+                java.util.Map.of("nummer", "RE-DEMO-0001", "debitorNr", "K-DEMO", "zahlungszielTage", 14)));
 
         kommunikation.protokolliere(KommunikationsEreignis.mitKontext(
                 EreignisTyp.AZUBI_VERTRAG_BESTAETIGT, personId,

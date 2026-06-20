@@ -35,9 +35,20 @@ public class PersonEreignis extends PanacheEntity {
         KEINER, BILDUNGSANGEBOT, ANMELDUNG, RECHNUNG, KONVERSATION
     }
 
-    /** Empfänger als reine Party-ID (kein FK über die Schema-/Modulgrenze). */
-    @Column(name = "empfaenger_person_id", nullable = false)
+    /** Empfänger als reine Party-ID (kein FK über die Schema-/Modulgrenze); {@code null} bei reinem
+     *  Direkt-Empfänger ({@link #anEmail}, Bestands-Mail-Migration ohne Person-Bezug). */
+    @Column(name = "empfaenger_person_id")
     public Long empfaengerPersonId;
+
+    /** Direkt-Empfänger ohne Person (Azubi-/Debitor-Adresse): die E-Mail geht hierhin statt an die
+     *  Person-Primäradresse; kein Portal-Log/Consent. {@code null} ⇒ Person-Primäradresse. */
+    @Column(name = "an_email", length = 320)
+    public String anEmail;
+
+    /** Template-Variablen (JSON) für die Qute-Vorlage des E-Mail-Adapters — beim async Versand wird daraus
+     *  der Body gerendert (zum Sendezeitpunkt ist das auslösende Event längst weg). */
+    @Column(name = "variablen_json", columnDefinition = "text")
+    public String variablenJson;
 
     /** Auslösender Ereignis-Typ (Single Source {@link EreignisTyp}: sichtbar/push/Rechtsgrundlage/Template). */
     @Enumerated(EnumType.STRING)

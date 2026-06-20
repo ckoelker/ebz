@@ -17,13 +17,23 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.
  */
 public enum EreignisTyp {
 
-    /** Berufsschul-Anmeldung des Azubis bestätigt (transaktional). Vorerst PORTAL-only: die E-Mail
-     *  versendet noch der Bestands-Flow inline; die EMAIL-Migration in die Spine folgt schrittweise (K1b). */
-    ANMELDUNG_BESTAETIGT(Kategorie.ANMELDUNG, true, Set.of(Kanal.PORTAL),
+    /** Berufsschul-Anmeldung bestätigt — an den <b>Besteller/Firma</b> (Person): Portal-Log + E-Mail über
+     *  die Spine (Bestands-Mail vollständig migriert). */
+    ANMELDUNG_BESTAETIGT(Kategorie.ANMELDUNG, true, Set.of(Kanal.PORTAL, Kanal.EMAIL),
             Rechtsgrundlage.VERTRAG_6_1_B, "anmeldung-bestaetigt", false, 0),
 
+    /** Berufsschul-Anmeldung bestätigt — an den <b>Azubi</b>: Direkt-Empfänger (teilnehmerEmail, oft keine
+     *  Person) ⇒ E-Mail-only über die Spine, kein Portal-Log ({@code sichtbar=false}). */
+    ANMELDUNG_BESTAETIGT_AZUBI(Kategorie.ANMELDUNG, false, Set.of(Kanal.EMAIL),
+            Rechtsgrundlage.VERTRAG_6_1_B, "anmeldung-bestaetigt-azubi", false, 0),
+
+    /** Portal-Einladung an einen geprüften Ansprechpartner (provisorische Person): Portal-Log + E-Mail mit
+     *  Login-Link über die Spine (Bestands-Mail migriert). */
+    EINLADUNG(Kategorie.ANMELDUNG, true, Set.of(Kanal.PORTAL, Kanal.EMAIL),
+            Rechtsgrundlage.VERTRAG_6_1_B, "einladung", false, 0),
+
     /** Ausbildungsvertrag final bestätigt → Anmeldung abrechenbar (transaktional, Kenntnisnahme erbeten).
-     *  Vorerst PORTAL-only (s. {@link #ANMELDUNG_BESTAETIGT}). Pflicht-Kenntnisnahme binnen 14 Tagen (K5). */
+     *  Pflicht-Kenntnisnahme binnen 14 Tagen (K5). */
     AZUBI_VERTRAG_BESTAETIGT(Kategorie.ANMELDUNG, true, Set.of(Kanal.PORTAL),
             Rechtsgrundlage.VERTRAG_6_1_B, "vertrag-bestaetigt", true, 14),
 

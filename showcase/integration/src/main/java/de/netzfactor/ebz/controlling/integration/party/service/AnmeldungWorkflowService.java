@@ -1,14 +1,12 @@
 package de.netzfactor.ebz.controlling.integration.party.service;
 
 import java.time.Instant;
+import java.util.Map;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
-
-import io.quarkus.mailer.Mail;
-import io.quarkus.mailer.Mailer;
 
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.event.KommunikationsEreignis;
@@ -33,9 +31,6 @@ import de.netzfactor.ebz.controlling.integration.rechnung.service.RegelVerletzun
  */
 @ApplicationScoped
 public class AnmeldungWorkflowService {
-
-    @Inject
-    Mailer mailer;
 
     @Inject
     Prozessspur prozess;
@@ -70,47 +65,29 @@ public class AnmeldungWorkflowService {
         prozess.schritt("Anmeldung prüfen & bestätigen", Akteur.EBZ, Prozess.System.COCKPIT,
                 Typ.USER_TASK, Phase.EBZ_BESTAETIGUNG);
 
+        Map<String, Object> vars = Map.of("teilnehmerName", a.teilnehmerName == null ? "" : a.teilnehmerName,
+                "schuljahrHalbjahr", schuljahrHalbjahr(a));
+
+        // Event-Spine: Azubi-Mail an die teilnehmerEmail (Direkt-Empfänger, oft keine Person) → E-Mail-only.
         String azubiMail = a.teilnehmerEmail;
         if (azubiMail != null && !azubiMail.isBlank()) {
-            mailer.send(Mail.withText(azubiMail,
-                    "Deine Anmeldung zur Berufsschule ist bestätigt",
-                    """
-                    Hallo %s,
-
-                    deine Anmeldung zur Berufsschule (%s) wurde vom EBZ geprüft und bestätigt.
-                    Den Zugang zum Portal hast du per separater Einladung erhalten.
-
-                    Viele Grüße
-                    Dein EBZ-Team
-                    """.formatted(a.teilnehmerName, schuljahrHalbjahr(a))));
+            benachrichtigung.fire(KommunikationsEreignis.anEmpfaenger(
+                    EreignisTyp.ANMELDUNG_BESTAETIGT_AZUBI, azubiMail,
+                    "Deine Anmeldung zur Berufsschule ist bestätigt", KontextTyp.ANMELDUNG, a.id,
+                    "anmeldung-azubi:" + a.id, vars));
             prozess.schritt("Bestätigungsmail an Azubi", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
                     Phase.EBZ_BESTAETIGUNG);
         }
 
-        String firmaMail = bestellerEmail(a.bestellerPersonId());
-        if (firmaMail != null && !firmaMail.isBlank()) {
-            mailer.send(Mail.withText(firmaMail,
-                    "Anmeldebestätigung: " + a.teilnehmerName,
-                    """
-                    Guten Tag,
-
-                    die Anmeldung von %s zur Berufsschule (%s) ist vom EBZ bestätigt. Bitte bestätigen
-                    Sie abschließend den Ausbildungsvertrag im Portal, damit die Abrechnung erfolgen kann.
-
-                    Viele Grüße
-                    Ihr EBZ-Team
-                    """.formatted(a.teilnehmerName, schuljahrHalbjahr(a))));
-            prozess.schritt("Bestätigungsmail an Firma", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
-                    Phase.EBZ_BESTAETIGUNG);
-        }
-
-        // Event-Spine: Portal-Aktivitätslog für den Besteller (E-Mail versendet vorerst der Inline-Pfad oben).
+        // Event-Spine: Besteller/Firma (Person) → Portal-Aktivitätslog + E-Mail (Bestands-Mail migriert).
         Long besteller = a.bestellerPersonId();
         if (besteller != null) {
-            benachrichtigung.fire(KommunikationsEreignis.mitKontext(
+            benachrichtigung.fire(KommunikationsEreignis.mitVariablen(
                     EreignisTyp.ANMELDUNG_BESTAETIGT, besteller,
-                    "Anmeldebestätigung: " + a.teilnehmerName, KontextTyp.ANMELDUNG, a.id, null,
-                    "anmeldung-bestaetigt:" + a.id));
+                    "Anmeldebestätigung: " + a.teilnehmerName, KontextTyp.ANMELDUNG, a.id,
+                    "anmeldung-bestaetigt:" + a.id, vars));
+            prozess.schritt("Bestätigungsmail an Firma", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
+                    Phase.EBZ_BESTAETIGUNG);
         }
         return a;
     }
@@ -155,12 +132,5 @@ public class AnmeldungWorkflowService {
 
     private static String schuljahrHalbjahr(Anmeldung a) {
         return a.schuljahr == null ? "" : a.schuljahr + ", " + a.halbjahr + ". Halbjahr";
-    }
-
-    private static String bestellerEmail(Long bestellerPersonId) {
-        if (bestellerPersonId == null) {
-            return null;
-        }
-        return PartyHoheitService.primaerEmail(bestellerPersonId);
     }
 }

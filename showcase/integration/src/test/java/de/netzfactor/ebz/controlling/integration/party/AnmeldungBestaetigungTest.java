@@ -15,11 +15,16 @@ import io.restassured.http.ContentType;
 
 import jakarta.inject.Inject;
 
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.ZustellService;
+
 /**
  * Anmeldung Berufsschule — Schritt E (EBZ-Bestätigung): eine ANGEFRAGTe Azubi-Anmeldung wird vom EBZ
  * bestätigt ({@code ANGEFRAGT → BESTAETIGT_EBZ}); Azubi <b>und</b> Firma (Besteller) erhalten je eine
  * Bestätigungsmail. Doppelte Bestätigung ist nicht möglich (409). Die Azubi-Dubletten-Prüfung selbst
  * läuft über die HITL-Review-Queue aus Schritt B (PERSON-Fälle).
+ * <p>
+ * Seit der Bestands-Mail-Migration laufen beide Mails über die Event-Spine (Azubi = Direkt-Empfänger
+ * E-Mail-only, Firma = Person mit Portal-Log + E-Mail) → der Test treibt die Zustell-Outbox selbst.
  */
 @QuarkusTest
 @TestSecurity(user = "kc-ebz-confirm", roles = "rechnung-pflege")
@@ -27,6 +32,9 @@ class AnmeldungBestaetigungTest {
 
     @Inject
     MockMailbox mailbox;
+
+    @Inject
+    ZustellService zustellService;
 
     private static long uniq() {
         return System.nanoTime();
@@ -85,11 +93,14 @@ class AnmeldungBestaetigungTest {
                 .body("status", equalTo("BESTAETIGT_EBZ"))
                 .body("teilnehmerName", equalTo("Anton Azubi"));
 
-        // Azubi-Mail geht an die (eindeutige) Anmeldungs-Adresse; insgesamt zwei Mails (Azubi + Firma).
-        // Die Firmen-Adresse ist die primaere des Bestellers (bei wiederverwendetem Test-sub ggf. eine
-        // fruehere) — daher hier die Gesamtzahl statt einer konkreten Firmen-Adresse pruefen.
+        zustellService.verarbeiteFaellige(500); // beide E-Mails laufen über die Spine-Outbox
+
+        // Azubi-Mail geht an die (eindeutige) Anmeldungs-Adresse — Direkt-Empfänger ohne Person (E-Mail-only).
+        // Empfänger-skopiert geprüft (nicht die Gesamtzahl), weil der Dispatcher die geteilte Outbox leert.
         Assertions.assertEquals(1, mailbox.getMailsSentTo(azubiEmail).size(), "Bestätigung an den Azubi");
-        Assertions.assertEquals(2, mailbox.getTotalMessagesSent(), "je eine Mail an Azubi und Firma");
+        // Firma/Besteller (Person): Portal-Aktivitätslog-Eintrag belegt die Benachrichtigung über die Spine.
+        given().when().get("/kommunikation/portal/ereignisse").then().statusCode(200)
+                .body("betreff", org.hamcrest.Matchers.hasItem("Anmeldebestätigung: Anton Azubi"));
 
         // Zweite Bestätigung ist nicht möglich (nicht mehr ANGEFRAGT) → 409
         given().contentType(ContentType.JSON)

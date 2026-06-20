@@ -1,14 +1,17 @@
 package de.netzfactor.ebz.controlling.integration.party.service;
 
+import java.util.Map;
+
 import jakarta.enterprise.context.ApplicationScoped;
+import jakarta.enterprise.event.Event;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
-import io.quarkus.mailer.Mail;
-import io.quarkus.mailer.Mailer;
-
+import de.netzfactor.ebz.controlling.integration.kommunikation.event.EreignisTyp;
+import de.netzfactor.ebz.controlling.integration.kommunikation.event.KommunikationsEreignis;
+import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur;
@@ -30,8 +33,9 @@ public class EinladungsService {
     @Inject
     LoginProvisionierung provisionierung;
 
+    /** Event-Spine: die Einladungsmail (Login-Link) fährt über die Spine (Template + Zustell-Outbox). */
     @Inject
-    Mailer mailer;
+    Event<KommunikationsEreignis> benachrichtigung;
 
     @Inject
     Prozessspur prozess;
@@ -63,21 +67,11 @@ public class EinladungsService {
                     Typ.SERVICE_TASK, Phase.EINLADUNG);
         }
 
-        mailer.send(Mail.withText(email,
-                "Ihr Zugang zum EBZ-Ausbildungsportal",
-                """
-                Hallo %s,
-
-                Ihr Ausbildungsbetrieb ist im EBZ-Ausbildungsportal freigeschaltet. Bitte melden Sie sich
-                mit dieser E-Mail-Adresse an und vergeben Sie beim ersten Login Ihr Passwort:
-
-                %s
-
-                Anschließend können Sie Ihre Auszubildenden zur Berufsschule anmelden.
-
-                Viele Grüße
-                Ihr EBZ-Team
-                """.formatted(p.anzeigeName(), portalUrl)));
+        // Event-Spine: Portal-Log (provisorische Person) + Einladungsmail mit Login-Link (Template + Outbox).
+        benachrichtigung.fire(KommunikationsEreignis.mitVariablen(
+                EreignisTyp.EINLADUNG, p.id, "Ihr Zugang zum EBZ-Ausbildungsportal",
+                KontextTyp.KEINER, null, null,
+                Map.of("anzeigeName", p.anzeigeName(), "portalUrl", portalUrl)));
         prozess.schritt("Einladungsmail senden", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
                 Phase.EINLADUNG);
 

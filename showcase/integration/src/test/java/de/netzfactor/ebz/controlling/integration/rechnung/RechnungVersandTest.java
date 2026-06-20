@@ -20,16 +20,25 @@ import io.restassured.path.json.JsonPath;
 
 import jakarta.inject.Inject;
 
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.ZustellService;
+
 /**
  * Rechnungsversand: ein festgeschriebener Beleg wird als ZUGFeRD-E-Rechnung per E-Mail an den Debitor
  * zugestellt (PDF-Anhang), der Versandstatus am Beleg nachgehalten. Entwürfe und Debitoren ohne Postfach
  * werden abgewiesen (409). Test nutzt die Quarkus-{@link MockMailbox} (kein echter SMTP-Verkehr).
+ * <p>
+ * Der Versand läuft seit der Bestands-Mail-Migration über die Event-Spine (Zustell-Outbox) → der Test
+ * treibt den Dispatcher ({@link ZustellService#verarbeiteFaellige}) deterministisch selbst, dann liegt
+ * die Mail (mit ZUGFeRD-Anhang via AnhangPort) in der MockMailbox.
  */
 @QuarkusTest
 class RechnungVersandTest {
 
     @Inject
     MockMailbox mailbox;
+
+    @Inject
+    ZustellService zustellService;
 
     @BeforeEach
     void clearMailbox() {
@@ -92,6 +101,8 @@ class RechnungVersandTest {
                 .body("versendetAn", equalTo(email))
                 .body("versendetAm", notNullValue());
 
+        zustellService.verarbeiteFaellige(100); // async Outbox treiben → Mail (mit ZUGFeRD) zustellen
+
         // genau eine Mail an den Debitor mit dem ZUGFeRD-PDF im Anhang
         List<Mail> mails = mailbox.getMailsSentTo(email);
         Assertions.assertEquals(1, mails.size(), "eine Rechnungsmail an den Debitor");
@@ -107,6 +118,7 @@ class RechnungVersandTest {
         // Re-Send erlaubt → zweite Mail
         given().when().post("/rechnung/rechnungen/" + rechnungId + "/versenden").then().statusCode(200)
                 .body("versandStatus", equalTo("VERSENDET"));
+        zustellService.verarbeiteFaellige(100);
         Assertions.assertEquals(2, mailbox.getMailsSentTo(email).size(), "Re-Send erzeugt eine weitere Mail");
     }
 

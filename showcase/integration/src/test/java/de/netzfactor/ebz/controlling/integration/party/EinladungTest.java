@@ -15,6 +15,7 @@ import io.restassured.http.ContentType;
 
 import jakarta.inject.Inject;
 
+import de.netzfactor.ebz.controlling.integration.kommunikation.service.ZustellService;
 import de.netzfactor.ebz.controlling.integration.party.service.KeycloakLoginProvisionierung;
 
 /**
@@ -33,6 +34,9 @@ class EinladungTest {
 
     @Inject
     MockMailbox mailbox;
+
+    @Inject
+    ZustellService zustellService;
 
     private static long uniq() {
         return System.nanoTime();
@@ -71,6 +75,7 @@ class EinladungTest {
                 .body("eingeladen", equalTo(true))
                 .body("provisioniert", equalTo(false)); // KC im Test deaktiviert
 
+        zustellService.verarbeiteFaellige(100); // Einladungsmail läuft über die Spine-Outbox
         Assertions.assertEquals(1, mailbox.getMailsSentTo(email).size(), "genau eine Einladungsmail");
     }
 
@@ -95,6 +100,7 @@ class EinladungTest {
                 .body("provisioniert", equalTo(true))
                 .body("keycloakUserId", equalTo("kc-user-xyz"));
 
+        zustellService.verarbeiteFaellige(100);
         Assertions.assertEquals(1, mailbox.getMailsSentTo(email).size(), "Einladungsmail trotz Provisionierung");
     }
 
