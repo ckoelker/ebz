@@ -17,6 +17,7 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.model.Konversatio
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Nachricht;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.PersonEreignis.KontextTyp;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.CrmSpiegelPort;
+import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.FaqAgentPort;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.RealtimePort;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.ThreadRealtimePort;
 
@@ -41,6 +42,9 @@ public class KonversationService {
 
     @Inject
     CrmSpiegelPort crmSpiegel;
+
+    @Inject
+    FaqAgentPort faqAgent;
 
     // ───────────────────────── Eröffnen / Antworten ─────────────────────────
 
@@ -69,15 +73,79 @@ public class KonversationService {
         return sendeAlsStaff(k, mitarbeiterId, inhaltHtml);
     }
 
-    /** Person antwortet in einem ihrer Vorgänge; eine Antwort öffnet einen geschlossenen Thread wieder. */
+    /**
+     * Person antwortet in einem ihrer Threads (Admin-Vorgang, Direkt-Chat oder Bot-Beratung); eine Antwort
+     * öffnet einen geschlossenen Thread wieder. Signalisiert Staff <i>und</i> mitlesende Personen (Direkt-Chat);
+     * hängt ein {@link FaqAgentPort#FAQ_BOT FAQ-Bot} am Thread, antwortet er anschließend autonom.
+     */
     @Transactional
     public Nachricht antworteAlsPerson(Long konversationId, Long personId, String inhaltHtml) {
         Konversation k = mussTeilnehmerPerson(konversationId, personId);
         Nachricht n = neueNachricht(k, TeilnehmerTyp.PERSON, personId, null, inhaltHtml, false);
         k.status = Status.OFFEN;
         signalisiereStaff(k);
+        signalisiereAnderePersonen(k, personId);
         threadRealtime.signalisiereThread(k.id);
+        if (hatBot(k)) {
+            botAntwortet(k); // autonomer FAQ-Bot reagiert auf die Folgefrage
+        }
         return n;
+    }
+
+    // ───────────────────────── Person↔Person (K4) + autonomer FAQ-Bot ─────────────────────────
+
+    /** Eine Person eröffnet einen Direkt-Chat mit einer anderen Person (Community) und sendet die erste Nachricht. */
+    @Transactional
+    public Konversation eroeffneDirekt(Long vonPersonId, Long anPersonId, String betreff, String inhaltHtml) {
+        if (vonPersonId == null || anPersonId == null || vonPersonId.equals(anPersonId)) {
+            throw new jakarta.ws.rs.BadRequestException("Ein Direkt-Chat braucht zwei verschiedene Personen.");
+        }
+        Konversation k = new Konversation();
+        k.typ = Typ.DIREKT;
+        k.betreff = betreff;
+        k.kontextTyp = KontextTyp.KEINER;
+        k.status = Status.OFFEN;
+        k.persist();
+        teilnehmer(k, TeilnehmerTyp.PERSON, vonPersonId, TeilnehmerRolle.ABSENDER);
+        teilnehmer(k, TeilnehmerTyp.PERSON, anPersonId, TeilnehmerRolle.EMPFAENGER);
+        neueNachricht(k, TeilnehmerTyp.PERSON, vonPersonId, null, inhaltHtml, false);
+        realtime.signalisiere(anPersonId, "konversation:" + k.id);
+        threadRealtime.signalisiereThread(k.id);
+        return k;
+    }
+
+    /**
+     * Eine Person startet eine <b>autonome KI-Studienberatung</b> (K4, Agent-Use-Case 2): legt einen Bot-Thread
+     * an, stellt die Frage und lässt den {@link FaqAgentPort FAQ-Bot} sofort (KI-gekennzeichnet) antworten.
+     */
+    @Transactional
+    public Konversation eroeffneBeratung(Long personId, String frage) {
+        Konversation k = new Konversation();
+        k.typ = Typ.DIREKT;
+        k.betreff = "KI-Studienberatung";
+        k.kontextTyp = KontextTyp.KEINER;
+        k.status = Status.OFFEN;
+        k.persist();
+        teilnehmer(k, TeilnehmerTyp.PERSON, personId, TeilnehmerRolle.ABSENDER);
+        teilnehmer(k, TeilnehmerTyp.AGENT, null, FaqAgentPort.FAQ_BOT, TeilnehmerRolle.ADMIN);
+        neueNachricht(k, TeilnehmerTyp.PERSON, personId, null, frage, false);
+        botAntwortet(k);
+        return k;
+    }
+
+    /** Hängt ein FAQ-Bot als Teilnehmer am Thread? */
+    private static boolean hatBot(Konversation k) {
+        return Teilnehmer.count("konversation.id = ?1 and teilnehmerTyp = ?2 and agentKennung = ?3",
+                k.id, TeilnehmerTyp.AGENT, FaqAgentPort.FAQ_BOT) > 0;
+    }
+
+    /** Lässt den FAQ-Bot autonom auf den bisherigen Verlauf antworten (KI-generiert markiert); best effort. */
+    private void botAntwortet(Konversation k) {
+        String text = faqAgent.beantworteThread(k.id);
+        if (text != null && !text.isBlank()) {
+            neueNachricht(k, TeilnehmerTyp.AGENT, null, FaqAgentPort.FAQ_BOT, text, true);
+            threadRealtime.signalisiereThread(k.id);
+        }
     }
 
     /** Agenten-Antwort (K2c): KI-generiert markiert (EU-AI-Act Art. 50); Empfänger ist die Person. */
@@ -143,14 +211,26 @@ public class KonversationService {
                 .gelesenBis = LocalDateTime.now();
     }
 
-    /** Hat der Teilnehmer ungelesene fremde Nachrichten in seinem Thread? */
+    /**
+     * Hat der Teilnehmer ungelesene <i>fremde</i> Nachrichten in seinem Thread? „Fremd" wird über die
+     * Identität bestimmt (nicht nur den Typ), damit auch Person↔Person-Direktchats (beide {@code PERSON})
+     * korrekt zählen — die Nachricht des Gegenübers gilt als fremd.
+     */
     public boolean hatUngelesene(Teilnehmer t) {
-        if (t.gelesenBis == null) {
-            return Nachricht.count("konversation.id = ?1 and absenderTyp <> ?2",
-                    t.konversation.id, t.teilnehmerTyp) > 0;
+        StringBuilder q = new StringBuilder("konversation.id = ?1 and not (");
+        List<Object> p = new java.util.ArrayList<>();
+        p.add(t.konversation.id);
+        switch (t.teilnehmerTyp) {
+            case PERSON -> { q.append("absenderTyp = ?2 and personId = ?3"); p.add(TeilnehmerTyp.PERSON); p.add(t.personId); }
+            case MITARBEITER -> { q.append("absenderTyp = ?2 and mitarbeiterId = ?3"); p.add(TeilnehmerTyp.MITARBEITER); p.add(t.mitarbeiterId); }
+            case AGENT -> { q.append("absenderTyp = ?2 and agentKennung = ?3"); p.add(TeilnehmerTyp.AGENT); p.add(t.agentKennung); }
         }
-        return Nachricht.count("konversation.id = ?1 and absenderTyp <> ?2 and zeitpunkt > ?3",
-                t.konversation.id, t.teilnehmerTyp, t.gelesenBis) > 0;
+        q.append(")");
+        if (t.gelesenBis != null) {
+            q.append(" and zeitpunkt > ?4");
+            p.add(t.gelesenBis);
+        }
+        return Nachricht.count(q.toString(), p.toArray()) > 0;
     }
 
     /** Letzte Nachricht eines Threads (für die Listen-Vorschau); {@code null}, wenn leer. */
@@ -257,6 +337,17 @@ public class KonversationService {
         Long pid = empfaengerPersonId(k);
         if (pid != null) {
             realtime.signalisiere(pid, "konversation:" + k.id);
+        }
+    }
+
+    /** Echtzeit-Signal an die übrigen Personen-Teilnehmer eines Direkt-Chats (nicht an den Absender). */
+    private void signalisiereAnderePersonen(Konversation k, Long absenderPersonId) {
+        List<Teilnehmer> personen = Teilnehmer.list("konversation.id = ?1 and teilnehmerTyp = ?2",
+                k.id, TeilnehmerTyp.PERSON);
+        for (Teilnehmer t : personen) {
+            if (t.personId != null && !t.personId.equals(absenderPersonId)) {
+                realtime.signalisiere(t.personId, "konversation:" + k.id);
+            }
         }
     }
 

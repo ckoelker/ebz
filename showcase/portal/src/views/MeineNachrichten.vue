@@ -5,7 +5,7 @@
 // nachgeladen. KI-generierte Nachrichten sind als solche gekennzeichnet (EU-AI-Act Art. 50).
 import { ref, onMounted, onBeforeUnmount, computed, nextTick } from 'vue';
 import {
-  partyLogin, meineKonversationen, threadNachrichten, threadAntworten, threadGelesen,
+  partyLogin, meineKonversationen, threadNachrichten, threadAntworten, threadGelesen, kiBeratung,
   ApiFehler, type KonversationView, type NachrichtView,
 } from '@/portal';
 import { auth, login } from '@/auth';
@@ -19,6 +19,11 @@ const entwurf = ref('');
 const sende = ref(false);
 const verlaufBox = ref<HTMLElement | null>(null);
 let socket: WebSocket | null = null;
+
+// KI-Studienberatung (K4): autonomer FAQ-Bot — Frage stellen, der Bot antwortet sofort (KI-gekennzeichnet).
+const beratungOffen = ref(false);
+const frage = ref('');
+const frageSende = ref(false);
 
 const angemeldet = computed(() => auth.angemeldet);
 
@@ -76,6 +81,23 @@ async function senden() {
   }
 }
 
+async function frageStellen() {
+  if (!frage.value.trim()) return;
+  frageSende.value = true;
+  try {
+    const neu = await kiBeratung(frage.value.trim());
+    frage.value = '';
+    beratungOffen.value = false;
+    await ladeThreads();
+    const t = threads.value.find((x) => x.id === neu.id) ?? neu;
+    await oeffne(t);
+  } catch (e) {
+    fehler(e);
+  } finally {
+    frageSende.value = false;
+  }
+}
+
 // ── Live: Thread-WebSocket (nur ID-Signal → Verlauf neu laden) ──
 function verbindeSocket(konversationId: number) {
   trenneSocket();
@@ -111,7 +133,11 @@ const eigenes = (n: NachrichtView) => n.absenderTyp === 'PERSON';
 
 <template>
   <section>
-    <h2 class="text-xl font-bold mb-4">Meine Nachrichten</h2>
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-bold">Meine Nachrichten</h2>
+      <UButton v-if="angemeldet" icon="i-lucide-sparkles" color="primary" variant="soft"
+        @click="beratungOffen = true">KI-Studienberatung fragen</UButton>
+    </div>
 
     <UAlert v-if="!angemeldet" color="warning" variant="soft" title="Anmeldung erforderlich">
       <template #description>
@@ -184,5 +210,27 @@ const eigenes = (n: NachrichtView) => n.absenderTyp === 'PERSON';
         </div>
       </div>
     </template>
+
+    <!-- KI-Studienberatung (K4): autonomer FAQ-Bot. Antworten sind KI-generiert (EU-AI-Act Art. 50). -->
+    <UModal v-model:open="beratungOffen" title="KI-Studienberatung">
+      <template #body>
+        <p class="text-sm text-muted mb-3">
+          Stellen Sie Ihre Frage zu Seminaren, Weiterbildungen oder der Berufsschule. Unser KI-Assistent
+          antwortet Ihnen sofort. <span class="text-dimmed">Die Antworten sind KI-generiert; für
+          Verbindliches vermittelt der Assistent an unser Service-Team.</span>
+        </p>
+        <UTextarea v-model="frage" :rows="3" autoresize class="w-full"
+          placeholder="z. B. Welche Weiterbildungen bieten Sie im Bereich Immobilien an?"
+          @keydown.enter.exact.prevent="frageStellen" />
+      </template>
+      <template #footer>
+        <div class="flex justify-end gap-2 w-full">
+          <UButton color="neutral" variant="ghost" @click="beratungOffen = false">Abbrechen</UButton>
+          <UButton icon="i-lucide-sparkles" :loading="frageSende" :disabled="!frage.trim()" @click="frageStellen">
+            Frage stellen
+          </UButton>
+        </div>
+      </template>
+    </UModal>
   </section>
 </template>

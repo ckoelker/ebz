@@ -6,6 +6,7 @@ import java.util.List;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Konversation;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Nachricht;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Konversation.TeilnehmerTyp;
+import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.FaqAgentPort;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.StaffIdentitaetsPort;
 
 /**
@@ -34,13 +35,18 @@ public final class KommunikationViews {
 
     // ───────────────────────── Mapping ─────────────────────────
 
-    /** Anzeigename des Absenders einer Nachricht je Typ (Mitarbeiter/Person/KI-Assistent). */
+    /** Anzeigename des Absenders einer Nachricht je Typ (Mitarbeiter/Person/KI-Agent). */
     public static String absenderName(Nachricht n, StaffIdentitaetsPort staff) {
         return switch (n.absenderTyp) {
             case MITARBEITER -> staff.mitarbeiterName(n.mitarbeiterId);
             case PERSON -> staff.personName(n.personId);
-            case AGENT -> "KI-Assistent";
+            case AGENT -> agentName(n.agentKennung);
         };
+    }
+
+    /** Anzeigename eines KI-Agenten anhand seiner Kennung (FAQ-Bot vs. allgemeiner Assistent). */
+    public static String agentName(String agentKennung) {
+        return FaqAgentPort.FAQ_BOT.equals(agentKennung) ? FaqAgentPort.FAQ_BOT_NAME : "KI-Assistent";
     }
 
     public static NachrichtView toView(Nachricht n, StaffIdentitaetsPort staff) {
@@ -61,11 +67,25 @@ public final class KommunikationViews {
         return text.length() > 120 ? text.substring(0, 119) + "…" : text;
     }
 
-    /** Partner-Anzeige für die Listenzeile aus Sicht der jeweiligen Seite. */
-    public static String partnerFuerPerson(Konversation k, StaffIdentitaetsPort staff) {
-        Konversation.Teilnehmer t = Konversation.Teilnehmer.find(
+    /**
+     * Partner-Anzeige für die Personen-Listenzeile, je Thread-Art: Admin-Vorgang → Mitarbeitername,
+     * Bot-Beratung → KI-Studienberatung, Direkt-Chat → die <i>andere</i> Person (≠ {@code eigenePersonId}).
+     */
+    public static String partnerFuerPerson(Konversation k, Long eigenePersonId, StaffIdentitaetsPort staff) {
+        Konversation.Teilnehmer ma = Konversation.Teilnehmer.find(
                 "konversation.id = ?1 and teilnehmerTyp = ?2", k.id, TeilnehmerTyp.MITARBEITER).firstResult();
-        return t == null ? "EBZ-Team" : staff.mitarbeiterName(t.mitarbeiterId);
+        if (ma != null) {
+            return staff.mitarbeiterName(ma.mitarbeiterId);
+        }
+        Konversation.Teilnehmer agent = Konversation.Teilnehmer.find(
+                "konversation.id = ?1 and teilnehmerTyp = ?2", k.id, TeilnehmerTyp.AGENT).firstResult();
+        if (agent != null) {
+            return agentName(agent.agentKennung);
+        }
+        Konversation.Teilnehmer andere = Konversation.Teilnehmer.find(
+                "konversation.id = ?1 and teilnehmerTyp = ?2 and personId <> ?3",
+                k.id, TeilnehmerTyp.PERSON, eigenePersonId).firstResult();
+        return andere == null ? "EBZ-Team" : staff.personName(andere.personId);
     }
 
     public static String partnerFuerStaff(Konversation k, StaffIdentitaetsPort staff) {

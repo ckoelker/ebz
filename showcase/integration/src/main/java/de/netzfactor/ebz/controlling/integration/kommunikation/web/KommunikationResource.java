@@ -263,11 +263,38 @@ public class KommunikationResource {
         return Response.noContent().build();
     }
 
+    /** Startet einen Direkt-Chat mit einer anderen Person (Community, K4); erste Nachricht inklusive. */
+    @Authenticated
+    @POST
+    @Path("/direkt")
+    @Transactional
+    public KonversationView direkt(SendenDto dto, @Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        Konversation k = konversationen.eroeffneDirekt(personId, dto == null ? null : dto.personId(),
+                dto == null ? null : dto.betreff(), dto == null ? null : dto.inhaltHtml());
+        return toPersonView(k, personId);
+    }
+
+    /** Startet eine autonome KI-Studienberatung (K4): Frage stellen, der FAQ-Bot antwortet sofort (KI-markiert). */
+    @Authenticated
+    @POST
+    @Path("/beratung")
+    @Transactional
+    public KonversationView beratung(BeratungDto dto, @Context SecurityContext ctx) {
+        Long personId = mussAufrufer(ctx);
+        String frage = dto == null || dto.frage() == null ? "" : "<p>" + dto.frage() + "</p>";
+        Konversation k = konversationen.eroeffneBeratung(personId, frage);
+        return toPersonView(k, personId);
+    }
+
+    public record BeratungDto(String frage) {
+    }
+
     private KonversationView toPersonView(Konversation k, Long personId) {
         Nachricht letzte = konversationen.letzteNachricht(k.id);
         boolean ungelesen = konversationen.ungelesenImThreadPerson(k.id, personId);
         return new KonversationView(k.id, k.typ.name(), k.betreff, k.status.name(), k.kontextTyp.name(),
-                k.kontextId, KommunikationViews.partnerFuerPerson(k, staff), KommunikationViews.vorschau(letzte),
+                k.kontextId, KommunikationViews.partnerFuerPerson(k, personId, staff), KommunikationViews.vorschau(letzte),
                 letzte == null ? k.erstelltAm : letzte.zeitpunkt, ungelesen);
     }
 

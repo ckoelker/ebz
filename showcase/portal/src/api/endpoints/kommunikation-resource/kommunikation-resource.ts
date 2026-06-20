@@ -5,6 +5,7 @@
  * OpenAPI spec version: 0.1.0
  */
 import type {
+  BeratungDto,
   EinstellungView,
   EreignisView,
   Kanal,
@@ -21,6 +22,32 @@ import { http } from '../../http';
 
 
 
+  /**
+ * @summary Beratung
+ */
+export const postKommunikationPortalBeratung = (
+    beratungDto: BeratungDto,
+ ) => {
+      return http<KonversationView>(
+      {url: `/kommunikation/portal/beratung`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: beratungDto
+    },
+      );
+    }
+  /**
+ * @summary Direkt
+ */
+export const postKommunikationPortalDirekt = (
+    sendenDto: SendenDto,
+ ) => {
+      return http<KonversationView>(
+      {url: `/kommunikation/portal/direkt`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: sendenDto
+    },
+      );
+    }
   /**
  * @summary Setze Einstellungen
  */
@@ -174,7 +201,9 @@ export const getKommunikationPortalUngelesen = (
     },
       );
     }
-  export type PutKommunikationPortalEinstellungenResult = NonNullable<Awaited<ReturnType<typeof putKommunikationPortalEinstellungen>>>
+  export type PostKommunikationPortalBeratungResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalBeratung>>>
+export type PostKommunikationPortalDirektResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalDirekt>>>
+export type PutKommunikationPortalEinstellungenResult = NonNullable<Awaited<ReturnType<typeof putKommunikationPortalEinstellungen>>>
 export type GetKommunikationPortalEinstellungenResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalEinstellungen>>>
 export type GetKommunikationPortalEreignisseResult = NonNullable<Awaited<ReturnType<typeof getKommunikationPortalEreignisse>>>
 export type PostKommunikationPortalEreignisseIdBestaetigenResult = NonNullable<Awaited<ReturnType<typeof postKommunikationPortalEreignisseIdBestaetigen>>>

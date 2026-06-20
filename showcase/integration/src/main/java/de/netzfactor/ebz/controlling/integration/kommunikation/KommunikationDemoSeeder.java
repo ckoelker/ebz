@@ -21,6 +21,8 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.service.Kommunika
 import de.netzfactor.ebz.controlling.integration.kommunikation.service.KonversationService;
 import de.netzfactor.ebz.controlling.integration.party.model.Login;
 import de.netzfactor.ebz.controlling.integration.party.model.Mitarbeiter;
+import de.netzfactor.ebz.controlling.integration.party.model.Person;
+import de.netzfactor.ebz.controlling.integration.party.service.PartyHoheitService;
 
 /**
  * Seedet beim Start idempotent ein paar personenseitige Aktivitätslog-Einträge für die Beispielkundin
@@ -45,6 +47,9 @@ public class KommunikationDemoSeeder {
 
     @Inject
     GruppenService gruppen;
+
+    @Inject
+    PartyHoheitService party;
 
     @Transactional
     void seed(@Observes @Priority(Interceptor.Priority.APPLICATION + 1100) StartupEvent ev) {
@@ -84,6 +89,16 @@ public class KommunikationDemoSeeder {
         if (Personengruppe.count("name = ?1", gruppenName) == 0) {
             Personengruppe g = gruppen.anlegenManuell(gruppenName, "Allgemeine Hinweise an Teilnehmende");
             gruppen.mitgliedHinzu(g.id, personId);
+        }
+
+        // Person↔Person-Direkt-Chat (K4, Community): ein anderer Teilnehmer schreibt Carla — damit das
+        // Portal einen Peer-Thread (kein EBZ-Absender) zeigt. Idempotent über den eindeutigen Betreff.
+        String direktBetreff = "Lerngruppe zur Prüfungsvorbereitung";
+        if (Konversation.count("betreff = ?1", direktBetreff) == 0) {
+            Person tom = party.selbstRegistrieren("seed-peer-tom", "tom.teilnehmer@ebz.de", "Tom Teilnehmer");
+            konversationen.eroeffneDirekt(tom.id, personId, direktBetreff,
+                    "<p>Hallo Carla, hast du Lust, dich zur Prüfungsvorbereitung in einer kleinen "
+                            + "Lerngruppe zusammenzutun? Viele Grüße, Tom</p>");
         }
 
         LOG.infof("Kommunikations-Demo geseedet für %s (Person %d)", KAEUFER_LOGIN, personId);

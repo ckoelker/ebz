@@ -8,6 +8,50 @@ import * as zod from 'zod';
 
 
 /**
+ * @summary Beratung
+ */
+export const PostKommunikationPortalBeratungBody = zod.object({
+  "frage": zod.string().optional()
+})
+
+export const PostKommunikationPortalBeratungResponse = zod.object({
+  "id": zod.number().optional(),
+  "typ": zod.string().optional(),
+  "betreff": zod.string().optional(),
+  "status": zod.string().optional(),
+  "kontextTyp": zod.string().optional(),
+  "kontextId": zod.number().optional(),
+  "partner": zod.string().optional(),
+  "letzteVorschau": zod.string().optional(),
+  "letzteZeit": zod.string().datetime({"offset":true}).optional(),
+  "ungelesen": zod.boolean().optional()
+})
+
+/**
+ * @summary Direkt
+ */
+export const PostKommunikationPortalDirektBody = zod.object({
+  "personId": zod.number().optional(),
+  "betreff": zod.string().optional(),
+  "inhaltHtml": zod.string().optional(),
+  "kontextTyp": zod.string().optional(),
+  "kontextId": zod.number().optional()
+})
+
+export const PostKommunikationPortalDirektResponse = zod.object({
+  "id": zod.number().optional(),
+  "typ": zod.string().optional(),
+  "betreff": zod.string().optional(),
+  "status": zod.string().optional(),
+  "kontextTyp": zod.string().optional(),
+  "kontextId": zod.number().optional(),
+  "partner": zod.string().optional(),
+  "letzteVorschau": zod.string().optional(),
+  "letzteZeit": zod.string().datetime({"offset":true}).optional(),
+  "ungelesen": zod.boolean().optional()
+})
+
+/**
  * @summary Setze Einstellungen
  */
 export const PutKommunikationPortalEinstellungenBody = zod.object({

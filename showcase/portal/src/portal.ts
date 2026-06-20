@@ -19,7 +19,7 @@ import {
   getKommunikationPortalPraeferenzen, putKommunikationPortalPraeferenzenKanal,
   getKommunikationPortalKonversationen, getKommunikationPortalKonversationenUngelesen,
   getKommunikationPortalKonversationenIdNachrichten, postKommunikationPortalKonversationenIdNachrichten,
-  postKommunikationPortalKonversationenIdGelesen,
+  postKommunikationPortalKonversationenIdGelesen, postKommunikationPortalBeratung,
 } from '@/api/endpoints/kommunikation-resource/kommunikation-resource';
 import { Kanal } from '@/api/model';
 import type {
@@ -136,3 +136,8 @@ export const threadAntworten = (id: number, inhaltHtml: string) =>
 /** Markiert einen Thread als gelesen. */
 export const threadGelesen = (id: number) =>
   run(() => postKommunikationPortalKonversationenIdGelesen(id));
+
+// ── KI-Studienberatung (K4): autonomer FAQ-Bot — Frage stellen, Bot antwortet sofort (KI-gekennzeichnet) ──
+/** Startet eine KI-Beratung mit der Frage; liefert den neuen Bot-Thread (Antwort bereits enthalten). */
+export const kiBeratung = async (frage: string): Promise<KonversationView> =>
+  (await run(() => postKommunikationPortalBeratung({ frage }))) as KonversationView;

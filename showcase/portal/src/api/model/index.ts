@@ -8,6 +8,7 @@
 export * from './ausbildungsbetriebAnfrage';
 export * from './azubiAnmeldungDto';
 export * from './belegart';
+export * from './beratungDto';
 export * from './bereich1';
 export * from './berufsschulbuchung';
 export * from './buchungZeile';

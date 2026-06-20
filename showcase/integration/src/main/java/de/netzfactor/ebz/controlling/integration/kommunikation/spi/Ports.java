@@ -127,6 +127,24 @@ public final class Ports {
         String entwirfAntwort(Long konversationId);
     }
 
+    /**
+     * <b>Autonomer</b> FAQ-/Studienberatungs-Agent (K4, Agent-Use-Case 2): beantwortet die Frage einer Person
+     * in einem Bot-Thread selbstständig — <b>ohne</b> menschliche Freigabe, anders als der HITL-{@link AgentPort}
+     * (Co-Pilot entwirft nur). Die Antwort wird als KI-generiert markiert (EU-AI-Act Art. 50, sichtbar in der
+     * UI). Graceful degradation im Adapter: ohne erreichbares LLM eine neutrale Auskunft statt Fehler — der
+     * Showcase bleibt ohne Schlüssel bedienbar.
+     */
+    public interface FaqAgentPort {
+        /** Logische Kennung des FAQ-Bots als {@code AGENT}-Teilnehmer (in Prod ein eigener Keycloak-Service-Account). */
+        String FAQ_BOT = "faq-bot";
+
+        /** Anzeigename des FAQ-Bots in der Nachrichten-Sicht (Partner-/Absenderkennung). */
+        String FAQ_BOT_NAME = "KI-Studienberatung";
+
+        /** Autonome Antwort auf den bisherigen Verlauf des Bot-Threads (jüngste Personen-Frage zuletzt). */
+        String beantworteThread(Long konversationId);
+    }
+
     /** Übergabe einer {@code Zustellung} an die asynchrone Auslieferung (Outbox-Enqueue); Impl: ZustellService. */
     public interface DispatchPort {
         /** Reiht eine Zustellung zur garantierten async Auslieferung ein (idempotent). */
