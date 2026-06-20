@@ -23,6 +23,8 @@
     <quarkus.platform.version>3.33.2</quarkus.platform.version>
     <!-- Differenzierer: explizit gepinnt (kein Platform-BOM-Member) -->
     <quarkus-langchain4j.version>1.10.0</quarkus-langchain4j.version>
+    <!-- MCP-Server (Quarkiverse): 1.13.0 ist gegen Quarkus 3.33.2 gebaut (= quarkus.platform.version). -->
+    <quarkus-mcp-server.version>1.13.0</quarkus-mcp-server.version>
 
     <!-- ── Rechnungsstellung R2: ZUGFeRD/E-Rechnung (Konzept §4f, Lösungsoption Mustang) ──
          Mustang = Apache-2.0 (vs Konik AGPL). PDFBox + xmpbox EXAKT auf die von Mustang transitiv
@@ -170,6 +172,21 @@
     <dependency>
       <groupId>io.quarkiverse.langchain4j</groupId>
       <artifactId>quarkus-langchain4j-openai</artifactId>
+    </dependency>
+
+    <!-- Kommunikation K4 (MCP-Demo): eigener MCP-Server (HTTP/SSE-Transport), der den sichtbaren
+         Aktivitätslog als Tool für externe KI-Agenten anbietet (Zukunfts-Showcase, RBAC/DSGVO-gefiltert).
+         1.13.0 ist gegen Quarkus 3.33.2 gebaut (= unsere Platform); zieht nur quarkus-vertx-http + mcp-core. -->
+    <dependency>
+      <groupId>io.quarkiverse.mcp</groupId>
+      <artifactId>quarkus-mcp-server-http</artifactId>
+      <version>${quarkus-mcp-server.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.quarkiverse.mcp</groupId>
+      <artifactId>quarkus-mcp-server-test</artifactId>
+      <version>${quarkus-mcp-server.version}</version>
+      <scope>test</scope>
     </dependency>
 
     <!-- ── Rechnungsstellung R2: ZUGFeRD/Factur-X erzeugen + Pflicht-Validierung ──
