@@ -9,7 +9,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.model.Bereich;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungVersandStatus;
 
-/** Lese-Sicht eines Belegs (Kopf + Positionen + Summe + Versand). Schreiben erfolgt über die Lebenszyklus-Endpunkte. */
+/** Lese-Sicht eines Belegs (Kopf + Positionen + Summe + Versand + Zahlungseingang). Schreiben über die Lebenszyklus-Endpunkte. */
 public record RechnungDto(
         Long id,
         long version,
@@ -26,5 +26,8 @@ public record RechnungDto(
         RechnungVersandStatus versandStatus,
         Instant versendetAm,
         String versendetAn,
+        LocalDate bezahltAm,
+        Long zahlbetragCent,
+        String zahlungsReferenz,
         List<RechnungPositionDto> positionen) {
 }

@@ -7,6 +7,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.transaction.Transactional;
 
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.ManuellePositionDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Belegart;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Leistungsart;
@@ -25,6 +26,36 @@ public class RechnungService {
 
     @Inject
     NummernkreisService nummernkreis;
+
+    @Inject
+    de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur prozess;
+
+    /**
+     * Verbucht einen manuellen Zahlungseingang zu einem festgeschriebenen Forderungs-Beleg
+     * ({@code AUSGESTELLT → BEZAHLT}). Nur {@code RECHNUNG}/{@code NACHBERECHNUNG} (eingehende Forderung) —
+     * Korrekturbelege (Storno/Gutschrift) sind kein Zahlungseingang. {@code bezahltAm} default = heute,
+     * {@code zahlbetragCent} default = Belegsumme. Idempotenz-Schutz: ein bereits bezahlter/stornierter
+     * Beleg wird abgewiesen (409). Offene-Posten/Mahnwesen/Lastschrift bleiben bei DATEV.
+     */
+    @Transactional
+    public Rechnung bezahlen(Long rechnungId, LocalDate bezahltAm, Long zahlbetragCent, String referenz) {
+        Rechnung r = mussExistieren(rechnungId);
+        if (r.status != RechnungStatus.AUSGESTELLT) {
+            throw new RegelVerletzung("Nur ein ausgestellter Beleg kann als bezahlt verbucht werden (aktuell: "
+                    + r.status + ").");
+        }
+        if (r.belegart != Belegart.RECHNUNG && r.belegart != Belegart.NACHBERECHNUNG) {
+            throw new RegelVerletzung("Zahlungseingang nur zu Forderungs-Belegen (RECHNUNG/NACHBERECHNUNG), "
+                    + "nicht zu " + r.belegart + ".");
+        }
+        r.bezahltAm = bezahltAm != null ? bezahltAm : LocalDate.now();
+        r.zahlbetragCent = zahlbetragCent != null ? zahlbetragCent : r.summeCent();
+        r.zahlungsReferenz = referenz;
+        r.status = RechnungStatus.BEZAHLT;
+        prozess.schritt("Zahlungseingang verbuchen", Prozess.Akteur.EBZ, Prozess.System.COCKPIT,
+                Prozess.Typ.USER_TASK, Prozess.Phase.RECHNUNGSLAUF);
+        return r;
+    }
 
     /** Schreibt eine Position aus dem manuellen DTO; nutzt Defaults für menge/steuersatz analog Lauf. */
     @Transactional

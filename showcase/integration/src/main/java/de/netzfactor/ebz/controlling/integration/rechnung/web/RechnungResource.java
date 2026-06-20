@@ -38,6 +38,7 @@ import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungPositionDto;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.HochschulLaufRequest;
 import de.netzfactor.ebz.controlling.integration.rechnung.dto.RechnungslaufRequest;
+import de.netzfactor.ebz.controlling.integration.rechnung.dto.ZahlungseingangDto;
 import de.netzfactor.ebz.controlling.integration.bildung.model.Bildungsangebot;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.Anmeldung;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.AnmeldungStatus;
@@ -478,6 +479,21 @@ public class RechnungResource {
     }
 
     /**
+     * Verbucht einen manuellen Zahlungseingang ({@code AUSGESTELLT → BEZAHLT}). Body optional
+     * (Datum default heute, Betrag default Belegsumme). Nur Forderungs-Belege; Wiederholung/falscher
+     * Status → 409 (siehe {@link RechnungService#bezahlen}). Offene Posten/Mahnwesen bleiben bei DATEV.
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/rechnungen/{id}/bezahlen")
+    @Consumes(MediaType.WILDCARD)
+    @Transactional
+    public RechnungDto bezahlen(@PathParam("id") Long id, ZahlungseingangDto dto) {
+        ZahlungseingangDto z = dto == null ? new ZahlungseingangDto(null, null, null) : dto;
+        return toRechnung(rechnungService.bezahlen(id, z.bezahltAm(), z.zahlbetragCent(), z.zahlungsReferenz()));
+    }
+
+    /**
      * Festschreibung + GoBD-Archivierung in EINER Transaktion: schlägt das Archivieren des validierten
      * ZUGFeRD fehl (Validierung 409 / MinIO 500), rollt die Festschreibung zurück — kein ausgestellter
      * Beleg ohne revisionssicheren E-Rechnungs-Beleg.
@@ -571,7 +587,8 @@ public class RechnungResource {
                 ? RechnungVersandStatus.NICHT_VERSENDET : r.versandStatus;
         return new RechnungDto(r.id, r.version, r.belegart, r.bereich, r.nummer, r.debitorId(),
                 r.zeitraumBezeichnung, r.ausstellungsdatum, r.zahlungszielTage, r.status,
-                r.originalRechnungId(), r.summeCent(), versand, r.versendetAm, r.versendetAn, pos);
+                r.originalRechnungId(), r.summeCent(), versand, r.versendetAm, r.versendetAn,
+                r.bezahltAm, r.zahlbetragCent, r.zahlungsReferenz, pos);
     }
 
     private static RechnungPositionDto toPosition(RechnungPosition p) {

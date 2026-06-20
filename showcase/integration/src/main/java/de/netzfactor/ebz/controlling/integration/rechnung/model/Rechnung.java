@@ -88,6 +88,23 @@ public class Rechnung extends PanacheEntity {
     @Column(name = "versendet_an", length = 200)
     public String versendetAn;
 
+    /**
+     * Manuell verbuchter Zahlungseingang ({@code AUSGESTELLT → BEZAHLT}). {@code null}, solange offen.
+     * Offene-Posten-Verwaltung/Mahnwesen/Lastschrift bleiben bewusst bei DATEV — hier nur der schlanke
+     * „bezahlt"-Vermerk fürs Beleg-Cockpit. Spalten nullable (Hibernate-{@code update} ergänzt sie ohne
+     * Default auf der Live-DB).
+     */
+    @Column(name = "bezahlt_am")
+    public LocalDate bezahltAm;
+
+    /** Verbuchter Zahlbetrag in Cent (Default = Belegsumme); für Teil-/Abweichungs-Audit festgehalten. */
+    @Column(name = "zahlbetrag_cent")
+    public Long zahlbetragCent;
+
+    /** Freitext-Referenz des Zahlungseingangs (z. B. Kontoauszug-/Überweisungs-Vermerk). */
+    @Column(name = "zahlungs_referenz", length = 140)
+    public String zahlungsReferenz;
+
     @OneToMany(mappedBy = "rechnung", cascade = CascadeType.ALL, orphanRemoval = true)
     @OrderBy("id ASC")
     public List<RechnungPosition> positionen = new ArrayList<>();
