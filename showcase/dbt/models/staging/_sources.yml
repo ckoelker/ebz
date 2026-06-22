@@ -26,3 +26,4 @@ sources:
     tables:
       - name: rechnung
       - name: rechnung_position
+      - name: debitor

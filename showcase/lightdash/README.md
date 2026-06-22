@@ -25,7 +25,32 @@ docker compose --profile controlling up -d lightdash
 # UI: http://localhost:8084
 ```
 
-## Erst-Setup + L21-Bootstrap (kein Lockout)
+## Automatischer Bootstrap (empfohlen) — `bootstrap.py`
+Eine **frische** Lightdash-Instanz (leere Metadaten-DB nach Volume-Wipe) wird vollständig per API
+eingerichtet, sodass nach dem SSO-Login sofort das Dashboard **„EBZ Controlling-Cockpit"** dasteht:
+
+```bash
+cd showcase/dbt && .venv/Scripts/python ../lightdash/bootstrap.py
+# oder als Teil des Voll-Aufbaus:  bash showcase/showcase-aufbau.sh --only lightdash
+```
+
+`bootstrap.py` fährt denselben **OIDC-Authorization-Code-Flow wie ein Browser** (Lightdash → Keycloak
+`staff/staff` → Callback — Passwort-Login ist deaktiviert), wird so zum **Org-Admin** (L21) und legt
+**idempotent** an: Organisation `EBZ` · Projekt `EBZ Controlling` (Warehouse `controlling`/`analytics`
++ lokales dbt unter `/usr/app/dbt`, inkl. dbt-Compile) · öffentlicher Space `Controlling` · fünf
+Auswertungen · das Dashboard. Re-Runs sind No-ops (legt nur Fehlendes an). Konfiguration via ENV
+(`LIGHTDASH_URL`, `LIGHTDASH_BOOTSTRAP_USER/PASS`, `CONTROLLING_*`) mit Defaults aus `.env`.
+
+**Auswertungen im Cockpit:** Kunden nach Umsatz · Umsatz je Bereich · Fakturierter Erlös je Monat ·
+Seminar-Deckungsbeitrag (Umsatz/DB II/Ergebnis je Variante) · Unternehmens-Forecast (Ist/gesichert/
+gewichtete Pipeline gestapelt + Ergebnis-Linie). Die Metriken/Dimensionen stammen aus den `meta`-
+Annotationen neben den dbt-Modellen (`../dbt/models/marts/_marts.yml`).
+
+> Wird Lightdashs Volume neu initialisiert, sind in der UI angelegte Charts/Dashboards **weg** — dieser
+> Bootstrap stellt sie reproduzierbar als Code wieder her. Darum ist er fester Schritt in
+> `showcase-aufbau.sh`.
+
+## Erst-Setup + L21-Bootstrap (kein Lockout) — manuell (Fallback)
 1. **Passwort-Login bleibt zunächst AN** (`LIGHTDASH_DISABLE_PW=false`). Der **erste**
    Login legt die Organisation an und macht den Nutzer zum **Org-Admin**.
 2. Per **SSO** einloggen (Button „Sign in with SSO" → Keycloak `staff`/`staff`). Dieser

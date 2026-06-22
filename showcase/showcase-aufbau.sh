@@ -35,7 +35,7 @@ SHOP="${SHOP:-http://localhost:3000}"                # vendure
 MVN="${MVN:-mvn}"
 
 # Schritt-Reihenfolge (Voll-Lauf führt sie genau so aus).
-SCHRITTE=(preflight reset up seed test-java test-spa test-vendure test-e2e bpmn summary)
+SCHRITTE=(preflight reset up seed test-java test-spa test-vendure test-e2e bpmn lightdash summary)
 
 # ── Hübsche Ausgabe ─────────────────────────────────────────────────────────────────────────────
 rot=$'\e[31m'; gruen=$'\e[32m'; gelb=$'\e[33m'; blau=$'\e[36m'; fett=$'\e[1m'; aus=$'\e[0m'
@@ -215,6 +215,20 @@ schritt_bpmn() {
   ok "BPMN aktualisiert (showcase/docs/bpmn/)"
 }
 
+schritt_lightdash() {
+  phase "LIGHTDASH — BI-Dashboard per API einrichten (Org/Projekt/Charts/Cockpit)"
+  # Lightdash startet mit leerer Metadaten-DB (frisches Volume). Da Passwort-Login deaktiviert ist
+  # (SSO-Zwang), fährt bootstrap.py denselben OIDC-Flow wie der Browser (Keycloak staff/staff) und
+  # legt Org + Projekt (Warehouse controlling/analytics + lokales dbt) + Space + alle Auswertungen +
+  # das Dashboard „EBZ Controlling-Cockpit" idempotent an. Nutzt das requests-Paket aus dem dbt-venv.
+  local LD="${LIGHTDASH_URL:-http://localhost:${LIGHTDASH_PORT:-8084}}"
+  warte_auf "Lightdash (${LD})" 180 bash -c \
+    "curl -fsS '${LD}/api/v1/health' | grep -q '\"healthy\":true'"
+  ( cd dbt && LIGHTDASH_URL="$LD" .venv/Scripts/python ../lightdash/bootstrap.py ) \
+    || fail "Lightdash-Bootstrap fehlgeschlagen"
+  ok "Lightdash-Dashboard eingerichtet (Cockpit sichtbar nach SSO-Login staff/staff)"
+}
+
 schritt_summary() {
   phase "FERTIG — System läuft & ist voll geseedet"
   cat <<EOF
@@ -227,7 +241,7 @@ ${fett}Zugänge / Demo-URLs:${aus}
   MDM-Cockpit (Staff) ........ http://localhost:${MDM_PORT:-5174}   (SSO staff/staff)
   Außenportal (Kunde) ........ http://localhost:${PORTAL_PORT:-5175}  (SSO customer/customer — Carla Kundin)
   OpenOLAT (LMS) ............. http://localhost:${OPENOLAT_PORT:-8089} (administrator/openolat; SSO customer)
-  Lightdash (BI) ............. http://localhost:${LIGHTDASH_PORT:-8084} (SSO staff)
+  Lightdash (BI) ............. http://localhost:${LIGHTDASH_PORT:-8084} (SSO staff/staff → Dashboard „EBZ Controlling-Cockpit")
   Keycloak ................... http://localhost:8088   (admin/admin)
   Adminer (DBs) .............. http://localhost:8082   (Server postgres · vendure/controlling/lightdash)
   Mailpit (Mails) ............ http://localhost:8025
@@ -251,6 +265,7 @@ fuehre_aus() {
     test-vendure) schritt_test_vendure ;;
     test-e2e)     schritt_test_e2e ;;
     bpmn)         schritt_bpmn ;;
+    lightdash)    schritt_lightdash ;;
     summary)      schritt_summary ;;
     *)            fail "Unbekannter Schritt: $1" ;;
   esac

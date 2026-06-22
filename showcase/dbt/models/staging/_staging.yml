@@ -31,6 +31,10 @@ models:
     columns:
       - name: position_id
         data_tests: [unique, not_null]
+  - name: stg_rechnung_debitoren
+    columns:
+      - name: debitor_id
+        data_tests: [unique, not_null]
   - name: stg_hubspot_deals
     columns:
       - name: deal_id

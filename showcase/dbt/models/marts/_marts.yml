@@ -185,6 +185,48 @@ models:
               type: sum
               label: "Belege"
 
+  - name: fct_revenue_by_customer
+    description: "Fakturierter Netto-Erlös je Kunde (Debitor/Golden-Record) — Top-Kunden nach Umsatz."
+    meta:
+      label: "Kunden nach Umsatz"
+      primary_key: kunde_id
+    columns:
+      - name: kunde_id
+        description: "Kunde (Golden-Record-Debitor)"
+        data_tests: [unique, not_null]
+        meta:
+          dimension: { type: number, label: "Kunden-ID" }
+      - name: debitor_nr
+        description: "Debitorennummer"
+        data_tests: [not_null]
+        meta:
+          dimension: { type: string, label: "Debitor-Nr." }
+      - name: debitor_name
+        description: "Kundenname (Rechnungsempfänger)"
+        data_tests: [not_null]
+        meta:
+          dimension: { type: string, label: "Kunde" }
+      - name: bereich
+        description: "Erlösbereich (BERUFSSCHULE/HOCHSCHULE/AKADEMIE/SHOP)"
+        data_tests: [not_null]
+        meta:
+          dimension: { type: string, label: "Bereich" }
+      - name: amount_net_eur
+        description: "Fakturierter Netto-Erlös (€)"
+        meta:
+          dimension: { type: number, label: "Umsatz (netto, €)" }
+          metrics:
+            sum_customer_revenue:
+              type: sum
+              label: "Umsatz je Kunde (netto, €)"
+      - name: belege
+        description: "Anzahl festgeschriebener Belege des Kunden"
+        meta:
+          metrics:
+            sum_customer_belege:
+              type: sum
+              label: "Belege"
+
 unit_tests:
   - name: seminar_break_even_worked_example
     description: "Rechenbeispiel des Plans: 600 €/TN, Fix 1.800 €, var. 25 €/TN, Umlage 800 € → Break-even 5 TN."
