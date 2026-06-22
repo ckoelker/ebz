@@ -1,4 +1,4 @@
-# pnpm 11 Settings-Home (siehe ../frontend/pnpm-workspace.yaml für die Begründungen).
+# pnpm 11 Settings-Home (siehe ../vendure/pnpm-workspace.yaml für die Begründungen).
 # Nuxt-SSR-Storefront (Produktkatalog P2).
 nodeLinker: hoisted
 trustPolicy: "off"

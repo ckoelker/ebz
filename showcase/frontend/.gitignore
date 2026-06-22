@@ -1,6 +1,0 @@
-node_modules
-dist
-*.local
-.DS_Store
-# Codegen-Ausgabe (wird generiert)
-src/gql/

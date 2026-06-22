@@ -37,7 +37,7 @@ Dazu je eine **Wofür-Tabelle** (Baustein → Zweck → [Status] → Technik) un
 
 | Baustein | Zweck | Status | Technik | Memory |
 |---|---|---|---|---|
-| Shop (Vendure) | Verkauf physisch/digital/Seminar/WBT + Ratenpläne | 🟢 (M5 🟡) | server, worker, postgres(vendure), frontend | showcase-shop-vendure |
+| Shop (Vendure) | Verkauf physisch/digital/Seminar/WBT + Ratenpläne | 🟢 (M5 🟡) | server, worker, postgres(vendure), storefront | showcase-shop-vendure |
 | Party-Kern | 1 Identität / n Bestellkontexte | 🟢 | integration, postgres(controlling) | party-kern-showcase |
 | Formularverwaltung/MDM | Bildungsangebote pflegen → Shop-Projektion | 🟢 | mdm-SPA, integration | formularverwaltung-showcase |
 | Anmeldung Berufsschule | Self-Service Azubi (HITL+KI → Vertrag → Rechnung) | 🟡 Backend A–G | portal, integration, keycloak | anmeldung-berufsschule-showcase |

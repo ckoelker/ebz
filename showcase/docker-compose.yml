@@ -64,7 +64,6 @@ services:
       DB_PASSWORD: ${POSTGRES_PASSWORD:-vendure}
       VENDURE_HOST: http://localhost:${VENDURE_PORT:-3000}
       # Keycloak SSO: Issuer = öffentliche URL (Token-Claim), JWKS = interne Container-URL.
-      # Bei geändertem KEYCLOAK_PORT auch frontend/.env.development anpassen.
       KEYCLOAK_ISSUER_CUSTOMERS: http://localhost:${KEYCLOAK_PORT:-8088}/realms/ebz-customers
       KEYCLOAK_JWKS_CUSTOMERS: http://keycloak:8080/realms/ebz-customers/protocol/openid-connect/certs
       KEYCLOAK_ISSUER_STAFF: http://localhost:${KEYCLOAK_PORT:-8088}/realms/ebz-staff
@@ -270,7 +269,7 @@ services:
       - "${INTEGRATION_PORT:-8090}:8090"
 
   # Storefront (Produktkatalog P2) — Nuxt-SSR gegen die Vendure-Shop-API.
-  # SEO/Speaking-URLs/SSR; ersetzt perspektivisch die Vite/Vue-SPA `frontend`.
+  # SEO/Speaking-URLs/SSR; ersetzt die frühere Vite/Vue-SPA (entfernt).
   # Spricht die Shop-API serverseitig über den Compose-Netz-Alias `server` an
   # (NUXT_SHOP_API_URL überschreibt runtimeConfig.shopApiUrl ohne Rebuild).
   storefront:

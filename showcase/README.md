@@ -17,7 +17,7 @@ showcase/
   .env / .env.example     # zentrale Variablen (Compose liest .env automatisch)
   postgres/initdb/        # legt DBs controlling + lightdash + dedizierte User an
   vendure/                # Shop-Backend (Vendure 3.6.4, pnpm)
-  frontend/               # Vue-3-Storefront (Vite, pnpm)
+  storefront/             # Nuxt-SSR-Storefront (Produktkatalog: Katalog/Suche/Warenkorb/Kasse, pnpm)
   integration/ dlt/ dbt/ lightdash/   # Controlling (M1–M4, geplant — neben vendure/, kein controlling/-Unterordner)
 ```
 
@@ -50,10 +50,9 @@ docker compose up -d --build      # postgres · server · worker · keycloak · 
 
 Storefront lokal:
 ```bash
-cd showcase/frontend
+cd showcase/storefront
 pnpm install
-pnpm codegen                      # erzeugt src/gql/ aus der laufenden Shop-API (Stack muss oben sein)
-pnpm dev                          # http://localhost:5173
+pnpm dev                          # Nuxt-Dev-Server (Standard http://localhost:3000)
 ```
 
 ### Endpunkte
