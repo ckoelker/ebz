@@ -11,7 +11,7 @@ Jeder Kandidat ist gegen diese Kriterien zu prüfen; die ersten beiden sind **K.
 1. **N:M Person↔Unternehmen + mehrere Debitoren je Company/Person.** Das in der Java-App vorhandene, in OpenEduCat verlorene Modell. **Kein öffentliches Produktdatenblatt bestätigt das — zwingend je Anbieter abfragen.**
 2. **Updatefähigkeit / Versionsneutralität (Leitplanke L4).** Standard-Customizing über unterstützte Erweiterungspunkte, keine Core-Modifikation (Lektion OpenEduCat).
 3. **Moderne technische Basis (Pflicht) + zukunftssicheres Betriebsmodell.** Entscheidungsregel: **Cloud/SaaS nur mit state-of-the-art Weboberfläche** (moderne, responsive, performante Web-UX). Ist die Cloud-/Web-Oberfläche nicht erstklassig → **moderne On-Premise-Lösung bevorzugt**. In keinem Fall veralteter Stack oder EOL-Pfad (wie UniTop/NAV on-prem). Veraltete oder träge Web-Frontends scheiden aus, auch wenn fachlich passend.
-4. **Offene API/Schnittstellen** zu den Pflicht-/Satellitensystemen: Moodle, WebUntis, MS Teams/Entra, Schild-NRW (SVWS-API), Sket, FiBu/DATEV, E-Rechnung.
+4. **Offene API/Schnittstellen** zu den Pflicht-/Satellitensystemen: Moodle, WebUntis, MS Teams, Schild-NRW (SVWS-API), Sket, FiBu/DATEV, E-Rechnung.
 5. **DSGVO / Hosting in DE/EU.**
 6. **Betreibbar durch die reale Mannschaft** (interne Junioren + definierte DL-Rolle), keine Single-Vendor-/Single-Person-Abhängigkeit beim Stammdaten-Kern.
 

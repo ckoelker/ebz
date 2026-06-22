@@ -49,7 +49,7 @@ EOL-Ablösungen).
 | 1 | **MDM / Single Point of Truth** | Dataverse (alt. EspoCRM/Salesforce); **N:M + Mehr-Debitoren** | MDM-Schema `mdm` (Angebote + `mdm.debitor`) mit Golden-Record/Match/Merge/Alias + zentraler Nummernhoheit (R3); **Mehr-Debitoren je Person rollenabhängig** | 🟡 **teilweise** — Debitoren-Dedup ja, **N:M Person↔Company fehlt** |
 | 2 | Controlling/BI | Power BI (alt. Metabase/Superset) | **Lightdash** auf dbt-Marts (Break-even, Drei-Bucket-Forecast) | 🟢 validiert (andere OSS-BI als genannt) |
 | 3 | Marketing + Sales-Pipeline | **HubSpot** 🔒, Sync via Airbyte+n8n (S14) | HubSpot-Ingestion via **Camel Quarkus + LangChain4j** (Controlling M1) | 🟢 Quelle wie gesetzt; **Sync-Technik divergiert** (JVM statt Airbyte/n8n) |
-| 4 | SSO / Identity | **Entra ID (vorhanden)** | **Keycloak** (2 Realms: Kunde/Staff; mdm-cockpit, lightdash, rechnung-pflege) | 🟢 Muster validiert; **Keycloak statt Entra** (Showcase kann reale Entra nicht nutzen) |
+| 4 | SSO / Identity | **Keycloak (gesetzt)** — anbieter-neutrales OIDC | **Keycloak** (2 Realms: Kunde/Staff; mdm-cockpit, lightdash, rechnung-pflege) | 🟢 **gesetzt + validiert**; externe Konten (M365 o. ä.) bei Bedarf föderieren |
 | 6 | Integration/Sync-Layer | **Power Automate/iPaaS** (alt. n8n) | **Camel Quarkus** (JVM-Option, „nicht gesetzt") + dlt (EL) | 🔵 **bewusste Wahl der nicht-gesetzten Option** |
 | 7 | Shop (Lehrmaterial) | Shopware/Shopify — „nie selbst bauen" | **Vendure** (Headless, Node) + Vue-Storefront | 🟢 Buy/OSS — anderes Produkt; zusätzlich für Buchung/Abo genutzt (s.u.) |
 | 8/16 | Buchung / Abo-Billing | ERPNext/Odoo Admission · Kill Bill/Stripe | **Vendure Subscriptions/Installments** (F4–F6, Stripe-Plan) | 🟡 in Vendure gebündelt statt separater Abo-Engine |
@@ -69,7 +69,7 @@ EOL-Ablösungen).
 | S13 Kern ↔ Shop | 🟢 | **gebaut** (R7 `ExterneBestellung`-Naht + P1.3 Shop-Projektion Vendure) | ✅ validiert |
 | S14 Kern ↔ HubSpot | 🟠 | **gebaut** (Controlling M1, JVM-Pull statt Airbyte) | ✅ (Technik divergiert) |
 | S15 Kern → BI/Controlling | 🟠 | **gebaut** (dbt→Lightdash) | ✅ validiert |
-| S5 Kern ↔ Entra/SSO | 🟠 | **Keycloak** statt Entra | 🟡 Muster validiert |
+| S5 Kern ↔ SSO (Keycloak) | 🔒 | **Keycloak gesetzt** (2 Realms) | ✅ validiert |
 | S6–S10 (WebUntis/Schild/Sket/Moodle/Teams) | gemischt | nicht gebaut | ⚪ offen |
 
 **Befund:** Der Showcase hat die **kaufmännisch-analytische Halbachse** (S11/S13/S14/S15 + SSO) gut
@@ -136,7 +136,7 @@ Debitoren) gezeigt/geprüft werden.
 | **Kritischer Pfad ungetestet** | S1–S3 (reale Legacy-Migration) nicht angefasst | Das eigentliche Projektrisiko (Datenqualität/Dubletten/N:M) ist unbewiesen |
 | **N:M-Lücke** | Nur Debitoren-Dedup, kein Person↔Company | Der #1-Geschäftswert ist noch nicht demonstriert |
 | **Zwei Ökosysteme** | Node (Vendure) + JVM (Integration/Billing) parallel | Betriebs-/Personalprofil muss beides können (Capability-Map „Ehrliche Spannungen" bestätigt) |
-| **Showcase-Vereinfachungen** | ein Postgres/Monorepo, Keycloak statt Entra, Platzhalter-SKR/Verkäufer, DATEV-Cloud=Mock, Vendure als Stammdatenquelle statt Java-App | Produktionsfähigkeit ≠ Showcase; klar als PoC kommunizieren |
+| **Showcase-Vereinfachungen** | ein Postgres/Monorepo, Platzhalter-SKR/Verkäufer, DATEV-Cloud=Mock, Vendure als Stammdatenquelle statt Java-App | Produktionsfähigkeit ≠ Showcase; klar als PoC kommunizieren |
 | **Test-Isolation** | geteilte controlling-DB → wiederkehrende „get(0)"-Flakes (mehrfach gefixt) | Für Produktion echte Test-Isolation/Throwaway-DB nötig |
 
 ---

@@ -41,7 +41,7 @@
 | 2 | **Kundenstamm / CRM** | KERN | je Fachsystem eigener Stamm | 🔵 neu | **Dynamics/Dataverse** (konsolidiert) | 🔴 |
 | 3 | **Marketing/Kampagnen + Sales-Pipeline** | KERN-nah | manuelle Exporte | 🔒 **gesetzt** | **HubSpot** — System of Record für Marketing **und** Deals/Pipeline; Golden Record bleibt im Kern (#1/#2), HubSpot synct dorthin (§0) | 🟠 |
 | 4 | **Controlling/BI** | KERN-nah | manuelle Exporte | 🔵 neu | **Power BI** auf dem Kern · Alt.: Metabase/Superset | 🟠 |
-| 5 | **SSO / Identity** | QUERSCHNITT | **Entra ID (vorhanden)** + je Schüler MS-Konto | 🟡 erweitern | **Entra ID** über alle Satelliten ausrollen (ein Login) | 🟠 |
+| 5 | **SSO / Identity** | QUERSCHNITT | fragmentierte Logins je Fachsystem | 🔒 **gesetzt** | **Keycloak** — anbieter-neutrales OIDC, 2 Realms (Kunde/Staff), im Showcase erprobt; über alle Satelliten ausrollen (ein Login), externe Konten (M365 o. ä.) bei Bedarf föderieren | 🟢 |
 | 6 | **Integration / Sync-Layer** | QUERSCHNITT | Punkt-zu-Punkt / manuell | 🔵 neu | **Power Automate / iPaaS** (Event-/API-Bus) · Alt.: n8n/Locoia | 🔴 |
 | 7 | **Hochschul-Verwaltung** | DOMÄNE | **OpenEduCat (Odoo)** — EOL on-prem, Customizing-Falle | 🟠 ersetzen | **TraiNex** o. Eigenbau auf Dataverse/Education Accelerator | 🔴 |
 | 8 | **Prüfungswesen Hochschule** | Satellit | **Sket (ausgelagert, vorhanden)** | 🟢 behalten | **Sket** anbinden (L6) | 🟢 |
@@ -51,7 +51,7 @@
 | 12 | **Stundenplan/Anwesenheit** | Satellit | **WebUntis (vorhanden)** | 🟢 behalten | **WebUntis** anbinden | 🟢 |
 | 13 | **Landes-Reporting Schule** | Satellit/**Pflicht** | **Schild-NRW / SVWS (vorhanden)** | 🟢 behalten | **Schild-NRW/SVWS-API** (Pflicht, bleibt) | 🟢 |
 | 14 | **LMS / Lehrmaterial** | Satellit | **Moodle (vorhanden)** | 🟢 behalten | **Moodle** anbinden (+ Entitlement-Anbindung, s. #16) | 🟢 |
-| 15 | **Kollaboration/Online-Vorlesung** | Satellit | **MS Teams / M365 (vorhanden)** | 🟢 behalten | **Teams/M365** (Entra-integriert) | 🟢 |
+| 15 | **Kollaboration/Online-Vorlesung** | Satellit | **MS Teams / M365 (vorhanden)** | 🟢 behalten | **Teams/M365** (per SSO/Keycloak angebunden) | 🟢 |
 | 16 | **Abo / Dauerzugriff Lehrmaterial** | Satellit | — (heute keine echte Abo-Logik) | 🔵 neu | **Abo-/Entitlement-Billing** (Kill Bill/Billwerk/Stripe) + Moodle-Entitlement | 🟠 |
 | 17 | **Rechnungsstellung / FiBu** | Satellit | je Domäne verteilt (Java-App, UniTop) | 🟠 konsolidieren | **Business Central/DATEV** o. je Domäne; **E-Rechnung-Pflicht** beachten | 🟠 |
 | 18 | **Shop (Lehrmaterial-Verkauf)** | Satellit | (unklar/in TarLemon?) | ⚪ klären | **Shopware/Shopify** falls echter Shop nötig (nie selbst bauen) | 🟢 |
@@ -66,7 +66,7 @@
 
 | Domäne | behalten 🟢/🟡 | ersetzen 🟠 | neu 🔵 | klären ⚪ |
 |---|---|---|---|---|
-| **Querschnitt/Kern** | Entra ID | — | MDM/CRM, Marketing, BI, Integration-Layer | — |
+| **Querschnitt/Kern** | — | — | SSO (Keycloak, gesetzt), MDM/CRM, Marketing, BI, Integration-Layer | — |
 | **Berufsschule** | Java-App (schrumpfend), WebUntis, Schild-NRW, Moodle, Teams | — | Anbindung an Kern | „Bochum-Prüfung", Fehltage/Krankmeldung (Schild vs. WebUntis) |
 | **Hochschule** | Sket | OpenEduCat (🔴 EOL) | Anbindung an Kern | — |
 | **Akademie** | Moodle (Rolle?) | UniTop (🔴 EOL) | Abo-/Entitlement, Anbindung | TarLemon-Rolle, Moodle-Nutzung, Shop |
@@ -91,7 +91,7 @@
 
 | # | Quelle ↔ Ziel | Datenobjekte | Richtung | Muster | Hinweis | Prio |
 |---|---|---|---|---|---|:--:|
-| S5 | Kern ↔ **Entra ID** | Identitäten, Gruppen, Rollen | ↔️ | API | **vorhanden** — SSO über alle Satelliten (ein Login); größter Komfort-Hebel | 🟠 |
+| S5 | Kern ↔ **Keycloak (SSO)** | Identitäten, Gruppen, Rollen | ↔️ | OIDC/SAML | **gesetzt** — SSO über alle Satelliten (ein Login), externe Konten (M365 o. ä.) föderierbar; größter Komfort-Hebel | 🔒 |
 | S6 | Kern ⬅️ **WebUntis** | Stunden, Anwesenheit | ⬅️ | API/Batch | für Controlling/Reporting | 🟢 |
 | S7 | Kern ↔ **Schild-NRW / SVWS** | Schülerstamm, Landes-Reporting | ↔️ | **SVWS-API** | **Pflicht** — Format-/Compliance-genau | 🟠 |
 | S8 | Kern ⬅️ **Sket** | Prüfungsergebnisse, Zertifikate | ⬅️ | API/Batch | bleibt eigenständig (L6) | 🟢 |

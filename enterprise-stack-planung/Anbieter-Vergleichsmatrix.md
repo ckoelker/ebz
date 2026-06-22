@@ -48,13 +48,13 @@
 
 | # | Plattform | Rolle | Betriebsmodell | Web-UI (L8) | N:M + Mehr-Debitoren | Schnittstellen/API | Hosting/DSGVO |
 |---|---|---|---|:--:|:--:|---|---|
-| 9 | **MS Dynamics 365 + Dataverse + Power Platform** | **Datenkern/SSoT + CRM + Low-Code** (Empfehlung) | Cloud SaaS (Azure), **EU-Region wählbar** | ✓ modern (model-driven/canvas) | **✓✓ nativ** (N:N automatisch via Junction-Table; komplexe Debitor-Modellierung) | ✓✓ API-first, Power Automate, **native Teams/M365/Entra**, iPaaS | ✓ EU data residency wählbar |
+| 9 | **MS Dynamics 365 + Dataverse + Power Platform** | **Datenkern/SSoT + CRM + Low-Code** (Empfehlung) | Cloud SaaS (Azure), **EU-Region wählbar** | ✓ modern (model-driven/canvas) | **✓✓ nativ** (N:N automatisch via Junction-Table; komplexe Debitor-Modellierung) | ✓✓ API-first, Power Automate, **native Teams/M365**, iPaaS | ✓ EU data residency wählbar |
 | 10 | **Salesforce Education Cloud** | Datenkern/SSoT + Bildungs-CRM (Alternative) | Cloud SaaS (**Hyperforce EU**) | ✓ modern | ✓ Account-Contact-Relationships / Affiliations | ✓✓ API-first, großes Ökosystem | ✓ Hyperforce EU, DSGVO, EU-Staff-Zugriff |
 | 11 | **HubSpot** | **Marketing-/Kampagnen-Layer** über dem Kern | Cloud SaaS | ✓ modern | ◑ mehrere Unternehmen je Kontakt (Pro/Ent.) | ✓ API, viele Integrationen | EU-Hosting verfügbar |
 
 **Stärken der Datenkern-Ebene:** native N:M-/Beziehungs- und Debitor-Modellierung (**genau das verlorene Modell**), erstklassige Web-UI (L8 ✓), API-first/iPaaS-ready, von einem Junior-Team per Low-Code erweiterbar.
 **Ehrliche Trade-offs:** spürbare **Lizenzkosten** (Dynamics Dataverse-Premium ab ~40 €/User/Monat + Storage; Salesforce premium, Preis auf Anfrage) und **Konfigurations-Disziplin** zwingend (sonst droht die OpenEduCat-Customizing-Falle erneut → konfigurieren statt hart customizen). Bildungs-**Fachtiefe** (Prüfungswesen, Stundenplan, Schild-NRW) kommt **nicht** out-of-the-box — dafür bleiben Fachsysteme als Satelliten.
-**Microsoft-Bonus:** Dynamics/Dataverse passt direkt auf euren bestehenden Teams/M365/Entra-Footprint; das **Education Accelerator**-Datenmodell (Open Source) liefert Hochschul-/Schul-Entitäten als Startpunkt.
+**Microsoft-Bonus:** Dynamics/Dataverse passt direkt auf euren bestehenden Teams/M365-Footprint; das **Education Accelerator**-Datenmodell (Open Source) liefert Hochschul-/Schul-Entitäten als Startpunkt.
 
 ---
 
@@ -86,7 +86,7 @@
 | **Abo-Billing** | **Kill Bill** | Abo-/Subscription-Engine (z. B. >300 €/Monat Studierende, Schulgebühren) | ◑ Admin-UI | ✓ REST | OSI (Apache 2.0) | sehr mächtig (usage/prepaid/multi-tenant), **steile Lernkurve**, Betrieb anspruchsvoll |
 | Rechnung/Abo | **Invoice Ninja** | Rechnung + einfache wiederkehrende Abos | ✓ modern | ✓ REST | *source-available* (Elastic License) | leichter zu betreiben; für komplexe Abos schwächer als Kill Bill |
 | **Shop Lehrmaterial** | **Shopware CE** / WooCommerce | Webshop Lehrmaterial | ✓ modern | ✓ REST | OSI (Shopware CE: MIT/MPL) | Shopware = deutscher Anbieter; CE-Funktionsumfang vs. kommerz. Editionen prüfen |
-| **SSO/IdP** | **Keycloak** | SSO/Identity (Alternative/Ergänzung) | ✓ | ✓ OIDC/SAML | OSI (Apache 2.0) | **ihr habt bereits Entra ID** → Keycloak nur falls IdP-Unabhängigkeit gewünscht |
+| **SSO/IdP** | **Keycloak** 🔒 | SSO/Identity (**gesetzt**) | ✓ | ✓ OIDC/SAML | OSI (Apache 2.0) | **gesetzt** — anbieter-neutrales OIDC, self-host, im Showcase erprobt (2 Realms Kunde/Staff); externe Konten (M365 o. ä.) bei Bedarf föderieren |
 | **Integration/iPaaS** | **n8n** | Sync-/Integrationsschicht (Power-Automate-Alternative) | ✓ modern | ✓ REST | ***fair-code*** (SUL) | deutscher Anbieter, self-host frei für Eigennutzung; **kein klassisches OSI-OSS**, Wiederverkauf eingeschränkt |
 
 ---

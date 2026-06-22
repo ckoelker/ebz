@@ -6,7 +6,7 @@
 > Softwarelandschaft (§I–§K)**. Baut auf dem
 > [Review Showcase vs. Planung](Review-2026-06-Showcase-vs-Planung.md) und der
 > [Capability-Map](Zielarchitektur-Capability-Map.md) auf.
-> **Stand:** 2026-06-16. **Status:** Entscheidungs-Input für den GF-Workshop — **keine gesetzte
+> **Stand:** 2026-06-22. **Status:** Entscheidungs-Input für den GF-Workshop — **keine gesetzte
 > Entscheidung**. Ändert die TCO-Hauptdatei nicht; die Korrektur gehört in einen GF-Beschluss.
 > **Geltungsbereich:** nur der strategische **Datenkern + Integrations-Layer** (wie TCO §1), nicht die
 > Satelliten-Ablösungen selbst.
@@ -19,9 +19,14 @@ Drei neue, belastbare Fakten verschieben die TCO-Bewertung — **nicht** primär
 in §8 ohnehin entscheidende Risiko-/Eignungsachse:
 
 1. **Showcase-Empirie.** Der `showcase/`-Stack hat den Best-of-Breed-Mesh mit JVM-Kern (Camel Quarkus +
-   LangChain4j) + Vue + OSS-Commodity (Vendure/Lightdash/Keycloak) gebaut und grün/live verifiziert
-   (Controlling M1–M3, Formularverwaltung P1, Rechnung R1–R7). Das ist der **PoC der in der
-   [Capability-Map](Zielarchitektur-Capability-Map.md) ausdrücklich „nicht gesetzten" JVM-Kern-Option**.
+   LangChain4j) + Vue + OSS-Commodity (Vendure/Lightdash/Keycloak/OpenOLAT) gebaut und grün/live verifiziert
+   — inzwischen über die ursprüngliche Stichprobe hinaus deutlich breiter: Controlling **M1–M4** (inkl.
+   reproduzierbarem BI-Dashboard), Formularverwaltung P1, Rechnung **R1–R7 + Cockpit**, Party-/CRM-Kern,
+   Anmeldung **A–I**, LMS **L0–L3**, **HubSpot In-/Outbound-Sync** (Consent/Art. 17/Marketing-Merkmale +
+   signierter Webhook-Rückkanal, realer Adapter live), Kundenkommunikation (Event-Spine) und ein
+   **EIN-Kommando-Voll-Aufbau** (`showcase-aufbau.sh`: reset→seed→Tests→Telemetrie/BPMN→BI). Das ist der
+   **PoC der in der [Capability-Map](Zielarchitektur-Capability-Map.md) ausdrücklich „nicht gesetzten"
+   JVM-Kern-Option** — die Velocity-Hypothese ist damit über mehrere Domänen belegt, nicht an einem Modul.
 2. **Präzisierung Liefergegenstand.** Vergeben würde **nicht der Showcase-Code**, sondern ein
    **Produktiv-Build nach dem Vorgehen, das der Showcase als tragfähig bewiesen hat**. Der Showcase ist
    **Blueprint/Entrisikungs-Artefakt**, nicht das ausgelieferte Produkt.
@@ -45,6 +50,12 @@ teuersten Unbekannten sind durch das bewiesene Vorgehen bereits **retired**:
 - Erreichbare **Velocity** mit KI-gestützter Entwicklung + Standard-Specs (Camel-EIP, CNCF Serverless
   Workflow) — stützt die [TCO §7](TCO-Kostenaufstellung.md)-Hypothese empirisch.
 - Das regulatorisch Härteste — **E-Rechnung (ZUGFeRD/XRechnung) + GoBD-WORM** — technisch gelöst (S11).
+- **Bidirektionale Drittsystem-Integration an einer realen Cloud-API** (HubSpot): Outbound-Sync mit
+  **DSGVO-Tiefe** — Consent/Werbesperre, **Recht auf Vergessen (Art. 17)**, Marketing-Merkmale und ein
+  **signatur-verifizierter Webhook-Rückkanal** — gegen das echte System live verifiziert (nicht nur Mock).
+  Damit ist die heikelste Integrations-Spielart (Schreibrichtung + Compliance + Rückkanal) belegt (S14).
+- **Reproduzierbarkeit als Eigenschaft, nicht Glück**: EIN Kommando baut den ganzen Mesh inkl. BI-Dashboard
+  deterministisch neu auf (Tests grün, Telemetrie/BPMN, Dashboard-as-Code) — stützt die Run/Betrieb-Achse.
 - Die **Make/Buy-Linie**: Debitoren-Hoheit + E-Rechnungs-/DATEV-Gateway = KERN-nah bauen; klassische
   FiBu = kaufen (DATEV hinter Interface). Vgl. [Review §4.A](Review-2026-06-Showcase-vs-Planung.md).
 
@@ -53,7 +64,6 @@ teuersten Unbekannten sind durch das bewiesene Vorgehen bereits **retired**:
 | Showcase-Vereinfachung | Im Produktiv-Build zu leisten |
 |---|---|
 | Mocks (DATEV-Cloud, Fixture-Daten) | echte Anbindungen + Härtung |
-| Keycloak statt Entra ID | reale Entra-Integration (vorhanden, aber Arbeit) |
 | Vendure als „Stammdatenquelle" | **S1: reale Legacy-Migration + N:M Person↔Firma** (gar nicht angefasst) |
 | ein Postgres/Monorepo, geteilte Test-DB | echte Isolation, Betrieb, Monitoring, On-Call |
 

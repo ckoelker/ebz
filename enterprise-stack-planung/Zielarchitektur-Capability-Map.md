@@ -19,7 +19,7 @@ Der Kern ist nur ~**15–25 %** der Gesamt-Landschaft. Shop/PMS/Billing/LMS/Tick
 | 1 | **Single Point of Truth / MDM** | **KERN** | Datenplattform | **Dataverse** (alt.: Salesforce, Custom) | **EspoCRM** (OSS, self-host — Custom Entities/N:M) · günstige Cloud: NocoDB/Baserow | Plattform-Kern |
 | 3 | **Kundenstamm / CRM** | **KERN** | CRM | **Dynamics/Dataverse** | **EspoCRM / Twenty** (OSS, self-host) · günstige Cloud: Zoho CRM | Plattform-Kern |
 | 2 | **Controlling** | **KERN-nah** | BI/Analytics | **Power BI** auf Kern + Feeds | **Metabase / Apache Superset** (OSS, self-host) · gratis Cloud: Looker Studio | Konfiguration |
-| 4 | **SSO / Identity** | **QUERSCHNITT** | Identity Provider | **Entra ID (bereits vorhanden!)** | **Keycloak / Authentik** (OSS, self-host) — nur falls IdP-unabhängig gewünscht | vorhanden — nur konfigurieren |
+| 4 | **SSO / Identity** | **QUERSCHNITT** | Identity Provider | **Keycloak** 🔒 *(gesetzt)* | **Authentik** (OSS-Alternative, self-host) | **gesetzt** — anbieter-neutrales OIDC, self-host, im Showcase erprobt (2 Realms) |
 | 5 | **Marketing + Sales-Pipeline** | Satellit/Layer | Marketing-Automation + CRM-Pipeline | **HubSpot** 🔒 *(gesetzt 2026-06-12)* | — gesetzt; Mautic/Brevo/CI damit verworfen (Golden Record bleibt im Kern) | Buy |
 | 8 | **Produktbuchung (Studium-Einschreibung)** | KERN **oder** Campus | Enrollment/Booking | Kern-App **oder** Campus-System | **ERPNext / Odoo Admission** (OSS, self-host) o. Formular→EspoCRM | Konfig/Buy |
 | 12 | **Schulverwaltung** | Satellit **+ Pflicht** | Schul-/Campus-Admin | **Schild-NRW (Pflicht)** + Campus/Berufsbildung-System | **Gibbon / openSIS / ERPNext Education** (OSS, self-host) — **Schild-NRW bleibt Pflicht** | Pflicht + Buy |
@@ -30,7 +30,7 @@ Der Kern ist nur ~**15–25 %** der Gesamt-Landschaft. Shop/PMS/Billing/LMS/Tick
 | 10 | **Ticket-/Veranstaltungsbuchung** | Satellit | Event/Ticketing **oder** Seminartool | **SEMCO/TCmanager** (deckt Buchung+Rechnung) / Ticketing-SaaS | **Pretix** (Seminar/Ticketing) · **Indico** (Kongress/Tagung) — OSS, self-host · günstige Cloud: Pretix Hosted | Buy |
 | 11 | **PMS (Gästehaus)** | Satellit | Hotel-PMS | **ASA / 3RPMS / igumbi** | **QloApps / HotelDruid** (OSS, self-host) · günstige Cloud: igumbi | Buy — **niemals** selbst |
 
-**Verbindungsschicht (das eigentliche Projekt):** iPaaS / Power Automate (Sync) **+ Entra SSO** (ein Login über alle Satelliten) **+ Event-/API-Bus**. Erst SSO + Integration machen Best-of-Breed komfortabel — und genau hier zahlt der bestehende Microsoft-/Entra-Footprint sich aus. **OSS-Variante der Verbindungsschicht:** **n8n** (self-host) statt Power Automate, **Keycloak** statt Entra (Letzteres aber bereits vorhanden). **JVM-Variante des Layers** (Camel Quarkus + LangChain4j + Quarkus Flow) — siehe Architektur-Option unten.
+**Verbindungsschicht (das eigentliche Projekt):** iPaaS / Power Automate (Sync) **+ Keycloak-SSO** (ein Login über alle Satelliten) **+ Event-/API-Bus**. Erst SSO + Integration machen Best-of-Breed komfortabel. **Keycloak** ist als anbieter-neutraler IdP **gesetzt** (self-host, im Showcase mit 2 Realms erprobt); externe Konten (M365 o. ä.) werden bei Bedarf föderiert. **OSS-Variante der Verbindungsschicht:** **n8n** (self-host) statt Power Automate. **JVM-Variante des Layers** (Camel Quarkus + LangChain4j + Quarkus Flow) — siehe Architektur-Option unten.
 
 > **Zur OSS-/Low-Cost-Spalte:** je Fähigkeit ist *eine* lizenzkostenfreie On-Prem- **oder** günstige Cloud-Option genannt — als Sparvariante und Verhandlungsanker. **Achtung (gilt durchgängig):** „lizenzfrei" ≠ „kostenlos" — Hosting, Betrieb, Updates, Sicherheit und Support kommen hinzu, und das **OpenEduCat-Lehrstück** (eure Hochschule auf Odoo-OSS, die ihr gerade ablöst) mahnt zur Vorsicht. Detail-Profile, Lizenzarten und Quellen: siehe Open-Source-Ebene der [Anbieter-Vergleichsmatrix](Anbieter-Vergleichsmatrix.md). Belastbarer Vergleich nur über die [TCO-Kostenaufstellung](TCO-Kostenaufstellung.md) (Lizenz **+ Hosting + FTE-Betrieb + Support**).
 
@@ -63,7 +63,7 @@ Statt „Quarkus = noch ein CRUD-Backend" bündelt eine **einzige nativ-kompilie
 ## Wichtige Stellhebel
 
 - **Satelliten zusammenlegen, nicht vervielfachen:** Ein gutes **Akademie/Seminar-System** deckt oft Produktbuchung **+ Ticketing + Seminar-Rechnung** in einem ab; ein **Campus-System** deckt Einschreibung **+ Prüfung**. So sinkt die Zahl der Satelliten (und Schnittstellen) deutlich. Das ist der größte Kostenhebel auf der Satellitenseite.
-- **Vorhandenes weiternutzen:** Entra (SSO), Moodle (LMS/Content), Sket (Prüfung), Teams/M365 sind da — anbinden, nicht ersetzen.
+- **Vorhandenes weiternutzen:** Moodle (LMS/Content), Sket (Prüfung), Teams/M365 sind da — anbinden, nicht ersetzen. **SSO = Keycloak** (gesetzt, anbieter-neutral) als zentraler Login darüber.
 - **Abo-Logik ist kein CRM-Job:** „dauerhafter Zugriff auf Lehrmaterial" = **Entitlement + Recurring Billing + Content-Delivery (LMS)** — dafür gibt es spezialisierte Abo-Billing-Tools; der Kern hält nur die Kundenbeziehung und den Status.
 - **Shop ≠ Buchung ≠ Billing:** drei getrennte Dinge. Shop (Bezahlung digitaler Inhalte) ist E-Commerce; Studienbuchung ist Enrollment; Rechnung/Abo ist Billing. Nicht in ein System pressen.
 
@@ -72,7 +72,7 @@ Statt „Quarkus = noch ein CRUD-Backend" bündelt eine **einzige nativ-kompilie
 ## Antwort auf die Ausgangsfrage (Kosten)
 
 - **Alles auf Power Platform = teuerste UND schlechteste Variante** (Commodity nachbauen). Niemand sollte Shop/PMS/Billing/Ticketing dort bauen.
-- **Günstigste *robuste* Variante = Best-of-Breed-Mesh:** schlanker moderner **Kern** (Daten/CRM/Controlling/Automation) + **fertige SaaS je Commodity** + **Entra-SSO** + **Integration**.
+- **Günstigste *robuste* Variante = Best-of-Breed-Mesh:** schlanker moderner **Kern** (Daten/CRM/Controlling/Automation) + **fertige SaaS je Commodity** + **Keycloak-SSO** + **Integration**.
 - Die Kern-Entscheidung (Power Platform vs. Salesforce vs. KI-gestützter Eigenbau) betrifft nur diese **15–25 %** — die übrigen Satellitenkosten fallen in jeder Variante an.
 - **Konsequenz:** Die „Plattform ist zu teuer"-Sorge löst sich auf, sobald man Plattform **nur als Kern** versteht und nicht als Monolith für alles. Genauso gilt aber: **auch ein Eigenbau soll nicht alles selbst bauen** — die Make/Buy-Grenze verläuft entlang dieser Capability-Map, nicht entlang der Stack-Wahl.
 
