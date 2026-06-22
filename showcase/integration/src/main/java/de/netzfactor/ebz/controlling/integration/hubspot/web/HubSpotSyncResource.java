@@ -15,6 +15,8 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 
+import org.eclipse.microprofile.openapi.annotations.tags.Tag;
+
 import de.netzfactor.ebz.controlling.integration.hubspot.model.HubSpotSyncAuftrag;
 import de.netzfactor.ebz.controlling.integration.hubspot.service.HubSpotSyncService;
 
@@ -23,6 +25,7 @@ import de.netzfactor.ebz.controlling.integration.hubspot.service.HubSpotSyncServ
  * manuelles Triggern (einzelne Partei, Backfill, Lauf, Retry) und das Recht-auf-Vergessen-Anstoßen.
  * Routine-Sync läuft automatisch über den Dispatcher; diese Endpunkte sind Sicht + menschliche Einzelfälle.
  */
+@Tag(name = "HubSpot Sync Resource")
 @Path("/hubspot/sync")
 @RolesAllowed("katalog-pflege")
 @Produces(MediaType.APPLICATION_JSON)

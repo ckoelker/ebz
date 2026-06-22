@@ -14,6 +14,7 @@ const prototypen = [
   { to: '/verteiler', label: 'Verteiler', icon: 'i-lucide-megaphone' },
   { to: '/bestaetigungen', label: 'Kenntnisnahmen', icon: 'i-lucide-clipboard-signature' },
   { to: '/rechnungen', label: 'Rechnungen', icon: 'i-lucide-receipt' },
+  { to: '/hubspot', label: 'HubSpot-Sync', icon: 'i-lucide-refresh-ccw-dot' },
 ];
 </script>
 

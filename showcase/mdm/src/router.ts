@@ -9,6 +9,7 @@ import AdminVerteiler from '@/views/AdminVerteiler.vue';
 import AdminBestaetigungen from '@/views/AdminBestaetigungen.vue';
 import RechnungenListe from '@/views/RechnungenListe.vue';
 import RechnungDetail from '@/views/RechnungDetail.vue';
+import HubSpotSync from '@/views/HubSpotSync.vue';
 
 // MDM-Cockpit. Startseite = CRM-Kernmaske (m:n-Kundenstamm, über die Storybook-Abnahme abgestimmt).
 // Die übrigen Masken (Bildungsangebote, HITL „Anmeldung Berufsschule") sind funktionale Prototypen
@@ -26,5 +27,6 @@ export const router = createRouter({
     { path: '/bestaetigungen', name: 'bestaetigungen', component: AdminBestaetigungen },
     { path: '/rechnungen', name: 'rechnungen', component: RechnungenListe },
     { path: '/rechnungen/:id', name: 'rechnung', component: RechnungDetail },
+    { path: '/hubspot', name: 'hubspot', component: HubSpotSync },
   ],
 });

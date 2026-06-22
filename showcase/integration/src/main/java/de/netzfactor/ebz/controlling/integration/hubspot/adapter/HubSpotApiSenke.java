@@ -37,9 +37,15 @@ public class HubSpotApiSenke implements HubSpotSenke {
 
     private static final Logger LOG = Logger.getLogger(HubSpotApiSenke.class);
 
-    /** Stabile externe Schlüssel-Properties (in HubSpot als eindeutige Custom-Properties angelegt). */
-    static final String PROP_PARTY_ID = "ebz_party_id";
-    static final String PROP_ORG_ID = "ebz_org_id";
+    /** Stabile externe Schlüssel-Properties (in HubSpot als <b>unique</b> Custom-Properties angelegt).
+     *  Eigene „uid"-Namen, da HubSpot ein einmal non-unique angelegtes Property nicht nachträglich unique
+     *  machen lässt (auch nach Löschung bleibt der Name archiviert/blockiert). */
+    static final String PROP_PARTY_ID = "ebz_party_uid";
+    static final String PROP_ORG_ID = "ebz_org_uid";
+    /** Marketing-Einwilligung als schreibbares Custom-Property — {@code hs_email_optout} ist read-only
+     *  (nur über die Subscriptions-API setzbar, die den fehlenden communication_preferences-Scope braucht).
+     *  Trägt die MDM-Entscheidung tier-unabhängig; HubSpot-Automationen können darauf segmentieren/suppressen. */
+    static final String PROP_MARKETING = "ebz_marketing_consent";
 
     @Inject
     ProducerTemplate producer;
@@ -62,7 +68,7 @@ public class HubSpotApiSenke implements HubSpotSenke {
         setze(props, "email", c.email());
         setze(props, "firstname", c.vorname());
         setze(props, "lastname", c.nachname());
-        setze(props, "hs_email_optout", c.marketingErlaubt() ? "false" : "true");
+        setze(props, PROP_MARKETING, c.marketingErlaubt() ? "true" : "false");
         setze(props, PROP_PARTY_ID, c.externeId());
         if (c.leadQuelle() != null) {
             setze(props, "hs_lead_status", c.leadQuelle());
@@ -102,7 +108,7 @@ public class HubSpotApiSenke implements HubSpotSenke {
     public void setzeMarketingStatus(String contactId, boolean erlaubt, ConsentNachweis nachweis) {
         ObjectNode body = mapper.createObjectNode();
         ObjectNode props = body.putObject("properties");
-        props.put("hs_email_optout", erlaubt ? "false" : "true");
+        props.put(PROP_MARKETING, erlaubt ? "true" : "false");
         ruf("PATCH", "/crm/v3/objects/contacts/" + contactId, body.toString());
     }
 
@@ -151,22 +157,28 @@ public class HubSpotApiSenke implements HubSpotSenke {
         if (propertiesGeprueft) {
             return;
         }
-        ensureProperty("contacts", PROP_PARTY_ID, "EBZ Party-ID", "string", "text");
-        ensureProperty("companies", PROP_ORG_ID, "EBZ Organisations-ID", "string", "text");
+        // Die externen ID-Properties MÜSSEN unique sein — Batch-Upsert per idProperty verlangt das.
+        ensureProperty("contacts", PROP_PARTY_ID, "EBZ Party-ID", "string", "text", true);
+        ensureProperty("companies", PROP_ORG_ID, "EBZ Organisations-ID", "string", "text", true);
+        // Marketing-Einwilligung als schreibbares Feld (hs_email_optout ist read-only).
+        ensureProperty("contacts", PROP_MARKETING, "EBZ Marketing-Einwilligung", "string", "text", false);
         for (String p : new String[]{"ebz_branche", "ebz_verband", "ebz_schwerpunkt", "ebz_unternehmenstyp",
                 "ebz_gewerbeerlaubnis", "ebz_ausbildungsbetrieb", "ebz_bestandsgroesse", "ebz_ihk_kammer"}) {
-            ensureProperty("companies", p, "EBZ " + p, "string", "text");
+            ensureProperty("companies", p, "EBZ " + p, "string", "text", false);
         }
         propertiesGeprueft = true;
     }
 
-    private void ensureProperty(String objekt, String name, String label, String typ, String feldTyp) {
+    private void ensureProperty(String objekt, String name, String label, String typ, String feldTyp, boolean unique) {
         ObjectNode body = mapper.createObjectNode();
         body.put("name", name);
         body.put("label", label);
         body.put("type", typ);
         body.put("fieldType", feldTyp);
         body.put("groupName", objekt.equals("contacts") ? "contactinformation" : "companyinformation");
+        if (unique) {
+            body.put("hasUniqueValue", true);
+        }
         try {
             ruf("POST", "/crm/v3/properties/" + objekt, body.toString());
         } catch (RuntimeException e) {
