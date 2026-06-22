@@ -54,7 +54,7 @@ public class RechnungService {
         r.status = RechnungStatus.ENTWURF;
         r.persist();
         prozess.schritt("Sonderrechnung anlegen", Prozess.Akteur.EBZ, Prozess.System.COCKPIT,
-                Prozess.Typ.USER_TASK, Prozess.Phase.RECHNUNGSLAUF);
+                Prozess.Typ.USER_TASK, Prozess.Phase.SONDERRECHNUNG_ANLAGE);
         return r;
     }
 
@@ -81,7 +81,7 @@ public class RechnungService {
         r.zahlungsReferenz = referenz;
         r.status = RechnungStatus.BEZAHLT;
         prozess.schritt("Zahlungseingang verbuchen", Prozess.Akteur.EBZ, Prozess.System.COCKPIT,
-                Prozess.Typ.USER_TASK, Prozess.Phase.RECHNUNGSLAUF);
+                Prozess.Typ.USER_TASK, Prozess.Phase.ZAHLUNGSEINGANG);
         return r;
     }
 
@@ -93,6 +93,8 @@ public class RechnungService {
             throw new RegelVerletzung("Positionen können nur im Status ENTWURF ergänzt werden (Festschreibung ab Ausstellung).");
         }
         r.positionen.add(ausDto(r, dto, "MANUELL"));
+        prozess.schritt("Rechnungsposition erfassen", Prozess.Akteur.EBZ, Prozess.System.COCKPIT,
+                Prozess.Typ.USER_TASK, Prozess.Phase.SONDERRECHNUNG_ANLAGE);
         return r;
     }
 
@@ -113,6 +115,8 @@ public class RechnungService {
         r.nummer = nummernkreis.vergib(r.bereich, r.belegart);
         r.ausstellungsdatum = LocalDate.now();
         r.status = RechnungStatus.AUSGESTELLT;
+        prozess.schritt("Rechnung ausstellen (Nummer festschreiben)", Prozess.Akteur.EBZ, Prozess.System.COCKPIT,
+                Prozess.Typ.USER_TASK, Prozess.Phase.RECHNUNG_AUSSTELLEN);
         return r;
     }
 

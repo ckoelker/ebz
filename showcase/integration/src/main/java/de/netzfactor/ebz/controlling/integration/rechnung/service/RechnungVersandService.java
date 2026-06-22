@@ -105,7 +105,7 @@ public class RechnungVersandService {
         LOG.infof("Beleg %s als E-Rechnung an %s versendet.", r.nummer, email);
 
         prozess.schritt("Rechnung versenden", Akteur.SYSTEM, Prozess.System.MAIL, Typ.MESSAGE,
-                Phase.RECHNUNGSLAUF);
+                Phase.RECHNUNG_VERSAND);
         return r;
     }
 }

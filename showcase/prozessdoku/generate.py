@@ -35,6 +35,9 @@ LANES_AKTIV = True
 VERFAHREN_LABEL = {
     "ANMELDUNG_BERUFSSCHULE": "Anmeldung Berufsschule",
     "WBT_VERKAUF": "WBT-Verkauf (Shop → OpenOLAT)",
+    "RECHNUNGSSTELLUNG": "Rechnungsstellung (Cockpit & E-Rechnung)",
+    "HUBSPOT_SYNC": "Marketing-Sync (HubSpot)",
+    "KOMMUNIKATION": "Benachrichtigung & Bestätigung",
 }
 
 # Reihenfolge + Klartext der Phasen (Übersicht/Dateinamen), je Phase ihrem Verfahren zugeordnet
@@ -53,6 +56,22 @@ PHASE_LABEL = {
     "WBT_KAUF": "WBT-Kauf im Shop",
     "WBT_AUSLIEFERUNG": "Auslieferung in OpenOLAT",
     "WBT_NUTZUNG": "Training nutzen",
+    # Verfahren: Rechnungsstellung (Cockpit & E-Rechnung)
+    "SONDERRECHNUNG_ANLAGE": "Sonderrechnung anlegen",
+    "RECHNUNG_AUSSTELLEN": "Rechnung ausstellen",
+    "RECHNUNG_VERSAND": "E-Rechnung versenden",
+    "ZAHLUNGSEINGANG": "Zahlungseingang verbuchen",
+    "DATEV_EXPORT": "DATEV-Export",
+    # Verfahren: Marketing-Sync (HubSpot)
+    "HUBSPOT_VORMERKEN": "Sync vormerken (Outbox)",
+    "HUBSPOT_UEBERTRAGUNG": "Kontakt/Firma übertragen",
+    "HUBSPOT_CONSENT": "Marketing-Einwilligung spiegeln",
+    "HUBSPOT_ERASURE": "Recht auf Vergessen",
+    "HUBSPOT_RUECKKANAL": "Consent-Rückkanal (Webhook)",
+    # Verfahren: Benachrichtigung & Bestätigung
+    "BENACHRICHTIGUNG_AUSLOESEN": "Benachrichtigung auslösen",
+    "KANAL_ZUSTELLUNG": "Portal-Inbox & Kanal-Zustellung",
+    "PFLICHT_BESTAETIGUNG": "Pflicht-Bestätigung",
 }
 
 

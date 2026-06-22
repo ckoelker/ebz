@@ -22,6 +22,7 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.ErreichbarkeitPort;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.Ports.RealtimePort;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 
 /**
@@ -57,6 +58,9 @@ public class KommunikationApi {
 
     @Inject
     ObjectMapper objectMapper;
+
+    @Inject
+    Prozessspur prozess;
 
     /**
      * Projiziert ein Ereignis. Zwei Pfade:
@@ -114,6 +118,8 @@ public class KommunikationApi {
         }
         pe.idempotenzSchluessel = ev.idempotenzSchluessel();
         pe.persist();
+        prozess.schritt("Benachrichtigung auslösen (" + typ.name() + ")", Prozess.Akteur.SYSTEM,
+                Prozess.System.PORTAL, Prozess.Typ.SERVICE_TASK, Prozess.Phase.BENACHRICHTIGUNG_AUSLOESEN);
 
         if (!personErreichbar) {
             // Direkt-Empfänger: nur die E-Mail über die Outbox (kein PORTAL/Consent/Realtime).
@@ -201,6 +207,8 @@ public class KommunikationApi {
             pe.bestaetigtVon = sub;
             pe.nachweisIp = ip;
             pe.nachweisZeit = LocalDateTime.now();
+            prozess.schritt("Pflicht-Bestätigung quittieren", Prozess.Akteur.KUNDE, Prozess.System.PORTAL,
+                    Prozess.Typ.USER_TASK, Prozess.Phase.PFLICHT_BESTAETIGUNG);
         }
     }
 

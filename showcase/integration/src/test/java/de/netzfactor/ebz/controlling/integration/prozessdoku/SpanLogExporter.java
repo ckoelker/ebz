@@ -53,7 +53,14 @@ public class SpanLogExporter implements SpanProcessor {
     static {
         try {
             Files.createDirectories(LOG.getParent());
-            Files.writeString(LOG, "", StandardCharsets.UTF_8); // Truncate beim Boot
+            // Nur EINMAL pro JVM (= pro `mvn test`-Lauf) truncaten, danach anhängen. Quarkus startet die
+            // App bei jedem @TestProfile-Wechsel mit frischem Classloader neu → der static-Block liefe sonst
+            // je Profil-Gruppe und überschriebe die Spans der anderen Gruppen (z. B. HubSpot-Webhook-Profil).
+            // Die System-Property ist JVM-global (überlebt Classloader-Wechsel) und markiert das erste Boot.
+            if (System.getProperty("prozessdoku.spans.truncated") == null) {
+                Files.writeString(LOG, "", StandardCharsets.UTF_8);
+                System.setProperty("prozessdoku.spans.truncated", "1");
+            }
         } catch (IOException e) {
             throw new UncheckedIOException("Prozess-Span-Log konnte nicht angelegt werden", e);
         }

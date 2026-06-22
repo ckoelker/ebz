@@ -31,6 +31,7 @@ import de.netzfactor.ebz.controlling.integration.party.model.ExterneId.Quelle;
 import de.netzfactor.ebz.controlling.integration.party.model.Mitgliedschaft;
 import de.netzfactor.ebz.controlling.integration.party.model.Organisation;
 import de.netzfactor.ebz.controlling.integration.party.model.Person;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 
 /**
@@ -64,6 +65,9 @@ public class HubSpotSyncService {
 
     @ConfigProperty(name = "hubspot.sync.gdpr-delete.enabled", defaultValue = "true")
     boolean gdprDeleteEnabled;
+
+    @Inject
+    Prozessspur prozess;
 
     /** Bevorzugt den realen Adapter (wenn per Config aktiviert), sonst die Mock-Senke (immer vorhanden). */
     private HubSpotSenke senke() {
@@ -182,6 +186,8 @@ public class HubSpotSyncService {
                 + ":" + a.erstelltAm.toEpochMilli();
         a.prozessFall = aktuellerFall();
         a.persist();
+        prozess.schritt("Sync-Auftrag vormerken (" + op + ")", Prozess.Akteur.EBZ, Prozess.System.BACKEND,
+                Prozess.Typ.SERVICE_TASK, Prozess.Phase.HUBSPOT_VORMERKEN);
         return a;
     }
 
@@ -280,6 +286,8 @@ public class HubSpotSyncService {
                 senke().setzeMarketingStatus(map.externeId, false, nachweis(u));
                 a.status = Status.MANUELL;
             }
+            prozess.schritt("Recht auf Vergessen in HubSpot", Prozess.Akteur.SYSTEM, Prozess.System.HUBSPOT,
+                    Prozess.Typ.SERVICE_TASK, Prozess.Phase.HUBSPOT_ERASURE);
             return;
         }
         if (u == Urteil.NIE) {
@@ -290,6 +298,8 @@ public class HubSpotSyncService {
         // Schneller Consent-Pfad: nur Status spiegeln, wenn der Kontakt schon existiert.
         if (a.operation == Operation.CONSENT_UPDATE && map != null) {
             senke().setzeMarketingStatus(map.externeId, marketable, nachweis(u));
+            prozess.schritt("Marketing-Einwilligung spiegeln", Prozess.Akteur.SYSTEM, Prozess.System.HUBSPOT,
+                    Prozess.Typ.SERVICE_TASK, Prozess.Phase.HUBSPOT_CONSENT);
             return;
         }
         ContactDto dto = mapper.zuContact(p);
@@ -308,6 +318,8 @@ public class HubSpotSyncService {
             map.externeId = hubspotId;
         }
         senke().setzeMarketingStatus(hubspotId, marketable, nachweis(u));
+        prozess.schritt("Kontakt übertragen", Prozess.Akteur.SYSTEM, Prozess.System.HUBSPOT,
+                Prozess.Typ.SERVICE_TASK, Prozess.Phase.HUBSPOT_UEBERTRAGUNG);
     }
 
     private void verarbeiteCompany(HubSpotSyncAuftrag a) {
@@ -328,6 +340,8 @@ public class HubSpotSyncService {
         } else {
             map.externeId = hubspotId;
         }
+        prozess.schritt("Firma übertragen", Prozess.Akteur.SYSTEM, Prozess.System.HUBSPOT,
+                Prozess.Typ.SERVICE_TASK, Prozess.Phase.HUBSPOT_UEBERTRAGUNG);
     }
 
     private void verarbeiteAssociation(HubSpotSyncAuftrag a) {

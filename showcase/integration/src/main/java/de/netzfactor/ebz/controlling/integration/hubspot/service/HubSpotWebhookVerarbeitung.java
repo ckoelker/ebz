@@ -16,6 +16,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import de.netzfactor.ebz.controlling.integration.party.model.Einwilligung;
 import de.netzfactor.ebz.controlling.integration.party.model.ExterneId;
 import de.netzfactor.ebz.controlling.integration.party.model.ExterneId.Quelle;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 
 /**
  * <b>Consent-Rückkanal (HubSpot→MDM).</b> Verarbeitet signatur-verifizierte HubSpot-Webhook-Events und
@@ -36,6 +38,9 @@ public class HubSpotWebhookVerarbeitung {
 
     /** Bereits verarbeitete Event-IDs (Showcase: In-Memory-Dedupe; in Prod eine kleine Tabelle). */
     private final Set<Long> verarbeiteteEvents = ConcurrentHashMap.newKeySet();
+
+    @jakarta.inject.Inject
+    Prozessspur prozess;
 
     /** Verarbeitet ein HubSpot-Event-Array; liefert die Anzahl wirksam verarbeiteter Events. */
     public int verarbeite(JsonNode events) {
@@ -89,6 +94,8 @@ public class HubSpotWebhookVerarbeitung {
                 Einwilligung.Kanal.EMAIL, Einwilligung.Zweck.NEWSLETTER, Einwilligung.Status.ERTEILT);
         LOG.infof("Webhook-Unsubscribe: %d Einwilligung(en) der Person %d widerrufen (HubSpot %d)",
                 geaendert, map.person.id, hubspotContactId);
+        prozess.schritt("Unsubscribe aus HubSpot übernehmen (Widerruf)", Prozess.Akteur.KUNDE,
+                Prozess.System.HUBSPOT, Prozess.Typ.MESSAGE, Prozess.Phase.HUBSPOT_RUECKKANAL);
         return true;
     }
 

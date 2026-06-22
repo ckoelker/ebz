@@ -34,6 +34,9 @@ public class DatevService {
     @Identifier("cloud-mock")
     DatevUebergabe cloudMock;
 
+    @Inject
+    de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur prozess;
+
     /** Festgeschriebene Belege (keine Entwürfe) im Zeitraum, optional je Bereich. */
     public List<Rechnung> belege(LocalDate von, LocalDate bis, Bereich bereich) {
         if (bereich != null) {
@@ -56,7 +59,12 @@ public class DatevService {
     /** Übergibt an den aktiven Weg (datev.modus): {@code cloud-mock} sonst EXTF-CSV. */
     public DatevUebergabe.Protokoll uebergeben(List<Rechnung> belege, LocalDate von, LocalDate bis) {
         DatevUebergabe weg = "cloud-mock".equalsIgnoreCase(konten.modus()) ? cloudMock : extf;
-        return weg.uebergeben(buchungssaetze(belege), kopf(von, bis));
+        DatevUebergabe.Protokoll p = weg.uebergeben(buchungssaetze(belege), kopf(von, bis));
+        prozess.schritt("DATEV-Buchungsstapel übergeben", de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Akteur.EBZ,
+                de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.System.DATEV,
+                de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Typ.SERVICE_TASK,
+                de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess.Phase.DATEV_EXPORT);
+        return p;
     }
 
     private ExtfBuchungsstapel.Kopf kopf(LocalDate von, LocalDate bis) {

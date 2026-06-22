@@ -38,7 +38,9 @@ public final class Prozess {
         RECHNUNGSLAUF("Rechnungslauf"),
         WEBUNTIS("WebUntis"),
         SUITE8("Suite8"),
-        OPENOLAT("OpenOLAT");
+        OPENOLAT("OpenOLAT"),
+        HUBSPOT("HubSpot"),
+        DATEV("DATEV");
 
         public final String label;
 
@@ -60,7 +62,10 @@ public final class Prozess {
      */
     public enum Verfahren {
         ANMELDUNG_BERUFSSCHULE("Anmeldung Berufsschule"),
-        WBT_VERKAUF("WBT-Verkauf (Shop → OpenOLAT)");
+        WBT_VERKAUF("WBT-Verkauf (Shop → OpenOLAT)"),
+        RECHNUNGSSTELLUNG("Rechnungsstellung (Cockpit & E-Rechnung)"),
+        HUBSPOT_SYNC("Marketing-Sync (HubSpot)"),
+        KOMMUNIKATION("Benachrichtigung & Bestätigung");
 
         public final String label;
 
@@ -83,7 +88,23 @@ public final class Prozess {
         WBT_KATALOG("WBT-Katalog & Shop-Listung", Verfahren.WBT_VERKAUF),
         WBT_KAUF("WBT-Kauf im Shop", Verfahren.WBT_VERKAUF),
         WBT_AUSLIEFERUNG("Auslieferung in OpenOLAT", Verfahren.WBT_VERKAUF),
-        WBT_NUTZUNG("Training nutzen", Verfahren.WBT_VERKAUF);
+        WBT_NUTZUNG("Training nutzen", Verfahren.WBT_VERKAUF),
+        // ── Verfahren: Rechnungsstellung (Cockpit & E-Rechnung) ──
+        SONDERRECHNUNG_ANLAGE("Sonderrechnung anlegen", Verfahren.RECHNUNGSSTELLUNG),
+        RECHNUNG_AUSSTELLEN("Rechnung ausstellen", Verfahren.RECHNUNGSSTELLUNG),
+        RECHNUNG_VERSAND("E-Rechnung versenden", Verfahren.RECHNUNGSSTELLUNG),
+        ZAHLUNGSEINGANG("Zahlungseingang verbuchen", Verfahren.RECHNUNGSSTELLUNG),
+        DATEV_EXPORT("DATEV-Export", Verfahren.RECHNUNGSSTELLUNG),
+        // ── Verfahren: Marketing-Sync (HubSpot) ──
+        HUBSPOT_VORMERKEN("Sync vormerken (Outbox)", Verfahren.HUBSPOT_SYNC),
+        HUBSPOT_UEBERTRAGUNG("Kontakt/Firma übertragen", Verfahren.HUBSPOT_SYNC),
+        HUBSPOT_CONSENT("Marketing-Einwilligung spiegeln", Verfahren.HUBSPOT_SYNC),
+        HUBSPOT_ERASURE("Recht auf Vergessen", Verfahren.HUBSPOT_SYNC),
+        HUBSPOT_RUECKKANAL("Consent-Rückkanal (Webhook)", Verfahren.HUBSPOT_SYNC),
+        // ── Verfahren: Benachrichtigung & Bestätigung ──
+        BENACHRICHTIGUNG_AUSLOESEN("Benachrichtigung auslösen", Verfahren.KOMMUNIKATION),
+        KANAL_ZUSTELLUNG("Portal-Inbox & Kanal-Zustellung", Verfahren.KOMMUNIKATION),
+        PFLICHT_BESTAETIGUNG("Pflicht-Bestätigung", Verfahren.KOMMUNIKATION);
 
         public final String label;
         public final Verfahren verfahren;

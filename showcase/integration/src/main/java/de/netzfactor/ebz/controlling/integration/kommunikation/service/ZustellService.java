@@ -19,6 +19,7 @@ import de.netzfactor.ebz.controlling.integration.kommunikation.model.ZustellAuft
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung;
 import de.netzfactor.ebz.controlling.integration.kommunikation.model.Zustellung.Kanal;
 import de.netzfactor.ebz.controlling.integration.kommunikation.spi.KanalVersand;
+import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozess;
 import de.netzfactor.ebz.controlling.integration.prozessdoku.Prozessspur;
 
 /**
@@ -38,6 +39,9 @@ public class ZustellService {
 
     @Inject
     Instance<KanalVersand> adapter;
+
+    @Inject
+    Prozessspur prozess;
 
     /** Synchrone Zustellung (PORTAL): Adapter direkt in der laufenden Transaktion aufrufen. */
     public void zustelleSofort(Zustellung zustellung) {
@@ -103,6 +107,9 @@ public class ZustellService {
             a.status = Status.ERLEDIGT;
             a.erledigtAm = Instant.now();
             a.letzterFehler = null;
+            prozess.schritt("Zustellung " + a.zustellung.kanal, Prozess.Akteur.SYSTEM,
+                    a.zustellung.kanal == Zustellung.Kanal.EMAIL ? Prozess.System.MAIL : Prozess.System.PORTAL,
+                    Prozess.Typ.MESSAGE, Prozess.Phase.KANAL_ZUSTELLUNG);
         } catch (RuntimeException e) {
             a.letzterFehler = kurz(e.getMessage());
             if (a.versuche >= ZustellAuftrag.MAX_VERSUCHE) {
