@@ -27,9 +27,10 @@ import de.netzfactor.ebz.controlling.integration.hubspot.spi.HubSpotSenke;
  * {@code source.HubSpotClient} (ProducerTemplate, Auth-Header, Status selbst auswerten, Backoff bei 429/5xx).
  * <p>
  * <b>Idempotenter Upsert</b> über die stabile externe ID ({@code ebz_party_id}/{@code ebz_org_id}) statt
- * E-Mail; nur MDM-eigene Felder werden gesetzt. <b>Consent property-basiert</b> ({@code hs_email_optout}) —
- * tier-unabhängig, ohne den fehlenden {@code communication_preferences}-Scope. Custom-Properties werden bei
- * Bedarf einmalig angelegt ({@link #ensureProperties()}).
+ * E-Mail; nur MDM-eigene Felder werden gesetzt. <b>Consent property-basiert</b> ({@code ebz_marketing_consent})
+ * — tier-unabhängig und immer maßgeblich. Ist der Scope {@code communication_preferences} vorhanden, wird die
+ * Einwilligung <b>zusätzlich</b> in die HubSpot-Subscription gespiegelt ({@code hubspot.sync.subscriptions.enabled},
+ * 403-/fehler-sicher gekapselt). Custom-Properties werden bei Bedarf einmalig angelegt ({@link #ensureProperties()}).
  */
 @ApplicationScoped
 @LookupIfProperty(name = "hubspot.sync.mode", stringValue = "real")
@@ -43,9 +44,14 @@ public class HubSpotApiSenke implements HubSpotSenke {
     static final String PROP_PARTY_ID = "ebz_party_uid";
     static final String PROP_ORG_ID = "ebz_org_uid";
     /** Marketing-Einwilligung als schreibbares Custom-Property — {@code hs_email_optout} ist read-only
-     *  (nur über die Subscriptions-API setzbar, die den fehlenden communication_preferences-Scope braucht).
-     *  Trägt die MDM-Entscheidung tier-unabhängig; HubSpot-Automationen können darauf segmentieren/suppressen. */
+     *  (nur über die Subscriptions-API setzbar). Trägt die MDM-Entscheidung tier-unabhängig und ist immer
+     *  maßgeblich; HubSpot-Automationen können darauf segmentieren/suppressen. Die echte Subscription wird
+     *  bei aktivem Scope zusätzlich gespiegelt ({@link #spiegeleSubscription}). */
     static final String PROP_MARKETING = "ebz_marketing_consent";
+
+    /** Subscribe/Unsubscribe-Vertrag (live verifiziert): GDPR-Portale verlangen BEIDES, legalBasis UND
+     *  legalBasisExplanation — auch beim Unsubscribe (sonst HTTP 400). */
+    private static final String LEGAL_BASIS = "CONSENT_WITH_NOTICE";
 
     @Inject
     ProducerTemplate producer;
@@ -58,6 +64,16 @@ public class HubSpotApiSenke implements HubSpotSenke {
 
     @ConfigProperty(name = "hubspot.token")
     Optional<String> token;
+
+    /** Zusätzlich zur Property auch die HubSpot-Subscription (Communication Preferences) spiegeln.
+     *  Braucht den Scope {@code communication_preferences.read/write}; fehler-/403-sicher gekapselt. */
+    @ConfigProperty(name = "hubspot.sync.subscriptions.enabled", defaultValue = "false")
+    boolean subscriptionsAktiv;
+
+    /** ID des Marketing-Subscription-Typs (portal-spezifisch — via GET /communication-preferences/v3/
+     *  definitions ermitteln). Ohne Wert wird die Subscription-Spiegelung übersprungen. */
+    @ConfigProperty(name = "hubspot.sync.subscription-id")
+    Optional<String> subscriptionId;
 
     private volatile boolean propertiesGeprueft = false;
 
@@ -106,10 +122,16 @@ public class HubSpotApiSenke implements HubSpotSenke {
 
     @Override
     public void setzeMarketingStatus(String contactId, boolean erlaubt, ConsentNachweis nachweis) {
+        // 1) Property ist immer maßgeblich (tier-unabhängig, kein Scope nötig).
         ObjectNode body = mapper.createObjectNode();
         ObjectNode props = body.putObject("properties");
         props.put(PROP_MARKETING, erlaubt ? "true" : "false");
         ruf("PATCH", "/crm/v3/objects/contacts/" + contactId, body.toString());
+        // 2) Subscription zusätzlich spiegeln, wenn Scope/Config vorhanden — schlägt das fehl, bleibt
+        //    der property-basierte Status maßgeblich (kein Sync-Abbruch).
+        if (subscriptionsAktiv) {
+            spiegeleSubscription(contactId, erlaubt, nachweis);
+        }
     }
 
     @Override
@@ -131,6 +153,57 @@ public class HubSpotApiSenke implements HubSpotSenke {
     }
 
     // ───────────────────────── intern ─────────────────────────
+
+    /**
+     * Spiegelt die Marketing-Einwilligung in die HubSpot-Subscription (Communication Preferences).
+     * Die API arbeitet per E-Mail (nicht contactId) → E-Mail wird nachgeladen. <b>403-/fehler-sicher:</b>
+     * fehlender Scope, fehlende E-Mail oder GDPR-Validierungsfehler werden nur geloggt — der zuvor gesetzte
+     * property-basierte Status bleibt maßgeblich, der Sync läuft weiter.
+     */
+    private void spiegeleSubscription(String contactId, boolean erlaubt, ConsentNachweis nachweis) {
+        if (subscriptionId.isEmpty()) {
+            LOG.warn("hubspot.sync.subscriptions.enabled=true, aber hubspot.sync.subscription-id fehlt → Subscription übersprungen.");
+            return;
+        }
+        try {
+            String email = ladeEmail(contactId);
+            if (email == null || email.isBlank()) {
+                LOG.debugf("Kontakt %s ohne E-Mail → keine Subscription-Spiegelung.", contactId);
+                return;
+            }
+            ObjectNode body = mapper.createObjectNode();
+            body.put("emailAddress", email);
+            body.put("subscriptionId", subscriptionId.get());
+            // GDPR-Portal: legalBasis UND legalBasisExplanation sind auch beim Unsubscribe Pflicht.
+            body.put("legalBasis", LEGAL_BASIS);
+            body.put("legalBasisExplanation", erklaerung(nachweis, erlaubt));
+            ruf("POST", "/communication-preferences/v3/" + (erlaubt ? "subscribe" : "unsubscribe"), body.toString());
+        } catch (RuntimeException e) {
+            LOG.warnf("Subscription-Spiegelung für Kontakt %s fehlgeschlagen (property-Status bleibt maßgeblich): %s",
+                    contactId, e.getMessage());
+        }
+    }
+
+    /** Lädt die primäre E-Mail eines Kontakts (für die E-Mail-basierte Subscription-API). */
+    private String ladeEmail(String contactId) {
+        String antwort = ruf("GET", "/crm/v3/objects/contacts/" + contactId + "?properties=email", null);
+        try {
+            return mapper.readTree(antwort).path("properties").path("email").asText(null);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    /** Revisions-Hinweis für HubSpot (legalBasisExplanation) aus dem MDM-Einwilligungsnachweis. */
+    private static String erklaerung(ConsentNachweis n, boolean erlaubt) {
+        StringBuilder sb = new StringBuilder(erlaubt ? "MDM-Opt-in" : "MDM-Widerruf");
+        if (n != null) {
+            if (n.rechtsgrundlage() != null && !n.rechtsgrundlage().isBlank()) sb.append("; Rechtsgrundlage ").append(n.rechtsgrundlage());
+            if (n.stand() != null && !n.stand().isBlank()) sb.append("; Stand ").append(n.stand());
+            if (n.quelle() != null && !n.quelle().isBlank()) sb.append("; Quelle ").append(n.quelle());
+        }
+        return sb.toString();
+    }
 
     private String batchUpsert(String objekt, String idProperty, String idWert, ObjectNode props) {
         ObjectNode input = mapper.createObjectNode();
