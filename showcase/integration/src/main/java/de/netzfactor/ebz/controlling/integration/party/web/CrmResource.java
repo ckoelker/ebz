@@ -59,7 +59,8 @@ public class CrmResource {
     public record PageView<T>(List<T> items, long total, int page, int size) {
     }
 
-    public record PersonListItem(Long id, String anzeigeName, String ort, String hauptFirma, String status) {
+    public record PersonListItem(Long id, String anzeigeName, String ort, String hauptFirma, String status,
+            boolean werbesperre, boolean auskunftssperre) {
     }
 
     public record KontaktpunktView(Long id, String typ, String label, boolean primaer, String status,
@@ -191,7 +192,8 @@ public class CrmResource {
         long total = query.count();
         List<PersonListItem> items = query.page(Page.of(page, size)).list().stream()
                 .map(p -> new PersonListItem(p.id, p.anzeigeName(),
-                        PartyHoheitService.personAdresse(p.id).ort(), hauptFirma(p.id), p.status.name()))
+                        PartyHoheitService.personAdresse(p.id).ort(), hauptFirma(p.id), p.status.name(),
+                        p.werbesperre, p.auskunftssperre))
                 .toList();
         return new PageView<>(items, total, page, size);
     }

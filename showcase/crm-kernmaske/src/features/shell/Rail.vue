@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import PartyAvatar from '../../ui/PartyAvatar.vue'
+import PartyAvatar from '@crm-ui/ui/PartyAvatar.vue'
 
 // Linke Cockpit-Schiene: Navigation mit Zähler-Badges, Subnav „+ Person/+ Firma"
 // (nur bei aktivem Kundenstamm), Quicklinks „Zuletzt aufgerufen", Profil unten.

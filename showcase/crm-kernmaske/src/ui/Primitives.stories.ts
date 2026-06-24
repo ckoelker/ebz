@@ -1,10 +1,11 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
-import PartyAvatar from './PartyAvatar.vue'
-import HealthDot from './HealthDot.vue'
-import StatusBadges from './StatusBadges.vue'
+import PartyAvatar from '@crm-ui/ui/PartyAvatar.vue'
+import HealthDot from '@crm-ui/ui/HealthDot.vue'
+import StatusBadges from '@crm-ui/ui/StatusBadges.vue'
+import MasterListItem from '@crm-ui/ui/MasterListItem.vue'
 import ChipList from './ChipList.vue'
 import KeyValueGrid from './KeyValueGrid.vue'
-import SegmentedControl from './SegmentedControl.vue'
+import SegmentedControl from '@crm-ui/ui/SegmentedControl.vue'
 import KontaktpunktList from './KontaktpunktList.vue'
 import Stepper from './Stepper.vue'
 import { PERSONEN } from '../data/mock'
@@ -41,6 +42,19 @@ export const Status: Story = {
       <StatusBadges status="AKTIV" />
       <StatusBadges status="PROVISORISCH" :unvollstaendig="true" />
       <StatusBadges status="AKTIV" :werbesperre="true" :auskunftssperre="true" />
+    </div>`,
+  }),
+}
+
+export const Listeneintraege: Story = {
+  name: 'MasterListItem (warn/blocked)',
+  render: () => ({
+    components: { MasterListItem },
+    template: `<div class="w-80 ring-1 ring-default rounded-lg overflow-hidden">
+      <MasterListItem label="Anna Schmidt" sub="Wohnbau Rhein-Ruhr eG · Vorstand" sub2="Düsseldorf" :active="true" />
+      <MasterListItem label="Markus Meyer" sub="Privatkontakt" sub2="*1981" :warn="true" />
+      <MasterListItem label="Petra Sperr" sub="Privatkontakt" :blocked="true" />
+      <MasterListItem label="Meyer Immobilien GmbH" sub="Makler · Köln" sub2="2 Personen verknüpft" :org="true" />
     </div>`,
   }),
 }

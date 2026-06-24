@@ -1,6 +1,10 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* Geteilte CRM-Primitive (showcase/crm-ui) liegen außerhalb des Roots → Tailwind v4 scannt sie
+   nur mit expliziter @source-Direktive, sonst fehlen deren Utility-Klassen im generierten CSS. */
+@source "../../../../crm-ui/src";
+
 /* EBZ-Branding: Nuxt-Default-Theme, nur die Primärfarbe ist das EBZ-Navy (#0b3a6f).
    Vollständige 50–950-Scale, damit Nuxt UI die Primary-Tokens (default 500 hell /
    400 dunkel) auflösen kann. @theme static → alle Shades werden emittiert. */

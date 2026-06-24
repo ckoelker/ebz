@@ -15,9 +15,11 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@crm-ui/*": ["../crm-ui/src/*"],
+      "vue": ["./node_modules/vue"]
     },
     "types": ["vite/client", "node"]
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "vite.config.ts", "vitest.config.ts", "openapi-ts.config.ts", "auto-imports.d.ts", "components.d.ts"]
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.vue", "vite.config.ts", "vitest.config.ts", "openapi-ts.config.ts", "auto-imports.d.ts", "components.d.ts", "../crm-ui/src/**/*.ts", "../crm-ui/src/**/*.vue"]
 }

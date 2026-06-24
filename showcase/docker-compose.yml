@@ -293,7 +293,11 @@ services:
   # Verwaltungsmaske „Bildungsangebote"; spricht den integration-Service (/bildung, /q) über
   # den nginx-Proxy an. Typsicher generiert aus /q/openapi (Stack B). Profil `controlling`.
   mdm:
-    build: ./mdm
+    # Context = showcase/ (statt ./mdm), damit das geteilte crm-ui (Vite-Source-Alias @crm-ui)
+    # im Build verfügbar ist; .dockerignore hält den Context schlank. Dockerfile: mdm/Dockerfile.
+    build:
+      context: .
+      dockerfile: mdm/Dockerfile
     profiles: ["controlling"]
     restart: unless-stopped
     depends_on:

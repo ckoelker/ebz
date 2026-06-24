@@ -69,6 +69,23 @@ class CrmResourceTest {
 
     @Test
     @TestSecurity(user = "sb", roles = "crm-pflege")
+    void personenListe_traegtSperrFlags() {
+        long n = uniq();
+        given().contentType(ContentType.JSON)
+                .body("""
+                        {"vorname":"Sperr","nachname":"Sperrenberg %d","geschlecht":"WEIBLICH",
+                         "korrespondenzspracheCode":"de","werbesperre":true,"auskunftssperre":false}"""
+                        .formatted(n))
+                .when().post("/crm/personen").then().statusCode(201);
+
+        // Die Listen-Projektion liefert die read-only Sperr-Flags (blocked-Icon der Master-Liste).
+        given().when().get("/crm/personen?q=Sperrenberg " + n).then().statusCode(200)
+                .body("items.werbesperre", hasItem(true))
+                .body("items.auskunftssperre", hasItem(false));
+    }
+
+    @Test
+    @TestSecurity(user = "sb", roles = "crm-pflege")
     void organisation_mitLookups_undHierarchie() {
         long n = uniq();
         long mutter = given().contentType(ContentType.JSON)

@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import { PERSONEN, ORGANISATIONEN, LOOKUPS } from '../../data/mock'
 import { personName } from '../../domain/party'
-import PartyAvatar from '../../ui/PartyAvatar.vue'
+import PartyAvatar from '@crm-ui/ui/PartyAvatar.vue'
 import DialogShell from '../../ui/DialogShell.vue'
 
 // Beidseitiger Verknüpfungs-Dialog Person↔Firma. Bestandssuche ZUERST (Dublettenschutz):

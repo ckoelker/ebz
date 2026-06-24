@@ -10,6 +10,8 @@ import NeueFirmaDialog from '@/crm/dialoge/NeueFirmaDialog.vue';
 import KontaktpunktDialog from '@/crm/dialoge/KontaktpunktDialog.vue';
 import NotizDialog from '@/crm/dialoge/NotizDialog.vue';
 import Uebersicht360 from '@/crm/Uebersicht360.vue';
+import KontaktDetailHeader from '@crm-ui/ui/KontaktDetailHeader.vue';
+import TabBar from '@crm-ui/ui/TabBar.vue';
 
 const props = defineProps<{ id: number }>();
 const emit = defineEmits<{ (e: 'select-person', id: number): void; (e: 'select-org', id: number): void }>();
@@ -50,6 +52,11 @@ const tabs = [
   { key: 'weiterbildung', label: 'Weiterbildung', icon: 'i-lucide-graduation-cap' },
   { key: 'hierarchie', label: 'Hierarchie', icon: 'i-lucide-network' },
 ];
+
+// Bubble-Zähler am Tab „Weiterbildung": Mitarbeiter mit kritischer (ROT) §34c-Frist = Handlungsbedarf.
+const offeneWb = computed(() => (weiterbildung.value ?? []).filter((z) => z.ampel === 'ROT').length);
+const tabsMitBubble = computed(() =>
+  tabs.map((t) => (t.key === 'weiterbildung' ? { ...t, bubble: offeneWb.value } : t)));
 const editStamm = ref(false);
 const kpDialog = ref(false);
 const notizDialog = ref(false);
@@ -76,27 +83,25 @@ const aktiv = (bis?: string) => !bis;
 
 <template>
   <div v-if="org" class="space-y-4">
-    <UCard>
-      <div class="flex items-start gap-4">
-        <UAvatar :alt="org.name" size="lg" icon="i-lucide-building-2" />
-        <div class="flex-1 min-w-0">
-          <h2 class="text-xl font-bold text-highlighted">{{ org.name }}</h2>
-          <p class="text-sm text-muted">{{ org.rechtsform }} <span v-if="org.ustId">· {{ org.ustId }}</span></p>
-          <div class="flex flex-wrap gap-1.5 mt-2">
-            <UBadge :color="org.status === 'AKTIV' ? 'success' : 'neutral'" variant="soft" size="sm">{{ org.status }}</UBadge>
+    <!-- Kopf + Tabs (sticky, während der Tab-Inhalt scrollt) -->
+    <div class="sticky top-0 z-10 bg-default pb-1 space-y-4">
+      <UCard>
+        <KontaktDetailHeader
+          :title="org.name ?? ''"
+          :org="true"
+          :status="org.status"
+          :meta="[org.rechtsform, org.ustId].filter((x): x is string => !!x)"
+        >
+          <template #badges>
             <UBadge v-if="org.ausbildungsbetrieb" color="info" variant="soft" size="sm">Ausbildungsbetrieb</UBadge>
             <UBadge v-for="t in org.unternehmenstypen" :key="t" color="neutral" variant="soft" size="sm">{{ t }}</UBadge>
-          </div>
-        </div>
-        <UButton color="neutral" variant="ghost" icon="i-lucide-refresh-cw" :loading="isFetching" @click="reload" />
-      </div>
-    </UCard>
-
-    <div class="flex gap-1 border-b border-default flex-wrap">
-      <UButton v-for="t in tabs" :key="t.key" :color="tab === t.key ? 'primary' : 'neutral'"
-               :variant="tab === t.key ? 'soft' : 'ghost'" :icon="t.icon" size="sm" @click="tab = t.key">
-        {{ t.label }}
-      </UButton>
+          </template>
+          <template #actions>
+            <UButton color="neutral" variant="ghost" icon="i-lucide-refresh-cw" :loading="isFetching" @click="reload" />
+          </template>
+        </KontaktDetailHeader>
+      </UCard>
+      <TabBar :tabs="tabsMitBubble" :model-value="tab" @update:model-value="tab = $event" />
     </div>
 
     <UCard v-if="tab === 'stammdaten'">

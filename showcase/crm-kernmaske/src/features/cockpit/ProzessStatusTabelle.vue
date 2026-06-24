@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { healthColor, healthLabel } from '../../domain/severity'
 import type { Prozess } from '../../domain/types'
-import HealthDot from '../../ui/HealthDot.vue'
+import HealthDot from '@crm-ui/ui/HealthDot.vue'
 
 // Überblick laufender automatisierter Prozesse (Showcase-Strecken) mit Health-Dot
 // und „→ Eingriff"-Sprung, wenn die Automatik einen HITL braucht.

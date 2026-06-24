@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import type { Person, Organisation } from '../../domain/types'
 import { personName } from '../../domain/party'
-import PartyAvatar from '../../ui/PartyAvatar.vue'
+import PartyAvatar from '@crm-ui/ui/PartyAvatar.vue'
 
 // Globale Sofortsuche mit „/"-Shortcut + Ergebnis-Dropdown (Personen & Firmen),
 // Anruf-Trigger (CTI-Demo) und User-Badge. Daten kommen per Prop (entkoppelt).

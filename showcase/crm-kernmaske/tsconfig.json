@@ -12,7 +12,11 @@
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "skipLibCheck": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": ["node"],
+    "paths": {
+      "@crm-ui/*": ["../crm-ui/src/*"],
+      "vue": ["./node_modules/vue"]
+    }
   },
   "include": [
     "src/**/*.ts",
@@ -20,6 +24,8 @@
     "src/**/*.vue",
     "auto-imports.d.ts",
     "components.d.ts",
-    ".storybook/**/*.ts"
+    ".storybook/**/*.ts",
+    "../crm-ui/src/**/*.ts",
+    "../crm-ui/src/**/*.vue"
   ]
 }

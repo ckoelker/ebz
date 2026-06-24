@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import MasterListItem from './MasterListItem.vue'
-import SegmentedControl from '../../ui/SegmentedControl.vue'
+import MasterListItem from '@crm-ui/ui/MasterListItem.vue'
+import SegmentedControl from '@crm-ui/ui/SegmentedControl.vue'
 import type { Person, Organisation, Mitgliedschaft } from '../../domain/types'
 import { buildKundenListe, type KundenFilter } from '../../domain/kundenliste'
 

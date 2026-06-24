@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import PartyAvatar from '../../ui/PartyAvatar.vue'
+import PartyAvatar from './PartyAvatar.vue';
 
 // Ein Eintrag der Master-Liste (Person oder Firma) mit Avatar, Identifikations-Infos
-// (Firma·Rolle·Ort bzw. Typ·Ort·Personenzahl) und Status-/Sperr-Badges.
+// (Firma·Rolle·Ort bzw. Typ·Ort·Personenzahl) und Status-/Sperr-Indikatoren. Prop-rein.
 defineProps<{
-  label: string
-  sub?: string
-  sub2?: string
-  org?: boolean
-  active?: boolean
-  warn?: boolean
-  blocked?: boolean
-}>()
+  label: string;
+  sub?: string;
+  sub2?: string;
+  org?: boolean;
+  active?: boolean;
+  warn?: boolean;
+  blocked?: boolean;
+}>();
 </script>
 
 <template>

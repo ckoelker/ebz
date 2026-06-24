@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import type { Health } from '../domain/types'
+import type { Health } from '../domain/types';
 
 // Health-Indikator (grün/gelb/rot). Optional mit Label.
-defineProps<{ health: Health; label?: string }>()
-const cls: Record<Health, string> = { ok: 'bg-success', warn: 'bg-warning', err: 'bg-error' }
+defineProps<{ health: Health; label?: string }>();
+const cls: Record<Health, string> = { ok: 'bg-success', warn: 'bg-warning', err: 'bg-error' };
 </script>
 
 <template>

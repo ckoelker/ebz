@@ -1,13 +1,13 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed } from 'vue';
 
-// Segment-Umschalter (Alle/Personen/Firmen u. ä.). Generisch, v-model-fähig.
+// Segment-Umschalter (Alle/Personen/Firmen u. ä.). Generisch, v-model-fähig, app-neutral.
 const props = defineProps<{
-  modelValue: string
-  options: { value: string; label: string }[] | string[]
-}>()
-const emit = defineEmits<{ (e: 'update:modelValue', v: string): void }>()
-const norm = computed(() => props.options.map(o => typeof o === 'string' ? { value: o, label: o } : o))
+  modelValue: string;
+  options: { value: string; label: string }[] | string[];
+}>();
+const emit = defineEmits<{ (e: 'update:modelValue', v: string): void }>();
+const norm = computed(() => props.options.map((o) => (typeof o === 'string' ? { value: o, label: o } : o)));
 </script>
 
 <template>

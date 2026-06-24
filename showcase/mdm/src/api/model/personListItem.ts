@@ -11,4 +11,6 @@ export interface PersonListItem {
   ort?: string;
   hauptFirma?: string;
   status?: string;
+  werbesperre?: boolean;
+  auskunftssperre?: boolean;
 }

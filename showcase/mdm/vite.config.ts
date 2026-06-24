@@ -26,10 +26,15 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Geteilte CRM-Primitive (eine Quelle für Storybook + mdm) als First-Party-Quelle, nicht als
+      // node_modules-Paket — so greifen Nuxt-UI-Auto-Imports + Tailwind-Content-Scan automatisch.
+      '@crm-ui': fileURLToPath(new URL('../crm-ui/src', import.meta.url)),
     },
   },
   server: {
     port: 5174,
+    // Dev-Server darf das Geschwister-Verzeichnis crm-ui ausliefern (außerhalb des mdm-Roots).
+    fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] },
     proxy: {
       '/bildung': { target: INTEGRATION, changeOrigin: true },
       '/crm': { target: INTEGRATION, changeOrigin: true },

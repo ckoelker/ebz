@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-06-17",
+  "generatedAt": "2026-06-24",
   "nodes": [
     {
       "name": "KanalEdit",
@@ -192,8 +192,7 @@
       "name": "KontaktDetailHeader",
       "group": "kunden",
       "children": [
-        "PartyAvatar",
-        "StatusBadges"
+        "CrmKontaktDetailHeader"
       ],
       "ui": [
         "UButton"
@@ -221,24 +220,6 @@
       ],
       "ui": [
         "UInput"
-      ]
-    },
-    {
-      "name": "MasterListItem",
-      "group": "kunden",
-      "children": [
-        "PartyAvatar"
-      ],
-      "ui": [
-        "UIcon"
-      ]
-    },
-    {
-      "name": "TabBar",
-      "group": "kunden",
-      "children": [],
-      "ui": [
-        "UBadge"
       ]
     },
     {
@@ -331,12 +312,6 @@
       ]
     },
     {
-      "name": "HealthDot",
-      "group": "ui (Primitives)",
-      "children": [],
-      "ui": []
-    },
-    {
       "name": "KeyValueGrid",
       "group": "ui (Primitives)",
       "children": [],
@@ -349,30 +324,6 @@
       "ui": [
         "UBadge",
         "UIcon"
-      ]
-    },
-    {
-      "name": "PartyAvatar",
-      "group": "ui (Primitives)",
-      "children": [],
-      "ui": [
-        "UAvatar"
-      ]
-    },
-    {
-      "name": "SegmentedControl",
-      "group": "ui (Primitives)",
-      "children": [],
-      "ui": [
-        "UButton"
-      ]
-    },
-    {
-      "name": "StatusBadges",
-      "group": "ui (Primitives)",
-      "children": [],
-      "ui": [
-        "UBadge"
       ]
     },
     {
@@ -397,8 +348,6 @@
       "ProzessStatusTabelle",
       "Rail",
       "SonderfaelleKarten",
-      "StatusBadges",
-      "TabBar",
       "TokenGallery",
       "WeiterbildungStundenkonto"
     ],
@@ -412,7 +361,6 @@
       "NeueFirmaDialog",
       "NeuePersonDialog",
       "ProzessStatusTabelle",
-      "SegmentedControl",
       "SonderfaelleKarten",
       "StammdatenForm",
       "TokenGallery",
@@ -464,17 +412,12 @@
       "KanalEdit",
       "KontakthistorieListe",
       "KontaktpunktList",
-      "MasterListItem",
       "MitgliedschaftEdit",
       "Rail",
       "StammdatenForm",
       "Stepper",
       "VerknuepfungDialog",
       "WeiterbildungStundenkonto"
-    ],
-    "UAvatar": [
-      "AnrufToast",
-      "PartyAvatar"
     ],
     "UCard": [
       "EingriffeKarten",
@@ -488,6 +431,9 @@
       "NeuePersonDialog",
       "RechtAufVergessenDialog",
       "VerknuepfungDialog"
+    ],
+    "UAvatar": [
+      "AnrufToast"
     ],
     "UProgress": [
       "WeiterbildungStundenkonto"

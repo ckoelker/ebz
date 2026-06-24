@@ -1,15 +1,14 @@
 <script setup lang="ts">
-import type { Status } from '../domain/types'
-import { statusColor } from '../domain/severity'
+import { statusColor } from '../domain/severity';
 
-// Status + DSGVO-Sperren/Vollständigkeit als Badge-Reihe. Wiederverwendbar in
-// Detailkopf UND Listen.
+// Status + DSGVO-Sperren/Vollständigkeit als Badge-Reihe. Prop-rein (Strings/Booleans) →
+// in Storybook UND mdm nutzbar, im Detailkopf wie in Listen.
 defineProps<{
-  status?: Status
-  werbesperre?: boolean
-  auskunftssperre?: boolean
-  unvollstaendig?: boolean
-}>()
+  status?: string;
+  werbesperre?: boolean;
+  auskunftssperre?: boolean;
+  unvollstaendig?: boolean;
+}>();
 </script>
 
 <template>

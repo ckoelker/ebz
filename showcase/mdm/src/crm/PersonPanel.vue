@@ -15,6 +15,8 @@ import NotizDialog from '@/crm/dialoge/NotizDialog.vue';
 import EinwilligungDialog from '@/crm/dialoge/EinwilligungDialog.vue';
 import WeiterbildungDialog from '@/crm/dialoge/WeiterbildungDialog.vue';
 import Uebersicht360 from '@/crm/Uebersicht360.vue';
+import KontaktDetailHeader from '@crm-ui/ui/KontaktDetailHeader.vue';
+import TabBar from '@crm-ui/ui/TabBar.vue';
 import ConfirmDialog from '@/components/ConfirmDialog.vue';
 import { fehlerText } from '@/crm/fehler';
 import { hatRolle } from '@/auth';
@@ -66,6 +68,11 @@ const tabs = [
   { key: 'weiterbildung', label: 'Weiterbildung', icon: 'i-lucide-graduation-cap' },
   { key: 'dsgvo', label: 'DSGVO', icon: 'i-lucide-shield' },
 ];
+
+// Bubble-Zähler am Tab „Einwilligung": offene Double-Opt-In-Bestätigungen (AUSSTEHEND) = Handlungsbedarf.
+const offeneEinw = computed(() => (einwilligungen.value ?? []).filter((e) => e.status === 'AUSSTEHEND').length);
+const tabsMitBubble = computed(() =>
+  tabs.map((t) => (t.key === 'einwilligung' ? { ...t, bubble: offeneEinw.value } : t)));
 
 // Dialog-Status
 const editStamm = ref(false);
@@ -193,44 +200,30 @@ const istAnonymisiert = computed(() => person.value?.loeschStatus === 'ANONYMISI
 
 <template>
   <div v-if="person" class="space-y-4">
-    <!-- Kopf -->
-    <UCard>
-      <div class="flex items-start gap-4">
-        <UAvatar :alt="person.anzeigeName" size="lg" />
-        <div class="flex-1 min-w-0">
-          <h2 class="text-xl font-bold text-highlighted">{{ person.anzeigeName }}</h2>
-          <p class="text-sm text-muted">{{ person.briefanrede }}</p>
-          <div class="flex flex-wrap gap-1.5 mt-2">
-            <UBadge :color="person.status === 'AKTIV' ? 'success' : 'neutral'" variant="soft" size="sm">
-              {{ person.status }}
-            </UBadge>
+    <!-- Kopf + Tabs (sticky, während der Tab-Inhalt scrollt) -->
+    <div class="sticky top-0 z-10 bg-default pb-1 space-y-4">
+      <UCard>
+        <KontaktDetailHeader
+          :title="person.anzeigeName ?? ''"
+          :status="person.status"
+          :werbesperre="person.werbesperre"
+          :auskunftssperre="person.auskunftssperre"
+          :anrede="person.briefanrede"
+        >
+          <template #badges>
             <UBadge v-if="person.loeschStatus && person.loeschStatus !== 'AKTIV'" color="error" variant="soft" size="sm">
               {{ person.loeschStatus }}
             </UBadge>
-            <UBadge v-if="person.werbesperre" color="warning" variant="soft" size="sm">Werbesperre</UBadge>
-            <UBadge v-if="person.auskunftssperre" color="warning" variant="soft" size="sm">Auskunftssperre</UBadge>
-          </div>
-        </div>
-        <UButton color="neutral" variant="ghost" icon="i-lucide-refresh-cw" :loading="isFetching" @click="reload" />
-      </div>
-    </UCard>
+          </template>
+          <template #actions>
+            <UButton color="neutral" variant="ghost" icon="i-lucide-refresh-cw" :loading="isFetching" @click="reload" />
+          </template>
+        </KontaktDetailHeader>
+      </UCard>
+      <TabBar :tabs="tabsMitBubble" :model-value="tab" @update:model-value="tab = $event" />
+    </div>
 
     <UAlert v-if="meldung" color="error" variant="soft" :title="meldung" close class="" @update:open="meldung = ''" />
-
-    <!-- Tabs -->
-    <div class="flex gap-1 border-b border-default">
-      <UButton
-        v-for="t in tabs"
-        :key="t.key"
-        :color="tab === t.key ? 'primary' : 'neutral'"
-        :variant="tab === t.key ? 'soft' : 'ghost'"
-        :icon="t.icon"
-        size="sm"
-        @click="tab = t.key"
-      >
-        {{ t.label }}
-      </UButton>
-    </div>
 
     <!-- Stammdaten -->
     <UCard v-if="tab === 'stammdaten'">

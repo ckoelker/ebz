@@ -1,3 +1,4 @@
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import ui from '@nuxt/ui/vite'
@@ -17,4 +18,14 @@ export default defineConfig({
       },
     }),
   ],
+  resolve: {
+    alias: {
+      // Geteilte CRM-Primitive (eine Quelle für Storybook + mdm) als First-Party-Quelle.
+      '@crm-ui': fileURLToPath(new URL('../crm-ui/src', import.meta.url)),
+    },
+  },
+  server: {
+    // Storybook-Dev darf das Geschwister-Verzeichnis crm-ui ausliefern (außerhalb des Roots).
+    fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] },
+  },
 })

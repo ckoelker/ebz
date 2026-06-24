@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { Person, Organisation } from '../../domain/types'
 import { personName } from '../../domain/party'
-import PartyAvatar from '../../ui/PartyAvatar.vue'
+import PartyAvatar from '@crm-ui/ui/PartyAvatar.vue'
 
 // CTI-Demo (anbieter-neutral, später WebSocket): eingehender Anruf unten rechts.
 // Die Auflösung Nummer→Person/Firma macht der Container; diese Komponente zeigt nur an.

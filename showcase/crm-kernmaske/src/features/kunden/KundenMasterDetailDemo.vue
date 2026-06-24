@@ -2,7 +2,7 @@
 import { ref, computed } from 'vue'
 import KundenMasterListe from './KundenMasterListe.vue'
 import KontaktDetailHeader from './KontaktDetailHeader.vue'
-import TabBar from './TabBar.vue'
+import TabBar from '@crm-ui/ui/TabBar.vue'
 import KontaktpunktList from '../../ui/KontaktpunktList.vue'
 import { PERSONEN, ORGANISATIONEN, MITGLIEDSCHAFTEN, personById, orgById, LOGINVERSUCHE } from '../../data/mock'
 

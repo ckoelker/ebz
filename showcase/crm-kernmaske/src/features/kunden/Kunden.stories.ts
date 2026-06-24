@@ -1,7 +1,8 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import KundenMasterListe from './KundenMasterListe.vue'
 import KontaktDetailHeader from './KontaktDetailHeader.vue'
-import TabBar from './TabBar.vue'
+import CrmKontaktDetailHeader from '@crm-ui/ui/KontaktDetailHeader.vue'
+import TabBar from '@crm-ui/ui/TabBar.vue'
 import KundenMasterDetailDemo from './KundenMasterDetailDemo.vue'
 import { PERSONEN, ORGANISATIONEN, MITGLIEDSCHAFTEN } from '../../data/mock'
 
@@ -37,6 +38,22 @@ export const DetailkopfFirma: Story = {
     components: { KontaktDetailHeader },
     setup: () => ({ o: ORGANISATIONEN[0] }),
     template: '<KontaktDetailHeader :org="o" />',
+  }),
+}
+
+export const DetailkopfBadges: Story = {
+  name: 'KontaktDetailHeader — Zusatz-Badges (#badges-Slot)',
+  render: () => ({
+    components: { CrmKontaktDetailHeader },
+    template: `<CrmKontaktDetailHeader title="Wohnbau Rhein-Ruhr eG" :org="true" status="AKTIV" :meta="['eG','DE123456789']">
+      <template #badges>
+        <UBadge color="info" variant="soft" size="sm">Ausbildungsbetrieb</UBadge>
+        <UBadge color="neutral" variant="soft" size="sm">WEG-Verwalter</UBadge>
+      </template>
+      <template #actions>
+        <UButton color="primary" size="sm" icon="i-lucide-pencil">Bearbeiten</UButton>
+      </template>
+    </CrmKontaktDetailHeader>`,
   }),
 }
 
