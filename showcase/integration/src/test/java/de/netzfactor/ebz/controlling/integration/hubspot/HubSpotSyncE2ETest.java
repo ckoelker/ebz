@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
-import io.quarkus.test.junit.QuarkusTestProfile;
 import io.quarkus.test.junit.TestProfile;
 import io.quarkus.test.security.TestSecurity;
 import io.restassured.http.ContentType;
@@ -38,22 +37,13 @@ import de.netzfactor.ebz.controlling.integration.party.model.Person;
  * (analog {@code HubSpotWebhookTest}).
  */
 @QuarkusTest
-@TestProfile(HubSpotSyncE2ETest.WebhookAn.class)
+@TestProfile(WebhookAnProfile.class)
 class HubSpotSyncE2ETest {
 
-    static final String SECRET = "e2e-secret-123";
-    static final String BASE_URL = "https://hooks.ebz.test";
+    // Gemeinsames Profil mit HubSpotWebhookTest → ein geteilter Quarkus-Boot (siehe WebhookAnProfile).
+    static final String SECRET = WebhookAnProfile.SECRET;
+    static final String BASE_URL = WebhookAnProfile.BASE_URL;
     static final String PFAD = "/hubspot/webhook";
-
-    public static class WebhookAn implements QuarkusTestProfile {
-        @Override
-        public Map<String, String> getConfigOverrides() {
-            return Map.of(
-                    "hubspot.webhook.enabled", "true",
-                    "hubspot.webhook.app-secret", SECRET,
-                    "hubspot.webhook.public-base-url", BASE_URL);
-        }
-    }
 
     @BeforeEach
     void reset() {
