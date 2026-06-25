@@ -173,11 +173,22 @@ volle White-Label (Stufe 2) · Content-Update-in-place mit Progress-Erhalt.
     (via REST round-trip bestätigt: DEMO_AG-Org key 2, `cssClass=mandant-demo-ag`). **Aber OpenOLAT rendert
     diese Org-cssClass NICHT** in die Seiten eines Org-Mitglieds (DOM trägt nur `o_lang_*`, kein
     `[class*=mandant]`) — die cssClass ist ein reines Datenmodell-/Admin-Feld, **kein** per-User-Theme-Hebel.
-    → **per-Org-CSS in OpenOLAT scheidet aus; Fallback D5 greift.** Charakterisierungs-Test hält den Befund
-    fest: `showcase/e2e/tests/mandant-branding.spec.ts`. **Sichtbare per-Kunde-CI lebt damit an zwei Stellen:**
-    (a) **per-IdP Keycloak-Login-Seite** (Realm `ebz-kunde-demo` bereits distinkt — im Brokering-Flow belegt),
-    (b) **SPAs** über den `mandant`-Claim + die Mandant-Branding-Felder (`primaerFarbe/sekundaerFarbe/logoUrl`),
-    die der A4-Endpunkt `/lms/portal/landing` schon ausliefert. **Stufe-1-`theme.scss`-Recompile entfällt.**
+    Die naive Annahme „cssClass setzen genügt" stimmt also nicht — Quellcode-Beleg: die `<body>`-Klasse kommt
+    allein aus `bodyCssClasses` (Layout `fullwebapplayout.html`), gefüllt nur über `addBodyCssClass(…)`; **kein**
+    Aufrufer und **kein** Template liest je `Organisation.getCssClass()` fürs Theming.
+  - **GELÖST (2026-06-25) — offizieller Weg, KEIN Core-Fork → M0 ist KEIN reiner D5-Fall mehr:** OpenOLAT
+    bietet die **public API `ChiefController.addBodyCssClass(String)`**. Eine kleine Extension
+    (`showcase/openolat/ext/`, gebaut ins Image) registriert via Standard-Spring-Mechanismus
+    (`_spring`-Context + `afterLoginInterceptionManager`) einen **AfterLogin-Interceptor**
+    (`SupportsAfterLoginInterceptor`, `isUserInteractionRequired=false` → unsichtbar), der die org-`cssClass`
+    `mandant-<schlüssel>` (die das Backend ohnehin setzt) an den `<body>` hängt. Registriert per
+    `mainContext.xml`-Overlay in `WEB-INF/classes` (Classloader-Vorrang, OpenOLAT scannt Fremd-Jars nicht
+    automatisch). `theme.scss` targetet `body.mandant-demo-ag .o_navbar` → **sichtbare per-Mandant-Navbar
+    (Orange #ff6600), EBZ-Default (Regenbogen) unberührt** — live + Screenshot verifiziert, Test
+    `mandant-branding.spec.ts` (Mitglied → Marke, Nicht-Mitglied → Default). **K3 erfüllt; D5 nur noch echter
+    Fallback.** Zusätzlich: per-IdP-Login-Branding (Realm `ebz-kunde-demo`) + SPA-Branding via `mandant`-Claim
+    + `/lms/portal/landing` (primaerFarbe/logoUrl). **K7-Aufwand:** ~1 kleine Java-Klasse + Spring-XML +
+    2 Dockerfile-Zeilen + 1 Theme-Regel.
 - **M1 — Datenmodell + CRUD:** `Mandant`/`IdpFoederation`/`Lizenzvertrag` + `Kurseinschreibung.mandant` +
   `WbtKurs.sollStundenAnrechenbar`; `MandantResource`-CRUD; CHECK-Constraints bei neuen Enums
   ([[jpa-enum-check-constraints]]); rest-assured.
