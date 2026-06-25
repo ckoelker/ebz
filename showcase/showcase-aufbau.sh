@@ -35,7 +35,7 @@ SHOP="${SHOP:-http://localhost:3000}"                # vendure
 MVN="${MVN:-mvn}"
 
 # Schritt-Reihenfolge (Voll-Lauf führt sie genau so aus).
-SCHRITTE=(preflight reset up seed test-java test-spa test-vendure test-e2e bpmn lightdash summary)
+SCHRITTE=(preflight reset up seed mandanten-seed test-java test-spa test-vendure test-e2e bpmn lightdash summary)
 
 # ── Hübsche Ausgabe ─────────────────────────────────────────────────────────────────────────────
 rot=$'\e[31m'; gruen=$'\e[32m'; gelb=$'\e[33m'; blau=$'\e[36m'; fett=$'\e[1m'; aus=$'\e[0m'
@@ -165,6 +165,16 @@ schritt_seed() {
   ok "dbt-Marts gebaut + Tests grün"
 }
 
+schritt_mandanten_seed() {
+  phase "MANDANTEN-SEED — Test-Mandanten (M3) backend-getrieben + gebrokerter Demo-Kunden-IdP-Link"
+  # Realm-Voraussetzungen (Organizations, Broker-IdP kunde-demo, mandant-/organization-Scopes, Realm
+  # ebz-kunde-demo) liegen als Import-JSON in vendure/keycloak/realms/ und sind beim frischen Boot da.
+  # Hier kommt die Laufzeit-Naht: EBZ_CUSTOMER/EBZ_STAFF/DEMO_AG über die Backend-API anlegen (Backend
+  # projiziert OpenOLAT- + Keycloak-Org) + org<->IdP-Link. Idempotent.
+  bash mandanten-seed/seed-mandanten.sh || fail "Mandanten-Seed fehlgeschlagen"
+  ok "Test-Mandanten geseedet (Brokering-Strecke bereit für e2e)"
+}
+
 schritt_test_java() {
   phase "TEST — Java-Integration (Quarkus, rest-assured + E2E-Spans)"
   # Läuft gegen das laufende Postgres; die DispatcherPauseExtension pausiert die Container-@Scheduled
@@ -260,6 +270,7 @@ fuehre_aus() {
     reset)        schritt_reset ;;
     up)           schritt_up ;;
     seed)         schritt_seed ;;
+    mandanten-seed) schritt_mandanten_seed ;;
     test-java)    schritt_test_java ;;
     test-spa)     schritt_test_spa ;;
     test-vendure) schritt_test_vendure ;;
