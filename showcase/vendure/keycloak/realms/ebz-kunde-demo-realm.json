@@ -1,0 +1,47 @@
+{
+  "realm": "ebz-kunde-demo",
+  "enabled": true,
+  "sslRequired": "none",
+  "loginWithEmailAllowed": true,
+  "registrationEmailAsUsername": true,
+  "duplicateEmailsAllowed": false,
+  "_kommentar": "Demo-Kunden-IdP (PoC, M3-Seed): simuliert das EIGENE Keycloak/AD des B2B-Demo-Mandanten DEMO_AG. ebz-customers brokert gegen dieses Realm. NUR Test/Seed - in echt waere das der kundeneigene, individuelle IdP (deshalb geseedet, nicht in integration verdrahtet).",
+  "clients": [
+    {
+      "clientId": "ebz-customers-broker",
+      "name": "Brokering-Client fuer ebz-customers",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "secret": "demo-broker-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": true,
+      "redirectUris": [
+        "http://localhost:8088/realms/ebz-customers/broker/kunde-demo/endpoint",
+        "http://localhost:8088/realms/ebz-customers/broker/kunde-demo/endpoint/*",
+        "http://keycloak.localhost:8080/realms/ebz-customers/broker/kunde-demo/endpoint",
+        "http://keycloak.localhost:8080/realms/ebz-customers/broker/kunde-demo/endpoint/*",
+        "http://keycloak:8080/realms/ebz-customers/broker/kunde-demo/endpoint",
+        "http://keycloak:8080/realms/ebz-customers/broker/kunde-demo/endpoint/*"
+      ],
+      "webOrigins": ["+"]
+    }
+  ],
+  "users": [
+    {
+      "username": "max.mustermann@demo-ag.de",
+      "email": "max.mustermann@demo-ag.de",
+      "emailVerified": true,
+      "enabled": true,
+      "firstName": "Max",
+      "lastName": "Mustermann",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "demo",
+          "temporary": false
+        }
+      ]
+    }
+  ]
+}
