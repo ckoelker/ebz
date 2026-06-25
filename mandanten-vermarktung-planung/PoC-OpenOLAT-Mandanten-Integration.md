@@ -48,6 +48,28 @@
 
 ---
 
+## 0a. Nicht-funktionale Anforderungen (verbindlich)
+
+**Reproduzierbar / Bootstrap (wie `showcase-aufbau.sh` / Lightdash-Bootstrap / `lms-import-seed.sh`):** Das
+**komplette** Mandanten-Setup wird **per Skript/Bootstrap** angelegt — Mandanten/Orgs, IdP-Föderationen
+(Keycloak Organizations), Offers, Branding-Themes, Demo-Content (Platzhalter-Video-SCORM), Seat-Limits,
+Demo-Lernende. **Kein manuelles UI-Klicken** fürs Setup. Ein **`docker compose down -v` (Volumes gecleant)
+→ kompletter Neuaufbau** muss alles **grün wiederherstellen**; der Bootstrap ist **idempotent** und als
+eigener Schritt in `showcase-aufbau.sh` eingehängt. Aller UI-/DB-State, der Volume-Reinit nicht überlebt
+(OpenOLAT-Themes, Orgs, Offers, Keycloak-Organizations/IdPs), liegt **als Code**, nicht als Handgriff.
+
+**Branding visuell klar unterscheidbar (für visuellen Test):** Jede Branding-Option — EBZ-Customer,
+EBZ-Staff-Intern und jeder B2B-Demo-Mandant — bekommt **deutlich verschiedene Logos + Markenfarben**
+(kontrastreich, auf einen Blick zuordenbar), damit ein **Playwright-Screenshot-/Visual-Test** je Mandant
+das korrekte Branding eindeutig verifiziert (K3). **Keine Pastell-Nuancen**, die im Screenshot verschwimmen.
+
+**Kommando-Hygiene (möglichst wenige Bestätigungen):** Alle Bau-/Verifikationsschritte als **einzelne,
+allowlist-fähige Bash-Kommandos** ([[use-bash-not-powershell]], [[single-commands-to-avoid-prompts]]) —
+kein Verketten/Umleiten wo vermeidbar, `mvn` mit absolutem `-f`-Pfad, kein `2>&1`. Lange Läufe in kurzen
+Intervallen beobachten ([[monitor-long-actions-frequently]]), nicht passiv mit Hoch-Timeout abfeuern.
+
+---
+
 ## 1. Tenant-Landschaft (tragendes Prinzip: EBZ ist Kernmandant)
 
 EBZ ist **nicht nur Betreiber, sondern selbst Mandant**. Die Landschaft ist **additiv** — die bestehende
@@ -97,14 +119,18 @@ volle White-Label (Stufe 2) · Content-Update-in-place mit Progress-Erhalt.
   dokumentiert** (nicht als Block) → fließt ins K7-Fazit + B2B-Risikovermerk.
 - **K2 Seat-Cap:** N+1 über `seatLimit` wird **durchgelassen, aber als HITL-Meldung** erzeugt (pro
   Überschreitung erneut); Belegung je Mandant korrekt.
-- **K3 Branding:** B2B-Mandant-A-Nutzer sieht A-Logo/-Farben (post-auth, Stufe 1) **und** A-Login via
-  eigenem IdP; EBZ-Default unverändert. **Klassenname/Injection-Punkt am DOM verifiziert.**
+- **K3 Branding (visuell):** B2B-Mandant-A-Nutzer sieht A-Logo/-Farben (post-auth, Stufe 1) **und** A-Login
+  via eigenem IdP; EBZ-Default unverändert. Alle Mandanten **visuell klar unterscheidbar** → per
+  **Playwright-Screenshot-Test** je Mandant verifiziert. **Klassenname/Injection-Punkt am DOM verifiziert.**
 - **K4 IdP-Föderation:** Login `@mandant-a.de` → über gebrokerten Kunden-IdP automatisch in Org A
   (`mandant`-Claim); fail-closed bei fehlendem Claim.
 - **K5 Content-share-once:** dasselbe video-SCORM ist in **≥ 2** Orgs (inkl. EBZ) sichtbar/startbar, liegt
   aber **einmal** im Repo (kein Re-Import/Kopie je Org); Update → in allen Orgs sichtbar.
 - **K6 Nachweis-Seam:** Completion eines A-Lernenden → `LernleistungsFakt` (Soll-Stunden) in MDM lesbar.
 - **K7 (Meta) Aufwands-Fazit:** je M-Schritt trivial/mittel/zäh + Stolpersteine → Entscheidungs-Input.
+- **K8 Reproduzierbar:** nach `docker compose down -v` baut **ein** Bootstrap-Kommando Orgs/Mandanten/
+  IdP-Föderationen/Offers/Branding/Demo-Content/Seats vollständig neu auf — alles grün, **kein** manueller
+  Setup-Schritt (idempotent, in `showcase-aufbau.sh` eingehängt).
 
 ## 5. Wiederverwendung (Bestand) & was neu ist
 
@@ -170,6 +196,10 @@ volle White-Label (Stufe 2) · Content-Update-in-place mit Progress-Erhalt.
 - **rest-assured** (`%test`, Mock-Senken): Aktivierung legt **genau eine** Org an (idempotent); Login
   `@mandant-a.de` → Org-A-Mitglied + Katalog; Seat-Überschreitung → HITL-Meldung; Fremd-Mandant sieht
   fremden Katalog **nicht** (K1, dokumentiert); `/mandant` ohne `ebz-staff` → 403.
+- **Reproduzierbarkeit (K8):** `docker compose down -v` → ein Bootstrap-Lauf stellt alles grün her
+  (Volumes gecleant, kein manueller Schritt); zweiter Lauf idempotent.
+- **Visueller Branding-Test (K3):** Playwright-Screenshots je Mandant beweisen die **klar unterscheidbaren**
+  Logos/Farben (EBZ-Customer vs. EBZ-Staff-Intern vs. B2B-Demo-Mandanten).
 - **K7-Aufwands-Fazit** je M-Schritt → Rückfluss in [§12.2](LMS-Plattformvergleich-OpenOLAT-Moodle.md).
 
 ## 8. Risiken / Gotchas (recherche-gestützt, 2026-06)
@@ -198,6 +228,8 @@ volle White-Label (Stufe 2) · Content-Update-in-place mit Progress-Erhalt.
 
 - **Bau-Freigabe** (nach Review dieses Plans). mdm-Tabellen + Keycloak-v26-Bump **bereits freigegeben** (H5).
 - **Platzhalter-Video-SCORM** als Demo-Content bereitstellen (H4).
+- **Bootstrap-Skript** (Mandanten/Orgs/IdP/Offers/Branding/Seats/Demo-Lernende) als eigener
+  `showcase-aufbau.sh`-Schritt — idempotent, übersteht `down -v` (§0a, K8).
 - **Demo-Kunden-IdP** = zweites Keycloak-Realm (gebrokert) für M3.
 - **Rechtliche Stundenzählung** §34d/§34c/§34i (Soll-Stunden-Anrechnung) final prüfen.
 - **Content-Update-in-place** (Progress-Erhalt) — bewusst offener Punkt (C5, Rise-Doc).
