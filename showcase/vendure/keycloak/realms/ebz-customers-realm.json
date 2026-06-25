@@ -79,7 +79,9 @@
       "attributes": {
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:5175/*"
-      }
+      },
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email", "organization"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
     },
     {
       "clientId": "openolat",
@@ -99,7 +101,9 @@
       "protocol": "openid-connect",
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:8089/*"
-      }
+      },
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email", "organization"],
+      "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
     }
   ],
   "users": [
