@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 
 import java.time.Instant;
+import java.util.List;
 
 import jakarta.inject.Inject;
 
@@ -13,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import io.quarkus.narayana.jta.QuarkusTransaction;
 import io.quarkus.test.junit.QuarkusTest;
 
+import de.netzfactor.ebz.controlling.integration.mandant.model.IdpFoederation;
 import de.netzfactor.ebz.controlling.integration.mandant.model.Mandant;
 import de.netzfactor.ebz.controlling.integration.mandant.model.MandantProjektion;
 import de.netzfactor.ebz.controlling.integration.mandant.service.MandantProjektionService;
@@ -33,9 +35,13 @@ class MandantProjektionTest {
     @Inject
     FakeOpenolatOrganisationProvisioning openolat;
 
+    @Inject
+    FakeKeycloakOrganizationsProvisioning keycloak;
+
     @BeforeEach
     void setup() {
         openolat.reset();
+        keycloak.reset();
     }
 
     private Long neuerMandant(Mandant.Vertragstyp typ) {
@@ -102,6 +108,73 @@ class MandantProjektionTest {
         return QuarkusTransaction.requiringNew().call(() -> {
             Mandant m = Mandant.findById(mandantId);
             return m.schluessel.toLowerCase().replace('_', '-');
+        });
+    }
+
+    // ── M3: Keycloak-Organization-Projektion ──
+
+    private void neueFoederation(Long mandantId, String domains) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            IdpFoederation f = new IdpFoederation();
+            f.mandant = Mandant.findById(mandantId);
+            f.idpAlias = "idp-" + (System.nanoTime() % 1_000_000L);
+            f.emailDomains = domains;
+            f.protokoll = IdpFoederation.Protokoll.OIDC;
+            f.status = IdpFoederation.Status.AKTIV;
+            f.persist();
+        });
+    }
+
+    private String keycloakOrgIdVon(Long mandantId) {
+        return QuarkusTransaction.requiringNew().call(() -> {
+            Mandant m = Mandant.findById(mandantId);
+            return m == null ? null : m.keycloakOrganizationId;
+        });
+    }
+
+    @Test
+    void keycloakProjektionLegtOrgAnUndSchreibtIdZurueck() {
+        Long mandantId = neuerMandant(Mandant.Vertragstyp.ENTERPRISE_FLAT);
+        neueFoederation(mandantId, "kunde.de;kunde.com");
+        Long projId = service.anfordernKeycloakOrg(mandantId).id;
+
+        // Gezielt nur die eigene Projektion verarbeiten (die controlling-DB ist test-geteilt → verarbeiteFaellige
+        // würde fremde, noch offene ORG_ANLEGEN-Zeilen mitziehen und die Call-Zählung verfälschen).
+        service.verarbeite(projId);
+
+        assertEquals(MandantProjektion.Status.ERLEDIGT, statusVon(projId));
+        assertEquals("kc-org-0001", keycloakOrgIdVon(mandantId));
+        assertEquals(1, keycloak.ensureCalls.get(), "genau eine Keycloak-Org-Anlage");
+        // Die Föderations-Domains werden (lowercase, dedupliziert) als Routing-Domains übergeben.
+        assertEquals(List.of("kunde.de", "kunde.com"), keycloak.letzteDomains);
+        // OpenOLAT bleibt von der Keycloak-Operation unberührt.
+        assertEquals(0, openolat.ensureCalls.get(), "kein OpenOLAT-Call bei Keycloak-Projektion");
+    }
+
+    @Test
+    void keycloakProjektionEskaliertNachMaxVersuchenZuDeadLetter() {
+        Long mandantId = neuerMandant(Mandant.Vertragstyp.ENTERPRISE_FLAT);
+        neueFoederation(mandantId, "fehler.de");
+        keycloak.fail = true;
+        Long projId = service.anfordernKeycloakOrg(mandantId).id;
+
+        // Jeder Lauf macht genau einen Versuch (Backoff setzt naechsterVersuchAm in die Zukunft); deshalb
+        // den Auftrag deterministisch MAX_VERSUCHE-mal sofort fällig schalten und verarbeiten.
+        for (int i = 0; i < MandantProjektion.MAX_VERSUCHE; i++) {
+            faelligJetzt(projId);
+            service.verarbeite(projId);
+        }
+
+        assertEquals(MandantProjektion.Status.FEHLGESCHLAGEN, statusVon(projId));
+        assertNull(keycloakOrgIdVon(mandantId), "bei Fehlschlag keine Org-ID zurückgeschrieben");
+    }
+
+    private void faelligJetzt(Long projId) {
+        QuarkusTransaction.requiringNew().run(() -> {
+            MandantProjektion p = MandantProjektion.findById(projId);
+            if (p != null) {
+                p.naechsterVersuchAm = Instant.now().minusSeconds(1);
+            }
         });
     }
 }

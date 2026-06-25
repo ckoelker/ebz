@@ -38,6 +38,7 @@ public final class MandantDtos {
             Mandant.Status status,
             Long organisationId,
             Long openolatOrganisationKey,
+            String keycloakOrganizationId,
             @Size(max = 300) String logoUrl,
             @Pattern(regexp = "^#[0-9a-fA-F]{6}$") String primaerFarbe,
             @Pattern(regexp = "^#[0-9a-fA-F]{6}$") String sekundaerFarbe) {

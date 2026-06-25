@@ -2,6 +2,7 @@ package de.netzfactor.ebz.controlling.integration.mandant.service;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 
 import jakarta.enterprise.context.ApplicationScoped;
@@ -13,6 +14,7 @@ import org.jboss.logging.Logger;
 
 import io.opentelemetry.api.baggage.Baggage;
 
+import de.netzfactor.ebz.controlling.integration.mandant.model.IdpFoederation;
 import de.netzfactor.ebz.controlling.integration.mandant.model.Mandant;
 import de.netzfactor.ebz.controlling.integration.mandant.model.MandantProjektion;
 import de.netzfactor.ebz.controlling.integration.mandant.model.MandantProjektion.Operation;
@@ -40,37 +42,57 @@ public class MandantProjektionService {
     OpenolatOrganisationProvisioning openolatOrg;
 
     @Inject
+    KeycloakOrganizationsProvisioning keycloakOrg;
+
+    @Inject
     Prozessspur prozess;
 
     /**
-     * Fordert — idempotent — die Org-Projektion des Mandanten an. Ein bereits offener {@code ORG_ANLEGEN}-
-     * Auftrag wird wiederverwendet (kein Dublett). Aufruf <b>innerhalb</b> der auslösenden Transaktion.
+     * Fordert — idempotent — die OpenOLAT-Org-Projektion des Mandanten an (M2). Ein bereits offener
+     * {@code ORG_ANLEGEN}-Auftrag wird wiederverwendet (kein Dublett). Aufruf <b>innerhalb</b> der
+     * auslösenden Transaktion.
      */
     @Transactional
     public MandantProjektion anfordern(Long mandantId) {
+        return anfordern(mandantId, Operation.ORG_ANLEGEN, "Org-Projektion anfordern",
+                Phase.MANDANT_ORG_PROJEKTION);
+    }
+
+    /**
+     * Fordert — idempotent — die Keycloak-Organization-Projektion des föderierten B2B-Mandanten an (M3).
+     * Quelle des Domain→Mandant-Routings und des {@code mandant}-Claims (K4). Aufruf <b>innerhalb</b> der
+     * auslösenden Transaktion.
+     */
+    @Transactional
+    public MandantProjektion anfordernKeycloakOrg(Long mandantId) {
+        return anfordern(mandantId, Operation.KEYCLOAK_ORG_ANLEGEN, "Keycloak-Org-Projektion anfordern",
+                Phase.MANDANT_IDP_FOEDERATION);
+    }
+
+    /** Gemeinsame, idempotent deduplizierende Enqueue-Logik je Mandant×Operation (Outbox). */
+    private MandantProjektion anfordern(Long mandantId, Operation op, String spanLabel, Phase phase) {
         Mandant m = Mandant.findById(mandantId);
         if (m == null) {
             throw new IllegalArgumentException("Unbekannter Mandant " + mandantId);
         }
         MandantProjektion offen = MandantProjektion
-                .find("mandant = ?1 and operation = ?2 and status = ?3", m, Operation.ORG_ANLEGEN, Status.ANGEFORDERT)
+                .find("mandant = ?1 and operation = ?2 and status = ?3", m, op, Status.ANGEFORDERT)
                 .firstResult();
         if (offen != null) {
             return offen;
         }
         MandantProjektion p = new MandantProjektion();
         p.mandant = m;
-        p.operation = Operation.ORG_ANLEGEN;
+        p.operation = op;
         p.status = Status.ANGEFORDERT;
         p.versuche = 0;
         p.naechsterVersuchAm = Instant.now();
         p.erstelltAm = Instant.now();
         p.prozessFall = aktuellerFall();
         p.persist();
-        // SERVICE_TASK: der aktivierte Mandant wird zur Org-Projektions-Anforderung (Outbox).
-        prozess.schritt("Org-Projektion anfordern", Akteur.SYSTEM, Prozess.System.BACKEND,
-                Typ.SERVICE_TASK, Phase.MANDANT_ORG_PROJEKTION);
-        LOG.infof("Org-Projektion angefordert für Mandant %d (%s)", mandantId, m.schluessel);
+        // SERVICE_TASK: der aktivierte Mandant wird zur Projektions-Anforderung (Outbox).
+        prozess.schritt(spanLabel, Akteur.SYSTEM, Prozess.System.BACKEND, Typ.SERVICE_TASK, phase);
+        LOG.infof("Projektion %s angefordert für Mandant %d (%s)", op, mandantId, m.schluessel);
         return p;
     }
 
@@ -106,8 +128,12 @@ public class MandantProjektionService {
         Mandant m = p.mandant;
         p.versuche++;
         try {
-            long orgKey = openolatOrg.ensureOrganisation(m.schluessel, m.anzeigeName, cssKlasse(m));
-            m.openolatOrganisationKey = orgKey;
+            switch (p.operation) {
+                case ORG_ANLEGEN -> m.openolatOrganisationKey =
+                        openolatOrg.ensureOrganisation(m.schluessel, m.anzeigeName, cssKlasse(m));
+                case KEYCLOAK_ORG_ANLEGEN -> m.keycloakOrganizationId =
+                        keycloakOrg.ensureOrganization(m.schluessel, m.anzeigeName, sammleDomains(m));
+            }
             p.status = Status.ERLEDIGT;
             p.erledigtAm = Instant.now();
             p.letzterFehler = null;
@@ -115,16 +141,39 @@ public class MandantProjektionService {
             p.letzterFehler = kurz(ex.getMessage());
             if (p.versuche >= MandantProjektion.MAX_VERSUCHE) {
                 p.status = Status.FEHLGESCHLAGEN; // Dead-Letter → HITL
-                LOG.errorf("Org-Projektion %d eskaliert nach %d Versuchen: %s", p.id, p.versuche, p.letzterFehler);
+                LOG.errorf("Projektion %d (%s) eskaliert nach %d Versuchen: %s",
+                        p.id, p.operation, p.versuche, p.letzterFehler);
             } else {
                 p.naechsterVersuchAm = Instant.now().plus(backoff(p.versuche));
-                LOG.warnf("Org-Projektion %d Versuch %d fehlgeschlagen (%s) → Retry %s",
-                        p.id, p.versuche, p.letzterFehler, p.naechsterVersuchAm);
+                LOG.warnf("Projektion %d (%s) Versuch %d fehlgeschlagen (%s) → Retry %s",
+                        p.id, p.operation, p.versuche, p.letzterFehler, p.naechsterVersuchAm);
             }
         }
-        // SERVICE_TASK in OpenOLAT (Jaeger + BPMN), dem gespeicherten Fall zugeordnet.
-        prozess.schritt(fall(p), "Mandant-Org in OpenOLAT anlegen", Akteur.SYSTEM, Prozess.System.OPENOLAT,
-                Typ.SERVICE_TASK, Phase.MANDANT_ORG_PROJEKTION);
+        // SERVICE_TASK im Zielsystem (Jaeger + BPMN), dem gespeicherten Fall zugeordnet.
+        boolean keycloak = p.operation == Operation.KEYCLOAK_ORG_ANLEGEN;
+        prozess.schritt(fall(p), keycloak ? "Mandant-Org in Keycloak anlegen" : "Mandant-Org in OpenOLAT anlegen",
+                Akteur.SYSTEM, keycloak ? Prozess.System.KEYCLOAK : Prozess.System.OPENOLAT,
+                Typ.SERVICE_TASK, keycloak ? Phase.MANDANT_IDP_FOEDERATION : Phase.MANDANT_ORG_PROJEKTION);
+    }
+
+    /**
+     * Sammelt die eindeutigen E-Mail-Domains aller {@link IdpFoederation}en des Mandanten (Semikolon-/Komma-
+     * separiert, lowercase) — die Routing-Domains der Keycloak-Organization (M3).
+     */
+    private static List<String> sammleDomains(Mandant m) {
+        List<String> domains = new ArrayList<>();
+        for (IdpFoederation f : IdpFoederation.<IdpFoederation>list("mandant", m)) {
+            if (f.emailDomains == null) {
+                continue;
+            }
+            for (String d : f.emailDomains.split("[;,]")) {
+                String dom = d.trim().toLowerCase();
+                if (!dom.isEmpty() && !domains.contains(dom)) {
+                    domains.add(dom);
+                }
+            }
+        }
+        return domains;
     }
 
     /** Manueller Neuversuch eines Dead-Letter-Auftrags (HITL-Aktion aus dem Cockpit). */

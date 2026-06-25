@@ -78,6 +78,14 @@ public class Mandant extends PanacheEntity {
     @Column(name = "openolat_organisation_key")
     public Long openolatOrganisationKey;
 
+    /**
+     * Keycloak-Organization-ID (UUID) — von der Keycloak-Org-Projektion (M3) für föderierte B2B-Mandanten
+     * gesetzt; Quelle des Domain→Mandant-Routings und des {@code mandant}-Claims (K4). Leer = nicht
+     * föderiert (EBZ-Kontexte) bzw. noch nicht projiziert.
+     */
+    @Column(name = "keycloak_organisation_id", length = 64)
+    public String keycloakOrganizationId;
+
     // ── Branding (Stufe 1: Logo + Farben; visuell klar unterscheidbar für K3) ──
     @Column(name = "logo_url", length = 300)
     public String logoUrl;

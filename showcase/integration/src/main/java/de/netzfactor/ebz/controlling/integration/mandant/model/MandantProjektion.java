@@ -31,9 +31,12 @@ public class MandantProjektion extends PanacheEntity {
     /** Maximale Zustellversuche vor Eskalation zur manuellen Klärung (HITL). */
     public static final int MAX_VERSUCHE = 5;
 
-    /** Was projiziert wird. Vorerst nur die Org-Anlage (M2); spätere Operationen erweitern hier. */
+    /**
+     * Was projiziert wird. {@link #ORG_ANLEGEN} legt die OpenOLAT-Organisation an (M2);
+     * {@link #KEYCLOAK_ORG_ANLEGEN} die Keycloak-Organization eines föderierten B2B-Mandanten (M3).
+     */
     public enum Operation {
-        ORG_ANLEGEN
+        ORG_ANLEGEN, KEYCLOAK_ORG_ANLEGEN
     }
 
     /** Outbox-Zustand: {@code ANGEFORDERT} = fällig; {@code FEHLGESCHLAGEN} = Dead-Letter (HITL). */

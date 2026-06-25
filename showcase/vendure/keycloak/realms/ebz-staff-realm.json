@@ -37,6 +37,10 @@
       {
         "name": "mcp-zugriff",
         "description": "Darf den hauseigenen MCP-Server (/mcp) aufrufen (Agent-/M2M-Zugriff, Scope)"
+      },
+      {
+        "name": "mandant-pflege",
+        "description": "Darf Mandanten (eLearning-Vermarktung) anlegen/pflegen, projizieren (OpenOLAT/Keycloak) und Seats verwalten (M1–M5 RBAC)"
       }
     ]
   },
@@ -200,7 +204,8 @@
         "rechnung-pflege",
         "crm-lesen",
         "crm-pflege",
-        "crm-datenschutz"
+        "crm-datenschutz",
+        "mandant-pflege"
       ],
       "groups": [
         "/controlling"

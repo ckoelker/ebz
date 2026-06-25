@@ -245,6 +245,30 @@ public class MandantResource {
         return Response.accepted(toDto(p)).build();
     }
 
+    /**
+     * Fordert die Keycloak-Organization-Projektion eines föderierten B2B-Mandanten an (M3, idempotent,
+     * Outbox). Der Dispatcher legt die Organization (mit den Föderations-Domains + {@code mandant}-Attribut)
+     * asynchron an und schreibt {@code keycloakOrganizationId} zurück. {@code 409}, wenn keine
+     * IdP-Föderation hinterlegt ist (ohne Domain keine Keycloak-Organization). Sonst {@code 202 Accepted}.
+     */
+    @RolesAllowed("mandant-pflege")
+    @POST
+    @Path("/{id}/keycloak-projizieren")
+    @Consumes(MediaType.WILDCARD) // kein Request-Body
+    @Transactional
+    public Response keycloakProjizieren(@PathParam("id") Long id) {
+        Mandant m = Mandant.findById(id);
+        if (m == null) {
+            return notFound();
+        }
+        if (IdpFoederation.count("mandant", m) == 0) {
+            return conflict("Mandant '" + m.schluessel + "' hat keine IdP-Föderation — "
+                    + "ohne E-Mail-Domain kann keine Keycloak-Organization angelegt werden.");
+        }
+        MandantProjektion p = projektion.anfordernKeycloakOrg(id);
+        return Response.accepted(toDto(p)).build();
+    }
+
     /** Lese-Sicht: jüngster Projektions-Auftrag des Mandanten (Status/Fehler/erzeugter Org-Key). */
     @GET
     @Path("/{id}/projektion")
@@ -341,7 +365,7 @@ public class MandantResource {
     private static MandantDto toDto(Mandant e) {
         return new MandantDto(e.id, e.version, e.schluessel, e.anzeigeName, e.vertragstyp, e.status,
                 e.organisation == null ? null : e.organisation.id, e.openolatOrganisationKey,
-                e.logoUrl, e.primaerFarbe, e.sekundaerFarbe);
+                e.keycloakOrganizationId, e.logoUrl, e.primaerFarbe, e.sekundaerFarbe);
     }
 
     private static IdpFoederationDto toDto(IdpFoederation f) {

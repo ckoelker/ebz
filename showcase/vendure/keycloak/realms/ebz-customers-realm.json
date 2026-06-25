@@ -1,6 +1,7 @@
 {
   "realm": "ebz-customers",
   "enabled": true,
+  "organizationsEnabled": true,
   "sslRequired": "none",
   "registrationAllowed": true,
   "registrationEmailAsUsername": true,
