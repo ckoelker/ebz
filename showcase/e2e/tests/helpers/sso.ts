@@ -27,6 +27,12 @@ export async function keycloakLogin(
 
   await expect(page.locator('#username')).toBeVisible();
   await page.fill('#username', creds.username);
+  // Identity-first-Login (aktiv durch den organization-Scope): Passwort erscheint erst nach dem
+  // Username-Schritt. Ist das Passwortfeld schon da (klassisches Ein-Seiten-Login), direkt ausfüllen.
+  if (!(await page.locator('#password').isVisible().catch(() => false))) {
+    await page.click('#kc-login, input[type=submit], button[type=submit]');
+    await expect(page.locator('#password')).toBeVisible({ timeout: 30_000 });
+  }
   await page.fill('#password', creds.password);
   await Promise.all([
     page.waitForURL((u) => !u.toString().includes('keycloak'), { timeout: 60_000 }),
