@@ -35,7 +35,24 @@
 | 4 | Rollen-Scoping pro Mandant | ✅ Rollen pro Org | 🟡 IOMAD scoped | ✅ Tenant-Rollen | ✅ volle Trennung je Instanz |
 | 5 | Mandanten-Admin (Self-Service) | 🟡 Admin org-begrenzt | 🟡 IOMAD Company-Manager | ✅ Tenant-Admin | ✅ eigener Admin je Instanz |
 | 6 | Multi-Mandant-User/Switcher | ❌ eine Org-Zugehörigkeit | 🟡 IOMAD Switcher | ✅ User in n Tenants | ❌ getrennt (2 Accounts) |
-| 7 | Eigene Tenant-URL/Subdomain | ❌ eine Domain | 🟡 IOMAD per-Tenant-URL | ✅ Custom-URL je Tenant | ✅ eigene Domain je Instanz |
+| 7 | Eigene Tenant-URL/Subdomain | ❌ **eine Domain — WAR-belegt** (s. Befund unter §1) | 🟡 IOMAD per-Tenant-URL | ✅ Custom-URL je Tenant | ✅ eigene Domain je Instanz |
+
+> **🔎 Quellen-Befund zu #7 (eigene Tenant-URL, 2026-06-25, in der .war verifiziert):** Auf einer *geteilten*
+> Instanz ist die persistente per-Kunde-(Sub)Domain **prinzipbedingt nicht lösbar**. In der WAR ist
+> `org.olat.core.helpers.Settings.domainName` ein **statisches** Feld (einmal aus `server.domainname` gesetzt);
+> `createServerURI()` baut **jede** absolute URL — OAuth-`redirect_uri`, Mail-Links, REST, Deep-Links — allein
+> daraus, **ohne** Host-Header / `X-Forwarded-Host` (Bytecode geprüft). Es gibt **keinen** `server.*`-Key für
+> Proxy-/Forwarded-Host. Empirisch bestätigt: Zugriff über `oN.localhost` → OpenOLAT setzt
+> `redirect_uri=…localhost…` (kanonischer Host), `X-Forwarded-Host` wird ignoriert → die Subdomain **bleibt
+> nicht** (spätestens beim Login/Cookies). **Pfad-basiert (`lern.ebz.de/m1`, `/m2`) scheitert auf einer
+> geteilten Instanz aus demselben Grund:** auch `WebappHelper.servletContextPath` ist ein einzelnes statisches
+> Feld (ein Mount-Punkt), und OpenOLAT hat **keinen** per-Pfad-Tenant-Dispatch (die web.xml-`<url-pattern>`
+> `/raw/*`,`/restapi/*`,`/rss/*`,`/*` sind app-interne Funktionspfade) → `/m1` würde als Fachroute (Permalink)
+> interpretiert. Persistente eigene URL — Subdomain **oder** Sub-Pfad — liefert daher nur **Instanz-pro-Mandant**
+> (je Instanz eigener `server.domainname`/`server.contextpath`, #7 ✅) oder Moodle WP/IOMAD. *Hübschere
+> Verpackung:* Instanz-pro-Mandant **path-mounted** (`/m1`,`/m2`) hinter EINER Domain/EINEM Cert — operativ
+> trotzdem n Instanzen. **Branding (#8 ✅), Kunden-IdP-Login (#14 ✅) und Org-Isolation sind davon unberührt und
+> auf shared bereits gebaut** — fehlt einzig die eigene URL.
 
 ## §2 Branding / White-Label (B)
 
@@ -291,6 +308,15 @@ kosten kämen bei Moodle teils als **laufende Betriebs-/Skill-Steuer** für eine
 schwerer als der einmalige Tenant-Layer-Bau bei OpenOLAT. **Wahrnehmung** spielt fair: IOMAD rebrandet je
 Mandant (Endkunde sieht *seine* Marke), aber intern bleibt's „wir fahren Moodle"; OpenOLAT ist im B2B ein
 **weißer Fleck** — für ein *premium* White-Label eher Vorteil als Makel.
+
+**Eine harte Grenze von shared bleibt (in der .war belegt, §1-#7):** die **persistente eigene Kunden-URL** —
+Subdomain (`oN.kunde.de`) **oder** Sub-Pfad (`…/mN`) — liefert eine *geteilte* Instanz prinzipbedingt nicht
+(OpenOLAT pinnt **jede** absolute URL auf die statische `server.domainname` + `servletContextPath`, ohne
+Host-/Forwarded-Header). Branding, Kunden-IdP-Login und Org-Isolation gibt es auf shared (gebaut), **nur die
+eigene URL nicht.** Ist eine eigene Domain für einen Kunden **zwingend**, gehört genau dieser Kunde auf
+**Instanz-pro-Mandant** (wahlweise path-mounted hinter einer Domain/einem Cert) — die übrigen bleiben auf der
+geteilten Instanz. Das stützt ein **hybrides** Zielbild: shared als Default, Instanz-pro-Mandant als Premium-
+Option für domain-zwingende Enterprise-Kunden.
 
 **Das eine ernste Risiko ist benannt und früh testbar:** *Wie schwer ist der Mandanten-Schicht-Eigenbau bei
 OpenOLAT wirklich?* → erster PoC-Sprint. Fällt er leicht → OpenOLAT klar. Wird er zäh → **IOMAD ziehen** und
