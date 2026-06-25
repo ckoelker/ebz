@@ -9,6 +9,13 @@
 > den Enterprise-Kunden abzustimmen** (siehe §8). Rechtliche/lizenzrechtliche Aussagen = Recherchestand,
 > vor Realisierung final prüfen.
 
+> **Fokussierter PoC (2026-06-25):** Die gebaute Teilmenge dieses Plans (Typ E, OpenOLAT shared, ohne
+> Reseller/Reporting-Ausspielung) ist eigenständig beschrieben in
+> [PoC-OpenOLAT-Mandanten-Integration.md](PoC-OpenOLAT-Mandanten-Integration.md) — misst gezielt den
+> **Eigenbau-Aufwand der Mandanten-Schicht** als Entscheidungs-Evidenz (vgl.
+> [LMS-Plattformvergleich §12.2](LMS-Plattformvergleich-OpenOLAT-Moodle.md); Moodle Workplace geparkt,
+> IOMAD-Spike bei Kollegen).
+
 **Reifegrad-Legende:** 🟢 vorhanden & nutzbar · 🟡 in Arbeit · ⚪ geplant/offen
 
 ---
