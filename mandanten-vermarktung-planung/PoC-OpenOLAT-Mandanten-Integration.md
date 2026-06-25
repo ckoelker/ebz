@@ -169,6 +169,15 @@ volle White-Label (Stufe 2) · Content-Update-in-place mit Progress-Erhalt.
   DOM verifizieren**; Stufe-1-Block in `theme.scss` (Logo + 2–3 Farben) → Recompile; Gegenprobe: B2B-Mandant
   sieht Marke, **EBZ-Default unverändert**. Trägt per-Org-CSS nicht → **Fallback D5** (nur IdP-Login-Branding),
   EBZ unberührt. **→ K3.** Aufwands-Notiz (K7).
+  - **Ergebnis (2026-06-25, verifiziert):** Das Backend setzt `OrganisationVO.cssClass = mandant-<schlüssel>`
+    (via REST round-trip bestätigt: DEMO_AG-Org key 2, `cssClass=mandant-demo-ag`). **Aber OpenOLAT rendert
+    diese Org-cssClass NICHT** in die Seiten eines Org-Mitglieds (DOM trägt nur `o_lang_*`, kein
+    `[class*=mandant]`) — die cssClass ist ein reines Datenmodell-/Admin-Feld, **kein** per-User-Theme-Hebel.
+    → **per-Org-CSS in OpenOLAT scheidet aus; Fallback D5 greift.** Charakterisierungs-Test hält den Befund
+    fest: `showcase/e2e/tests/mandant-branding.spec.ts`. **Sichtbare per-Kunde-CI lebt damit an zwei Stellen:**
+    (a) **per-IdP Keycloak-Login-Seite** (Realm `ebz-kunde-demo` bereits distinkt — im Brokering-Flow belegt),
+    (b) **SPAs** über den `mandant`-Claim + die Mandant-Branding-Felder (`primaerFarbe/sekundaerFarbe/logoUrl`),
+    die der A4-Endpunkt `/lms/portal/landing` schon ausliefert. **Stufe-1-`theme.scss`-Recompile entfällt.**
 - **M1 — Datenmodell + CRUD:** `Mandant`/`IdpFoederation`/`Lizenzvertrag` + `Kurseinschreibung.mandant` +
   `WbtKurs.sollStundenAnrechenbar`; `MandantResource`-CRUD; CHECK-Constraints bei neuen Enums
   ([[jpa-enum-check-constraints]]); rest-assured.

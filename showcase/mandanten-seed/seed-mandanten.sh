@@ -53,8 +53,17 @@ seed_mandant() {
     ok "Mandant $schluessel existiert (id $mid)"
   fi
 
-  # B2B mit IdP-Foederation: Foederation + Keycloak-Org-Projektion + org<->IdP-Link.
+  # B2B mit IdP-Foederation: OpenOLAT-Org + Foederation + Keycloak-Org-Projektion + org<->IdP-Link.
   if [ -n "$idp" ] && [ -n "$domains" ]; then
+    # OpenOLAT-Org (M2): Seat-/Mitglieder-Container + per-Org-Anker (cssClass). Backend-getrieben.
+    curl -s -o /dev/null -H "$AUTH" -X POST "$API/mandant/$mid/projizieren"
+    local olk=""
+    for _ in $(seq 1 12); do
+      olk=$(curl -s -H "$AUTH" "$API/mandant/$mid" | jload "print(d.get('openolatOrganisationKey') or '')")
+      [ -n "$olk" ] && break; sleep 3
+    done
+    [ -n "$olk" ] && ok "OpenOLAT-Org projiziert (Backend): key $olk" || ok "OpenOLAT-Org-Projektion angefordert"
+
     local hasf
     hasf=$(curl -s -H "$AUTH" "$API/mandant/$mid/foederationen" | jload "print(len(d))")
     if [ "$hasf" = "0" ] || [ -z "$hasf" ]; then
