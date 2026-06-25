@@ -10,6 +10,11 @@ Ablösung des bestehenden, kommerziellen **Lemon LMS**. Analog zu `rechnungsstel
   **OpenOLAT · Open edX · Selbst machen · Lemon**, Empfehlung **OpenOLAT** (Fallback Open edX,
   Entscheidungsregel = SCORM-Version), die Integrationsarchitektur (SSO + Outbox→Einschreibung),
   Phasen-Roadmap L0–L5, offene Gating-Punkte und Quellen.
+- **[Konzept-Rise360-Content-Verteilung.md](Konzept-Rise360-Content-Verteilung.md)** — wie die in
+  **Articulate Rise 360** erstellten Lernnuggets in die OpenOLAT-Instanzen kommen: **Push statt Pull**
+  (Rise hat keine Content-Export-API), Ingest → Content-Outbox → Per-Instanz-Dispatcher (`PUT /repo/entries`),
+  Mapping für idempotente Updates, Fallstricke (Re-Export-Identität/Lernfortschritt/Drift/Medienlast); inkl.
+  **Alternativen-Abwägung Git/GitOps vs. „host-once-per-LTI"** (SCORM Cloud) und offene Gating-Punkte.
 - **[L1-Code-Plan-LMS-Anbindung.md](L1-Code-Plan-LMS-Anbindung.md)** — detaillierter
   Realisierungsplan (kein Code). Entscheidungen festgezurrt: **OpenOLAT (SCORM 1.2)**, eigene
   Postgres-DB **`openolat`**, Katalog **aus MDM projizieren**. Enthält Verortung, Deployment,

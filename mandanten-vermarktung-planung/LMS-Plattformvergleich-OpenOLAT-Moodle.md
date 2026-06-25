@@ -1,7 +1,9 @@
 # LMS-Plattformvergleich — OpenOLAT (shared & Instanz/Mandant) vs. Moodle (OSS & Workplace)
 
-> **Anlass:** Die Geschäftsführung präferiert **Moodle**. Diese Matrix vergleicht entlang **40 Kriterien**
-> vier Optionen für die **mandantenfähige Vermarktung von EBZ-eLearning** und spricht eine Empfehlung aus.
+> **Anlass:** Die Geschäftsführung präferiert **Moodle**. Diese Matrix vergleicht entlang **43 Kriterien**
+> (40 + 2 Content-Verteilung §4b + 1 Enterprise-MT-Verbreitung §10b, ergänzt 2026-06-24 nach Rise-360- und
+> Adoptions-Recherche) vier Optionen für die **mandantenfähige Vermarktung von EBZ-eLearning** und spricht
+> eine Empfehlung aus.
 > **Stand:** 2026-06-24 · **Status:** Entscheidungsvorlage. Lizenz-/Preis- und Feature-Aussagen =
 > Recherchestand 2026-06, vor Vertrag final prüfen (Quellen am Ende).
 
@@ -63,6 +65,20 @@
 | 19 | H5P / interaktiv | 🟡 via Plugin/SCORM-Trick | ✅ H5P im Core | ✅ H5P im Core | 🟡 via Plugin/SCORM-Trick |
 | 20 | Autorenwerkzeug | ✅ Kurseditor | ✅ stark | ✅ stark | ✅ Kurseditor je Instanz |
 
+## §4b Content-Verteilung & -Pflege über Mandanten (D+, ergänzt 2026-06-24)
+
+> Ergänzt nach der Rise-360-Content-Analyse
+> ([../lms-anbindung-planung/Konzept-Rise360-Content-Verteilung.md](../lms-anbindung-planung/Konzept-Rise360-Content-Verteilung.md)).
+> **Treiber:** viele Nuggets enthalten **Video** → Content-Gewicht und Verteil-/Storage-Kosten werden
+> entscheidungsrelevant. Trennt „**einmal speichern, alle referenzieren**" (geteilte Tenancy) von „**in jede
+> Instanz kopieren**" (Instanz-pro-Mandant). Die beiden Kriterien sind korreliert (beide folgen aus der
+> Kopie-vs-Referenz-Wahl) → bei video-schweren Inhalten verdienen sie **hohes Gewicht** (vgl. §11/§12.1).
+
+| # | Kriterium | OpenOLAT shared (geplant) | Moodle OSS (+IOMAD) | Moodle Workplace | OpenOLAT Instanz/Mandant (API-first) |
+|--|--|--|--|--|--|
+| 41 | Content einmal speichern, alle Mandanten referenzieren (Storage, v. a. Video) | ✅ ein Repo-Entry, alle Orgs referenzieren (Storage × 1) | ✅ IOMAD Shared Courses (Storage × 1) | ✅ zentrale Kursbibliothek/Programs (Storage × 1) | ❌ Kopie je Instanz (Storage × N; bei Video gravierend) |
+| 42 | Update-Propagierung / Drift-Freiheit (ein Update → überall) | ✅ Update an einer Stelle, sofort für alle | ✅ Shared-Course-Update zentral | ✅ zentrale Bibliothek | ❌ Re-Import in n Instanzen, Versions-Drift |
+
 ## §5 API / Provisionierung / Automatisierung (E)
 
 | # | Kriterium | OpenOLAT shared (geplant) | Moodle OSS (+IOMAD) | Moodle Workplace | OpenOLAT Instanz/Mandant (API-first) |
@@ -115,22 +131,61 @@
 
 ---
 
-## §11 Auswertung (indikativ, ungewichtet: ✅=2 · 🟡=1 · ❌=0, max. 80)
+## §10b Verbreitung & Enterprise-Multi-Tenant-Referenzen (Recherche 2026-06)
 
-| Option | Punkte | Profil |
-|---|:--:|---|
-| **Moodle Workplace** | **≈ 66** | Stärkste **Feature-Abdeckung** nativ (Mandanten, Branding, Per-Tenant-SSO, Certifications, Reporting). Schwach: **Kosten, Lock-in, Stack-Fit, Souveränität**. |
-| **OpenOLAT Instanz/Mandant (API-first)** | **≈ 61** | **Volle Isolation & White-Label** (Domain/Theme/Login/IdP je Instanz), **OSS/0 €/souverän/JVM-Stack**, nutzt Bestehendes. Schwach: **Betriebsaufwand n×**, kein Multi-Tenant-User, TCO skaliert mit Mandantenzahl. |
-| **Moodle OSS (+IOMAD)** | **≈ 56** | Bester **Kostenausgleich**: 0 € + native Mandanten via IOMAD + größtes DACH-Ökosystem. Schwach: **PHP-Stack-fremd**, IOMAD-Bus-Faktor. |
-| **OpenOLAT shared (wie geplant)** | **≈ 54** | Bester **Stack-Fit + bereits gebaut + 0 €**, geringster Betrieb. Mandanten/Branding/Reporting aber **Eigenbau**. |
+> **Datenlage-Vorbehalt:** Harte, getrennte Zahlen *für die Multi-Tenant-Nutzung* sind öffentlich kaum
+> verfügbar (Workplace ist partner-gated, IOMAD/OpenOLAT führen keine MT-Zähler). Folgende Einordnung ist
+> qualitativer Recherchestand, kein belastbares Marktdatum.
 
-> Die Summen liegen eng beieinander; entscheidend ist die **Gewichtung**. Auffällig: **OpenOLAT
-> Instanz/Mandant erreicht fast Workplace-Niveau bei Isolation/Branding/SSO — ohne Lizenz, Lock-in und
-> Stack-Bruch**, erkauft das aber mit linear steigendem Betriebsaufwand (n Instanzen).
+| Option | Verbreitung (gesamt) | Enterprise-Multi-Tenant-Praxis | Einordnung |
+|---|---|---|---|
+| **Moodle-Familie (Basis)** | **#1 LMS weltweit:** 148.000+ registrierte Sites, **500 Mio.+ Nutzer**, ~15 % Markt; DACH-Marktführer (~48 % DE). Marken: IBM, Allianz, Shell, Vodafone, NHS, Roche; 606 Orgs mit 10.001+ MA | — (gilt für die ganze Familie) | größtes Ökosystem/Talentpool/Partner-Netz |
+| **Moodle Workplace** | Teil der Moodle-Familie, **kommerziell/partner-only** | ✅ **dafür gebaut**: native MT bei Konzernen/Multi-Division/Franchise; Referenzen über Certified Partner | stärkste **belegte** Enterprise-MT-Basis, Zahlen aber partner-gated |
+| **Moodle OSS + IOMAD** | IOMAD = **verbreitetste *freie* MT-Lösung** für Moodle; Deployments mit **50+ Orgs aus einer Instanz** dokumentiert | 🟡 Corporate/Franchise real genutzt, aber weniger prominent belegt als Workplace; kleiner Maintainer-Kreis (Bus-Faktor) | bester freier MT-Kompromiss; Reife/Release-Lag prüfen |
+| **OpenOLAT shared (Organisations-MT)** | stark in **DACH-Hochschule/Public** (frentix/UZH-Spin-off; Uni Innsbruck, CAU Kiel, HS Furtwangen; OLAT-Vorgänger UZH+ETH 50.000+ Nutzer) | 🟡 **Organisations als *Multi-Tenant*-Modell jung/dünn belegt** — große Installs sind eher *ein* großer Mandant je Instanz, nicht n Tenants in einer | solide Plattform, MT-in-einer-Instanz wenig referenziert |
+| **OpenOLAT Instanz-pro-Mandant** | **Instanz-pro-Org ist in OpenOLAT der Normalfall** (jede Hochschule betreibt ihre eigene Instanz) | 🟡 als *Muster* allgegenwärtig, aber „**ein Anbieter orchestriert N Instanzen als Managed-MT-Angebot**" bespoke/kaum als Produkt belegt | bewährt als Einzelinstanz, MT-Orchestrierung = Eigenleistung |
+
+**Lesart (ehrlich, auch gegen die OpenOLAT-Präferenz):** Nach *belegter* Enterprise-Multi-Tenant-Praxis führt
+**Moodle Workplace** klar, gefolgt von **IOMAD** (freie MT mit echten Mehr-Org-Deployments). **Beide
+OpenOLAT-Wege** sind als Plattform solide, aber **im Multi-Tenant-Betrieb am dünnsten referenziert** —
+OpenOLAT läuft überwiegend *ein-mandantig je Instanz*. Das ist ein **Reife-/Risiko-Argument gegen die
+OpenOLAT-MT-Eigenbauten** (shared wie instanz-orchestriert) und relativiert deren Punktevorsprung zusätzlich.
+
+| # | Kriterium | OpenOLAT shared | Moodle OSS (+IOMAD) | Moodle Workplace | OpenOLAT Instanz/Mandant |
+|--|--|--|--|--|--|
+| 43 | Belegte Enterprise-Multi-Tenant-Referenzen | 🟡 dünn (Organisations-MT jung) | 🟡 IOMAD: 50+ Orgs/Instanz dokumentiert | ✅ dafür gebaut, Konzern-Referenzen (partner) | 🟡 Muster verbreitet, Managed-MT bespoke |
+
+---
+
+## §11 Auswertung (indikativ, ungewichtet: ✅=2 · 🟡=1 · ❌=0, max. 86)
+
+| Option | Punkte (40 Krit.) | **+ §4b/§10b** | **Gesamt /86** | Profil |
+|---|:--:|:--:|:--:|---|
+| **Moodle Workplace** *(geparkt — Kosten)* | ≈ 66 | +6 | **≈ 72** | Höchster Score, aber **aus Lizenzkosten (~50–150 k €+/Jahr, Partner-only) geparkt** (§12) → fällt aus der engeren Wahl. Stärkste Feature-Abdeckung + beste belegte Enterprise-MT-Praxis; Schwach: Kosten, Lock-in, Stack-Fit, Souveränität. |
+| **OpenOLAT Instanz/Mandant (API-first)** | ≈ 61 | **+1** | **≈ 62** | **Volle Isolation & White-Label**, **OSS/0 €/souverän/JVM-Stack**, nutzt Bestehendes. Schwach: **Betriebsaufwand n×**, TCO **und Content-Storage** skalieren mit Mandantenzahl, **Managed-MT-Orchestrierung kaum referenziert**. |
+| **Moodle OSS (+IOMAD)** | ≈ 56 | +5 | **≈ 61** | Bester **Kostenausgleich**: 0 € + native Mandanten via IOMAD + Shared-Courses + **verbreitetste freie MT** + größtes DACH-Ökosystem. Schwach: **PHP-Stack-fremd**, IOMAD-Bus-Faktor. |
+| **OpenOLAT shared (wie geplant)** | ≈ 54 | +5 | **≈ 59** | Bester **Stack-Fit + bereits gebaut + 0 €**, geringster Betrieb, **Content einmal halten**. Schwach: Mandanten/Branding/Reporting **Eigenbau**, **Organisations-MT jung/dünn belegt**. |
+
+> Die Zusatzkriterien (§4b Content-einmal-halten/Drift + §10b belegte Enterprise-MT) geben **+5/+6 an die
+> geteilten/Moodle-Optionen** und **+1 an Instanz-pro-Mandant** → dessen ungewichteter Vorsprung schrumpft von
+> 5–7 auf **1–2 Punkte**. **Zwei gegenläufige Befunde:** (a) **Content-Gewicht (Video)** drückt Richtung
+> *geteilter* Tenancy; (b) **Adoptions-Evidenz** drückt innerhalb der geteilten Optionen Richtung *Moodle*
+> (Workplace/IOMAD), weil OpenOLATs MT am wenigsten battle-tested ist. Entscheidend bleibt die **Gewichtung**
+> (siehe §12.1).
+>
+> **Hinweis (2026-06-25):** Der Spitzenreiter **Moodle Workplace ist aus Kostengründen geparkt** (§12) → die
+> **engere Wahl ist der Zweikampf OpenOLAT shared ↔ Moodle OSS+IOMAD**; Instanz-pro-Mandant nur noch Nische
+> (Content-Gewicht). Zugespitzte Empfehlung: **§12.2**.
 
 ---
 
 ## §12 Empfehlung
+
+> **⚠️ Aktualisierte Entscheidungsgrundlage (2026-06-25): Moodle Workplace ist aus Kostengründen geparkt.**
+> Die ~50–150 k €+/Jahr Lizenz (Partner-only) sind aktuell **kein gangbarer Weg**. Damit fällt die einzige
+> „fertig kaufen, vendor-bewiesene" Option weg; das Feld besteht nur noch aus **OSS-/0 €-Wegen**, bei denen
+> die B2B-Mandanten-Schicht so oder so selbst integriert wird. **Die maßgebliche, zugespitzte Empfehlung
+> steht in §12.2**; die ursprüngliche Drei-Wege-Logik (§12 unten) bleibt als Historie/Begründung stehen.
 
 **Timing-Befund:** Der Mandanten-Layer ist **geplant, aber noch nicht gebaut** (nur WBT-Basis L0–L3 steht)
 → **jetzt** ist der günstigste Entscheidungszeitpunkt.
@@ -151,12 +206,93 @@
   → **Moodle Workplace** — geringster Bauaufwand, deckt E **und** R nativ ab; Preis: Lizenz, Partner-Lock-in,
   PHP-Fremdbetrieb, geringere Souveränität (widerspricht der OSS-/Kein-Lock-in-Linie des Showcase).
 
-**Konkreter Vorschlag (build-vs-buy mit Evidenz):** zeitlich begrenzter **Doppel-PoC** —
-1) **OpenOLAT Instanz-pro-Mandant** für **einen Enterprise-Demokunden** (eigene Domain/Theme/Realm + IdP,
-   Inhalte per REST verteilt, Weiterbildungsnachweis), und
-2) **Moodle OSS + IOMAD** für **zwei Reseller-Demomandanten** (Branding/Seat-Lizenz/Report).
-So werden GF-Präferenz (Moodle) und der souveräne OpenOLAT-Weg **gegeneinander an realen Fällen** validiert,
-bevor der teure Mandanten-Layer überhaupt gebaut wird.
+### §12.1 Re-Bewertung: Content-Gewicht (Video) als dritter Hebel
+
+Die Empfehlung hing bisher an zwei Hebeln (**Mandanten-Typ**, **Mandantenzahl**). Die Rise-360-Analyse fügt
+einen **dritten** hinzu: **Content-Gewicht**. Bei **video-schweren Nuggets** kostet „Instanz-pro-Mandant"
+nicht nur n× Betrieb, sondern n× **Storage + laufende Medien-Verteilung + Drift-Risiko** (Kriterien 41/42).
+Das erodiert genau den Punktevorsprung, mit dem Instanz-pro-Mandant bei Isolation/Branding führt:
+
+- **Ungewichtet** rücken die geteilten Optionen auf (Instanz 61 vs. shared 58/60 — Abstand von 5–7 auf 1–3
+  Punkte geschrumpft).
+- **Gewichtet** man Content-Verteilung hoch (was Video rechtfertigt), kippt es zugunsten **geteilter
+  Tenancy** — also **„eine OpenOLAT-Instanz mit eingeschränkter Mandanten-CI"** (Org-je-Mandant + CSS-Klasse
+  pro Org-Typ + Keycloak-Login-Theme), exakt die tragende Architektur aus
+  [Plan-Mandanten-Vermarktung §3](Plan-Mandanten-Vermarktung-OpenOLAT.md). Damit löst sich die scheinbare
+  Spannung zwischen den beiden Planungsdokumenten **zugunsten der Single-Instance-Architektur**, sobald
+  Content-Gewicht mitzählt.
+
+**Präzisierte Empfehlung (drei Hebel):**
+- **Wenige Enterprise-Kunden · eigene Domain/Marke zwingend · eher leichte Inhalte:** Instanz-pro-Mandant
+  bleibt vertretbar (Isolation/White-Label gewinnt; Storage × N verschmerzbar).
+- **Video-schwere Inhalte und/oder mehr als eine Handvoll Mandanten:** **geteilte Instanz** — OpenOLAT shared
+  mit eingeschränkter CI (Stack-Fit, bereits gebaut, 0 €) **oder** Moodle OSS+IOMAD (GF-Wunsch). Content
+  einmal halten, alle referenzieren.
+- **Brücke „beides":** Will man Instanz-pro-Mandant aus **Branding**-Gründen, aber Video **nicht n× kopieren**
+  → **„host-once-per-LTI"** (Rise-Doc, §Alternativen): Inhalt zentral hosten, je Instanz per LTI referenzieren.
+
+**Vierter Hebel — Adoptions-Evidenz (§10b):** Die Verbreitungs-Recherche zieht *innerhalb* der geteilten
+Optionen in eine andere Richtung: **Moodle Workplace/IOMAD** haben die **belegtere Enterprise-Multi-Tenant-
+Praxis**, während OpenOLATs Multi-Tenancy (shared wie instanz-orchestriert) **am dünnsten referenziert** ist
+(OpenOLAT läuft meist ein-mandantig je Instanz). Daraus folgt eine ehrliche Spannung:
+- **Content-Gewicht** sagt „geteilte Tenancy" (gut für *OpenOLAT shared*).
+- **Adoptions-Evidenz** sagt „wenn schon geteilt, dann eher *Moodle* (Workplace/IOMAD)" — reifer für MT.
+- **OpenOLAT shared** gewinnt nur, wenn **Stack-Fit/OSS/Souveränität/bereits-gebaut** hoch und das
+  **MT-Reife-Risiko** akzeptiert wird (Eigenbau, wenig Referenzen).
+
+**Fazit zur Ausgangsfrage:** Ja — video-schwere Nuggets sprechen für **eine geteilte Instanz mit
+eingeschränkter Mandanten-CI** statt Instanz-pro-Mandant; das bestätigt die §3-Setzung des Plans, die
+§12-Empfehlung (Instanz-pro-Mandant für Typ E) gilt nur noch für den **branding-kritischen, content-leichten**
+Sonderfall. **Ob diese geteilte Instanz OpenOLAT (Stack-Fit/souverän, aber MT-Eigenbau & wenig referenziert)
+oder Moodle+IOMAD (reifere, belegtere MT, aber PHP-fremd) ist, bleibt der offene Build-vs-Buy-Punkt** — genau
+das validiert der Doppel-PoC unten.
+
+### §12.2 Zugespitzte Empfehlung — ohne Moodle Workplace (maßgeblich, 2026-06-25)
+
+Mit geparktem Workplace bleibt **kein** vendor-bewiesenes B2B-MT-Produkt im Budget; alle Wege sind OSS und
+verlangen Eigenintegration der Mandanten-Schicht. Die Frage verschiebt sich von „kaufen vs. bauen" zu
+**„welchen Stack baue ich — und wie viel davon schenkt mir das System".**
+
+**Das Feld schrumpft real auf zwei.** **OpenOLAT Instanz-pro-Mandant** scheidet durch das Content-Gewicht
+(Video × N Instanzen = Storage × N + Drift) aus — Restnische: wenige Enterprise-Kunden mit eigener Domain
+**und** content-leichten Inhalten. Bleibt der **Zweikampf OpenOLAT shared ↔ Moodle OSS + IOMAD**, ungewichtet
+fast gleichauf (59 ↔ 61); zwei Hebel entscheiden:
+
+| Hebel | OpenOLAT shared | Moodle OSS + IOMAD |
+|---|---|---|
+| Stack | ✅ JVM/Postgres = euer Haus | ❌ **PHP** = Fremdkörper im Quarkus-Haus |
+| Mandanten-Schicht | ❌ **Eigenbau** (Org + Seat + Branding) | ✅ **nativ via IOMAD** (Companies/Branding/Seat) |
+| Content share-once (Video) | ✅ ein Repo-Entry, n Orgs | ✅ Shared Courses |
+| Bereits gebaut | ✅ L0–L3 stehen | ❌ Neuaufbau |
+| MT-Reife belegt | 🟡 Organisations-MT jung | 🟡 IOMAD real, aber **Fork-Lag + Bus-Faktor** |
+
+**Der eigentliche Trade-off:** *IOMAD schenkt genau die Mandanten-Schicht, die OpenOLAT-shared zum Eigenbau
+macht — um den Preis eines PHP-Stacks (zweite Runtime/Patch-/Security-Kultur) und des IOMAD-Fork-Risikos.*
+Umgekehrt behält **OpenOLAT-shared Stack-Kohärenz + die investierte Arbeit + die Hoheit über die B2B-Logik**.
+
+**Empfehlung: OpenOLAT shared als Primärwette, IOMAD als Hedge.** Für ein konsequentes Quarkus/JVM-Haus mit
+Souveränitäts-Linie ist ein PHP-System **kein „kostenloser" Gewinn** — die bei Workplace gesparten Lizenz-
+kosten kämen bei Moodle teils als **laufende Betriebs-/Skill-Steuer** für einen Fremdstack zurück; das wiegt
+schwerer als der einmalige Tenant-Layer-Bau bei OpenOLAT. **Wahrnehmung** spielt fair: IOMAD rebrandet je
+Mandant (Endkunde sieht *seine* Marke), aber intern bleibt's „wir fahren Moodle"; OpenOLAT ist im B2B ein
+**weißer Fleck** — für ein *premium* White-Label eher Vorteil als Makel.
+
+**Das eine ernste Risiko ist benannt und früh testbar:** *Wie schwer ist der Mandanten-Schicht-Eigenbau bei
+OpenOLAT wirklich?* → erster PoC-Sprint. Fällt er leicht → OpenOLAT klar. Wird er zäh → **IOMAD ziehen** und
+den PHP-Preis bewusst zahlen.
+
+**Konkreter Vorschlag (build-vs-buy mit Evidenz):** **fokussierter PoC auf dem Primärweg, IOMAD als
+Vergleichs-Spike** —
+1) **OpenOLAT shared** (eine Instanz, eingeschränkte Mandanten-CI): an **einem Demo-Mandanten** die
+   Mandanten-Schicht bauen — **Organisation + Seat-Cap + Per-Tenant-CSS-Klasse + Keycloak-Login-Theme** +
+   Content einmal halten/n Orgs referenzieren + Weiterbildungsnachweis. **Misst den Eigenbau-Aufwand** (das
+   Kernrisiko).
+2) **Moodle OSS + IOMAD** als **schlanker Vergleichs-Spike** für **zwei Reseller-Mandanten**
+   (Branding/Seat-Lizenz/Report) — nur so tief, dass der **native MT-Komfort gegen den PHP-Betriebspreis**
+   ehrlich abwägbar wird.
+
+So wird **am realen Aufwand** entschieden, nicht am Markenbild — und der GF-Moodle-Wunsch bekommt seinen
+fairen Vergleichslauf, ohne dass die teure Workplace-Variante nötig ist.
 
 ---
 
@@ -166,6 +302,9 @@ bevor der teure Mandanten-Layer überhaupt gebaut wird.
   Shared-Architektur; **Break-even** Instanz-Betrieb × n gegen geteilte Tenancy beziffern.
 - **IaC für Instanz-pro-Mandant**: automatisiertes Bereitstellen/Patchen/Backups je Instanz; Content-
   Versionierung + idempotente REST-Verteilung an n Instanzen; **Reporting-Aggregation über n Instanzen**.
+- **Content-Storage/Egress beziffern (Video)**: erwartete Nugget-Größe × Mandantenzahl bei Instanz-pro-
+  Mandant (Storage × N + Verteil-Egress je Update) gegen geteilte Tenancy (Storage × 1). Treibt den
+  Break-even mit; ggf. „host-once-per-LTI" (Rise-Doc) als Mittelweg prüfen.
 - **IOMAD-Reife/Release-Lag** zur aktuellen Moodle-Version + Wartungszusage (Bus-Faktor).
 - **Workplace-Preis** nur über Certified Partner (kein Listenpreis) → Angebot; EU-Partner + AVV/Residenz.
 - **PHP-Betrieb im JVM-Haus**: wer betreibt/patcht Moodle (Skill/Betrieb)?
@@ -186,6 +325,14 @@ bevor der teure Mandanten-Layer überhaupt gebaut wird.
   [Enrolment on payment](https://docs.moodle.org/501/en/Enrolment_on_payment)
 - Markt/DACH: [LMS-Marktanteil DE 2024 (Statista)](https://www.statista.com/statistics/1415031/market-share/) ·
   [Moodle Europe](https://www.elearnmagazine.com/marketplace/europe-report-moodle-market-share-leader-almost-everywhere/)
+- Verbreitung (§10b, Recherche 2026-06):
+  [Moodle 500 Mio. Nutzer](https://moodle.com/news/500-million-users-on-registered-moodle-sites/) ·
+  [stats.moodle.org](https://stats.moodle.org/) ·
+  [Moodle-Marktanteil (W3Techs)](https://w3techs.com/technologies/details/cm-moodle) ·
+  [Enterprise-Marken/Workplace-MT](https://www.learningplatforms.net/brands-using-moodle/) ·
+  [IOMAD Multi-Tenancy](https://www.iomad.org/multi-tenancy/) ·
+  [IOMAD 50+ Orgs/Instanz](https://infranext.co/moodle-multi-tenancy-iomad-configuration/) ·
+  [OpenOLAT (Wikipedia: frentix/UZH, Hochschul-Installs)](https://en.wikipedia.org/wiki/OpenOLAT)
 - OpenOLAT: [REST API](https://docs.openolat.org/manual_admin/administration/REST_API/) ·
   [Organisations](https://docs.openolat.org/manual_admin/administration/Modules_Organisations/) ·
   [Installation/Multi-Instance](https://docs.openolat.org/manual_admin/installation/installGuide/)
