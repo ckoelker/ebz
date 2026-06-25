@@ -41,8 +41,8 @@
 
 | # | Kriterium | OpenOLAT shared (geplant) | Moodle OSS (+IOMAD) | Moodle Workplace | OpenOLAT Instanz/Mandant (API-first) |
 |--|--|--|--|--|--|
-| 8 | Per-Tenant-Branding (Logo/Farben) | 🟡 CSS-Klasse pro Org-Typ | ✅ IOMAD: Logo/Theme/CSS | ✅ nativ je Tenant | ✅ volles Theme je Instanz |
-| 9 | Per-Tenant-Login-Seite | ❌ nur via Keycloak-Theme | 🟡 IOMAD per-Tenant-Login | ✅ Custom-Login | ✅ eigener Realm/Login je Instanz |
+| 8 | Per-Tenant-Branding (Logo/Farben) | ✅ **gelöst (PoC 06-25): per-Org via offizieller `addBodyCssClass`-Extension** | ✅ IOMAD: Logo/Theme/CSS | ✅ nativ je Tenant | ✅ volles Theme je Instanz |
+| 9 | Per-Tenant-Login-Seite | 🟡 **eigene Login-Seite je gebrokertem Kunden-IdP (PoC 06-25)** | 🟡 IOMAD per-Tenant-Login | ✅ Custom-Login | ✅ eigener Realm/Login je Instanz |
 | 10 | Theme-Tiefe (CSS/Templates) | 🟡 ein globales SCSS-Theme | ✅ Theme-System + IOMAD-CSS | ✅ Theme+Templates je Tenant | ✅ volles SCSS, keine Org-Klassen-Grenze |
 | 11 | White-Label-Reife (B2B2C) | 🟡 über Storefront-Layer | 🟡 via IOMAD | ✅ dafür gebaut | ✅ volles White-Label inkl. OLAT-UI+Domain |
 
@@ -52,7 +52,7 @@
 |--|--|--|--|--|--|
 | 12 | OIDC/OAuth2-SSO | ✅ nativ (Keycloak) | ✅ OAuth2 nativ | ✅ nativ | ✅ nativ je Instanz |
 | 13 | SAML-SSO | ✅ Shibboleth/SAML | 🟡 Plugin `auth_saml2` | ✅ tenant-aware | ✅ nativ je Instanz |
-| 14 | Per-Tenant-IdP (Kunden-IdP) | 🟡 Keycloak-Brokering (Eigenbau) | 🟡 nicht tenant-nativ | ✅ IdP je Tenant | ✅ je Instanz direkt (kein Brokering nötig) |
+| 14 | Per-Tenant-IdP (Kunden-IdP) | ✅ **Keycloak-Brokering gebaut+Browser-verifiziert (`mandant`-Claim, PoC 06-25)** | 🟡 nicht tenant-nativ | ✅ IdP je Tenant | ✅ je Instanz direkt (kein Brokering nötig) |
 | 15 | Keycloak-Fit (im Showcase) | ✅ live integriert | ✅ OIDC | ✅ OIDC | ✅ eigener Realm/Client je Instanz |
 
 ## §4 Content / SCORM / Authoring (D)
@@ -164,7 +164,7 @@ OpenOLAT-MT-Eigenbauten** (shared wie instanz-orchestriert) und relativiert dere
 | **Moodle Workplace** *(geparkt — Kosten)* | ≈ 66 | +6 | **≈ 72** | Höchster Score, aber **aus Lizenzkosten (~50–150 k €+/Jahr, Partner-only) geparkt** (§12) → fällt aus der engeren Wahl. Stärkste Feature-Abdeckung + beste belegte Enterprise-MT-Praxis; Schwach: Kosten, Lock-in, Stack-Fit, Souveränität. |
 | **OpenOLAT Instanz/Mandant (API-first)** | ≈ 61 | **+1** | **≈ 62** | **Volle Isolation & White-Label**, **OSS/0 €/souverän/JVM-Stack**, nutzt Bestehendes. Schwach: **Betriebsaufwand n×**, TCO **und Content-Storage** skalieren mit Mandantenzahl, **Managed-MT-Orchestrierung kaum referenziert**. |
 | **Moodle OSS (+IOMAD)** | ≈ 56 | +5 | **≈ 61** | Bester **Kostenausgleich**: 0 € + native Mandanten via IOMAD + Shared-Courses + **verbreitetste freie MT** + größtes DACH-Ökosystem. Schwach: **PHP-Stack-fremd**, IOMAD-Bus-Faktor. |
-| **OpenOLAT shared (wie geplant)** | ≈ 54 | +5 | **≈ 59** | Bester **Stack-Fit + bereits gebaut + 0 €**, geringster Betrieb, **Content einmal halten**. Schwach: Mandanten/Branding/Reporting **Eigenbau**, **Organisations-MT jung/dünn belegt**. |
+| **OpenOLAT shared (wie geplant)** | ≈ 57 ⬆ | +5 | **≈ 62 (nach PoC)** | Bester **Stack-Fit + bereits gebaut + 0 €**, geringster Betrieb, **Content einmal halten**. **PoC 2026-06-25 (M0–M3) entkräftet die Kern-Schwäche:** Org-Anlage (OpenOLAT+Keycloak) backend-getrieben + idempotenter Seed, gebrokerter B2B-Login→`mandant`-Claim→fail-closed-Landing (Browser-E2E), **Per-Tenant-Branding GELÖST über die offizielle `addBodyCssClass`-Extension** (kein Core-Fork). Rest-offen: **Seat-Cap/Reporting (M5/M6)**, Organisations-MT bleibt jung. |
 
 > Die Zusatzkriterien (§4b Content-einmal-halten/Drift + §10b belegte Enterprise-MT) geben **+5/+6 an die
 > geteilten/Moodle-Optionen** und **+1 an Instanz-pro-Mandant** → dessen ungewichteter Vorsprung schrumpft von
@@ -176,6 +176,20 @@ OpenOLAT-MT-Eigenbauten** (shared wie instanz-orchestriert) und relativiert dere
 > **Hinweis (2026-06-25):** Der Spitzenreiter **Moodle Workplace ist aus Kostengründen geparkt** (§12) → die
 > **engere Wahl ist der Zweikampf OpenOLAT shared ↔ Moodle OSS+IOMAD**; Instanz-pro-Mandant nur noch Nische
 > (Content-Gewicht). Zugespitzte Empfehlung: **§12.2**.
+
+> **🔬 PoC-Evidenz (2026-06-25) — das entscheidende Risiko ist jetzt empirisch beantwortet:** §12.2 machte den
+> ganzen Zweikampf an *„wie schwer ist der Mandanten-Schicht-Eigenbau bei OpenOLAT?"* fest. Der erste PoC-Sprint
+> hat **M0–M3 gebaut + live verifiziert**: backend-getriebene OpenOLAT-**und** Keycloak-Org (idempotenter Seed,
+> in `showcase-aufbau.sh` eingehängt), gebrokerter Kunden-IdP mit `mandant`-Claim + **fail-closed-Landing**
+> (Browser-E2E), und das vorab als **🔴 markierte per-Mandant-Branding ist über den OFFIZIELLEN OpenOLAT-Weg
+> gelöst** — `ChiefController.addBodyCssClass(…)` via einen Spring-registrierten AfterLogin-Interceptor
+> (~1 kleine Java-Klasse, **kein Core-Fork**), **nicht** nur der Login-Theme-Fallback (D5). Quellcode-Befund: die
+> `<body>`-Klasse kommt allein aus `bodyCssClasses`/`addBodyCssClass`, **kein** Renderer liest die org-`cssClass`
+> selbst — der Bridge-Interceptor schließt genau diese Lücke. **Der Eigenbau fiel leicht.** Damit greift die
+> §12.2-Regel *„fällt er leicht → OpenOLAT klar"*: ungewichtet **+3** (Kriterien #8 Branding 🟡→✅, #9 Login
+> ❌→🟡, #14 Kunden-IdP 🟡→✅) → **OpenOLAT shared ≈62 zieht an Moodle+IOMAD (≈61) vorbei** und gleichauf mit
+> Instanz/Mandant (≈62, das aber durch Content-Gewicht ausscheidet). **IOMAD bleibt der Hedge**, falls die noch
+> **offenen M5 (Seat-Cap) / M6 / Reporting** zäh werden — die sind noch nicht gebaut.
 
 ---
 
@@ -256,7 +270,8 @@ verlangen Eigenintegration der Mandanten-Schicht. Die Frage verschiebt sich von 
 **Das Feld schrumpft real auf zwei.** **OpenOLAT Instanz-pro-Mandant** scheidet durch das Content-Gewicht
 (Video × N Instanzen = Storage × N + Drift) aus — Restnische: wenige Enterprise-Kunden mit eigener Domain
 **und** content-leichten Inhalten. Bleibt der **Zweikampf OpenOLAT shared ↔ Moodle OSS + IOMAD**, ungewichtet
-fast gleichauf (59 ↔ 61); zwei Hebel entscheiden:
+vor dem PoC fast gleichauf (59 ↔ 61); zwei Hebel entscheiden — **nach dem PoC-Sprint kippt der ungewichtete
+Score auf 62 ↔ 61 zugunsten OpenOLAT shared** (per-Mandant-Branding/Brokering gebaut, s. §11-PoC-Evidenz):
 
 | Hebel | OpenOLAT shared | Moodle OSS + IOMAD |
 |---|---|---|
