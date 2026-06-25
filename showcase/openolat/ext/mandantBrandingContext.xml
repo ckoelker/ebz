@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  EBZ-Mandanten-Branding-Extension — registriert den AfterLogin-Interceptor über den offiziellen
+  OpenOLAT-Hook (afterLoginInterceptionManager.addAfterLoginControllerConfig). Wird via
+  classpath*:/**/_spring/*.xml automatisch geladen, sobald das Jar in WEB-INF/lib liegt.
+-->
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+  http://www.springframework.org/schema/beans
+  http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="ebz.mandantBranding.AfterLogin.Injection" class="org.springframework.beans.factory.config.MethodInvokingFactoryBean">
+        <property name="targetObject" ref="afterLoginInterceptionManager" />
+        <property name="targetMethod" value="addAfterLoginControllerConfig" />
+        <property name="arguments">
+            <ref bean="ebz.mandantBranding.AfterLoginConfig" />
+        </property>
+    </bean>
+
+    <bean id="ebz.mandantBranding.AfterLoginConfig" class="org.olat.login.AfterLoginConfig">
+        <property name="afterLoginControllerList">
+            <list>
+                <map>
+                    <entry key="controller">
+                        <bean class="org.olat.core.gui.control.creator.AutoCreator" scope="prototype">
+                            <property name="className" value="de.netzfactor.ebz.olat.branding.MandantBrandingInterceptor" />
+                        </bean>
+                    </entry>
+                    <entry key="forceUser"><value>false</value></entry>
+                    <entry key="redoTimeout"><value>0</value></entry>
+                    <entry key="i18nIntro"><value>org.olat.core.commons.controllers.resume:resume</value></entry>
+                    <entry key="size"><value>1x1</value></entry>
+                    <entry key="order"><value>1100</value></entry>
+                </map>
+            </list>
+        </property>
+    </bean>
+
+</beans>

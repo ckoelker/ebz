@@ -53,3 +53,21 @@ $link-hover-color: #e6007e;  // Magenta
 	color: #fff !important;
 	text-shadow: 0 1px 2px rgba(0, 0, 0, .35);
 }
+
+/* ---- Per-Mandant-Branding (M0/K3) ---------------------------------------------------
+ * Der AfterLogin-Interceptor (offizielle OpenOLAT-Extension, ebz-mandant-branding.jar)
+ * hängt die Organisation-cssClass `mandant-<schlüssel>` (vom Integration-Backend gesetzt)
+ * an den <body>. Pro B2B-Mandant eine kontrastreiche Marke; der EBZ-Default (Regenbogen)
+ * bleibt für alle übrigen unberührt. Beispiel DEMO AG (#ff6600 / #003366). */
+body.mandant-demo-ag .o_navbar,
+body.mandant-demo-ag .o_navbar_wrapper .o_navbar,
+body.mandant-demo-ag .navbar.o_navbar {
+	background-image: none !important;
+	background-color: #ff6600 !important;          /* DEMO-AG Primärfarbe (Orange) */
+	border-bottom: 4px solid #003366 !important;   /* DEMO-AG Sekundärfarbe (Navy) */
+}
+body.mandant-demo-ag .o_navbar .navbar-brand::after {
+	content: " · DEMO AG";
+	color: #fff;
+	font-weight: 600;
+}

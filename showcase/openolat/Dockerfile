@@ -26,6 +26,32 @@ COPY postgresql.jar "$CATALINA_HOME/lib/postgresql.jar"
 # OpenOLAT-Datenverzeichnis (per Volume persistiert).
 RUN mkdir -p /opt/openolat/olatdata
 
+# ── EBZ-Mandanten-Branding-Extension (offizieller AfterLogin-Hook, KEIN Core-Fork) ──────
+# Kompiliert eine kleine OpenOLAT-Extension gegen die WAR-Bibliotheken und legt das Jar
+# (Interceptor-Klasse + _spring-Context) in WEB-INF/lib. Der Interceptor hängt die org-cssClass
+# (mandant-<schlüssel>, vom Integration-Backend gesetzt) via ChiefController.addBodyCssClass an
+# den <body> → das EBZ-Theme targetet .mandant-<schlüssel>. Spring lädt das _spring-XML via
+# classpath*:/**/_spring/*.xml automatisch. javac ist im -jdk17-Basisimage vorhanden.
+COPY ext/ /tmp/ext/
+RUN ROOT="$CATALINA_HOME/webapps/ROOT" \
+ && PKG=/tmp/ext-build/de/netzfactor/ebz/olat/branding \
+ && mkdir -p "$PKG/_spring" \
+ && CP="$ROOT/WEB-INF/classes:$(echo "$ROOT"/WEB-INF/lib/*.jar | tr ' ' ':')" \
+ && javac -cp "$CP" -d /tmp/ext-build /tmp/ext/MandantBrandingInterceptor.java \
+ && cp /tmp/ext/mandantBrandingContext.xml "$PKG/_spring/" \
+ && (cd /tmp/ext-build && jar cf "$ROOT/WEB-INF/lib/ebz-mandant-branding.jar" de) \
+ && rm -rf /tmp/ext /tmp/ext-build
+# OpenOLAT lädt Spring-Contexts NUR über explizite <import> in mainContext.xml (kein Auto-Scan
+# für Fremd-Jars). Wir registrieren unseren Context genau so — per Overlay der mainContext.xml in
+# WEB-INF/classes (hat Classloader-Vorrang vor dem Jar): aus dem openolat-lms-Jar extrahieren, EINE
+# <import>-Zeile ergänzen. Kein Java-Core-Fork; exakt die Zeile, die OpenOLAT für jedes Modul setzt.
+RUN ROOT="$CATALINA_HOME/webapps/ROOT" \
+ && LMS=$(ls "$ROOT"/WEB-INF/lib/openolat-lms-*.jar) \
+ && (cd "$ROOT/WEB-INF/classes" && jar xf "$LMS" org/olat/_spring/mainContext.xml) \
+ && grep -q "mandantBrandingContext" "$ROOT/WEB-INF/classes/org/olat/_spring/mainContext.xml" \
+    || sed -i 's#</beans>#\t<import resource="classpath:/de/netzfactor/ebz/olat/branding/_spring/mandantBrandingContext.xml"/>\n</beans>#' \
+       "$ROOT/WEB-INF/classes/org/olat/_spring/mainContext.xml"
+
 # ── Eigenes EBZ-SCSS-Theme („Regenbogen") AUSSERHALB der .war ──────────────────
 # Dart-Sass-Standalone (gitignored, via fetch-artifacts.sh; kein Node nötig) entpacken.
 COPY dart-sass.tar.gz /tmp/dart-sass.tar.gz

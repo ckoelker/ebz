@@ -5,33 +5,53 @@ const OL = URLS.openolat;
 const ADMIN = 'Basic ' + Buffer.from('administrator:openolat').toString('base64');
 
 /**
- * M0-Spike (CI/Branding, war 🔴-Risiko): Klärt, ob OpenOLAT die per-Org cssClass `mandant-demo-ag`
- * (vom Backend über `OrganisationVO.cssClass` gesetzt, via REST verifiziert) in die SEITEN eines
- * Org-Mitglieds rendert — der vermeintliche „native" per-Org-Branding-Hebel.
+ * M0 (CI/Branding) — gelöst über den OFFIZIELLEN OpenOLAT-Erweiterungsweg (kein Core-Fork):
+ * die Extension `ebz-mandant-branding.jar` registriert via `_spring`-Context einen AfterLogin-
+ * Interceptor, der die Organisation-cssClass `mandant-<schlüssel>` (vom Integration-Backend gesetzt)
+ * über die öffentliche API `ChiefController.addBodyCssClass(...)` an den `<body>` hängt. Das
+ * extern geladene EBZ-Theme targetet dann `body.mandant-demo-ag .o_navbar` → sichtbare per-Mandant-CI.
  *
- * BEFUND (dokumentiert, reproduzierbar): NEIN. Die cssClass ist ein reines Datenmodell-/Admin-Feld;
- * die OpenOLAT-GUI leitet daraus KEIN per-User-Theme ab (body trägt nur `o_lang_*`, die Klasse taucht
- * nirgends im DOM auf). Dieser Test hält den Befund fest — schlägt er künftig fehl (Klasse erscheint),
- * würde OpenOLAT-internes per-Org-Theming doch funktionieren und wir würden es nutzen.
- *
- * KONSEQUENZ (Entscheidung D5): die sichtbare per-Kunde-CI lebt NICHT in OpenOLAT, sondern
- *   (a) auf der per-IdP gebrandeten Keycloak-Login-Seite (Realm ebz-kunde-demo ist bereits distinkt), und
- *   (b) in den SPAs über den `mandant`-Claim + die Mandant-Branding-Felder (primaerFarbe/logoUrl), die
- *       der A4-Endpunkt `/lms/portal/landing` schon ausliefert.
+ * Dieser Test beweist die Kette end-to-end: Mitglied der DEMO_AG-Org → `<body class="… mandant-demo-ag">`
+ * → Navbar trägt die DEMO-AG-Marke (Orange #ff6600 statt EBZ-Regenbogen).
  */
-test('M0: OpenOLAT rendert die per-Org cssClass NICHT in Mitglieder-Seiten (Branding gehört an Login/SPA)', async ({
+// Nach dem Test customer wieder aus der DEMO_AG-Org entfernen → Baseline (EBZ-Regenbogen) bleibt für
+// die übrigen Tests erhalten (customer ist ein B2C-EBZ-Kunde; die Mitgliedschaft ist reines Test-Setup).
+test.afterEach(async ({ request }) => {
+  try {
+    const orgs = await (
+      await request.get(`${OL}/restapi/organisations`, {
+        headers: { Authorization: ADMIN, Accept: 'application/json' },
+      })
+    ).json();
+    const demo = orgs.find((o: { externalId?: string }) => o.externalId === 'DEMO_AG');
+    const users = await (
+      await request.get(`${OL}/restapi/users?login=customer`, {
+        headers: { Authorization: ADMIN, Accept: 'application/json' },
+      })
+    ).json();
+    const cust = (Array.isArray(users) ? users : [users])[0];
+    if (demo && cust) {
+      await request.delete(`${OL}/restapi/organisations/${demo.key}/users/${cust.key}`, {
+        headers: { Authorization: ADMIN },
+      });
+    }
+  } catch {
+    /* Best-effort-Cleanup */
+  }
+});
+
+test('M0: DEMO_AG-Org-Mitglied sieht per-Mandant-Branding (body-cssClass + Navbar-Marke)', async ({
   page,
 }) => {
-  // 1) Setup (idempotent, reproduzierbar): customer (Carla Kundin) als Mitglied der DEMO_AG-Org.
+  // 1) Setup (idempotent): customer (Carla Kundin) als Mitglied der DEMO_AG-Org.
   const orgs = await (
     await page.request.get(`${OL}/restapi/organisations`, {
       headers: { Authorization: ADMIN, Accept: 'application/json' },
     })
   ).json();
   const demo = orgs.find((o: { externalId?: string }) => o.externalId === 'DEMO_AG');
-  expect(demo, 'DEMO_AG-Org existiert (mandanten-seed + /mandant/{id}/projizieren)').toBeTruthy();
-  expect(demo.cssClass, 'Backend hat die per-Org cssClass gesetzt').toBe('mandant-demo-ag');
-
+  expect(demo, 'DEMO_AG-Org existiert (mandanten-seed + projizieren)').toBeTruthy();
+  expect(demo.cssClass).toBe('mandant-demo-ag');
   const users = await (
     await page.request.get(`${OL}/restapi/users?login=customer`, {
       headers: { Authorization: ADMIN, Accept: 'application/json' },
@@ -59,10 +79,21 @@ test('M0: OpenOLAT rendert die per-Org cssClass NICHT in Mitglieder-Seiten (Bran
   }
   await page.waitForTimeout(1000);
 
-  // 3) Befund: die per-Org cssClass ist NICHT im DOM (kein per-User-Theming durch OpenOLAT).
-  const html = await page.evaluate(() => document.documentElement.outerHTML);
-  expect(
-    html.includes('mandant-demo-ag'),
-    'OpenOLAT rendert die Org-cssClass NICHT in Mitglieder-Seiten (M0-Befund → Branding via Login/SPA)',
-  ).toBe(false);
+  // 3) Der AfterLogin-Interceptor hat die Org-cssClass an den <body> gehängt.
+  const bodyClass = await page.evaluate(() => document.body.className);
+  expect(bodyClass, 'body trägt die per-Org cssClass (Extension via addBodyCssClass)').toContain(
+    'mandant-demo-ag',
+  );
+
+  // 4) Das Theme rendert daraufhin die DEMO-AG-Marke auf der Navbar (Orange #ff6600, kein Regenbogen).
+  const navbar = page.locator('.o_navbar:visible').first();
+  await expect(navbar).toBeVisible();
+  const bg = await navbar.evaluate((el) => {
+    const s = getComputedStyle(el);
+    return { color: s.backgroundColor, image: s.backgroundImage };
+  });
+  expect(bg.color, 'Navbar trägt die DEMO-AG-Primärfarbe').toBe('rgb(255, 102, 0)');
+  expect(bg.image, 'kein EBZ-Regenbogen-Verlauf für den Mandanten').toBe('none');
+
+  await page.screenshot({ path: 'screenshots/mandant-branding-demo-ag.png' });
 });
