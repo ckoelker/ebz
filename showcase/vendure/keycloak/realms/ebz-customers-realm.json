@@ -36,6 +36,67 @@
         "syncMode": "IMPORT",
         "defaultScope": "openid profile email"
       }
+    },
+    {
+      "alias": "kunde-demo",
+      "displayName": "DEMO AG (Kunden-Login)",
+      "providerId": "oidc",
+      "enabled": true,
+      "trustEmail": true,
+      "storeToken": false,
+      "linkOnly": false,
+      "firstBrokerLoginFlowAlias": "first broker login",
+      "_kommentar": "M3-Seed: gebrokerter Demo-Kunden-IdP (Realm ebz-kunde-demo). Frontchannel localhost:8088 (Browser), Backchannel localhost:8080 (KC zu sich selbst). In echt = kundenindividueller IdP -> geseedet, nicht in integration verdrahtet.",
+      "config": {
+        "clientId": "ebz-customers-broker",
+        "clientSecret": "demo-broker-secret",
+        "authorizationUrl": "http://localhost:8088/realms/ebz-kunde-demo/protocol/openid-connect/auth",
+        "tokenUrl": "http://localhost:8080/realms/ebz-kunde-demo/protocol/openid-connect/token",
+        "userInfoUrl": "http://localhost:8080/realms/ebz-kunde-demo/protocol/openid-connect/userinfo",
+        "jwksUrl": "http://localhost:8080/realms/ebz-kunde-demo/protocol/openid-connect/certs",
+        "issuer": "http://localhost:8080/realms/ebz-kunde-demo",
+        "validateSignature": "true",
+        "useJwksUrl": "true",
+        "defaultScope": "openid profile email",
+        "clientAuthMethod": "client_secret_post",
+        "syncMode": "FORCE"
+      }
+    }
+  ],
+  "identityProviderMappers": [
+    {
+      "name": "stamp-mandant",
+      "identityProviderAlias": "kunde-demo",
+      "identityProviderMapper": "hardcoded-attribute-idp-mapper",
+      "config": {
+        "attribute": "mandant",
+        "attribute.value": "DEMO_AG",
+        "syncMode": "INHERIT"
+      }
+    }
+  ],
+  "clientScopes": [
+    {
+      "name": "mandant",
+      "description": "Mandant-Claim aus User-Attribut (Landing A4)",
+      "protocol": "openid-connect",
+      "attributes": { "include.in.token.scope": "true", "display.on.consent.screen": "false" },
+      "protocolMappers": [
+        {
+          "name": "mandant-claim",
+          "protocol": "openid-connect",
+          "protocolMapper": "oidc-usermodel-attribute-mapper",
+          "config": {
+            "user.attribute": "mandant",
+            "claim.name": "mandant",
+            "jsonType.label": "String",
+            "access.token.claim": "true",
+            "id.token.claim": "true",
+            "userinfo.token.claim": "true",
+            "multivalued": "false"
+          }
+        }
+      ]
     }
   ],
   "clients": [
@@ -80,7 +141,7 @@
         "pkce.code.challenge.method": "S256",
         "post.logout.redirect.uris": "http://localhost:5175/*"
       },
-      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email", "organization"],
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email", "organization", "mandant"],
       "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
     },
     {
@@ -102,7 +163,7 @@
       "attributes": {
         "post.logout.redirect.uris": "http://localhost:8089/*"
       },
-      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email", "organization"],
+      "defaultClientScopes": ["web-origins", "acr", "roles", "profile", "basic", "email", "organization", "mandant"],
       "optionalClientScopes": ["address", "phone", "offline_access", "microprofile-jwt"]
     }
   ],

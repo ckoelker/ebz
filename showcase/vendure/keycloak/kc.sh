@@ -16,8 +16,9 @@ TOKEN=$(curl -s -X POST "$KC/realms/master/protocol/openid-connect/token" \
   -d username="${KC_ADMIN:-admin}" -d password="${KC_ADMIN_PW:-admin}" \
   | python -c "import json,sys;print(json.load(sys.stdin)['access_token'])")
 if [ -n "$DATA" ]; then
+  # Inhalt inline lesen (statt @pfad) — natives Windows-curl liest msys-Pfade wie /c/... nicht.
   curl -s -w '\n[HTTP %{http_code}]\n' -X "$M" "$KC$P" \
-    -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" --data-binary @"$DATA"
+    -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" --data-binary "$(cat "$DATA")"
 else
   curl -s -w '\n[HTTP %{http_code}]\n' -X "$M" "$KC$P" -H "Authorization: Bearer $TOKEN"
 fi
