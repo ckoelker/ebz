@@ -1,5 +1,8 @@
 package de.netzfactor.ebz.controlling.integration.lms.dto;
 
+import java.math.BigDecimal;
+
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -25,5 +28,6 @@ public record WbtKursDto(
         @Min(0) Integer preisCent,
         boolean shopVerkauf,
         @NotNull AngebotStatus status,
-        @Size(max = 64) String vendureProductId) {
+        @Size(max = 64) String vendureProductId,
+        @DecimalMin("0.0") BigDecimal sollStundenAnrechenbar) {
 }

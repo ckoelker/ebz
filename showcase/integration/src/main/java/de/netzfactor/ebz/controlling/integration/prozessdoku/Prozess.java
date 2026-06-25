@@ -65,6 +65,7 @@ public final class Prozess {
         WBT_VERKAUF("WBT-Verkauf (Shop → OpenOLAT)"),
         RECHNUNGSSTELLUNG("Rechnungsstellung (Cockpit & E-Rechnung)"),
         HUBSPOT_SYNC("Marketing-Sync (HubSpot)"),
+        MANDANTEN_VERMARKTUNG("Mandantenfähige eLearning-Vermarktung"),
         KOMMUNIKATION("Benachrichtigung & Bestätigung");
 
         public final String label;
@@ -95,6 +96,13 @@ public final class Prozess {
         RECHNUNG_VERSAND("E-Rechnung versenden", Verfahren.RECHNUNGSSTELLUNG),
         ZAHLUNGSEINGANG("Zahlungseingang verbuchen", Verfahren.RECHNUNGSSTELLUNG),
         DATEV_EXPORT("DATEV-Export", Verfahren.RECHNUNGSSTELLUNG),
+        // ── Verfahren: Mandantenfähige eLearning-Vermarktung ──
+        MANDANT_ONBOARDING("Mandant anlegen & konfigurieren", Verfahren.MANDANTEN_VERMARKTUNG),
+        MANDANT_ORG_PROJEKTION("Org-Projektion nach OpenOLAT", Verfahren.MANDANTEN_VERMARKTUNG),
+        MANDANT_IDP_FOEDERATION("IdP-Föderation (Keycloak Organizations)", Verfahren.MANDANTEN_VERMARKTUNG),
+        MANDANT_CONTENT_FREIGABE("Content-Freigabe (Catalog-2.0-Offers)", Verfahren.MANDANTEN_VERMARKTUNG),
+        MANDANT_SEAT_VERWALTUNG("Seat-Verwaltung (Cap & HITL)", Verfahren.MANDANTEN_VERMARKTUNG),
+        MANDANT_NACHWEIS("Weiterbildungsnachweis (Soll-Stunden)", Verfahren.MANDANTEN_VERMARKTUNG),
         // ── Verfahren: Marketing-Sync (HubSpot) ──
         HUBSPOT_VORMERKEN("Sync vormerken (Outbox)", Verfahren.HUBSPOT_SYNC),
         HUBSPOT_UEBERTRAGUNG("Kontakt/Firma übertragen", Verfahren.HUBSPOT_SYNC),

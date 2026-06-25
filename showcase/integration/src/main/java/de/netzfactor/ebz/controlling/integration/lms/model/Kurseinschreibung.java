@@ -15,6 +15,8 @@ import jakarta.persistence.Version;
 
 import io.quarkus.hibernate.orm.panache.PanacheEntity;
 
+import de.netzfactor.ebz.controlling.integration.mandant.model.Mandant;
+
 /**
  * Einschreibung eines Lernenden in einen {@link WbtKurs} — <b>zugleich der Transactional-Outbox-
  * Datensatz</b> der OpenOLAT-Provisionierung. Statt des anmeldungs-gebundenen {@code OutboxAuftrag}
@@ -47,6 +49,16 @@ public class Kurseinschreibung extends PanacheEntity {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "wbt_kurs_id", nullable = false)
     public WbtKurs wbtKurs;
+
+    /**
+     * Mandant, unter dem diese Einschreibung läuft (echte FK). Nullable: Bestands-Einschreibungen der
+     * bisherigen Ein-Mandanten-Strecke (vor M1) tragen keinen Mandanten; neue Einschreibungen werden dem
+     * EBZ-Kernmandanten bzw. — bei B2B-Login — dem föderierten Mandanten zugeordnet. Trägt den Mandanten
+     * in den Nachweis-Fakt (M6) und die Seat-Zählung (M5).
+     */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "mandant_id")
+    public Mandant mandant;
 
     /** Lernenden-Identität: Keycloak-Subject (Realm ebz-customers) — Match-Schlüssel zur OpenOLAT-Auth. */
     @Column(name = "keycloak_sub", nullable = false, length = 64)

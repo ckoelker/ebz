@@ -20,10 +20,14 @@
     <maven.compiler.release>21</maven.compiler.release>
 
     <quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
-    <quarkus.platform.version>3.33.2</quarkus.platform.version>
+    <!-- 3.37.0: angehoben, damit der Quarkus-core Dev-MCP-Endpunkt (/q/dev-mcp, ab 3.36) verfügbar ist
+         → Continuous Testing über den standalone quarkus-agent-MCP. Achtung: die beiden gepinnten
+         Quarkiverse-Extensions unten zielen in ihrem neuesten Release noch auf 3.33.2 (kein 3.37-Build),
+         laufen aber auf der 3.37-Plattform (Augmentation + voller Mandant-Testlauf grün verifiziert 2026-06-25). -->
+    <quarkus.platform.version>3.37.0</quarkus.platform.version>
     <!-- Differenzierer: explizit gepinnt (kein Platform-BOM-Member) -->
     <quarkus-langchain4j.version>1.10.0</quarkus-langchain4j.version>
-    <!-- MCP-Server (Quarkiverse): 1.13.0 ist gegen Quarkus 3.33.2 gebaut (= quarkus.platform.version). -->
+    <!-- MCP-Server (Quarkiverse): 1.13.0 ist gegen Quarkus 3.33.2 gebaut, läuft aber auf der 3.37-Plattform (s. o.). -->
     <quarkus-mcp-server.version>1.13.0</quarkus-mcp-server.version>
 
     <!-- ── Rechnungsstellung R2: ZUGFeRD/E-Rechnung (Konzept §4f, Lösungsoption Mustang) ──
@@ -190,7 +194,8 @@
 
     <!-- Kommunikation K4 (MCP-Demo): eigener MCP-Server (HTTP/SSE-Transport), der den sichtbaren
          Aktivitätslog als Tool für externe KI-Agenten anbietet (Zukunfts-Showcase, RBAC/DSGVO-gefiltert).
-         1.13.0 ist gegen Quarkus 3.33.2 gebaut (= unsere Platform); zieht nur quarkus-vertx-http + mcp-core. -->
+         1.13.0 ist gegen Quarkus 3.33.2 gebaut, läuft aber auf der 3.37-Plattform (s. quarkus.platform.version);
+         zieht nur quarkus-vertx-http + mcp-core. -->
     <dependency>
       <groupId>io.quarkiverse.mcp</groupId>
       <artifactId>quarkus-mcp-server-http</artifactId>

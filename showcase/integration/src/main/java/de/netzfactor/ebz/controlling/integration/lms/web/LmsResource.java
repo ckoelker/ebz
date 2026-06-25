@@ -163,11 +163,13 @@ public class LmsResource {
         e.shopVerkauf = dto.shopVerkauf();
         e.status = dto.status();
         e.vendureProductId = dto.vendureProductId();
+        e.sollStundenAnrechenbar = dto.sollStundenAnrechenbar();
     }
 
     private static WbtKursDto toDto(WbtKurs e) {
         return new WbtKursDto(e.id, e.version, e.code, e.titel, e.kurzbeschreibung, e.openolatKey,
-                e.scormVersion, e.preisCent, e.shopVerkauf, e.status, e.vendureProductId);
+                e.scormVersion, e.preisCent, e.shopVerkauf, e.status, e.vendureProductId,
+                e.sollStundenAnrechenbar);
     }
 
     private static Response notFound() {

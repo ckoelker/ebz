@@ -1,5 +1,7 @@
 package de.netzfactor.ebz.controlling.integration.lms.model;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -48,6 +50,16 @@ public class WbtKurs extends PanacheEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "scorm_version", length = 16)
     public ScormVersion scormVersion;
+
+    /**
+     * Anrechenbare Soll-Stunden (Weiterbildungs-/Kreditstunden) dieses WBT — die <b>rechtlich maßgebliche</b>
+     * Zählung des Nachweises (F1/F2). Bewusst statt der unzuverlässigen SCORM-{@code session_time}
+     * (write-only, „kein Beweis echter Lernzeit"): bei Completion fließt dieser Wert in den
+     * {@code LernleistungsFakt}. Leer = (noch) nicht anrechenbar. Die §34d/§34c/§34i-Anrechnung wird separat
+     * final geprüft (offener Punkt).
+     */
+    @Column(name = "soll_stunden_anrechenbar", precision = 5, scale = 2)
+    public BigDecimal sollStundenAnrechenbar;
 
     /** Listenpreis in Cent (Vendure-Minor-Units); leer = (noch) kein verkaufbarer Preis. */
     @Column(name = "preis_cent")
