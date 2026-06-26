@@ -322,6 +322,15 @@ Option für domain-zwingende Enterprise-Kunden.
 OpenOLAT wirklich?* → erster PoC-Sprint. Fällt er leicht → OpenOLAT klar. Wird er zäh → **IOMAD ziehen** und
 den PHP-Preis bewusst zahlen.
 
+> **✅ K7-Aufwands-Fazit (2026-06-26, PoC M0–M6 gebaut+live verifiziert, [Detailtabelle](PoC-OpenOLAT-Mandanten-Integration.md#10-k7-aufwands-fazit-build-evidenz-2026-06-26)):**
+> Der Eigenbau fiel **moderat („mittel")** aus — **nicht** zäh-prohibitiv, **kein Core-Fork**. Jede Lücke
+> hatte einen offiziellen Weg: M0 Branding via public `addBodyCssClass`-Extension; M4 (Offers nicht REST-fähig)
+> via Curriculum (Storage ×1); M6 (Completion nur kurs-skopiert, SCORM kein Kurs) via REST-Assessment-Kurs.
+> Aufwand bündelt sich auf **M3 Identity** (aber via Keycloak = Haus-IdP) und die **REST-Lücken M4/M6**; viel
+> Bestand (L0–L3, Outbox, Codegen) trug. **Also: Risiko-Frage mit „machbar, moderat" beantwortet → Primärwette
+> _OpenOLAT shared_ bestätigt** (der Fall „zäh → IOMAD" trat nicht ein). Offen bleibt nur das Gegenstück:
+> das K7-Fazit des **IOMAD-Spikes** (nativer MT-Komfort vs. PHP-Betriebspreis) — erst dann final gegenlegen.
+
 **Konkreter Vorschlag (build-vs-buy mit Evidenz):** **fokussierter PoC auf dem Primärweg, IOMAD als
 Vergleichs-Spike** —
 1) **OpenOLAT shared** (eine Instanz, eingeschränkte Mandanten-CI): an **einem Demo-Mandanten** die

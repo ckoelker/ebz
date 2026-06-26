@@ -255,7 +255,34 @@ volle White-Label (Stufe 2) · Content-Update-in-place mit Progress-Erhalt.
 - **Content-Update-in-place** (Progress-Erhalt) — bewusst offener Punkt (C5, Rise-Doc).
 - **Schnittstelle zum IOMAD-Kollegen-Spike:** das K7-Aufwands-Fazit beider Seiten in §12.2 zusammenführen.
 
-## 10. Quellen (Recherche 2026-06)
+## 10. K7-Aufwands-Fazit (Build-Evidenz, 2026-06-26)
+
+**Leitfrage (§2):** Wie schwer ist der Mandanten-Schicht-Eigenbau auf OpenOLAT shared *wirklich*? — Gemessen am
+real gebauten, live verifizierten Durchstich M0–M6 (alles grün, ein reproduzierbarer Bootstrap, K8).
+
+| M | Schritt | Aufwand | Kern-Stolperstein (und Auflösung) |
+|---|---|---|---|
+| **M0** | Per-Mandant-Branding | **zäh** | OpenOLAT rendert `Organisation.cssClass` **nicht** selbst (WAR-Quellbeleg). Offizieller Weg ohne Core-Fork: `ChiefController.addBodyCssClass` via AfterLogin-Interceptor + Spring-XML-Overlay, gegen WAR-Libs kompiliert. **Viel Interna-Recherche, wenig Code (~1 Klasse).** |
+| **M1** | Datenmodell + CRUD | **trivial** | Standard Quarkus/Panache, flache Entities, Stack-B-Codegen. Keine OpenOLAT-Spezifika. |
+| **M2** | Org-Projektion | **mittel** | Outbox-/Dispatcher-**Muster wiederverwendet** (`EnrollmentDispatcher`); idempotent über `externalId`; `cssClass` ist nativer `OrganisationVO`-Wert (= Branding-Anker ohne Hack). openapi-Audit nötig. |
+| **M3** | Keycloak Organizations + Brokering | **zäh** | Organizations (v26, jung); `organization`-Scope macht Login **identity-first/zweistufig**; **Issuer-Host-Disziplin** (`keycloak.localhost:8080`, sonst Cookie-Bruch/401). Trickreichster Teil — aber von **eurem Standard-IdP Keycloak nativ** getragen, nicht von OpenOLAT. |
+| **M4** | Content-share-once | **mittel** | Catalog-2.0-**Offers sind NICHT REST-fähig** → offizieller **Curriculum-Weg** (ein Repo-Entry, n org-skopierte Elemente, Storage ×1). `curriculummanager`-Rolle **in der Org** nötig; `status`-Feld → 500. |
+| **M5** | Seat-Cap | **trivial–mittel** | OpenOLAT kennt **kein** natives Seat-Limit → weicher Gate via Org-Mitgliederzählung + HITL-Meldung, wenig Code (E1/E2/E4 sauber abbildbar). |
+| **M6** | Weiterbildungsnachweis | **mittel** | Completion ist **nur kurs-skopiert** REST-lesbar; das SCORM-Nugget ist **kein Kurs** und ein SCORM-Knoten ist **nicht per REST** anlegbar; `editortreemodel` liefert kein JSON. Auflösung: **trackbarer Assessment-Kurs rein per REST** als Completion-Quelle (Nugget unberührt), `assessmentDone`→Fakt mit Soll-Stunden. |
+| — | Querschnitt SSO/Realm | **punktuell zäh** | Realm-Scope-Disziplin (ein `clientScopes`-Array unterdrückt Keycloaks Built-ins → Token ohne Identity-Claims); Issuer-Host; `sub`-Wechsel bei Realm-Recreate. Einmalig verstanden, dann robust. |
+
+**Verdikt:** Der Eigenbau fiel **moderat (in Summe „mittel")** aus — **nicht** zäh-prohibitiv. **Kein Core-Fork
+nötig**; jede REST-/Funktionslücke (M4 Offers, M6 Completion-für-Nicht-Kurse, M0 Branding) hatte einen
+**offiziellen Umweg** (Extension-Punkt bzw. REST). Der Aufwand bündelt sich an **zwei** Stellen: M3 (Identity —
+aber via Keycloak, eurem Haus-IdP) und die REST-Lücken (M4/M6), beide dokumentiert und reproduzierbar. Viel
+Bestand (L0–L3, Outbox-Muster, Stack-B-Codegen) trug. **Damit ist das in §12.2 benannte Kernrisiko mit
+„machbar, moderat" beantwortet → die Primärwette _OpenOLAT shared_ ist bestätigt** (Fall „wird zäh → IOMAD
+ziehen" ist **nicht** eingetreten). **Einzige harte Grenze:** die persistente eigene Kunden-URL (§12.2,
+.war-belegt) → bleibt der Trigger fürs **hybride** Zielbild (Instanz-pro-Mandant nur für domain-zwingende
+Enterprise-Kunden). Rückfluss verdichtet in [§12.2](LMS-Plattformvergleich-OpenOLAT-Moodle.md); gegenzulegen
+ist das K7-Fazit des **IOMAD-Kollegen-Spikes** (nativer MT-Komfort vs. PHP-Betriebspreis).
+
+## 11. Quellen (Recherche 2026-06)
 
 - Keycloak Organizations (GA v26):
   [Ankündigung](https://www.keycloak.org/2024/06/announcement-keycloak-organizations) ·
