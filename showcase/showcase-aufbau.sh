@@ -35,7 +35,7 @@ SHOP="${SHOP:-http://localhost:3000}"                # vendure
 MVN="${MVN:-mvn}"
 
 # Schritt-Reihenfolge (Voll-Lauf führt sie genau so aus).
-SCHRITTE=(preflight reset up seed mandanten-seed test-java test-spa test-vendure test-e2e bpmn lightdash summary)
+SCHRITTE=(preflight reset up seed mandanten-seed lms-share test-java test-spa test-vendure test-e2e bpmn lightdash summary)
 
 # ── Hübsche Ausgabe ─────────────────────────────────────────────────────────────────────────────
 rot=$'\e[31m'; gruen=$'\e[32m'; gelb=$'\e[33m'; blau=$'\e[36m'; fett=$'\e[1m'; aus=$'\e[0m'
@@ -175,6 +175,14 @@ schritt_mandanten_seed() {
   ok "Test-Mandanten geseedet (Brokering-Strecke bereit für e2e)"
 }
 
+schritt_lms_share() {
+  phase "LMS-SHARE — Content-share-once (M4): ein Repo-Entry, n org-skopierte Curricula (Storage x 1)"
+  # Setzt den Content-Import (Schritt seed → lms-import-seed) UND die DEMO_AG-Org (mandanten-seed) voraus.
+  # Catalog-2.0-Offers sind nicht REST-faehig → org-skopiertes Sharing via Curriculum (offizieller Weg).
+  bash openolat/lms-share-seed.sh || fail "Content-share-once-Seed fehlgeschlagen"
+  ok "Content-share-once geseedet (EBZ-Default-Org + DEMO_AG teilen dasselbe Nugget)"
+}
+
 schritt_test_java() {
   phase "TEST — Java-Integration (Quarkus, rest-assured + E2E-Spans)"
   # Läuft gegen das laufende Postgres; die DispatcherPauseExtension pausiert die Container-@Scheduled
@@ -271,6 +279,7 @@ fuehre_aus() {
     up)           schritt_up ;;
     seed)         schritt_seed ;;
     mandanten-seed) schritt_mandanten_seed ;;
+    lms-share)    schritt_lms_share ;;
     test-java)    schritt_test_java ;;
     test-spa)     schritt_test_spa ;;
     test-vendure) schritt_test_vendure ;;
