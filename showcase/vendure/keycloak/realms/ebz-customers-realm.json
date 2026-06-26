@@ -46,7 +46,6 @@
       "storeToken": false,
       "linkOnly": false,
       "firstBrokerLoginFlowAlias": "first broker login",
-      "_kommentar": "M3-Seed: gebrokerter Demo-Kunden-IdP (Realm ebz-kunde-demo). Frontchannel localhost:8088 (Browser), Backchannel localhost:8080 (KC zu sich selbst). In echt = kundenindividueller IdP -> geseedet, nicht in integration verdrahtet.",
       "config": {
         "clientId": "ebz-customers-broker",
         "clientSecret": "demo-broker-secret",

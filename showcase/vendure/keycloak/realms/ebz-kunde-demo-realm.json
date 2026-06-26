@@ -5,7 +5,6 @@
   "loginWithEmailAllowed": true,
   "registrationEmailAsUsername": true,
   "duplicateEmailsAllowed": false,
-  "_kommentar": "Demo-Kunden-IdP (PoC, M3-Seed): simuliert das EIGENE Keycloak/AD des B2B-Demo-Mandanten DEMO_AG. ebz-customers brokert gegen dieses Realm. NUR Test/Seed - in echt waere das der kundeneigene, individuelle IdP (deshalb geseedet, nicht in integration verdrahtet).",
   "clients": [
     {
       "clientId": "ebz-customers-broker",
