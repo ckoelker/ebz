@@ -108,4 +108,56 @@ public interface OpenolatApi {
     @Path("/repo/entries/{repoEntryKey}/organisations/{organisationKey}")
     Response linkRepoEntryToOrganisation(@HeaderParam("Authorization") String auth,
             @PathParam("repoEntryKey") long repoEntryKey, @PathParam("organisationKey") long organisationKey);
+
+    // ── Nachweis-Seam (M6): trackbarer WBT-Kurs als REST-lesbare Completion-Quelle ──
+    // Begründung (openapi.json-Audit, F3): Completion ist in OpenOLAT-REST NUR kurs-skopiert lesbar
+    // (assessments/statements/certificates unter /repo/courses/…). Das geteilte Nugget ist ein bares
+    // FileResource.SCORMCP (kein Kurs) → kein REST-Completion. Ein per REST gebauter Kurs mit
+    // Assessment-Knoten ist die offizielle, UI-freie Nachweis-Quelle (Nugget bleibt unberührt).
+
+    /** Legt einen Kurs an (Query-Parameter statt Body, wie die OpenOLAT-REST-API) → CourseVO mit {@code key}/{@code editorRootNodeId}. */
+    @PUT
+    @Path("/repo/courses")
+    JsonNode createCourse(@HeaderParam("Authorization") String auth,
+            @QueryParam("shortTitle") String shortTitle, @QueryParam("title") String title,
+            @QueryParam("displayName") String displayName, @QueryParam("externalId") String externalId,
+            @QueryParam("status") String status, @QueryParam("access") Integer access);
+
+    /** Sucht Kurse nach {@code externalId} (Idempotenz) — CourseVO trägt {@code key} + {@code editorRootNodeId}. */
+    @GET
+    @Path("/repo/courses")
+    JsonNode findCoursesByExternalId(@HeaderParam("Authorization") String auth,
+            @QueryParam("externalId") String externalId);
+
+    /** Hängt einen Assessment-(Nachweis-)Knoten an → CourseNodeVO mit {@code id} (= nodeIdent). */
+    @PUT
+    @Path("/repo/courses/{courseId}/elements/assessment")
+    JsonNode addAssessmentElement(@HeaderParam("Authorization") String auth,
+            @PathParam("courseId") long courseId, @QueryParam("parentNodeId") String parentNodeId,
+            @QueryParam("shortTitle") String shortTitle, @QueryParam("longTitle") String longTitle);
+
+    /** Publiziert den Kurs (macht den neuen Knoten live). */
+    @POST
+    @Path("/repo/courses/{courseId}/publish")
+    Response publishCourse(@HeaderParam("Authorization") String auth, @PathParam("courseId") long courseId,
+            @QueryParam("status") String status, @QueryParam("locale") String locale);
+
+    /** Macht den Nachweis-Kurs einer Organisation sichtbar (org-skopiertes Sharing, analog M4). */
+    @PUT
+    @Path("/repo/courses/{courseId}/organisations/{organisationKey}")
+    Response linkCourseToOrganisation(@HeaderParam("Authorization") String auth,
+            @PathParam("courseId") long courseId, @PathParam("organisationKey") long organisationKey);
+
+    /** Schreibt das Assessment-Ergebnis eines Lernenden (AssessableResultsVO) — die Completion in OpenOLAT (SoR). */
+    @POST
+    @Path("/repo/courses/{courseId}/assessments/{nodeId}")
+    Response writeAssessmentResult(@HeaderParam("Authorization") String auth,
+            @PathParam("courseId") long courseId, @PathParam("nodeId") String nodeId, Map<String, Object> resultVo);
+
+    /** Liest das Assessment-Ergebnis eines Lernenden zum Knoten → AssessableResultsVO ({@code passed}/{@code assessmentDone}). */
+    @GET
+    @Path("/repo/courses/{courseId}/assessments/{nodeId}/users/{identityKey}")
+    JsonNode readAssessmentResult(@HeaderParam("Authorization") String auth,
+            @PathParam("courseId") long courseId, @PathParam("nodeId") String nodeId,
+            @PathParam("identityKey") long identityKey);
 }

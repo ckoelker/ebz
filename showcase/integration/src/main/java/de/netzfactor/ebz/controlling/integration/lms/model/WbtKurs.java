@@ -47,6 +47,19 @@ public class WbtKurs extends PanacheEntity {
     @Column(name = "openolat_key")
     public Long openolatKey;
 
+    /**
+     * Nachweis-Seam (M6): {@code courseId} (= olatResourceId) des per REST gebauten, trackbaren WBT-Kurses,
+     * der als REST-lesbare Completion-Quelle dient (das bare SCORM-Nugget hat keine). Leer = noch nicht
+     * provisioniert. Der Nachweis-Kurs ist getrennt vom Inhalts-Nugget ({@link #openolatKey}) — das Nugget
+     * bleibt unangetastet.
+     */
+    @Column(name = "openolat_nachweis_kurs_id")
+    public Long openolatNachweisKursId;
+
+    /** Knoten-Ident ({@code nodeIdent}) des Assessment-Knotens im Nachweis-Kurs (Ziel des Completion-Reads). */
+    @Column(name = "openolat_nachweis_node_id", length = 64)
+    public String openolatNachweisNodeId;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "scorm_version", length = 16)
     public ScormVersion scormVersion;
