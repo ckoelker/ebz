@@ -92,6 +92,11 @@
       <groupId>io.quarkus</groupId>
       <artifactId>quarkus-rest-jackson</artifactId>
     </dependency>
+    <!-- Health-/Readiness-Probes (/q/health, /q/health/ready) — Container-Health & Seed-Polling. -->
+    <dependency>
+      <groupId>io.quarkus</groupId>
+      <artifactId>quarkus-smallrye-health</artifactId>
+    </dependency>
     <!-- Reactive Routes: nur für den @RouteFilter, der das access_token aus der Query in den
          Authorization-Header hebt (Browser-SSE/-WS-Auth); läuft vor der OIDC-Authentifizierung. -->
     <dependency>

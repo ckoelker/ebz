@@ -35,7 +35,7 @@ SHOP="${SHOP:-http://localhost:3000}"                # vendure
 MVN="${MVN:-mvn}"
 
 # Schritt-Reihenfolge (Voll-Lauf führt sie genau so aus).
-SCHRITTE=(preflight reset up seed mandanten-seed lms-share test-java test-spa test-vendure test-e2e bpmn lightdash summary)
+SCHRITTE=(preflight reset up seed mandanten-seed lms-share lms-nachweis test-java test-spa test-vendure test-e2e bpmn lightdash summary)
 
 # ── Hübsche Ausgabe ─────────────────────────────────────────────────────────────────────────────
 rot=$'\e[31m'; gruen=$'\e[32m'; gelb=$'\e[33m'; blau=$'\e[36m'; fett=$'\e[1m'; aus=$'\e[0m'
@@ -183,6 +183,14 @@ schritt_lms_share() {
   ok "Content-share-once geseedet (EBZ-Default-Org + DEMO_AG teilen dasselbe Nugget)"
 }
 
+schritt_lms_nachweis() {
+  phase "LMS-NACHWEIS — Weiterbildungsnachweis (M6): OpenOLAT-Completion → LernleistungsFakt (Soll-Stunden)"
+  # Setzt Content-Import (seed) UND ein laufendes Backend (up) voraus. Treibt rein die Backend-Endpunkte
+  # (Staff-OIDC); der trackbare Nachweis-Kurs ist die REST-lesbare Completion-Quelle (Nugget unberuehrt).
+  bash openolat/lms-nachweis-seed.sh || fail "Nachweis-Seam-Seed fehlgeschlagen"
+  ok "Weiterbildungsnachweis geseedet (customer schliesst WBT ab → Soll-Stunden-Fakt im MDM)"
+}
+
 schritt_test_java() {
   phase "TEST — Java-Integration (Quarkus, rest-assured + E2E-Spans)"
   # Läuft gegen das laufende Postgres; die DispatcherPauseExtension pausiert die Container-@Scheduled
@@ -280,6 +288,7 @@ fuehre_aus() {
     seed)         schritt_seed ;;
     mandanten-seed) schritt_mandanten_seed ;;
     lms-share)    schritt_lms_share ;;
+    lms-nachweis) schritt_lms_nachweis ;;
     test-java)    schritt_test_java ;;
     test-spa)     schritt_test_spa ;;
     test-vendure) schritt_test_vendure ;;
