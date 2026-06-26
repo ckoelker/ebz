@@ -36,6 +36,12 @@ public class PortalTenantResolver implements TenantResolver {
                 || path.startsWith("/party/firmensicht")) {
             return "customers";
         }
+        // Bestellkontexte werden CROSS-REALM gebraucht: das Cockpit (Staff) UND das Außenportal (Kunde,
+        // „Meine Azubis") rufen sie auf. Ein pfad-fester Tenant würde die jeweils andere Seite mit 401
+        // aussperren → Tenant am Token-Issuer entscheiden (gleiches Muster wie der WS-Pfad unten).
+        if (path.startsWith("/party/personen/") && path.endsWith("/kontexte")) {
+            return tenantAusIssuer(context);
+        }
         // Thread-WebSocket ist <b>Cross-Realm</b> (Staff UND Kunde in einer Konversation) → der Tenant
         // kann nicht am Pfad hängen, sondern wird am Issuer des Tokens entschieden (das der
         // RealtimeAuthRouteFilter zuvor aus ?access_token in den Authorization-Header gehoben hat).
