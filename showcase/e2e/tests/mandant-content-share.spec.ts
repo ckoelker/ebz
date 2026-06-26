@@ -39,11 +39,11 @@ test('M4: ein Repo-Entry in ≥2 Org-Curricula geteilt (Storage ×1) — REST-To
   ).toBeTruthy();
 });
 
-// BLOCKIERT (nicht von M4): OpenOLAT-Browser-SSO ist stack-weit gestört — Login schlägt mit
-// "OAuth Login failed, no infos extracted from access token" fehl (betrifft auch mandant-branding).
-// Sobald der OpenOLAT-OIDC-Claim-/Scope-Fix steht, hier `fixme` entfernen. Die REST-Topologie (oben)
-// belegt K5 (Storage ×1, ≥2 Org-Curricula) bereits unabhängig vom Browser.
-test.fixme('M4: EBZ-Teilnehmer (customer) startet den geteilten Kurs im Browser', async ({ page, request }) => {
+// M4-Browser-Beleg: customer (EBZ-Curriculum-Teilnehmer) öffnet den geteilten Kurs. Setzt voraus, dass
+// OpenOLAT-SSO Identity-Claims bekommt — die fehlten zwischenzeitlich, weil die ebz-customers-Realm-JSON
+// ein `clientScopes`-Array hatte und Keycloak deshalb die Built-in-Scopes (profile/email/…) NICHT anlegte.
+// Fix: Standard-Scopes explizit in die Realm-JSON aufgenommen.
+test('M4: EBZ-Teilnehmer (customer) startet den geteilten Kurs im Browser', async ({ page, request }) => {
   const entries = await (await request.get(`${OL}/restapi/repo/entries`, H)).json();
   const key = (entries as { displayname?: string; key: number }[]).find((e) =>
     (e.displayname ?? '').includes('H5P Showcase'),
