@@ -35,7 +35,7 @@ SHOP="${SHOP:-http://localhost:3000}"                # vendure
 MVN="${MVN:-mvn}"
 
 # Schritt-Reihenfolge (Voll-Lauf führt sie genau so aus).
-SCHRITTE=(preflight reset up seed mandanten-seed lms-share lms-nachweis test-java test-spa test-vendure test-e2e bpmn lightdash summary)
+SCHRITTE=(preflight reset up seed mandanten-seed lms-share lms-nachweis lms-zertifikat test-java test-spa test-vendure test-e2e bpmn lightdash summary)
 
 # ── Hübsche Ausgabe ─────────────────────────────────────────────────────────────────────────────
 rot=$'\e[31m'; gruen=$'\e[32m'; gelb=$'\e[33m'; blau=$'\e[36m'; fett=$'\e[1m'; aus=$'\e[0m'
@@ -102,6 +102,7 @@ schritt_up() {
   warte_auf "vendure server (healthy)" 240 gesund server
   warte_auf "integration (/q/openapi)" 180 http_ok "$API/q/openapi"
   warte_auf "keycloak (token)"        180 bash -c "curl -fsS ${RESOLVE[*]} -o /dev/null '$KC/realms/ebz-staff/.well-known/openid-configuration'"
+  warte_auf "keycloak-demo-ag (Kunden-IdP)" 180 http_ok "http://localhost:8085/realms/demo-ag/.well-known/openid-configuration"
   warte_auf "storefront (SSR)"        180 http_ok "http://localhost:${STOREFRONT_PORT:-3001}/"
   warte_auf "mdm-cockpit"             120 http_ok "http://localhost:${MDM_PORT:-5174}/"
   warte_auf "portal"                  120 http_ok "http://localhost:${PORTAL_PORT:-5175}/"
@@ -189,6 +190,15 @@ schritt_lms_nachweis() {
   # (Staff-OIDC); der trackbare Nachweis-Kurs ist die REST-lesbare Completion-Quelle (Nugget unberuehrt).
   bash openolat/lms-nachweis-seed.sh || fail "Nachweis-Seam-Seed fehlgeschlagen"
   ok "Weiterbildungsnachweis geseedet (customer schliesst WBT ab → Soll-Stunden-Fakt im MDM)"
+}
+
+schritt_lms_zertifikat() {
+  phase "LMS-ZERTIFIKAT — Auto-Zertifikat-Demo: DEMO_AG-Kurs (SCORM-Nugget) → natives Zertifikat bei Abschluss"
+  # Setzt Content-Import (seed, Nugget 884736), DEMO_AG-Org (mandanten-seed) UND das Image mit der
+  # ebz-nachweis-cert.jar voraus. Treibt die EBZ-Extension (SCORM-Knoten + passed.progress + Auto-Cert +
+  # Publish) plus OpenOLAT-Std-REST; max ist DEMO_AG-Mitglied (Branding) + eingeschrieben. Idempotent.
+  bash openolat/lms-zertifikat-seed.sh || fail "Auto-Zertifikat-Seed fehlgeschlagen"
+  ok "Auto-Zertifikat-Demo geseedet (max @ DEMO_AG schliesst Nugget ab → OpenOLAT stellt Zertifikat aus)"
 }
 
 schritt_test_java() {
@@ -289,6 +299,7 @@ fuehre_aus() {
     mandanten-seed) schritt_mandanten_seed ;;
     lms-share)    schritt_lms_share ;;
     lms-nachweis) schritt_lms_nachweis ;;
+    lms-zertifikat) schritt_lms_zertifikat ;;
     test-java)    schritt_test_java ;;
     test-spa)     schritt_test_spa ;;
     test-vendure) schritt_test_vendure ;;

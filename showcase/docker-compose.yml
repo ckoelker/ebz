@@ -154,6 +154,31 @@ services:
       - ./vendure/keycloak/themes:/opt/keycloak/themes:ro
       - ./vendure/keycloak/providers:/opt/keycloak/providers:ro
 
+  # Der EIGENE Unternehmens-Keycloak des B2B-Kunden DEMO AG (echte externe IdP-Foederation).
+  # ebz-customers brokert hierher (IdP-Alias kunde-demo) → max meldet sich an SEINEM Firmen-IdP an.
+  # KC_HTTP_PORT=8085 + publish 8085:8085 + Netz-Alias keycloak-demo-ag.localhost: damit der Issuer
+  # http://keycloak-demo-ag.localhost:8085/realms/demo-ag von Browser (localhost→127.0.0.1) UND vom
+  # EBZ-Keycloak-Container (Alias) IDENTISCH aufloest (Backchannel-Token/JWKS = Frontchannel-Issuer).
+  # (8082 = Adminer, 8084 = Lightdash, 8088/8080 = EBZ-Keycloak, 8089 = OpenOLAT → 8085 frei.)
+  keycloak-demo-ag:
+    image: quay.io/keycloak/keycloak:26.2.5
+    command: ["start-dev", "--import-realm"]
+    restart: unless-stopped
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin}
+      KC_HOSTNAME_STRICT: "false"
+      KC_HTTP_ENABLED: "true"
+      KC_HTTP_PORT: "8085"
+    ports:
+      - "8085:8085"
+    networks:
+      default:
+        aliases:
+          - keycloak-demo-ag.localhost
+    volumes:
+      - ./vendure/keycloak/demo-ag-realms:/opt/keycloak/data/import:ro
+
   adminer:
     image: adminer:latest
     restart: unless-stopped

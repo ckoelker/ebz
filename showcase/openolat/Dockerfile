@@ -36,10 +36,11 @@ COPY ext/ /tmp/ext/
 RUN ROOT="$CATALINA_HOME/webapps/ROOT" \
  && PKG=/tmp/ext-build/de/netzfactor/ebz/olat/branding \
  && mkdir -p "$PKG/_spring" \
- && CP="$ROOT/WEB-INF/classes:$(echo "$ROOT"/WEB-INF/lib/*.jar | tr ' ' ':')" \
- && javac -cp "$CP" -d /tmp/ext-build /tmp/ext/MandantBrandingInterceptor.java \
+ && CP="$ROOT/WEB-INF/classes:$(echo "$ROOT"/WEB-INF/lib/*.jar | tr ' ' ':'):$(echo "$CATALINA_HOME"/lib/*.jar | tr ' ' ':')" \
+ && javac -cp "$CP" -d /tmp/ext-build /tmp/ext/MandantBrandingInterceptor.java /tmp/ext/EbzNachweisCertWebService.java \
  && cp /tmp/ext/mandantBrandingContext.xml "$PKG/_spring/" \
  && (cd /tmp/ext-build && jar cf "$ROOT/WEB-INF/lib/ebz-mandant-branding.jar" de) \
+ && (cd /tmp/ext-build && jar cf "$ROOT/WEB-INF/lib/ebz-nachweis-cert.jar" org) \
  && rm -rf /tmp/ext /tmp/ext-build
 # OpenOLAT lädt Spring-Contexts NUR über explizite <import> in mainContext.xml (kein Auto-Scan
 # für Fremd-Jars). Wir registrieren unseren Context genau so — per Overlay der mainContext.xml in
