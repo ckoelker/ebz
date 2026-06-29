@@ -2,11 +2,17 @@
 // SSR an (SEO/Speaking-URLs), @nuxt/ui (4) als UI-Lib, EBZ-Navy, nur Deutsch.
 // Alle Shop-API-Aufrufe laufen serverseitig über Nuxt-Server-Routen (server/api/*),
 // damit die Vendure-URL serverseitig bleibt (kein CORS, keine URL-Dualität im Browser).
+import { fileURLToPath } from 'node:url';
+
 export default defineNuxtConfig({
   compatibilityDate: '2025-06-18',
   ssr: true,
   modules: ['@nuxt/ui'],
   css: ['~/assets/css/main.css'],
+  // Geteilter Domain-Core (Geld/Datum/Status) aus crm-ui — eine Quelle für mdm/portal/storefront.
+  alias: { '@crm-ui': fileURLToPath(new URL('../crm-ui/src', import.meta.url)) },
+  // Build/Dev-Server darf das Geschwister-Verzeichnis crm-ui (außerhalb des storefront-Roots) lesen.
+  vite: { server: { fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] } } },
   // Light als Default-Theme (statt OS-`system`); Toggle bleibt möglich.
   colorMode: {
     preference: 'light',

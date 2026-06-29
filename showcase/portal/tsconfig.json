@@ -15,7 +15,8 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@crm-ui/*": ["../crm-ui/src/*"]
     },
     "types": ["vite/client", "node"]
   },

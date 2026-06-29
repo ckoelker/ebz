@@ -10,6 +10,7 @@ import {
 } from '@/kommunikation';
 import { auth, login, getAccessToken } from '@/auth';
 import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
+import { datumZeitKurz as zeit } from '@crm-ui/domain/format';
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -138,14 +139,6 @@ function fehler(e: unknown) {
 
 function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-}
-
-function zeit(iso?: string): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  // DACH-Strategie: konsequent in Europe/Berlin ausgeben (der Server erfasst bereits in Berlin).
-  return isNaN(d.getTime()) ? iso
-    : d.toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Berlin' });
 }
 
 const eigenes = (n: NachrichtView) => n.absenderTyp === 'MITARBEITER';

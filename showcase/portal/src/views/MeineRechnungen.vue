@@ -9,6 +9,8 @@ import {
   type PortalRechnungView,
 } from '@/portal';
 import { auth, login } from '@/auth';
+import { euro } from '@crm-ui/domain/format';
+import { rechnungStatusColor } from '@crm-ui/domain/severity';
 
 type KontextOption = { label: string; value: string; organisationId?: number };
 
@@ -81,16 +83,6 @@ function fehler(e: unknown) {
   meldung.value = { text: (e as Error).message, severity: 'error' };
 }
 
-function euro(cent: number): string {
-  return (cent / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
-}
-
-const statusFarbe: Record<string, 'info' | 'success' | 'neutral'> = {
-  AUSGESTELLT: 'info',
-  BEZAHLT: 'success',
-  STORNIERT: 'neutral',
-};
-
 const columns: TableColumn<PortalRechnungView>[] = [
   { accessorKey: 'nummer', header: 'Beleg-Nr.' },
   { accessorKey: 'ausstellungsdatum', header: 'Datum' },
@@ -128,7 +120,7 @@ const columns: TableColumn<PortalRechnungView>[] = [
         <UTable :data="belege" :columns="columns" :loading="laden" :empty="'Keine Rechnungen in diesem Kontext.'">
           <template #betrag-cell="{ row }">{{ euro(row.original.summeCent) }}</template>
           <template #status-cell="{ row }">
-            <UBadge :color="statusFarbe[row.original.status ?? ''] ?? 'neutral'" variant="soft" size="sm">
+            <UBadge :color="rechnungStatusColor(row.original.status)" variant="soft" size="sm">
               {{ row.original.status }}
             </UBadge>
           </template>

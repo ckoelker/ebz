@@ -35,7 +35,7 @@ SHOP="${SHOP:-http://localhost:3000}"                # vendure
 MVN="${MVN:-mvn}"
 
 # Schritt-Reihenfolge (Voll-Lauf führt sie genau so aus).
-SCHRITTE=(preflight reset up seed mandanten-seed lms-share lms-nachweis lms-zertifikat test-java test-spa test-vendure test-e2e bpmn lightdash summary)
+SCHRITTE=(preflight reset up seed mandanten-seed lms-share lms-nachweis lms-zertifikat test-java test-spa storybook test-vendure test-e2e bpmn lightdash summary)
 
 # ── Hübsche Ausgabe ─────────────────────────────────────────────────────────────────────────────
 rot=$'\e[31m'; gruen=$'\e[32m'; gelb=$'\e[33m'; blau=$'\e[36m'; fett=$'\e[1m'; aus=$'\e[0m'
@@ -228,6 +228,21 @@ schritt_test_spa() {
   ok "storefront grün"
 }
 
+schritt_storybook() {
+  phase "BUILD — Storybooks (Design-Systeme: typecheck + build-storybook)"
+  # Zwei eigenständige Storybook-Pakete (eigene pnpm-Installs, kein Root-Workspace): das interne
+  # CRM/Admin-Design-System (crm-kernmaske) und das kundennahe (kunden-kernmaske, Shop+Portal).
+  # Rein statisch — kein laufender Stack nötig. build-storybook = maßgeblicher Compile-/Story-Gate
+  # (kompiliert auch alle Stories inkl. play()/argTypes). Reale play()/a11y-Ausführung = Folgeschritt
+  # (Vitest-Browser-Runner `test-storybook`, separat wegen Versions-Pinning + a11y-Triage).
+  for sb in crm-kernmaske kunden-kernmaske; do
+    echo "── $sb ──"
+    ( cd "$sb" && pnpm install --frozen-lockfile >/dev/null 2>&1 || pnpm install >/dev/null 2>&1; \
+      pnpm run typecheck && pnpm run build-storybook >/dev/null ) || fail "$sb Storybook (typecheck/build) rot"
+    ok "$sb grün"
+  done
+}
+
 schritt_test_vendure() {
   phase "TEST — Vendure-Smoke-Tests (Shop-API)"
   for s in smoke-shop smoke-subscriptions smoke-rechnungslauf smoke-sso smoke-checkout-f1; do
@@ -302,6 +317,7 @@ fuehre_aus() {
     lms-zertifikat) schritt_lms_zertifikat ;;
     test-java)    schritt_test_java ;;
     test-spa)     schritt_test_spa ;;
+    storybook)    schritt_storybook ;;
     test-vendure) schritt_test_vendure ;;
     test-e2e)     schritt_test_e2e ;;
     bpmn)         schritt_bpmn ;;

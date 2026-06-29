@@ -6,6 +6,7 @@ import {
   getHubspotSyncAuftraege, postHubspotSyncBackfill, postHubspotSyncRun, postHubspotSyncRetryAuftragId,
   postHubspotSyncContactsPersonId, postHubspotSyncCompaniesOrganisationId, postHubspotSyncErasurePersonId,
 } from '@/api/endpoints/hubspot-sync-resource/hubspot-sync-resource';
+import { datumZeit } from '@crm-ui/domain/format';
 
 /** Strikte Auftragszeile fürs Cockpit (gemappt aus dem generierten, durchweg optionalen AuftragDto). */
 export interface AuftragDto {
@@ -77,10 +78,5 @@ export const syncCompany = (organisationId: number): Promise<unknown> =>
 export const erasure = (personId: number): Promise<unknown> =>
   run(() => postHubspotSyncErasurePersonId(personId));
 
-/** ISO-Zeitstempel → „22.06.2026, 14:10" (Europe/Berlin, de-DE). */
-export const zeit = (iso?: string | null): string =>
-  iso
-    ? new Date(iso).toLocaleString('de-DE', {
-        dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin',
-      })
-    : '—';
+/** ISO-Zeitstempel → „22.06.2026, 14:10" (Europe/Berlin) — geteilter Core, „—" wenn leer/ungültig. */
+export const zeit = (iso?: string | null): string => datumZeit(iso) || '—';

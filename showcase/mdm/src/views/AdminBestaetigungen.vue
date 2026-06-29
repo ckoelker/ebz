@@ -7,6 +7,7 @@ import { ref, onMounted, computed } from 'vue';
 import { bestaetigungsReport, ApiFehler, type BestaetigungReportView } from '@/kommunikation';
 import { auth, login } from '@/auth';
 import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
+import { datumZeit } from '@crm-ui/domain/format';
 
 const laden = ref(false);
 const meldung = ref<string | null>(null);
@@ -55,12 +56,7 @@ function statusLabel(s?: string): string {
     : s === 'UEBERFAELLIG' ? 'überfällig' : s === 'OFFEN' ? 'offen' : (s ?? '');
 }
 
-function zeit(iso?: string): string {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return isNaN(d.getTime()) ? iso
-    : d.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
-}
+const zeit = (iso?: string | null): string => datumZeit(iso) || '—';
 </script>
 
 <template>

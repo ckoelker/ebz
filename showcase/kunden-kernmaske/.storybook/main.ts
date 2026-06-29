@@ -8,7 +8,7 @@ const config: StorybookConfig = {
     name: '@storybook/vue3-vite',
     options: {},
   },
-  // vite.config.ts (inkl. @nuxt/ui/vite-Plugin) wird vom Framework automatisch gemerged.
+  // vite.config.ts (inkl. @nuxt/ui/vite-Plugin + @crm-ui-Alias) wird vom Framework automatisch gemerged.
 }
 
 export default config

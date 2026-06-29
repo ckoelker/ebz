@@ -26,10 +26,14 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Geteilte CRM-Primitive/Domain-Logik (eine Quelle für mdm + portal) als First-Party-Quelle.
+      '@crm-ui': fileURLToPath(new URL('../crm-ui/src', import.meta.url)),
     },
   },
   server: {
     port: 5175,
+    // Dev-Server darf das Geschwister-Verzeichnis crm-ui ausliefern (außerhalb des portal-Roots).
+    fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] },
     proxy: {
       '/party': { target: INTEGRATION, changeOrigin: true },
       '/lms': { target: INTEGRATION, changeOrigin: true },

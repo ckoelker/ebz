@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import type { Uebersicht360View } from '@/api/model';
+import { euro } from '@crm-ui/domain/format';
 
 // 360°-Sicht (Plan A18): read-only Buchungen/Anmeldungen + festgeschriebene Rechnungen eines Kontakts.
 // Reine Anzeige (keine Schreib-Ops); DSGVO-Scope steckt schon in der API (Firmenkontext ohne Privates).
 defineProps<{ data?: Uebersicht360View }>();
-
-const euro = (cent?: number) =>
-  ((cent ?? 0) / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
 const anmeldungColor = (s?: string) =>
   s === 'AKTIV' ? 'success' : s === 'ANGEFRAGT' ? 'warning' : s === 'STORNIERT' ? 'error' : 'neutral';

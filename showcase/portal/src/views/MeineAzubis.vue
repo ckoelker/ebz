@@ -10,6 +10,7 @@ import {
 } from '@/portal';
 import type { Zimmerart } from '@/api/model';
 import { auth, login } from '@/auth';
+import { azubiStatusColor } from '@crm-ui/domain/severity';
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -108,12 +109,6 @@ function fehler(e: unknown) {
   meldung.value = { text: (e as Error).message, severity: 'error' };
 }
 
-const statusFarbe: Record<string, 'warning' | 'info' | 'success' | 'neutral'> = {
-  ANGEFRAGT: 'warning',
-  BESTAETIGT_EBZ: 'info',
-  AKTIV: 'success',
-};
-
 const halbjahrItems = [{ label: '1', value: 1 }, { label: '2', value: 2 }];
 const zimmerItems = ['KEINE', 'DOPPEL', 'EINZEL'];
 
@@ -177,7 +172,7 @@ const columns: TableColumn<BuchungZeile>[] = [
         <h3 class="font-semibold mb-2">Angemeldete Azubis</h3>
         <UTable :data="zeilen" :columns="columns" :loading="laden" :empty="'Noch keine Azubis angemeldet.'">
           <template #status-cell="{ row }">
-            <UBadge :color="statusFarbe[row.original.status ?? ''] ?? 'neutral'" variant="soft" size="sm">
+            <UBadge :color="azubiStatusColor(row.original.status)" variant="soft" size="sm">
               {{ row.original.status }}
             </UBadge>
           </template>

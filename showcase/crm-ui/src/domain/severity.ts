@@ -21,3 +21,39 @@ export const prioColor = (p?: string): UiColor =>
 // Severity → Tailwind-Border-Klasse (linke Karten-Kante).
 export const healthBorder = (h: Health): string =>
   h === 'ok' ? 'border-l-success' : h === 'warn' ? 'border-l-warning' : 'border-l-error';
+
+// ── Außenportal-/Self-Service-Status (kundennah) ────────────────────────────────────────────────
+// Fachliche Status-Semantik ist invariant (eine bezahlte Rechnung ist überall „grün") → hier zentral
+// statt per-View-Maps. Gleicher string-toleranter Stil; unbekannt → neutral.
+
+/** Rechnungs-Status (Portal „Meine Rechnungen"). */
+export const rechnungStatusColor = (s?: string): UiColor =>
+  s === 'BEZAHLT' ? 'success' : s === 'AUSGESTELLT' ? 'info' : 'neutral';
+
+/** Einschreibungs-/WBT-Status (Portal „Meine Trainings"). */
+export const einschreibungStatusColor = (s?: string): UiColor =>
+  s === 'EINGESCHRIEBEN' ? 'success'
+    : s === 'ANGEFORDERT' ? 'warning'
+    : s === 'FEHLGESCHLAGEN' ? 'error'
+    : 'neutral';
+
+/** Einschreibungs-Status als kundenfreundlicher Text. */
+export const einschreibungStatusText = (s?: string): string =>
+  s === 'EINGESCHRIEBEN' ? 'verfügbar'
+    : s === 'ANGEFORDERT' ? 'wird bereitgestellt …'
+    : s === 'FEHLGESCHLAGEN' ? 'Problem — bitte EBZ kontaktieren'
+    : (s ?? '');
+
+/** Azubi-/Anmeldungs-Status (Portal „Meine Azubis"). */
+export const azubiStatusColor = (s?: string): UiColor =>
+  s === 'AKTIV' ? 'success'
+    : s === 'BESTAETIGT_EBZ' ? 'info'
+    : s === 'ANGEFRAGT' ? 'warning'
+    : 'neutral';
+
+/** Aktivitäts-Kategorie (Portal „Meine Aktivitäten"). */
+export const aktivitaetKategorieColor = (k?: string): UiColor =>
+  k === 'ANMELDUNG' || k === 'EINSCHREIBUNG' ? 'success'
+    : k === 'RECHNUNG' ? 'info'
+    : k === 'PRUEFUNG' ? 'warning'
+    : 'neutral';

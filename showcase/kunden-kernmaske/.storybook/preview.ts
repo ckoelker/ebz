@@ -12,9 +12,8 @@ setup((app) => {
 const preview: Preview = {
   // Best-practice: jede Story bekommt automatisch eine Docs-Seite (Autodocs) aus Args/ArgTypes.
   tags: ['autodocs'],
-  // Farbschema-Umschalter in der Toolbar (Default: Light). Nuxt UI / Tailwind v4
-  // schalten Dark über die `.dark`-Klasse auf <html> — wir setzen sie explizit,
-  // damit nicht das System-Schema (prefers-color-scheme) gewinnt.
+  // Farbschema-Umschalter in der Toolbar (Default: Light). Nuxt UI / Tailwind v4 schalten Dark über die
+  // `.dark`-Klasse auf <html> — wir setzen sie explizit, damit nicht das System-Schema gewinnt.
   globalTypes: {
     theme: {
       description: 'Farbschema',
@@ -49,7 +48,7 @@ const preview: Preview = {
     a11y: { test: 'todo' },
     options: {
       storySort: {
-        order: ['Übersicht', 'Tokens', 'Primitives', 'Shell', 'Cockpit', 'Kundenstamm', 'Bausteine', 'Tabs', 'Dialoge'],
+        order: ['Willkommen', 'Tokens', 'UI'],
       },
     },
   },

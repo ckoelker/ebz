@@ -87,6 +87,5 @@ export async function zugferdHerunterladen(id: number, nummer?: string | null): 
   URL.revokeObjectURL(url);
 }
 
-/** Cent → „1.234,56 €" (Europe/Berlin, de-DE). */
-export const euro = (cent?: number | null): string =>
-  ((cent ?? 0) / 100).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
+// Geld kommt aus dem geteilten Domain-Core (@crm-ui/domain/format) — EINE Quelle für alle Apps.
+export { euro } from '@crm-ui/domain/format';

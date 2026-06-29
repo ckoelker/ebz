@@ -9,6 +9,8 @@ import {
   type EreignisView,
 } from '@/portal';
 import { auth, login, getAccessToken } from '@/auth';
+import { datumZeit } from '@crm-ui/domain/format';
+import { aktivitaetKategorieColor } from '@crm-ui/domain/severity';
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -115,21 +117,6 @@ function fehler(e: unknown) {
   meldung.value = { text: (e as Error).message, severity: 'error' };
 }
 
-function zeit(iso?: string): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  // DACH-Strategie: konsequent in Europe/Berlin ausgeben (der Server erfasst bereits in Berlin).
-  return isNaN(d.getTime()) ? iso
-    : d.toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/Berlin' });
-}
-
-const kategorieFarbe: Record<string, 'info' | 'success' | 'warning' | 'neutral'> = {
-  RECHNUNG: 'info',
-  ANMELDUNG: 'success',
-  EINSCHREIBUNG: 'success',
-  PRUEFUNG: 'warning',
-  SYSTEM: 'neutral',
-};
 </script>
 
 <template>
@@ -185,11 +172,11 @@ const kategorieFarbe: Record<string, 'info' | 'success' | 'warning' | 'neutral'>
           />
           <div class="flex flex-col gap-1.5">
             <div class="flex items-center gap-2 flex-wrap">
-              <UBadge :color="kategorieFarbe[ev.kategorie ?? ''] ?? 'neutral'" variant="soft" size="sm">
+              <UBadge :color="aktivitaetKategorieColor(ev.kategorie)" variant="soft" size="sm">
                 {{ ev.kategorie }}
               </UBadge>
               <span :class="ev.gelesen ? 'font-medium' : 'font-bold'">{{ ev.betreff }}</span>
-              <span class="ml-auto text-dimmed text-xs">{{ zeit(ev.zeitpunkt) }}</span>
+              <span class="ml-auto text-dimmed text-xs">{{ datumZeit(ev.zeitpunkt) }}</span>
             </div>
             <div class="flex items-center gap-2">
               <UBadge v-if="ev.bestaetigtAm" color="success" variant="soft" size="sm" icon="i-lucide-check">
@@ -201,7 +188,7 @@ const kategorieFarbe: Record<string, 'info' | 'success' | 'warning' | 'neutral'>
                 <UButton size="sm" icon="i-lucide-check"
                   :color="ev.status === 'UEBERFAELLIG' || ev.status === 'ESKALIERT' ? 'error' : 'primary'"
                   :loading="busy === ev.id" @click="bestaetigen(ev)">Zur Kenntnis genommen</UButton>
-                <span v-if="ev.bestaetigenBis" class="text-dimmed text-xs">Frist: {{ zeit(ev.bestaetigenBis) }}</span>
+                <span v-if="ev.bestaetigenBis" class="text-dimmed text-xs">Frist: {{ datumZeit(ev.bestaetigenBis) }}</span>
               </template>
               <UButton v-if="!ev.gelesen" color="neutral" variant="ghost" size="sm" icon="i-lucide-eye"
                 :loading="busy === ev.id" @click="gelesen(ev)">Als gelesen markieren</UButton>

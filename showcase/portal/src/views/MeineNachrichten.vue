@@ -9,6 +9,7 @@ import {
   ApiFehler, type KonversationView, type NachrichtView,
 } from '@/portal';
 import { auth, login, getAccessToken } from '@/auth';
+import { datumZeitKurz } from '@crm-ui/domain/format';
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -125,13 +126,6 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-function zeit(iso?: string): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  // DACH-Strategie: konsequent in Europe/Berlin ausgeben (der Server erfasst bereits in Berlin).
-  return isNaN(d.getTime()) ? iso
-    : d.toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short', timeZone: 'Europe/Berlin' });
-}
 
 const eigenes = (n: NachrichtView) => n.absenderTyp === 'PERSON';
 </script>
@@ -169,7 +163,7 @@ const eigenes = (n: NachrichtView) => n.absenderTyp === 'PERSON';
             <div class="flex items-center gap-2">
               <span v-if="t.ungelesen" class="w-2 h-2 rounded-full bg-primary-500 shrink-0" />
               <span class="font-semibold truncate" :class="t.ungelesen ? '' : 'text-muted'">{{ t.partner }}</span>
-              <span class="ml-auto text-dimmed text-xs shrink-0">{{ zeit(t.letzteZeit) }}</span>
+              <span class="ml-auto text-dimmed text-xs shrink-0">{{ datumZeitKurz(t.letzteZeit) }}</span>
             </div>
             <div class="text-sm font-medium truncate">{{ t.betreff }}</div>
             <div class="text-xs text-dimmed truncate">{{ t.letzteVorschau }}</div>
@@ -194,7 +188,7 @@ const eigenes = (n: NachrichtView) => n.absenderTyp === 'PERSON';
                     <UBadge v-if="n.kiGeneriert" color="warning" variant="soft" size="xs" icon="i-lucide-bot">
                       KI-generiert
                     </UBadge>
-                    <span class="text-xs" :class="eigenes(n) ? 'text-white/70' : 'text-dimmed'">{{ zeit(n.zeitpunkt) }}</span>
+                    <span class="text-xs" :class="eigenes(n) ? 'text-white/70' : 'text-dimmed'">{{ datumZeitKurz(n.zeitpunkt) }}</span>
                   </div>
                   <!-- Inhalt ist serverseitig sanitisiert (KonversationService.sanitize). -->
                   <div class="prose-sm" v-html="n.inhaltHtml" />

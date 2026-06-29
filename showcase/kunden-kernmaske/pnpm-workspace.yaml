@@ -1,0 +1,9 @@
+# pnpm 11 Settings (siehe ../crm-kernmaske/pnpm-workspace.yaml). Kunden-/Marketing-Design-System — Storybook.
+nodeLinker: hoisted
+trustPolicy: "off"
+# Cooldown gegen frisch publizierte Pakete aus (0): Pins sind bewusst gewählt + verifiziert.
+minimumReleaseAge: 0
+allowBuilds:
+  esbuild: true
+  # vue-demi (transitiv über @nuxt/ui/vueuse): Postinstall wählt den Vue-3-Pfad.
+  vue-demi: true

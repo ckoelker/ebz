@@ -298,7 +298,11 @@ services:
   # Spricht die Shop-API serverseitig über den Compose-Netz-Alias `server` an
   # (NUXT_SHOP_API_URL überschreibt runtimeConfig.shopApiUrl ohne Rebuild).
   storefront:
-    build: ./storefront
+    # Context = showcase/ (statt ./storefront), damit das geteilte crm-ui (Alias @crm-ui) im Build
+    # verfügbar ist; .dockerignore hält den Context schlank. Dockerfile: storefront/Dockerfile.
+    build:
+      context: .
+      dockerfile: storefront/Dockerfile
     restart: unless-stopped
     depends_on:
       server:
@@ -334,7 +338,11 @@ services:
   # Self-Service für Firmen & Teilnehmer (Realm ebz-customers, Client ebz-portal); spricht den
   # integration-Service (/party, /q) über den nginx-Proxy an. Shop bleibt eigenständig. Profil `controlling`.
   portal:
-    build: ./portal
+    # Context = showcase/ (statt ./portal), damit das geteilte crm-ui (Vite-Source-Alias @crm-ui)
+    # im Build verfügbar ist; .dockerignore hält den Context schlank. Dockerfile: portal/Dockerfile.
+    build:
+      context: .
+      dockerfile: portal/Dockerfile
     profiles: ["controlling"]
     restart: unless-stopped
     depends_on:

@@ -7,6 +7,7 @@ import { ref, onMounted, computed } from 'vue';
 import type { TableColumn } from '@nuxt/ui';
 import { partyLogin, meineTrainings, ApiFehler, type MeinTrainingView } from '@/portal';
 import { auth, login } from '@/auth';
+import { einschreibungStatusColor, einschreibungStatusText } from '@crm-ui/domain/severity';
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -38,17 +39,6 @@ function fehler(e: unknown) {
   meldung.value = { text: (e as Error).message, severity: 'error' };
 }
 
-const statusFarbe: Record<string, 'warning' | 'success' | 'error' | 'neutral'> = {
-  ANGEFORDERT: 'warning',
-  EINGESCHRIEBEN: 'success',
-  FEHLGESCHLAGEN: 'error',
-};
-const statusText: Record<string, string> = {
-  ANGEFORDERT: 'wird bereitgestellt …',
-  EINGESCHRIEBEN: 'verfügbar',
-  FEHLGESCHLAGEN: 'Problem — bitte EBZ kontaktieren',
-};
-
 const columns: TableColumn<MeinTrainingView>[] = [
   { accessorKey: 'kursTitel', header: 'Training' },
   { accessorKey: 'status', header: 'Status' },
@@ -73,8 +63,8 @@ const columns: TableColumn<MeinTrainingView>[] = [
       <UTable :data="trainings" :columns="columns" :loading="laden"
         :empty="'Sie haben noch keine Trainings gebucht.'">
         <template #status-cell="{ row }">
-          <UBadge :color="statusFarbe[row.original.status ?? ''] ?? 'neutral'" variant="soft" size="sm">
-            {{ statusText[row.original.status ?? ''] ?? row.original.status }}
+          <UBadge :color="einschreibungStatusColor(row.original.status)" variant="soft" size="sm">
+            {{ einschreibungStatusText(row.original.status) }}
           </UBadge>
         </template>
         <template #aktion-cell="{ row }">
