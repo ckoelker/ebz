@@ -1,0 +1,70 @@
+# EBZ Design-System — Arbeitsanweisung (Masken, Listen & Komponenten)
+
+Verbindliches Playbook für die Entwicklung von UI (Masken/Listen/Komponenten) im showcase-Monorepo —
+für Menschen **und** KI-Assistenten. Ziel: konsistente Oberflächen, **eine Quelle** pro Design-System
+und „nichts wird benutzt, was nicht definiert ist" — bei **erhaltenem Bau-Tempo**.
+
+## 0. Grundsatz — Design-System-first (Richtung A)
+Storybook ist die **verbindliche Quelle**, nicht nur Doku. Neue UI entsteht DS-first: erst die geteilte
+Komponente + Story, dann in der App benutzen. Bestehender App-Code wird **inkrementell** nachgezogen,
+nicht auf einen Schlag.
+
+## 1. Landkarte — wo was lebt
+| Bereich | Komponenten | Storybook (Schaufenster) |
+|---|---|---|
+| Intern/Admin (MDM/CRM) | `@crm-ui` = `showcase/crm-ui/src` | `crm-kernmaske` (:6007) |
+| Kunde/Marketing (Shop+Portal) | `@customer-ui` *(noch anzulegen)* | `kunden-kernmaske` (:6008) |
+| Invariante Logik (Geld/Datum/Status/Anrede) | `@crm-ui/domain` | — (von allen geteilt) |
+
+**Naht:** Admin- und Kunden-Komponenten werden **nicht** über die Naht geteilt; nur `domain` ist
+gemeinsam. Branding via Tokens (`src/assets/css/main.css`), nicht via geforkter Komponenten.
+
+## 2. Entscheidungsregel — vor JEDER Maske/Liste (in dieser Reihenfolge)
+1. **Existiert die Komponente?** (Storybook/Shared-Paket suchen) → importieren, **nie kopieren**.
+2. **Fast passend?** → geteilte Komponente per **Prop erweitern**, nicht forken.
+3. **Neu + wiederverwendbar?** → im geteilten Paket anlegen (prop-rein) → **Story** → dann benutzen.
+4. **Echt einmalig/app-spezifisch?** → darf in der App liegen, aber **komponiert aus** geteilten
+   Primitiven + Tokens (kein Roh-HTML/Inline-Styling, keine direkten `@nuxt/ui`-Sonderlocken in der Fläche).
+
+## 3. Komponenten-Regeln (für neue geteilte Komponenten)
+- **Prop-rein & SSR-safe** — keine App-Bindung (kein API-Client/Router/Store, keine Nuxt-only-Composables);
+  muss in Vite-SPA **und** Nuxt-SSR laufen.
+- **Logik nur aus `@crm-ui/domain`** (Farben/Status/Format), nie inline nachbauen.
+- **Tokens statt Werte** — Farben/Spacing/Radii über Theme-Tokens, keine Hex/px-Hardcodes.
+- **Typsichere `defineProps`-Interfaces**, deutsche Fachbegriffe, schlanke Datei-Struktur (verwandtes bündeln).
+- **Löschen immer mit Bestätigung.**
+- Standard-„Masken & Listen"-Bausteine zuerst seeden: `ListenTabelle`/`MasterDetail`, `FormFeld`/`FormSektion`,
+  `StatusBadge`, `AktionsLeiste`, `Leer-/Lade-Zustand`, `LöschenBestätigenDialog`.
+
+## 4. Storybook-Pflicht — „ohne Story nicht fertig"
+Jede neue geteilte Komponente bekommt **co-located** `Name.stories.ts` im richtigen Schaufenster, SOTA-Muster:
+- `meta` mit `component`; **`argTypes` für JEDEN Prop**; sinnvolle Default-`args`.
+- **mehrere Stories** für die relevanten Zustände/Varianten (inkl. Leer/Fehler/Sperre).
+- **mind. ein `play()`** als Interaction-Test der Kernaussage.
+- `tags:['autodocs']` ist global gesetzt → Doks-Seite automatisch.
+
+## 5. Verifikationsschleife (abgestuft — siehe Tempo-Klausel)
+- `typecheck` **immer** (billig).
+- `build-storybook` **nur**, wenn ein Storybook angefasst wurde.
+- App-Seite: `vitest --passWithNoTests` + `typecheck` (mdm/portal) bzw. Nuxt-`build` (storefront).
+- **Voller Stack-Lauf** (`showcase-aufbau.sh`) nur an **Meilensteinen**, nicht pro Komponente.
+- **Docker-Gotcha:** jede App, die ein geteiltes Paket konsumiert, braucht Build-`context: showcase/`
+  + `COPY <paket>` im Dockerfile (sonst bricht das Image bei der `@…`-Auflösung — bereits passiert bei portal/storefront).
+
+## 6. Wann nachfragen/eskalieren
+- Neue Komponente **kreuzt die Naht** (Admin↔Kunde) → kurz rückfragen.
+- **Branding/Tokens** betroffen (neue Marketing-Palette o. ä.) → CD klären, nicht raten.
+- Muster existiert noch **gar nicht** im DS → Vorschlag zeigen, bevor es Standard wird.
+
+## Tempo-Klausel (damit die Regeln Rails sind, keine Schranke)
+1. **Generator/Template** für „neue Komponente + Story" nutzen (sobald vorhanden) → spart ~80 % der Story-Kosten.
+2. **`build-storybook` nur bei SB-Änderung**, `typecheck` immer, voller Stack-Lauf nur an Meilensteinen.
+3. Mehraufwand ist **front-loaded**: dünne Bibliothek = viele neue Komponenten; gefüllte Bibliothek =
+   meist **Komposition** → schnell. Reuse-lastige Masken/Listen sind mit Playbook **schneller** als ohne.
+
+## Noch offen (Voraussetzungen für volle Verbindlichkeit)
+- **`@customer-ui` extrahieren** (Kunden-Primitive aus den Shop/Portal-Views) — Voraussetzung, dass die
+  Apps das storyfizierte tatsächlich konsumieren.
+- **Erzwingung:** ESLint-Importgrenzen (`@nuxt/ui` nur im DS-Paket), dependency-cruiser auf die Apps,
+  Story-Coverage-Test — als CI-/`showcase-aufbau`-Schritt.
+- **Komponenten-Generator** (Tempo-Klausel Punkt 1).
