@@ -37,9 +37,14 @@ RUN ROOT="$CATALINA_HOME/webapps/ROOT" \
  && PKG=/tmp/ext-build/de/netzfactor/ebz/olat/branding \
  && mkdir -p "$PKG/_spring" \
  && CP="$ROOT/WEB-INF/classes:$(echo "$ROOT"/WEB-INF/lib/*.jar | tr ' ' ':'):$(echo "$CATALINA_HOME"/lib/*.jar | tr ' ' ':')" \
- && javac -cp "$CP" -d /tmp/ext-build /tmp/ext/MandantBrandingInterceptor.java /tmp/ext/EbzNachweisCertWebService.java \
+ && javac -cp "$CP" -d /tmp/ext-build /tmp/ext/MandantBrandingInterceptor.java /tmp/ext/EbzNachweisCertWebService.java /tmp/ext/KeycloakLogoutFilter.java \
  && cp /tmp/ext/mandantBrandingContext.xml "$PKG/_spring/" \
  && (cd /tmp/ext-build && jar cf "$ROOT/WEB-INF/lib/ebz-mandant-branding.jar" de) \
+ # WICHTIG: den ganzen org-Tree jarren (MIT Paket-Verzeichnis-Einträgen org/ org/olat/ …). CXF
+ # basePackages="org.olat" findet die @Path-Resource NUR, wenn diese Dir-Einträge im Jar stehen;
+ # ein `jar cf … org/olat/ebz/restapi` lässt sie weg → Extension nicht registriert (404). Das Jar
+ # enthält die CXF-Resource (org.olat.ebz.restapi) UND den Logout-Filter (org.olat.ebz.logout,
+ # per web.xml-FQN registriert).
  && (cd /tmp/ext-build && jar cf "$ROOT/WEB-INF/lib/ebz-nachweis-cert.jar" org) \
  && rm -rf /tmp/ext /tmp/ext-build
 # OpenOLAT lädt Spring-Contexts NUR über explizite <import> in mainContext.xml (kein Auto-Scan
@@ -52,6 +57,13 @@ RUN ROOT="$CATALINA_HOME/webapps/ROOT" \
  && grep -q "mandantBrandingContext" "$ROOT/WEB-INF/classes/org/olat/_spring/mainContext.xml" \
     || sed -i 's#</beans>#\t<import resource="classpath:/de/netzfactor/ebz/olat/branding/_spring/mandantBrandingContext.xml"/>\n</beans>#' \
        "$ROOT/WEB-INF/classes/org/olat/_spring/mainContext.xml"
+# Single-Logout-Filter registrieren: web.xml ist metadata-complete=true → keine @WebFilter-Annotation,
+# also <filter>+<filter-mapping> per Overlay ergänzen (idempotent). Leitet /dmz/?logout=… zum Keycloak-
+# end_session, danach frisches IdP-Login (Filter-Klasse org.olat.ebz.logout.* aus ebz-nachweis-cert.jar).
+RUN ROOT="$CATALINA_HOME/webapps/ROOT" \
+ && WX="$ROOT/WEB-INF/web.xml" \
+ && grep -q "EbzKeycloakLogoutFilter" "$WX" \
+    || sed -i 's#</web-app>#\t<filter>\n\t\t<filter-name>EbzKeycloakLogoutFilter</filter-name>\n\t\t<filter-class>org.olat.ebz.logout.KeycloakLogoutFilter</filter-class>\n\t\t<init-param><param-name>kcEndpoint</param-name><param-value>http://keycloak.localhost:8080</param-value></init-param>\n\t\t<init-param><param-name>kcRealm</param-name><param-value>ebz-customers</param-value></init-param>\n\t</filter>\n\t<filter-mapping>\n\t\t<filter-name>EbzKeycloakLogoutFilter</filter-name>\n\t\t<url-pattern>/dmz/*</url-pattern>\n\t</filter-mapping>\n</web-app>#' "$WX"
 
 # ── Eigenes EBZ-SCSS-Theme („Regenbogen") AUSSERHALB der .war ──────────────────
 # Dart-Sass-Standalone (gitignored, via fetch-artifacts.sh; kein Node nötig) entpacken.

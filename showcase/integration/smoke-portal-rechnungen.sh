@@ -99,7 +99,7 @@ ok "Tenant-Trennung ok (Staff-Token auf Portal → HTTP $SX)"
 KONTEXTE=$(curl -s -H "$CH" "$API/party/portal/rechnungs-kontexte")
 echo "$KONTEXTE" | jget "1 if any(k['art']=='PRIVAT' for k in d) else (_ for _ in ()).throw(SystemExit('kein PRIVAT-Kontext'))" >/dev/null \
   || fail "Kontexte: PRIVAT fehlt"
-echo "$KONTEXTE" | jget "1 if any(k['organisationId']==$ORG for k in d) else (_ for _ in ()).throw(SystemExit('Firmenkontext fehlt'))" >/dev/null \
+echo "$KONTEXTE" | jget "1 if any(k.get('organisationId')==$ORG for k in d) else (_ for _ in ()).throw(SystemExit('Firmenkontext fehlt'))" >/dev/null \
   || fail "Kontexte: Firmenkontext $ORG fehlt"
 ok "Kontexte: PRIVAT + Firma $ORG"
 

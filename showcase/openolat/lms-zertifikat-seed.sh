@@ -22,7 +22,9 @@
 set -uo pipefail
 
 OL="${OL:-http://localhost:8089}"
-NUGGET_KEY="${NUGGET_KEY:-884736}"          # geteiltes SCORM/H5P-Nugget (Inhalt des Zertifikatskurses)
+NUGGET_NAME="${NUGGET_NAME:-H5P Showcase}"  # Anzeigename des geteilten Nuggets (Inhalt des Zertifikatskurses)
+NUGGET_KEY="${NUGGET_KEY:-}"                # LEER = dynamisch über NUGGET_NAME auflösen (Key NICHT
+                                            # deterministisch über Builds — wie lms-share). Gesetzt = Vorrang.
 ORG_KEY="${ORG_KEY:-2}"                      # DEMO_AG OpenOLAT-Org (Branding-Anker + Kurs-Scope)
 EXTREF="${EXTREF:-EBZ-ZERT-DEMO}"            # Idempotenz-Schluessel des Kurses
 COURSE_TITLE="${COURSE_TITLE:-DEMO AG - Golf-Knigge (Zertifikat)}"
@@ -56,6 +58,15 @@ main(){
   probe=$(curl -s -X PUT -H "$A" "$OL/restapi/ebz/nachweis/courses/0/scorm-zertifikat?nuggetKey=0")
   echo "$probe" | grep -q 'fehler' || fail "EBZ-Extension nicht registriert (ebz-nachweis-cert.jar im Image?)"
   ok "OpenOLAT up, EBZ-Nachweis-Extension registriert"
+
+  # 0b) Nugget-Repo-Key dynamisch auflösen (wie lms-share, über den displayname) — der Import vergibt
+  #     KEINEN über Builds stabilen Key. Explizit gesetztes NUGGET_KEY hat Vorrang.
+  if [ -z "$NUGGET_KEY" ]; then
+    NUGGET_KEY="$(curl -s -H "$A" -H "$AC" "$OL/restapi/repo/entries" \
+      | jget "d=d if isinstance(d,list) else d.get('repositoryEntries',[]); print(next((str(e['key']) for e in d if '$NUGGET_NAME' in (e.get('displayname') or '')),''))")"
+    [ -n "$NUGGET_KEY" ] || fail "Nugget '$NUGGET_NAME' nicht in OpenOLAT gefunden (erst 'bash openolat/lms-import-seed.sh'?)"
+    ok "Nugget aufgelöst: '$NUGGET_NAME' → Repo-Key $NUGGET_KEY"
+  fi
 
   # 1) Zertifikatskurs find-or-create (externalRef = Idempotenz; nur bei Neuanlage konfigurieren).
   local CID RE

@@ -21,7 +21,12 @@ set -uo pipefail
 KC="${KC:-http://keycloak.localhost:8080}"
 BACKEND="${BACKEND:-http://localhost:8090}"
 WBT_CODE="${WBT_CODE:-WBT-NACHWEIS-DEMO}"
-NUGGET_KEY="${NUGGET_KEY:-884736}"     # geteiltes SCORM-Nugget (H5P) als Inhaltsreferenz des WBT
+OL="${OL:-http://localhost:8089}"           # OpenOLAT-Basis (für Repo-Key-Auflösung)
+NUGGET_NAME="${NUGGET_NAME:-H5P Showcase}"  # Anzeigename des geteilten Nuggets (Inhaltsreferenz des WBT)
+NUGGET_KEY="${NUGGET_KEY:-}"                # LEER = dynamisch über NUGGET_NAME auflösen (Key ist NICHT
+                                            # deterministisch über Builds — wie lms-share). Gesetzt = Vorrang.
+OLA_USER="${OPENOLAT_ADMIN_USER:-administrator}"
+OLA_PASS="${OPENOLAT_ADMIN_PASSWORD:-openolat}"
 SOLL="${SOLL:-2.50}"                   # anrechenbare Soll-Stunden (rechtliche Zaehlung)
 LERNENDER="${LERNENDER:-customer}"     # Demo-Lernender (Realm ebz-customers)
 
@@ -59,6 +64,15 @@ main(){
   [ -n "$SUB" ] || fail "keycloak-sub von $LERNENDER nicht gefunden"
   local AUTH="Authorization: Bearer $ST" CT="Content-Type: application/json"
   ok "Aufgeloest: staff-token ok, $LERNENDER-sub=$SUB"
+
+  # 0b) Nugget-Repo-Key dynamisch auflösen (wie lms-share, über den displayname) — der Import vergibt
+  #     KEINEN über Builds stabilen Key. Explizit gesetztes NUGGET_KEY hat Vorrang.
+  if [ -z "$NUGGET_KEY" ]; then
+    NUGGET_KEY="$(curl -s -u "$OLA_USER:$OLA_PASS" -H 'Accept: application/json' "$OL/restapi/repo/entries" \
+      | jget "d=d if isinstance(d,list) else d.get('repositoryEntries',[]); print(next((str(e['key']) for e in d if '$NUGGET_NAME' in (e.get('displayname') or '')),''))")"
+    [ -n "$NUGGET_KEY" ] || fail "Nugget '$NUGGET_NAME' nicht in OpenOLAT gefunden (erst 'bash openolat/lms-import-seed.sh'?)"
+    ok "Nugget aufgelöst: '$NUGGET_NAME' → Repo-Key $NUGGET_KEY"
+  fi
 
   # 1) WbtKurs find-or-create (mit Soll-Stunden + Nugget als Inhaltsreferenz).
   local WID

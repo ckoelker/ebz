@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { keycloakLogin } from './helpers/sso';
 
 /**
  * Storefront-Smoke (Produktkatalog P2-Gerüst). Verifiziert echtes SSR: das ROHE HTML
@@ -235,9 +236,8 @@ test('Login-Redirect: Anmelden → gebrandete Keycloak-Seite → zurück angemel
   // Auf der Keycloak-Login-Seite (EBZ-Theme lädt ebz.css).
   await page.waitForURL(/\/realms\/ebz-customers\/.*\/auth/);
   await expect(page.locator('link[href*="login/ebz/css/ebz.css"]')).toHaveCount(1);
-  await page.locator('#username').fill('customer@ebz.de');
-  await page.locator('#password').fill('customer');
-  await page.locator('#kc-login').click();
+  // Identity-first-Login (organization-Scope: Passwort erst nach dem E-Mail-Schritt) → geteilter Helfer.
+  await keycloakLogin(page, { username: 'customer@ebz.de', password: 'customer' });
   // Zurück in der Storefront, angemeldet (Vorname im Header).
   await page.waitForURL(`${STOREFRONT}/**`);
   await expect(page.getByText('Carla')).toBeVisible({ timeout: 15000 });

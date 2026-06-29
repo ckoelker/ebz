@@ -90,8 +90,14 @@ public class OpenolatProvisioning {
                     "lastName", name[1],
                     "password", UUID.randomUUID().toString())); // Login läuft über SSO, nicht über dieses Passwort
             long identityKey = created.path("key").asLong();
+            // OpenOLAT lädt die Identität aus identityKey IM BODY (nicht aus dem Pfad) und verlangt eine
+            // credential — fehlt eines, antwortet die AuthenticationWebService mit 404. Daher beides setzen
+            // (credential = sub; für den SSO-Login irrelevant, gematcht wird über authUsername).
             try (Response r = api.putAuthentication(auth, identityKey, Map.of(
-                    "provider", KEYCLOAK_PROVIDER, "authUsername", keycloakSub))) {
+                    "identityKey", identityKey,
+                    "provider", KEYCLOAK_PROVIDER,
+                    "authUsername", keycloakSub,
+                    "credential", keycloakSub))) {
                 if (r.getStatus() >= 300) {
                     throw new OpenolatException("Anlegen der KEYCLOAK-Authentifizierung fehlgeschlagen (HTTP "
                             + r.getStatus() + ")");
