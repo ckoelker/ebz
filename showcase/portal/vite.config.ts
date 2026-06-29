@@ -28,6 +28,10 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
       // Geteilte CRM-Primitive/Domain-Logik (eine Quelle für mdm + portal) als First-Party-Quelle.
       '@crm-ui': fileURLToPath(new URL('../crm-ui/src', import.meta.url)),
+      // Gebrandete Kunden-Primitive (StatusBadge/PreisBadge; Schaufenster: kunden-kernmaske).
+      '@customer-ui': fileURLToPath(new URL('../customer-ui/src', import.meta.url)),
+      // Neutrale UI-Infrastruktur (ListenTabelle/FormFeld/LeerZustand) — von allen geteilt.
+      '@ui-base': fileURLToPath(new URL('../ui-base/src', import.meta.url)),
     },
   },
   server: {

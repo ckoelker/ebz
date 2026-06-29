@@ -5,6 +5,7 @@
 // Zahlung: Kauf auf Rechnung (B2B) ODER Karte/SEPA (Stripe-Stand-in).
 import type { Teilnehmer } from '~~/server/utils/order'
 import type { TeilnehmerVorschlag } from '~~/server/utils/integration'
+import FormFeld from '@ui-base/ui/FormFeld.vue'
 
 const { order, refresh, adjust, clearLocal, isEmpty } = useCart()
 const { customer, istAngemeldet, refresh: refreshAuth, login } = useAuth()
@@ -165,17 +166,17 @@ async function bestellen() {
         <section>
           <h2 class="mb-3 text-lg font-medium text-(--ui-text-highlighted)">Kontakt</h2>
           <div class="grid gap-3 sm:grid-cols-2">
-            <UFormField label="Vorname" required><UInput v-model="form.firstName" /></UFormField>
-            <UFormField label="Nachname" required><UInput v-model="form.lastName" /></UFormField>
-            <UFormField
+            <FormFeld label="Vorname" required><UInput v-model="form.firstName" /></FormFeld>
+            <FormFeld label="Nachname" required><UInput v-model="form.lastName" /></FormFeld>
+            <FormFeld
               label="E-Mail"
               required
               class="sm:col-span-2"
               :error="form.email && !emailOk ? 'Bitte eine gültige E-Mail-Adresse angeben.' : undefined"
             >
               <UInput v-model="form.email" type="email" class="w-full" />
-            </UFormField>
-            <UFormField label="Firma (optional)" class="sm:col-span-2"><UInput v-model="form.company" /></UFormField>
+            </FormFeld>
+            <FormFeld label="Firma (optional)" class="sm:col-span-2"><UInput v-model="form.company" /></FormFeld>
           </div>
         </section>
 
@@ -198,16 +199,16 @@ async function bestellen() {
                 />
               </div>
               <div class="grid gap-2 sm:grid-cols-2">
-                <UFormField label="Geschlecht *" size="sm">
+                <FormFeld label="Geschlecht *" size="sm">
                   <USelect v-model="t.geschlecht" :items="geschlechtOptions" value-key="value" placeholder="bitte wählen" class="w-full" />
-                </UFormField>
-                <UFormField label="Titel" size="sm"><UInput v-model="t.titel" placeholder="z. B. Dr." /></UFormField>
-                <UFormField label="Vorname *" size="sm"><UInput v-model="t.vorname" /></UFormField>
-                <UFormField label="Nachname *" size="sm"><UInput v-model="t.nachname" /></UFormField>
-                <UFormField label="E-Mail" size="sm"><UInput v-model="t.email" type="email" /></UFormField>
-                <UFormField label="Namensschild (Freitext)" size="sm" help="z. B. Wunschname fürs Namensschild">
+                </FormFeld>
+                <FormFeld label="Titel" size="sm"><UInput v-model="t.titel" placeholder="z. B. Dr." /></FormFeld>
+                <FormFeld label="Vorname *" size="sm"><UInput v-model="t.vorname" /></FormFeld>
+                <FormFeld label="Nachname *" size="sm"><UInput v-model="t.nachname" /></FormFeld>
+                <FormFeld label="E-Mail" size="sm"><UInput v-model="t.email" type="email" /></FormFeld>
+                <FormFeld label="Namensschild (Freitext)" size="sm" help="z. B. Wunschname fürs Namensschild">
                   <UInput v-model="t.namensschild" />
-                </UFormField>
+                </FormFeld>
               </div>
             </div>
           </div>
@@ -216,9 +217,9 @@ async function bestellen() {
         <section>
           <h2 class="mb-3 text-lg font-medium text-(--ui-text-highlighted)">Rechnungs-/Lieferadresse</h2>
           <div class="grid gap-3 sm:grid-cols-2">
-            <UFormField label="Straße & Nr." required class="sm:col-span-2"><UInput v-model="form.streetLine1" /></UFormField>
-            <UFormField label="PLZ" required><UInput v-model="form.postalCode" /></UFormField>
-            <UFormField label="Ort" required><UInput v-model="form.city" /></UFormField>
+            <FormFeld label="Straße & Nr." required class="sm:col-span-2"><UInput v-model="form.streetLine1" /></FormFeld>
+            <FormFeld label="PLZ" required><UInput v-model="form.postalCode" /></FormFeld>
+            <FormFeld label="Ort" required><UInput v-model="form.city" /></FormFeld>
           </div>
         </section>
 

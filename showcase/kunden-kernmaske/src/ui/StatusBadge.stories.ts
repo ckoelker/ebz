@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { expect, within } from 'storybook/test'
-import StatusBadge from './StatusBadge.vue'
+import StatusBadge from '@customer-ui/ui/StatusBadge.vue'
 
 // State-of-the-art: interaktive Controls über argTypes, je Story ein Args-Satz, Interaction-Test (play).
 const meta = {
@@ -9,7 +9,7 @@ const meta = {
   argTypes: {
     art: {
       control: 'inline-radio',
-      options: ['einschreibung', 'rechnung'],
+      options: ['einschreibung', 'rechnung', 'azubi'],
       description: 'Fachlicher Kontext — bestimmt Farb-/Text-Mapping aus dem Domain-Core.',
     },
     status: {
@@ -37,3 +37,4 @@ export const WirdBereitgestellt: Story = { args: { status: 'ANGEFORDERT' } }
 export const Fehlgeschlagen: Story = { args: { status: 'FEHLGESCHLAGEN' } }
 export const RechnungBezahlt: Story = { args: { art: 'rechnung', status: 'BEZAHLT' } }
 export const RechnungAusgestellt: Story = { args: { art: 'rechnung', status: 'AUSGESTELLT' } }
+export const AzubiBestaetigt: Story = { args: { art: 'azubi', status: 'BESTAETIGT_EBZ' } }

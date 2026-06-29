@@ -12,12 +12,14 @@ nicht auf einen Schlag.
 ## 1. Landkarte — wo was lebt
 | Bereich | Komponenten | Storybook (Schaufenster) |
 |---|---|---|
-| Intern/Admin (MDM/CRM) | `@crm-ui` = `showcase/crm-ui/src` | `crm-kernmaske` (:6007) |
-| Kunde/Marketing (Shop+Portal) | `@customer-ui` *(noch anzulegen)* | `kunden-kernmaske` (:6008) |
+| Intern/Admin (MDM/CRM) | `@crm-ui` = `showcase/crm-ui/src` (gebrandet) | `crm-kernmaske` (:6007) |
+| Kunde/Marketing (Shop+Portal) | `@customer-ui` = `showcase/customer-ui/src` (gebrandet: StatusBadge/PreisBadge) | `kunden-kernmaske` (:6008) |
+| **Neutrale UI-Infrastruktur** | `@ui-base` = `showcase/ui-base/src` (ListenTabelle/FormFeld/LeerZustand) | `kunden-kernmaske` |
 | Invariante Logik (Geld/Datum/Status/Anrede) | `@crm-ui/domain` | — (von allen geteilt) |
 
-**Naht:** Admin- und Kunden-Komponenten werden **nicht** über die Naht geteilt; nur `domain` ist
-gemeinsam. Branding via Tokens (`src/assets/css/main.css`), nicht via geforkter Komponenten.
+**Naht:** **Gebrandete** Admin- und Kunden-Komponenten werden **nicht** über die Naht geteilt.
+Geteilt werden nur die **brand-/domain-neutralen** Schichten: `@crm-ui/domain` (Logik) und `@ui-base`
+(struktur­elle UI-Infra ohne Branding/Domain). Branding via Tokens, nicht via geforkter Komponenten.
 
 ## 2. Entscheidungsregel — vor JEDER Maske/Liste (in dieser Reihenfolge)
 1. **Existiert die Komponente?** (Storybook/Shared-Paket suchen) → importieren, **nie kopieren**.
@@ -62,9 +64,30 @@ Jede neue geteilte Komponente bekommt **co-located** `Name.stories.ts` im richti
 3. Mehraufwand ist **front-loaded**: dünne Bibliothek = viele neue Komponenten; gefüllte Bibliothek =
    meist **Komposition** → schnell. Reuse-lastige Masken/Listen sind mit Playbook **schneller** als ohne.
 
-## Noch offen (Voraussetzungen für volle Verbindlichkeit)
-- **`@customer-ui` extrahieren** (Kunden-Primitive aus den Shop/Portal-Views) — Voraussetzung, dass die
-  Apps das storyfizierte tatsächlich konsumieren.
-- **Erzwingung:** ESLint-Importgrenzen (`@nuxt/ui` nur im DS-Paket), dependency-cruiser auf die Apps,
-  Story-Coverage-Test — als CI-/`showcase-aufbau`-Schritt.
+## Erledigt (Stand 2026-06-29)
+- **Pakete angelegt:** `@customer-ui` (StatusBadge mit `art` einschreibung/rechnung/azubi, PreisBadge) +
+  `@ui-base` (ListenTabelle/FormFeld/LeerZustand, prop-rein/dependency-frei) — alle mit Stories in
+  `kunden-kernmaske`. Consumer brauchen kein `@nuxt/ui`-Pfad-Mapping (geteilte Komponenten importieren
+  bewusst keine `@nuxt/ui`-Typen; Globals + lose `any`-Spalten).
+- **Apps migriert:** portal (Rechnungen/Trainings/Azubis), storefront (kasse-Formular→FormFeld),
+  mdm (DublettenReview). Alias/`@source`/Dockerfile-`COPY`/`vue`-Pfad je App verdrahtet; typecheck/build grün.
+
+## Noch offen — in dieser Reihenfolge
+1. **Abdeckung-Rest** (zuerst): storefront Katalog-Preise → `PreisBadge`; mdm 2 paginierte Tabellen
+   (`AngeboteListe`/`AnmeldungenBestaetigung` — brauchen Pagination/`ref`, dafür `ListenTabelle` erst
+   erweitern). Bewusst bespoke & NICHT zu migrieren: portal Aktivitäten/Nachrichten (Timeline/Chat).
+   Danach: echter Docker-Stack-Rebuild (alle `COPY ui-base`/`customer-ui`) als Meilenstein-Validierung.
+2. **Erzwingung** (danach): ESLint-Importgrenzen (`@nuxt/ui`/Roh-Komponenten nur im DS-Paket),
+   dependency-cruiser auf die Apps, Story-Coverage-Test — als CI-/`showcase-aufbau`-Schritt. Erst damit
+   ist „nur was definiert ist" garantiert (statt nur befolgt).
 - **Komponenten-Generator** (Tempo-Klausel Punkt 1).
+
+## Offene Entscheidung — `ListenTabelle`-Typsicherheit
+Aktuell `data: any[]` → Zell-Slot-`row.original` ist **`any`** (Tippfehler in Slot-Templates ungeprüft;
+Daten↔Spalten-Kohärenz nicht erzwungen). Eingegebene `:data` bleibt am Call-Site getypt. Varianten:
+- **A** (empfohlen): `ListenTabelle` **generisch** (`generic="T"`, `data: T[]`) **+ `defineSlots`**
+  Index-Signatur `{ [k]: (p:{ row:{ original: T } }) => any }` → `row.original` wieder `T`. Kosten:
+  Storybook-`Meta`-Reibung + minimaler Spalten-Typ statt `@nuxt/ui`.
+- **B**: `any[]` lassen, im Slot einmalig casten (`row.original as View`).
+- **C**: rohes `<UTable>` für stark getypte Tabellen, `ListenTabelle` nur für einfache Listen.
+→ Entscheidung ausstehend; bis dahin bleibt `any[]`.

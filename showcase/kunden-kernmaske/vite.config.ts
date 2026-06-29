@@ -22,6 +22,10 @@ export default defineConfig({
     alias: {
       // Geteilter Domain-Core (EUR/Datum/Status) — invariante Logik, eine Quelle für Shop/Portal/Storybook.
       '@crm-ui': fileURLToPath(new URL('../crm-ui/src', import.meta.url)),
+      // Geteilte Kunden-Primitive — dieses Storybook ist ihr Schaufenster; Quelle für Shop/Portal.
+      '@customer-ui': fileURLToPath(new URL('../customer-ui/src', import.meta.url)),
+      // Neutrale UI-Infrastruktur (ListenTabelle/FormFeld/LeerZustand) — von allen geteilt.
+      '@ui-base': fileURLToPath(new URL('../ui-base/src', import.meta.url)),
     },
   },
   server: {

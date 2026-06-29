@@ -9,8 +9,12 @@ export default defineNuxtConfig({
   ssr: true,
   modules: ['@nuxt/ui'],
   css: ['~/assets/css/main.css'],
-  // Geteilter Domain-Core (Geld/Datum/Status) aus crm-ui — eine Quelle für mdm/portal/storefront.
-  alias: { '@crm-ui': fileURLToPath(new URL('../crm-ui/src', import.meta.url)) },
+  // Geteilter Domain-Core (Geld/Datum/Status) + Kunden-Primitive — eine Quelle für mdm/portal/storefront.
+  alias: {
+    '@crm-ui': fileURLToPath(new URL('../crm-ui/src', import.meta.url)),
+    '@customer-ui': fileURLToPath(new URL('../customer-ui/src', import.meta.url)),
+    '@ui-base': fileURLToPath(new URL('../ui-base/src', import.meta.url)),
+  },
   // Build/Dev-Server darf das Geschwister-Verzeichnis crm-ui (außerhalb des storefront-Roots) lesen.
   vite: { server: { fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] } } },
   // Light als Default-Theme (statt OS-`system`); Toggle bleibt möglich.

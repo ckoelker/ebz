@@ -16,7 +16,10 @@
     "resolveJsonModule": true,
     "paths": {
       "@/*": ["./src/*"],
-      "@crm-ui/*": ["../crm-ui/src/*"]
+      "@crm-ui/*": ["../crm-ui/src/*"],
+      "@customer-ui/*": ["../customer-ui/src/*"],
+      "@ui-base/*": ["../ui-base/src/*"],
+      "vue": ["./node_modules/vue"]
     },
     "types": ["vite/client", "node"]
   },

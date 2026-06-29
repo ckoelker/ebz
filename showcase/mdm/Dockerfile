@@ -9,6 +9,8 @@ FROM node:22-alpine AS build
 RUN corepack enable
 # Geteilte CRM-Primitive als Geschwister von /build ablegen → Alias ../crm-ui/src zeigt auf /crm-ui/src.
 COPY crm-ui /crm-ui
+# Neutrale UI-Infrastruktur → Alias ../ui-base/src zeigt auf /ui-base/src.
+COPY ui-base /ui-base
 WORKDIR /build
 COPY mdm/package.json mdm/pnpm-lock.yaml mdm/pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile

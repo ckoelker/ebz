@@ -10,7 +10,9 @@ import {
 } from '@/portal';
 import type { Zimmerart } from '@/api/model';
 import { auth, login } from '@/auth';
-import { azubiStatusColor } from '@crm-ui/domain/severity';
+import ListenTabelle from '@ui-base/ui/ListenTabelle.vue';
+import StatusBadge from '@customer-ui/ui/StatusBadge.vue';
+import FormFeld from '@ui-base/ui/FormFeld.vue';
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -141,28 +143,28 @@ const columns: TableColumn<BuchungZeile>[] = [
 
       <template v-else>
         <div class="mb-4">
-          <UFormField v-if="firmen.length > 1" label="Betrieb">
+          <FormFeld v-if="firmen.length > 1" label="Betrieb">
             <USelect v-model="orgId" :items="firmenItems" class="w-72" @update:model-value="ladeFirmensicht" />
-          </UFormField>
+          </FormFeld>
           <span v-else-if="firmen[0]" class="font-bold">{{ firmen[0].bezeichnung }}</span>
         </div>
 
         <h3 class="font-semibold mb-2">Neuen Azubi anmelden</h3>
         <form class="flex flex-col gap-3 max-w-2xl mb-6" @submit.prevent="anmelden">
           <div class="flex gap-3">
-            <UFormField label="Name" class="flex-1"><UInput v-model="neu.azubiName" class="w-full" /></UFormField>
-            <UFormField label="E-Mail" class="flex-1"><UInput v-model="neu.azubiEmail" type="email" class="w-full" /></UFormField>
+            <FormFeld label="Name" class="flex-1"><UInput v-model="neu.azubiName" class="w-full" /></FormFeld>
+            <FormFeld label="E-Mail" class="flex-1"><UInput v-model="neu.azubiEmail" type="email" class="w-full" /></FormFeld>
           </div>
           <div class="flex gap-3">
-            <UFormField label="Schuljahr" class="flex-1"><UInput v-model="neu.schuljahr" placeholder="2025/2026" class="w-full" /></UFormField>
-            <UFormField label="Halbjahr" class="w-24"><USelect v-model="neu.halbjahr" :items="halbjahrItems" class="w-full" /></UFormField>
-            <UFormField label="Zimmer" class="w-32"><USelect v-model="neu.zimmerart" :items="zimmerItems" class="w-full" /></UFormField>
+            <FormFeld label="Schuljahr" class="flex-1"><UInput v-model="neu.schuljahr" placeholder="2025/2026" class="w-full" /></FormFeld>
+            <FormFeld label="Halbjahr" class="w-24"><USelect v-model="neu.halbjahr" :items="halbjahrItems" class="w-full" /></FormFeld>
+            <FormFeld label="Zimmer" class="w-32"><USelect v-model="neu.zimmerart" :items="zimmerItems" class="w-full" /></FormFeld>
           </div>
           <div class="flex gap-3">
-            <UFormField label="Unterricht (Cent)" class="flex-1"><UInputNumber v-model="neu.unterrichtBetragCent" :min="0" class="w-full" /></UFormField>
-            <UFormField v-if="neu.zimmerart !== 'KEINE'" label="Übernachtung (Cent)" class="flex-1">
+            <FormFeld label="Unterricht (Cent)" class="flex-1"><UInputNumber v-model="neu.unterrichtBetragCent" :min="0" class="w-full" /></FormFeld>
+            <FormFeld v-if="neu.zimmerart !== 'KEINE'" label="Übernachtung (Cent)" class="flex-1">
               <UInputNumber v-model="neu.uebernachtungBetragCent" :min="0" class="w-full" />
-            </UFormField>
+            </FormFeld>
           </div>
           <div>
             <UButton type="submit" icon="i-lucide-user-plus" :loading="aktiv === -1">Azubi anmelden</UButton>
@@ -170,11 +172,9 @@ const columns: TableColumn<BuchungZeile>[] = [
         </form>
 
         <h3 class="font-semibold mb-2">Angemeldete Azubis</h3>
-        <UTable :data="zeilen" :columns="columns" :loading="laden" :empty="'Noch keine Azubis angemeldet.'">
+        <ListenTabelle :data="zeilen" :columns="columns" :loading="laden" :empty="'Noch keine Azubis angemeldet.'">
           <template #status-cell="{ row }">
-            <UBadge :color="azubiStatusColor(row.original.status)" variant="soft" size="sm">
-              {{ row.original.status }}
-            </UBadge>
+            <StatusBadge art="azubi" :status="row.original.status" />
           </template>
           <template #aktion-cell="{ row }">
             <UButton v-if="row.original.status === 'BESTAETIGT_EBZ'" size="sm" icon="i-lucide-file-check"
@@ -184,7 +184,7 @@ const columns: TableColumn<BuchungZeile>[] = [
             </span>
             <span v-else class="text-dimmed text-sm">wartet auf EBZ</span>
           </template>
-        </UTable>
+        </ListenTabelle>
       </template>
     </template>
   </section>

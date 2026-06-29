@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/vue3-vite'
 import { expect, within } from 'storybook/test'
-import PreisBadge from './PreisBadge.vue'
+import PreisBadge from '@customer-ui/ui/PreisBadge.vue'
 
 const meta = {
   title: 'UI/PreisBadge',

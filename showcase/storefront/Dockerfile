@@ -8,6 +8,10 @@ WORKDIR /app
 RUN corepack enable
 # Geteilte CRM-Primitive als Geschwister von /app ablegen → Alias ../crm-ui/src zeigt auf /crm-ui/src.
 COPY crm-ui /crm-ui
+# Gebrandete Kunden-Primitive → Alias ../customer-ui/src zeigt auf /customer-ui/src.
+COPY customer-ui /customer-ui
+# Neutrale UI-Infrastruktur → Alias ../ui-base/src zeigt auf /ui-base/src.
+COPY ui-base /ui-base
 COPY storefront/package.json storefront/pnpm-workspace.yaml ./
 RUN pnpm install
 COPY storefront/ ./

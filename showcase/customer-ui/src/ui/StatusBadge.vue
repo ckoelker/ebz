@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import {
-  einschreibungStatusColor, einschreibungStatusText, rechnungStatusColor,
+  einschreibungStatusColor, einschreibungStatusText, rechnungStatusColor, azubiStatusColor,
 } from '@crm-ui/domain/severity'
 
 // Kunden-Primitiv: ein Status-Badge für Shop/Portal. Farbe + (optionaler) Klartext kommen aus dem
@@ -10,7 +10,7 @@ const props = withDefaults(defineProps<{
   /** Roh-Status aus dem Backend, z. B. EINGESCHRIEBEN, BEZAHLT, ANGEFORDERT. */
   status?: string
   /** Fachlicher Kontext — bestimmt das Farb-/Text-Mapping. */
-  art?: 'einschreibung' | 'rechnung'
+  art?: 'einschreibung' | 'rechnung' | 'azubi'
   variant?: 'soft' | 'solid' | 'outline' | 'subtle'
   size?: 'sm' | 'md' | 'lg'
 }>(), {
@@ -20,7 +20,9 @@ const props = withDefaults(defineProps<{
 })
 
 const color = computed(() =>
-  props.art === 'rechnung' ? rechnungStatusColor(props.status) : einschreibungStatusColor(props.status))
+  props.art === 'rechnung' ? rechnungStatusColor(props.status)
+    : props.art === 'azubi' ? azubiStatusColor(props.status)
+      : einschreibungStatusColor(props.status))
 
 // Einschreibung hat eine kundenfreundliche Klartext-Übersetzung; Rechnung zeigt den Status direkt.
 const label = computed(() =>

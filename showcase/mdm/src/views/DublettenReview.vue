@@ -9,6 +9,7 @@ import { reviewQueue, entscheide, einschaetzungSchwere, ApiFehler, type Fall } f
 import { Entscheidung } from '@/api/model';
 import { auth, login } from '@/auth';
 import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
+import ListenTabelle from '@ui-base/ui/ListenTabelle.vue';
 
 const qc = useQueryClient();
 
@@ -94,7 +95,7 @@ const columns: TableColumn<Fall>[] = [
       @update:open="meldung = null"
     />
 
-    <UTable :data="data ?? []" :columns="columns" :empty="'Keine offenen Dubletten-Fälle.'">
+    <ListenTabelle :data="data ?? []" :columns="columns" :empty="'Keine offenen Dubletten-Fälle.'">
       <template #art-cell="{ row }">
         <UBadge :color="row.original.art === 'FIRMA' ? 'info' : 'neutral'" variant="soft" size="sm">{{ row.original.art }}</UBadge>
       </template>
@@ -131,6 +132,6 @@ const columns: TableColumn<Fall>[] = [
           Neuanlage bestätigen
         </UButton>
       </template>
-    </UTable>
+    </ListenTabelle>
   </section>
 </template>

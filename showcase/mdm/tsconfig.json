@@ -17,6 +17,7 @@
     "paths": {
       "@/*": ["./src/*"],
       "@crm-ui/*": ["../crm-ui/src/*"],
+      "@ui-base/*": ["../ui-base/src/*"],
       "vue": ["./node_modules/vue"]
     },
     "types": ["vite/client", "node"]

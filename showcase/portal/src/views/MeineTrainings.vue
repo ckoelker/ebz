@@ -7,7 +7,8 @@ import { ref, onMounted, computed } from 'vue';
 import type { TableColumn } from '@nuxt/ui';
 import { partyLogin, meineTrainings, ApiFehler, type MeinTrainingView } from '@/portal';
 import { auth, login } from '@/auth';
-import { einschreibungStatusColor, einschreibungStatusText } from '@crm-ui/domain/severity';
+import ListenTabelle from '@ui-base/ui/ListenTabelle.vue';
+import StatusBadge from '@customer-ui/ui/StatusBadge.vue';
 
 const laden = ref(false);
 const meldung = ref<{ text: string; severity: 'success' | 'error' } | null>(null);
@@ -60,19 +61,17 @@ const columns: TableColumn<MeinTrainingView>[] = [
       <UAlert v-if="meldung" :color="meldung.severity === 'success' ? 'success' : 'error'" variant="soft"
         :title="meldung.text" close class="mb-4" @update:open="meldung = null" />
 
-      <UTable :data="trainings" :columns="columns" :loading="laden"
+      <ListenTabelle :data="trainings" :columns="columns" :loading="laden"
         :empty="'Sie haben noch keine Trainings gebucht.'">
         <template #status-cell="{ row }">
-          <UBadge :color="einschreibungStatusColor(row.original.status)" variant="soft" size="sm">
-            {{ einschreibungStatusText(row.original.status) }}
-          </UBadge>
+          <StatusBadge :status="row.original.status" />
         </template>
         <template #aktion-cell="{ row }">
           <UButton v-if="row.original.launchUrl" size="sm" icon="i-lucide-external-link"
             @click="starten(row.original)">Kurs starten</UButton>
           <span v-else class="text-dimmed">—</span>
         </template>
-      </UTable>
+      </ListenTabelle>
     </template>
   </section>
 </template>

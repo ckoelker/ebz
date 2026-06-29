@@ -9,8 +9,9 @@ import {
   type PortalRechnungView,
 } from '@/portal';
 import { auth, login } from '@/auth';
-import { euro } from '@crm-ui/domain/format';
-import { rechnungStatusColor } from '@crm-ui/domain/severity';
+import ListenTabelle from '@ui-base/ui/ListenTabelle.vue';
+import StatusBadge from '@customer-ui/ui/StatusBadge.vue';
+import PreisBadge from '@customer-ui/ui/PreisBadge.vue';
 
 type KontextOption = { label: string; value: string; organisationId?: number };
 
@@ -117,18 +118,16 @@ const columns: TableColumn<PortalRechnungView>[] = [
           </UFormField>
         </div>
 
-        <UTable :data="belege" :columns="columns" :loading="laden" :empty="'Keine Rechnungen in diesem Kontext.'">
-          <template #betrag-cell="{ row }">{{ euro(row.original.summeCent) }}</template>
+        <ListenTabelle :data="belege" :columns="columns" :loading="laden" :empty="'Keine Rechnungen in diesem Kontext.'">
+          <template #betrag-cell="{ row }"><PreisBadge :cent="row.original.summeCent" /></template>
           <template #status-cell="{ row }">
-            <UBadge :color="rechnungStatusColor(row.original.status)" variant="soft" size="sm">
-              {{ row.original.status }}
-            </UBadge>
+            <StatusBadge art="rechnung" :status="row.original.status" />
           </template>
           <template #pdf-cell="{ row }">
             <UButton color="neutral" variant="ghost" size="sm" icon="i-lucide-file-text"
               :loading="pdfAktiv === row.original.id" @click="pdfLaden(row.original)">PDF</UButton>
           </template>
-        </UTable>
+        </ListenTabelle>
       </template>
     </template>
   </section>

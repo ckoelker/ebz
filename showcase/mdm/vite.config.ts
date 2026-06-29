@@ -29,6 +29,8 @@ export default defineConfig({
       // Geteilte CRM-Primitive (eine Quelle für Storybook + mdm) als First-Party-Quelle, nicht als
       // node_modules-Paket — so greifen Nuxt-UI-Auto-Imports + Tailwind-Content-Scan automatisch.
       '@crm-ui': fileURLToPath(new URL('../crm-ui/src', import.meta.url)),
+      // Neutrale UI-Infrastruktur (ListenTabelle/FormFeld/LeerZustand) — von allen geteilt.
+      '@ui-base': fileURLToPath(new URL('../ui-base/src', import.meta.url)),
     },
   },
   server: {

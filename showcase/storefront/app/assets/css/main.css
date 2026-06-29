@@ -1,6 +1,11 @@
 @import "tailwindcss";
 @import "@nuxt/ui";
 
+/* Geteilte Primitive (showcase/customer-ui + ui-base) liegen außerhalb des Roots → Tailwind v4 scannt
+   sie nur mit expliziter @source-Direktive, sonst fehlen deren Utility-Klassen im generierten CSS. */
+@source "../../../../customer-ui/src";
+@source "../../../../ui-base/src";
+
 /* EBZ-Branding: Primärfarbe „navy" (#0b3a6f) auf dem Nuxt-UI-Default-Theme.
    Skala identisch zum MDM-Cockpit, damit alle EBZ-Flächen gleich aussehen. */
 @theme static {
