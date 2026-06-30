@@ -17,10 +17,14 @@ export default defineNuxtConfig({
   },
   // Build/Dev-Server darf das Geschwister-Verzeichnis crm-ui (außerhalb des storefront-Roots) lesen.
   vite: { server: { fs: { allow: [fileURLToPath(new URL('..', import.meta.url))] } } },
-  // Light als Default-Theme (statt OS-`system`); Toggle bleibt möglich.
+  // Shop ist LIGHT-only. preference/fallback 'light' (nicht OS-`system`).
+  // Eigener storageKey: entwertet alte `nuxt-color-mode`-Einträge (frühere Builds speicherten
+  // teils `system` → folgte dunklem OS und kippte den Shop nach dark trotz Light-Default).
+  // Mit frischem Key starten bestehende UND neue Besucher deterministisch auf light.
   colorMode: {
     preference: 'light',
     fallback: 'light',
+    storageKey: 'ebz-shop-color-mode',
   },
   runtimeConfig: {
     // Serverseitig: Container-URL (http://server:3000), Dev-Default localhost.
