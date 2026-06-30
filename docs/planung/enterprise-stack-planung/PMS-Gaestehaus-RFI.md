@@ -28,7 +28,7 @@ Zusätzlich: **klar als eigener Satellit abgrenzbar**, **vollständiger API-Zugr
 API-first-Zimmer-PMS** (Apaleo/Beds24/Cloudbeds/Mews/Guesty/QloApps) deckt Bankett/Bestuhlung/Eindecken +
 Kantine + Kiosk nativ ab.
 
-## 3. Kandidaten (drei Wege)
+## 3. Kandidaten (vier Wege)
 - **Weg 1 — SIHOT** (GUBSE AG): integrierte DACH-Conference-Hotel-Suite. PMS + **SIHOT.MICE/C&B** (Räume,
   Equipment, Verträge, **Bestuhlung/Eindecken**) + **SIHOT.POS** (Kantine/Kiosk). Cloud/SaaS/on-prem.
   Schnittstellen/API; DACH-Middleware **MICE DESK** koppelt SIHOT/Opera/protel/apaleo/Mews an CRM/Controlling.
@@ -39,7 +39,37 @@ Kantine + Kiosk nativ ab.
   **Apaleo** (Zimmer, API-first, Dev-Sandbox vorhanden) + **iVvy/EventTemple/MeetingPackage** (Bankett/Bestuhlung,
   Sales&Catering, BEOs/Function-Diary) + **POS** (TCPOS/APRO/Lightspeed) + **Mensa** (MensaMax/KantinePlus für
   Schüler-Mo–Fr) + **Kiosk** (APRO Self-Order / Agilysys) + **CMMS** (Hausmeister) + **Controlling-Kern** (Fixkosten).
+- **Weg 4 — Hybrid: Eigenleistung erweitern + dünne Spezialisten** (nutzt aus, dass EBZ **bereits** eine
+  Integrationsplattform besitzt — Party-Kern, Debitoren/Rechnung, Controlling, Keycloak, integration-Service):
+  - **Vendure-als-POS** für **Kantine + Kiosk** (Order = Folio/Beleg) + **eure Rechnungslegung als das EINE
+    Billing-Gehirn** für *alles* (Hotel-Folio + Seminar + Shop + F&B → Debitoren/ZUGFeRD/E-Rechnung). Fixkosten =
+    Controlling-Kern.
+  - **Gekauft bleibt nur das, was Commodity-Kern ist:** ein **dünnes PMS** (Apaleo) für Verfügbarkeit/Reservierung/
+    Front-Desk **+** ein **dünnes MICE** (iVvy/EventTemple) für Bankett/Bestuhlung — deren Folios posten in euer Billing.
+  - **Harte Grenze:** die **Datum-/Verfügbarkeits-/Raten-Engine, Front-Desk und Bankett-Planung NICHT** in Vendure
+    nachbauen (= Commodity selbst bauen → Capability-Map-Verstoß + OpenEduCat-Customizing-Falle).
+  - **Compliance-Preis:** Vendure-POS in DE erfordert **zertifizierte TSE (KassenSichV) + DSFinV-K** (z. B. fiskaly).
+
+  | Funktion | Weg 4 (Hybrid) |
+  |---|---|
+  | Zimmer: Verfügbarkeit/Reservierung/Front-Desk | dünnes PMS (Apaleo) — **kaufen** |
+  | Bankett/Bestuhlung/Eindecken | dünnes MICE (iVvy/EventTemple) — **kaufen** |
+  | Kantine + Kiosk (POS) | **Vendure-als-POS** (+ TSE) — **selbst** |
+  | Debitoren/Rechnung/E-Rechnung (alle Domänen) | **eure Rechnungslegung** — **selbst** (Differenzierer) |
+  | Hausmeister / Fixkosten | kleines CMMS / Controlling-Kern |
+
+  **Netto:** schrumpft den Kauf-Footprint auf **dünnes PMS + dünnes MICE** (POS+Billing selbst) → wenige Lizenzen,
+  maximale Nutzung des vorhandenen Stacks. Für EBZ realistischer als für ein normales Hotel, weil die teure **Naht
+  schon existiert**.
+
 - *(Alternative protel/Xn protel (Planet) mit Conference & Banqueting als zweiter Suite-Kandidat möglich.)*
+
+### Randnotiz — „warum nicht einfach OSS/selbst bauen?"
+Freie Lösungen existieren (QloApps schmal; **Odoo/ERPNext breit** — PMS+Events+POS+Maintenance+FiBu in einer
+OSS-Plattform), aber **Conference-&-Catering-/Fiskal-Tiefe + zertifizierte Integrationen** (Channel-Manager,
+TSE, Meldeschein) sind der Grund, warum „free" hier selten produktionsreif ist — und **Odoo-für-alles ist exakt
+die OpenEduCat-Falle**, der EBZ entkommt. Deshalb: Commodity-Kern (Verfügbarkeit/Front-Desk/Bankett) **kaufen**,
+nur den **Differenzierer (Billing/Daten/Integration) selbst** — was Weg 4 genau so zuschneidet.
 
 ## 4. Scope-Abdeckungs-Matrix
 | Geforderte Funktion | Weg 1: SIHOT | Weg 2: OPERA Cloud S&E | Weg 3: Best-of-Breed-Mesh |
@@ -55,6 +85,8 @@ Kantine + Kiosk nativ ab.
 
 ✓ nativ · ⚬ teilweise/über Integration. **In allen Wegen identisch:** der Kern-Mehrwert = Anbindung an
 Party-Kern (Gäste = teils dieselben Kunden), Debitoren/Rechnung (ZUGFeRD/E-Rechnung), Controlling — via S4.
+**Weg 4 (Hybrid):** Mapping in §3 — Zimmer/Bankett wie Weg 3 (dünn **gekauft**), Kantine/Kiosk-POS + Billing
+**selbst** (Vendure-POS + eure Rechnung).
 
 ## 5. Bewertungskriterien
 | Kriterium | Weg 1: SIHOT | Weg 2: OPERA Cloud S&E | Weg 3: Best-of-Breed-Mesh |
@@ -68,6 +100,11 @@ Party-Kern (Gäste = teils dieselben Kunden), Debitoren/Rechnung (ZUGFeRD/E-Rech
 | Reife / DACH-Marktfit Tagungshotel | **sehr hoch** | hoch | mittel (Zusammenbau) |
 | Kosten (grob, s. §6) | mittel | **hoch** | niedrig–mittel + Integrationsaufwand |
 
+**Weg 4 (Hybrid) im Profil:** Scope-Abdeckung hoch (POS+Billing selbst, Reservierung/Bankett dünn gekauft) ·
+**API/Abgrenzung am besten** (ihr ownt die Naht) · **Oracle-Ausstieg ja** · niedrigste Lizenzkosten, aber
+**eigener Bau-/Betriebsaufwand** (Vendure-POS + **TSE/KassenSichV**) · Schnittstellen: PMS + MICE (wenige) ·
+DACH-Fit: gut, sofern TSE/Fiskal sauber gelöst. **Stärkster Fit für EBZ** dank vorhandener Plattform.
+
 ## 6. Kosten-Schätzung (grob, angebotsabhängig)
 - **Weg 1 — SIHOT (112 Zi, PMS+C&B+POS):** keine Listenpreise. Richtwerte: ab ~€150/User/Monat; DACH-Cloud-PMS
   €8–15/Zi/Mo; C&B/POS extra. Überschlag: **laufend ~€18–30k+/Jahr**; **einmalig** (Setup+Migration+Schulung+
@@ -76,19 +113,29 @@ Party-Kern (Gäste = teils dieselben Kunden), Debitoren/Rechnung (ZUGFeRD/E-Rech
   Beds24 günstiger (Trial gratis 14 Tage). **Dazu** MICE/Bankett (iVvy/EventTemple) + POS + Mensa + CMMS — je
   eigene, nutzungsabhängige Posten → Summe stark vom Zuschnitt abhängig.
 - **Weg 2 — OPERA Cloud (S&E):** Oracle, teuer/teils metered — oberer Anker.
+- **Weg 4 — Hybrid:** **niedrigste Lizenzen** (nur dünnes PMS ~€11–12k/J + dünnes MICE; POS+Billing selbst), aber
+  **Eigenaufwand**: Vendure-POS-Erweiterung + **TSE/KassenSichV-Anbindung** (z. B. fiskaly, ~€ niedrig 3-/4-stellig/J)
+  + interner Entwicklungsaufwand (Aktiv-Dev — passt zum aktuellen Fokus). Laufend voraussichtlich am günstigsten,
+  Einmal-Aufwand verlagert sich von „Lizenz/Setup" zu „Eigenentwicklung".
 - **Fehlende Baseline:** reale **Suite8-Kosten + genutzte Module** (EBZ beizustellen). Erst damit ist „SIHOT/Mesh
   ist ein Bruchteil von Suite8" **belegt** statt vermutet.
 
 ## 7. Vorläufige Empfehlung (vor Baseline)
-- **Wenn „ein System, wenig Schnittstellen, raus aus Oracle" Priorität hat → Weg 1 (SIHOT).** Direkteste 1:1-Ablöse
-  des Suite8-Funktionsumfangs (inkl. C&B/Bestuhlung) im DACH-Tagungshotel-Markt; eine Anbindung an den Kern (S4).
-- **Wenn API-first-Reinheit/maximale Modularität Priorität hat → Weg 3 (Best-of-Breed).** Passt zur Capability-Map,
-  aber spürbar mehr Schnittstellen-/Betriebsaufwand und Integrations-TCO.
-- **Weg 2 (OPERA Cloud) nur als Vergleichsanker** — widerspricht dem Ziel „Oracle-Lock-in verlassen".
+Die Entscheidung läuft im Kern auf **kaufen vs. Eigenleistung ausspielen** hinaus:
+- **Weg 4 (Hybrid) — stärkster Fit für EBZ, wenn Aktiv-Dev gewollt:** nutzt aus, dass die **teure Naht schon
+  existiert**; POS (Kantine/Kiosk) + **EINE Rechnungslegung** selbst (= euer Differenzierer), nur **dünnes PMS +
+  dünnes MICE** gekauft. Niedrigste Lizenzen, beste Abgrenzung/API-Hoheit, raus aus Oracle. **Preis:** Eigenbau +
+  **TSE/KassenSichV**, und die **Verfügbarkeits-/Bankett-Engine bleibt gekauft** (nicht nachbauen!).
+- **Weg 1 (SIHOT) — risikoärmste „ein-System"-Ablöse:** direkteste 1:1-Deckung des Suite8-Umfangs (inkl.
+  C&B/Bestuhlung), eine Anbindung (S4), wenig Eigenbau. Gut, wenn schnelle Ablöse > maximale Eigenhoheit.
+- **Weg 3 (reines Best-of-Breed)** = wie Weg 4, aber **ohne** den Eigenleistungs-Hebel (kauft auch POS/Billing) →
+  meist nur sinnvoll, falls die eigene Rechnungslegung doch *nicht* der Billing-SoR werden soll.
+- **Weg 2 (OPERA Cloud)** nur Vergleichsanker — widerspricht „Oracle-Lock-in verlassen".
 
-**Tendenz:** für ein 112-Zimmer-Tagungshotel mit Bankett/Bestuhlung und schlankem Team ist **SIHOT** der
-pragmatischere Suite8-Ersatz; das Best-of-Breed-Mesh bleibt die Option, wenn der API-first-/Modularitätswert die
-Mehr-Schnittstellen rechtfertigt. **Finale Entscheidung erst nach §8.**
+**Tendenz:** Für EBZ konkurrieren realistisch **Weg 4 (Plattform ausspielen, mehr selbst)** und **Weg 1 (SIHOT,
+schnell & risikoarm kaufen)**. Weg 4 maximiert Hoheit/Wiederverwendung und minimiert Lizenzen, kostet aber
+Eigenentwicklung + Fiskal-Compliance; Weg 1 ist der schnellste saubere Suite8-Ersatz. **Finale Entscheidung erst
+nach §8** (v.a. echte Suite8-Kosten + Bau-Appetit/Kapazität).
 
 ## 8. Offene Punkte (vor Entscheidung zu klären)
 1. **Suite8-Baseline:** reale Jahres-/Lizenzkosten + genutzte Module (PMS, C&B, POS, Schnittstellen) — vom EBZ.
@@ -97,7 +144,11 @@ Mehr-Schnittstellen rechtfertigt. **Finale Entscheidung erst nach §8.**
 3. **Rechnungs-Datenrichtung:** Rechnung **im Kern** erzeugen (Debitoren-/Nummernkreis-Hoheit, ZUGFeRD) und PMS-
    Folio nur als Quelle — empfohlen — vs. PMS-Finance führend.
 4. **Pflichten:** E-Rechnung-Pflicht, **BFSG/Barrierefreiheit**, DSGVO/Hosting-Region je Kandidat prüfen.
-5. **Angebote:** RFI an SIHOT (Weg 1) + ggf. protel; bei Weg 3 Apaleo + iVvy/EventTemple + POS einholen.
+5. **Angebote:** RFI an SIHOT (Weg 1) + ggf. protel; bei Weg 3/4 Apaleo + iVvy/EventTemple (+ POS nur bei Weg 3).
+6. **Nur Weg 4 — TSE/Fiskal:** zertifizierte **TSE (KassenSichV) + DSFinV-K** für Vendure-POS klären (Cloud-TSE
+   z. B. fiskaly vs. Hardware); **harte Guardrail:** Verfügbarkeits-/Raten-Engine + Bankett **nicht** selbst bauen.
+7. **Bau-Appetit/Kapazität:** Weg 4 verlagert Kosten von Lizenz zu **Eigenentwicklung** — passt das zum aktuellen
+   Fokus „saubere Entwicklung fehlender Funktionen" und zur Team-Kapazität?
 
 ## 9. Nächster Schritt
 Nach Klärung §8 → Entscheidung dokumentieren, **⚪#19 / S4** im Bebauungsplan auf Status setzen, dann **Phase B

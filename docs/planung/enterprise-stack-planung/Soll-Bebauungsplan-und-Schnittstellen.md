@@ -55,7 +55,7 @@
 | 16 | **Abo / Dauerzugriff Lehrmaterial** | Satellit | — (heute keine echte Abo-Logik) | 🔵 neu | **Abo-/Entitlement-Billing** (Kill Bill/Billwerk/Stripe) + Moodle-Entitlement | 🟠 |
 | 17 | **Rechnungsstellung / FiBu** | Satellit | je Domäne verteilt (Java-App, UniTop) | 🟠 konsolidieren | **Business Central/DATEV** o. je Domäne; **E-Rechnung-Pflicht** beachten | 🟠 |
 | 18 | **Shop (Lehrmaterial-Verkauf)** | Satellit | (unklar/in TarLemon?) | ⚪ klären | **Shopware/Shopify** falls echter Shop nötig (nie selbst bauen) | 🟢 |
-| 19 | **PMS Gästehaus** | DOMÄNE | **Suite8** (inkl. C&C); Kosten enorm, Zukunft offen | 🟠 Ablöse (RFI läuft) | **Conference-House-Suite**: SIHOT (Weg 1) vs. OPERA Cloud S&E vs. Best-of-Breed-Mesh; Debitoren/E-Rechnung an Kern. Siehe [PMS-Gaestehaus-RFI](PMS-Gaestehaus-RFI.md) | 🟠 |
+| 19 | **PMS Gästehaus** | DOMÄNE | **Suite8** (inkl. C&C); Kosten enorm, Zukunft offen | 🟠 Ablöse (RFI läuft) | 4 Wege: SIHOT · OPERA Cloud S&E · Best-of-Breed · **Hybrid (Vendure-POS + eigene Rechnung + dünnes PMS/MICE)**; Debitoren/E-Rechnung an Kern. Siehe [RFI](PMS-Gaestehaus-RFI.md) | 🟠 |
 | 20 | **„Bochum-Prüfung" (Berufsschule)** | Sonderfall | in Java-App/Akademie-nah | ⚪ klären | als buchbares Seminar im Akademie-/Seminar-System abbilden (Buchung+Gebühr+Zertifikat) | 🟢 |
 
 **Quintessenz des Plans:** **3 Systeme neu/ersetzen mit hoher Dringlichkeit** (Kern+Integration #1/2/6, OpenEduCat #7, UniTop #9). **Der Großteil der Satelliten bleibt** (Moodle, Teams, WebUntis, Schild-NRW, Sket) und wird nur angebunden — das ist die Risiko-minimierende Strangler-Linie aus dem [Grobkonzept §7](Grobkonzept-IT-Konsolidierung.md). **5 Punkte sind ⚪ Phase-0-Klärungen**, bevor ihr Status fixiert werden kann.
