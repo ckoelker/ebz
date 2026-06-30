@@ -40,9 +40,16 @@ Aus HTTP-Headern/HTML-Signaturen (fuxam.app, app.fuxam.com, fuxam.com) + Personi
   Studierenden-/Prüfungsdaten (Auftragsverarbeiter + EU-Region klären).
 - **Team/Kultur:** klein, **„AI-native"** (tägliche Nutzung von Cursor/Claude Code/Copilot erwartet), aktuell
   **Junior-Fullstack** gesucht → junges, schlankes, KI-gestützt entwickelndes Team.
-- **Multi-Tenancy (Inferenz, zu verifizieren):** zentrale Login-Domain (fuxam.app / app.fuxam.com → `/sign-in`),
-  **eine** Next.js-App + Prisma-ORM → spricht für **shared-schema Multi-Tenancy** (logische, zeilenbasierte
-  Mandantentrennung in EINER DB), nicht physische Pro-Mandant-Isolation. **Daten-Isolation ist DD-kritisch.**
+- **Multi-Tenancy (jetzt belegt):** der Sign-in (fuxam.app/app.fuxam.com → `/sign-in`) fragt **„Institution /
+  Workspace / Subdomain – Select your …"** → Mandanten-Konzept bestätigt. Geratene Tenant-Subdomains
+  (code/stuttgart/…`.fuxam.app`) liefern aber **404 (Vercel)**, Wildcard-DNS existiert → **zentrale Vercel-App +
+  Workspace-/Slug-Auswahl**, **keine** physische Pro-Mandant-Isolation auffindbar ⇒ **shared (logische)
+  Multi-Tenancy** wahrscheinlich. `api.fuxam.com` löst nicht auf → API = Next.js-Routes unter der App-Domain.
+- **AVV/DSGVO (aus fuxam.com-Datenschutz — = Marketing-Site!):** Website-Hosting **GoDaddy NL (EU)**; Marketing-
+  Verarbeiter Intercom (EU), SendGrid (US), HubSpot, **Stripe (Irland)**, Google Analytics/Tag Manager, Meta/
+  TikTok/LinkedIn; US-Transfers via **EU-US DPF/Standardvertragsklauseln**. **Wichtig:** Das ist die Marketing-
+  Site — die **Produkt-/Plattform-Datenverarbeitung** (Studierenden-/Prüfungsdaten auf **Vercel/AWS**) ist
+  **dort nicht beschrieben**; der **Produkt-AVV/Serverstandort ist nicht öffentlich** → muss angefordert werden.
 - **Integrations-Sicht (positiv):** moderner Node/Next-Stack → **REST/JSON-Anbindung an euren Kern grundsätzlich
   gut machbar** — *sofern* APIs bereitgestellt werden (Vertrag/Doku weiterhin nicht öffentlich).
 
@@ -78,6 +85,25 @@ Weg** (LMS, bereits L0–L6 integriert + Mandanten-Vermarktung) und wäre bei **
   die EOL-/Lock-in-Sorgen (nur von der anderen Seite). Genau die **Versionsneutralitäts-/Abhängigkeits-Lektion
   aus OpenEduCat** mahnt zur Vorsicht.
 - **Reife:** Funktionsbreite hoch beworben, Referenztiefe (große/öffentliche, Berufsschule) dünn.
+
+## Ist Fuxam eine Option für EBZ? (Fazit)
+**Fuxam konkurriert mit eurem Stack — und zwar mit der Strategie selbst, nicht nur mit Einzelsystemen.** Euer
+Leitprinzip ist „**eigener Daten-/Kundenkern (SoR) + Best-of-Breed integrieren**". Fuxam ist eine **konkurrierende
+All-in-one-Suite** (Campus+LMS+Prüfung), die Studierende/Kurse/Prozesse **selbst** besitzen will — das läuft eurem
+Kern-als-SoR-Modell und dem bereits Gebauten (Party-Kern, `bildung`-Domäne, OpenOLAT-Integration, Anmeldung,
+Rechnung/Controlling) **entgegen**.
+
+**Verdict:**
+- **Als Bildungs-Kern/LMS-Ersatz: NEIN (jedenfalls nicht jetzt).** Es widerspricht eurer Kern-Strategie, ersetzt
+  bewusst gewählte/integrierte Bausteine (OpenOLAT), kommt von einem **frühen Anbieter** (Seed, ~21 Personen,
+  Basis = Exam-Tool), mit **US-PaaS/Shared-Multi-Tenant** und **nicht öffentlichem Produkt-AVV**. Reife- und
+  Vendor-Risiko zu hoch für einen geschäftskritischen, mehrjährigen Kern.
+- **Als schmales Punkt-Tool „digitale Prüfungen": VIELLEICHT (beobachten).** Das ist Fuxams **älteste/stärkste**
+  Kompetenz → möglicher **Sket-/„Bochum-Prüfung"-Kandidat**, als Satellit an euren Kern angebunden — **nicht**
+  als Campus/LMS-Kern. Nur nach harter DD (s. u.).
+
+**Kurz:** Fuxam ist **keine Option für den Bildungs-Kern**, weil es gegen eure eigene (schon umgesetzte)
+Architektur-Entscheidung läuft; bestenfalls ein **beobachteter Prüfungs-Punktbaustein**.
 
 ## Empfehlung
 **Nicht als Kern-Setzung, sondern „beobachten / höchstens schmaler Pilot".** Falls inhaltlich interessant:
