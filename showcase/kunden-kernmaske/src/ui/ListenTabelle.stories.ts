@@ -17,11 +17,20 @@ const columns = [
   { accessorKey: 'status', header: 'Status' },
 ]
 
+// Args-Typ explizit (statt `typeof ListenTabelle`): die generische Komponente lässt sich von Storybooks
+// Meta/StoryObj nicht sauber ableiten. Die echten .vue-Consumer (portal/mdm) bleiben generisch + getypt;
+// nur die Story braucht diesen konkreten Zeilen-Typ.
+type Beleg = { nummer: string; datum: string; betragCent: number; status: string }
+type ListenTabelleArgs = { data: Beleg[]; columns: unknown[]; loading?: boolean; empty?: string }
+
 // data/columns sind keine Control-tauglichen Werte (ausgeblendet); `loading`/`empty` als Args.
 // Zell-Slots (PreisBadge + StatusBadge) werden durch ListenTabelle an UTable durchgereicht.
 const meta = {
   title: 'Listen & Masken/ListenTabelle',
-  component: ListenTabelle,
+  // Cast (begründete Ausnahme): Storybooks `component`-Typ erwartet einen ConcreteComponent — eine
+  // generische SFC (`generic="T"`) ist ein generischer Funktionstyp und passt dort nicht. Betrifft nur
+  // die Story-Metadaten; die echten .vue-Consumer (portal/mdm) bleiben voll generisch + getypt.
+  component: ListenTabelle as unknown as Meta<ListenTabelleArgs>['component'],
   argTypes: {
     data: { control: false },
     columns: { control: false },
@@ -37,10 +46,10 @@ const meta = {
       <template #status-cell="{ row }"><StatusBadge art="rechnung" :status="row.original.status" /></template>
     </ListenTabelle>`,
   }),
-} satisfies Meta<typeof ListenTabelle>
+} satisfies Meta<ListenTabelleArgs>
 
 export default meta
-type Story = StoryObj<typeof meta>
+type Story = StoryObj<ListenTabelleArgs>
 
 export const Rechnungsliste: Story = {
   play: async ({ canvasElement }) => {

@@ -71,6 +71,11 @@ Jede neue geteilte Komponente bekommt **co-located** `Name.stories.ts` im richti
   bewusst keine `@nuxt/ui`-Typen; Globals + lose `any`-Spalten).
 - **Apps migriert:** portal (Rechnungen/Trainings/Azubis), storefront (kasse-Formular→FormFeld),
   mdm (DublettenReview). Alias/`@source`/Dockerfile-`COPY`/`vue`-Pfad je App verdrahtet; typecheck/build grün.
+- **`ListenTabelle` typsicher (Variante A, 2026-06-30):** generisch `generic="T"` + `data: T[]` +
+  `defineSlots` → Zell-Slot-`row.original` ist im Consumer wieder **`T`** (per Tippfehler-Test in
+  MeineRechnungen nachgewiesen: Compiler fängt falsches Feld). `columns: any[]` bleibt als begründete
+  Ausnahme (keine `@nuxt/ui`-Typabhängigkeit im dependency-freien `@ui-base`). Storybook-Story: ein
+  schmaler, kommentierter Cast im `component`-Feld (generische SFC passt nicht in Storybooks Component-Typ).
 
 ## Noch offen — in dieser Reihenfolge
 1. **Abdeckung-Rest** (zuerst): storefront Katalog-Preise → `PreisBadge`; mdm 2 paginierte Tabellen
@@ -82,12 +87,7 @@ Jede neue geteilte Komponente bekommt **co-located** `Name.stories.ts` im richti
    ist „nur was definiert ist" garantiert (statt nur befolgt).
 - **Komponenten-Generator** (Tempo-Klausel Punkt 1).
 
-## Offene Entscheidung — `ListenTabelle`-Typsicherheit
-Aktuell `data: any[]` → Zell-Slot-`row.original` ist **`any`** (Tippfehler in Slot-Templates ungeprüft;
-Daten↔Spalten-Kohärenz nicht erzwungen). Eingegebene `:data` bleibt am Call-Site getypt. Varianten:
-- **A** (empfohlen): `ListenTabelle` **generisch** (`generic="T"`, `data: T[]`) **+ `defineSlots`**
-  Index-Signatur `{ [k]: (p:{ row:{ original: T } }) => any }` → `row.original` wieder `T`. Kosten:
-  Storybook-`Meta`-Reibung + minimaler Spalten-Typ statt `@nuxt/ui`.
-- **B**: `any[]` lassen, im Slot einmalig casten (`row.original as View`).
-- **C**: rohes `<UTable>` für stark getypte Tabellen, `ListenTabelle` nur für einfache Listen.
-→ Entscheidung ausstehend; bis dahin bleibt `any[]`.
+## Entschieden — `ListenTabelle`-Typsicherheit (Variante A, umgesetzt 2026-06-30)
+Per Projekt-Policy „typsicher bleiben wo vertretbar" entschieden: **Variante A** (generisch + getypte
+Slots, s. „Erledigt"). B (cast im Slot) / C (rohes `<UTable>`) verworfen. Muster für künftige getypte
+Tabellen-Wrapper: `generic="T"` + `defineSlots<Record<string, ((p:{ row:{ original: T } }) => any) | undefined>>()`.
