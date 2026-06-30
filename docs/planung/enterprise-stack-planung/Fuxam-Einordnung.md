@@ -30,10 +30,31 @@ KI-Planung + Mobile-App**, vermarktet für **Hochschulen, Berufsschulen, Akademi
   (digitale Prüfungen) nur einen **Teilbereich** abdeckt. smarTest selbst hat **keine eigenständigen
   Referenzen/Historie** (kein Reifenachweis aus der Vorgänger-Phase).
 
-## Substanz-Lücke (Due-Diligence offen)
-Öffentlich **nicht** auffindbar: **API-/Interop-Doku** (LTI/SCORM/xAPI für LMS-Interop), DSGVO/Hosting-Details,
-Datenmodell, Skalierungs-/Verfügbarkeitsangaben, unabhängige (nicht referenz-gestützte) Reviews. → Eindruck
-„viel Marketing, wenig belastbare Technik" bestätigt sich.
+## Technik (Fingerprint-Recherche 2026-06-30 — da keine offizielle Doku)
+Aus HTTP-Headern/HTML-Signaturen (fuxam.app, app.fuxam.com, fuxam.com) + Personio-Stellenausschreibung
+(„Fullstack Engineer"):
+- **Stack:** **TypeScript · Next.js / React · Node.js · Tailwind**; **Prisma ORM** (→ sehr wahrscheinlich
+  PostgreSQL); KI via **Vercel AI SDK** + Vektor-DB (**Pinecone/Weaviate**); **Sentry** (Error-Monitoring).
+- **Hosting:** App läuft auf **Vercel** (`Server: Vercel`, `X-Powered-By: Next.js`); Marketing-Site hinter
+  **Cloudflare**. → **Vercel = US-PaaS (auf AWS)** ⇒ **DSGVO/Hosting-Region ist ein harter Prüfpunkt** für
+  Studierenden-/Prüfungsdaten (Auftragsverarbeiter + EU-Region klären).
+- **Team/Kultur:** klein, **„AI-native"** (tägliche Nutzung von Cursor/Claude Code/Copilot erwartet), aktuell
+  **Junior-Fullstack** gesucht → junges, schlankes, KI-gestützt entwickelndes Team.
+- **Multi-Tenancy (Inferenz, zu verifizieren):** zentrale Login-Domain (fuxam.app / app.fuxam.com → `/sign-in`),
+  **eine** Next.js-App + Prisma-ORM → spricht für **shared-schema Multi-Tenancy** (logische, zeilenbasierte
+  Mandantentrennung in EINER DB), nicht physische Pro-Mandant-Isolation. **Daten-Isolation ist DD-kritisch.**
+- **Integrations-Sicht (positiv):** moderner Node/Next-Stack → **REST/JSON-Anbindung an euren Kern grundsätzlich
+  gut machbar** — *sofern* APIs bereitgestellt werden (Vertrag/Doku weiterhin nicht öffentlich).
+
+**Einordnung:** Stack ist **modern & sauber (kein Legacy)** — Pluspunkt für Integration. **Risiken:** US-PaaS
+(Vercel)/DSGVO-Region · vermutlich **shared Multi-Tenant** (Isolation prüfen) · **kleines Junior-/AI-vibe-Team**
+(Code-Reife + Security-Review nötig).
+
+## Substanz-Lücke (weiterhin offen)
+Trotz Stack-Fingerprint öffentlich **nicht** dokumentiert: **API-Vertrag/Interop** (LTI/SCORM/xAPI, SSO/OIDC,
+Webhooks), **Daten-Isolations-/Mandanten-Modell** im Detail, DSGVO-Auftragsverarbeiter + EU-Region,
+Skalierung/SLA, unabhängige (nicht referenz-gestützte) Reviews. → bleibt **Due-Diligence-Pflicht** vor jeder
+Setzung.
 
 ## Wo es in die EBZ-Bildungslandschaft passt
 | EBZ-Fähigkeit | Heute / geplant | Fuxam |
