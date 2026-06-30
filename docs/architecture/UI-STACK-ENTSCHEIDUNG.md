@@ -69,6 +69,54 @@ Ist **volle Code-Ownership der Komponenten** ein *harter* Design-Anspruch (+ Pfl
 → dann shadcn-vue — **aber weiterhin Storybook**, nicht Histoire.
 Sonst (Tempo, Konsistenz, allein wartbar) → **Status quo: Nuxt UI + Storybook.**
 
+## Begriffsklärung: „Vue-DX" (Histoire) betrifft das Story-Format, NICHT die Komponenten
+Häufiges Missverständnis: Die **Komponenten** sind in beiden Welten `.vue` (z. B.
+`PreisBadge.vue`). Unterschiedlich ist nur die **Story-Datei** daneben:
+- **Storybook:** `PreisBadge.stories.ts` — TypeScript-Objekt (CSF: `meta` + benannte Exports + `args`).
+- **Histoire:** `PreisBadge.story.vue` — SFC; der Vue-Dev bleibt durchgängig im `<template>`-Format.
+
+Histoires „besseres Vue-DX" = genau dieses durchgängige SFC-Gefühl. **Aber** gerade das typisierte
+CSF-Format ist der Grund, warum Storybook seine Addons (a11y, Autodocs, Interaction-Tests) automatisch
+ableiten kann — der Tausch fällt zugunsten Storybook aus.
+
+## Greenfield (ohne Sunk Cost) — was sich ändert und was nicht
+Auf der grünen Wiese fällt **nur** Argument #5 (Sunk Cost) weg. Es bleiben:
+- **Workshop → weiterhin Storybook.** Greenfield macht Histoires eingeschlafene Wartung nicht wett.
+- **UI-Lib → echte, knappe Abwägung (~60/40).** Sie hängt an **einer** Frage:
+  *Ist die visuelle Design-Identität ein First-Class-Differenzierer, das Design will/kann Komponenten-Code
+  selbst besitzen+pflegen?*
+  - **Ja (design-geführt):** greenfield ist **shadcn-vue** legitim — „own your components" ist 2025/26 der
+    SOTA-Default design-getriebener Teams (Reka-UI-Basis, Tailwind, alles editierbar). SSR-Plumbing zahlt
+    man dann bewusst.
+  - **Nein / Velocity-first (unser Profil):** **Nuxt UI** — SSR-nativ, batteries-included, ein kohärentes
+    System. Schnellster Weg zu Wert.
+
+## Architektur schlägt Lib-Wahl: Naht zuerst (konsensfähig)
+Das Klügste — greenfield **vor** der Lib-Entscheidung, bei uns bereits gebaut: eine **dünne, prop-reine,
+library-agnostische Primitive-Schicht** (`packages/crm-ui|customer-ui|ui-base`). Dadurch wird die UI-Lib zur
+**austauschbaren Implementierung hinter der Naht**:
+- Mit Nuxt UI starten (Tempo), einzelne Primitive später auf shadcn-vue/Reka UI umstellen — **ohne Consumer
+  anzufassen**.
+- Bespoke-Komponenten, die das Design will, punktuell direkt auf Reka UI — **heute schon, ohne Lib-Wechsel**.
+
+Damit ist die Lib-Wahl **weniger irreversibel, als sie klingt**, und der Streit löst sich auf in: „**womit
+starten wir hinter einer Naht, die den Wechsel billig hält**" → dort gewinnt Tempo (Nuxt UI), mit shadcn-vue
+als jederzeit offener Tür. Niemand verliert.
+
+## Vibecoding-Eignung (Agent-Perspektive)
+Da hier viel KI-gestützt gebaut wird, ist *messbar*, womit der Coding-Agent zuverlässiger/schneller ist —
+und das fällt klar auf **Storybook + Nuxt UI**, aus mechanischen Gründen (nicht Gewohnheit):
+- **Storybook-CSF (`.stories.ts`)** = strukturierter, **typisierter Vertrag** → Typecheck fängt Fehler sofort
+  (enger Loop); riesige Trainingsdichte (Histoire ist Nische → mehr Fehlgriffe); **Story = prüfbare Spec**
+  (`build-storybook` als Gate — so wurde der generische `ListenTabelle`-Fehler gefunden).
+- **Nuxt UI** = stabile, dokumentierte, prop-getriebene APIs + Auto-Import → **weniger fehleranfälliger
+  Glue-Code**. shadcn-vue („owned code") = mehr Bespoke-Fläche, die der Agent korrekt halten muss.
+- **Eigentlicher Hebel = die Gates** (Typecheck → build-storybook → Naht-Wächter). Typisierte CSF + Nuxt-UI-
+  Props **füttern** diese Gates am besten; shadcn/Histoire liefern dafür weniger.
+- **Fair benannt, wo es auch jetzt beißt:** generische Komponenten in CSF brauchen Casts
+  (`… as unknown as Meta<…>`); Nuxt UIs lose getippte Slots/`any`-Spalten verstecken gelegentlich Typfehler
+  vor dem Typecheck → ein Bug rutscht bis Build/Runtime durch.
+
 ## Revisit-Trigger
 Design-geführte Bespoke-Anforderung wird verbindlich · zweiter UI-Mitwirkender mit Pflege-Kapazität ·
 Nuxt UI blockiert ein konkretes Designziel, das auch über Reka-UI-Direktnutzung nicht lösbar ist.
