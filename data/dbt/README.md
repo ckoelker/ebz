@@ -32,15 +32,28 @@ Quellen; schreibt die Modelle nach Schema `analytics`.
 - **Unit-Test** `seminar_break_even_worked_example`: Plan-Rechenbeispiel
   (600 €/TN, Fix 1.800 €, var. 25 €/TN, Umlage 800 €) → **Break-even 5 TN**.
 
+## Projekt-Konfiguration (`dbt_project.yml`)
+`dbt_project.yml` wird absichtlich **kommentarlos** gehalten — Tools (u. a. der Lightdash-
+Bootstrap, der das Projekt parst) normalisieren die Datei sonst bei jedem Lauf und strippen
+Kommentare. Die fachliche Bedeutung der `vars` steht deshalb hier:
+- `currency: EUR` — **eine** Währung erzwingen (L17).
+- `vat_rate: 0.19` — MwSt-Satz, um Installment-**Brutto**beträge auf **netto** zu bringen
+  (eine Steuerklasse).
+- `forecast_anchor: ''` — Anker der Forecast-Monatszuordnung; leer ⇒ `current_date`
+  (Monatsbeginn). Für reproduzierbare Demos überschreibbar.
+
+`models`: `staging` materialisiert als **view**, `marts` als **table**.
+
 ## Ausführen
 Voraussetzung: Stack läuft, M1+M2 geladen (HubSpot-Deals + dlt-Tabellen im Warehouse).
 Reihenfolge (L26): **dlt-Load → dbt → BI**.
 ```bash
-cd showcase/dbt
+cd data/dbt
 python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt
-.venv/Scripts/dbt build --profiles-dir .     # seeds + models + tests + unit test
+# dbt move-fest über python -m aufrufen (console-script dbt.exe bricht nach venv-Move):
+.venv/Scripts/python -m dbt.cli.main build --profiles-dir .   # seeds + models + tests + unit test
 ```
-Konfiguration via Umgebung (Defaults = `showcase/.env`): `CONTROLLING_DB_HOST/PORT`,
+Konfiguration via Umgebung (Defaults = `.env`): `CONTROLLING_DB_HOST/PORT`,
 `CONTROLLING_DB/USER/PASSWORD`. Reproduzierbare Demos: `--vars '{forecast_anchor: "2026-06-01"}'`.
 
 ## Verifikation

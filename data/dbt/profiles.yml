@@ -1,5 +1,5 @@
 # Projekt-lokales Profil (Aufruf mit `--profiles-dir .`). Werte aus der Umgebung,
-# Defaults passen zu showcase/.env (Postgres auf Host-Port 6543, DB `controlling`).
+# Defaults passen zu .env (Postgres auf Host-Port 6543, DB `controlling`).
 ebz_controlling:
   target: dev
   outputs:

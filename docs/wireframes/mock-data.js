@@ -1,6 +1,6 @@
 /*
  * CRM-Wireframe — Mock-Daten (Wegwerf-Prototyp, keine echte Persistenz)
- * Bildet das im Plan (showcase/crm-planung/crm-plan.md) abgestimmte Modell ab.
+ * Bildet das im Plan (docs/planung/crm-planung/crm-plan.md) abgestimmte Modell ab.
  * Bewusst klein gehalten, deckt aber alle Funktionen ab:
  *  - Privatperson ohne Firma
  *  - Person mit mehreren Firmenzugehörigkeiten + Hauptzugehörigkeit

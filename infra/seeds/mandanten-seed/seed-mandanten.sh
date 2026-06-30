@@ -8,7 +8,7 @@
 # organization-Claim-Mapper, mandant-pflege-Rolle, Realm ebz-kunde-demo) liegen als Import-JSON in
 # vendure/keycloak/realms/ und ueberleben `down -v` automatisch — hier kommt nur die LAUFZEIT-Naht dazu.
 #
-# Idempotent: erneuter Lauf legt nichts doppelt an. Hook fuer showcase-aufbau.sh (Schritt `mandanten-seed`).
+# Idempotent: erneuter Lauf legt nichts doppelt an. Hook fuer tools/stack.sh (Schritt `mandanten-seed`).
 #
 # Scoping (bewusst): KC-Org-Anlage = Backend (POST /mandant). IdP-Verknuepfung + CI/Branding = hier geseedet
 # (zu kundenindividuell, NICHT in integration verdrahtet).

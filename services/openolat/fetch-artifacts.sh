@@ -3,8 +3,8 @@
 #   - OpenOLAT-WAR (Build 2034 = OpenOLAT 20.1) von openolat.com (resumebar via -C -)
 #   - Postgres-JDBC-Treiber von Maven Central
 #   - Dart-Sass-Standalone (Linux x64) — kompiliert im Build das eigene SCSS-Theme
-#     (showcase/openolat/theme/ebz) gegen die Framework-Partials der WAR; kein Node nötig.
-# Danach ist `docker compose build olat` offline-fähig. Nutzung:  bash showcase/openolat/fetch-artifacts.sh
+#     (services/openolat/theme/ebz) gegen die Framework-Partials der WAR; kein Node nötig.
+# Danach ist `docker compose build olat` offline-fähig. Nutzung:  bash services/openolat/fetch-artifacts.sh
 set -euo pipefail
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OLAT_BUILD="${OLAT_BUILD:-2034}"

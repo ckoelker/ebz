@@ -16,7 +16,7 @@
 #                    /restapi/repo/entries/{re}/participants/{id}, /restapi/repo/courses/{id}/organisations/{org}
 #
 # Idempotent (find-or-create je Schritt; der Kurs wird ueber externalRef genau einmal konfiguriert, da das
-# Anhaengen des SCORM-Knotens NICHT idempotent ist). Hook fuer showcase-aufbau.sh (Schritt `lms-zertifikat`,
+# Anhaengen des SCORM-Knotens NICHT idempotent ist). Hook fuer tools/stack.sh (Schritt `lms-zertifikat`,
 # nach `lms-share`/`lms-nachweis`). Voraussetzung: Image mit ebz-nachweis-cert.jar, mandanten-seed (DEMO_AG-
 # Org key 2, cssClass mandant-demo-ag), lms-import-seed (Nugget 884736).
 set -uo pipefail

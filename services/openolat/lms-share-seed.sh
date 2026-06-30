@@ -16,7 +16,7 @@
 # Curriculums (nicht in der Root-Org) — wird hier idempotent gesetzt.
 #
 # Idempotent. Vorausgesetzt: lms-import-seed.sh lief (Repo-Entry da), mandanten-seed (DEMO_AG-Org da).
-# Hook fuer showcase-aufbau.sh (Schritt `lms-share`).
+# Hook fuer tools/stack.sh (Schritt `lms-share`).
 set -uo pipefail
 
 BASE="${OLAT_BASE:-http://localhost:8089/restapi}"

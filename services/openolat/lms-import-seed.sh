@@ -9,7 +9,7 @@
 # WICHTIG: curl -F erzwingt POST → für den Import IMMER -X PUT mitgeben (sonst 405).
 #
 # Voraussetzung: openolat-Container läuft (Profil controlling), Seeds via lms-fetch-testdata.sh geladen.
-# Nutzung:  bash showcase/openolat/lms-import-seed.sh
+# Nutzung:  bash services/openolat/lms-import-seed.sh
 #           OLAT_BASE=http://localhost:8089/restapi OLAT_CRED=administrator:openolat bash ...
 set -euo pipefail
 
@@ -31,7 +31,7 @@ import_course() {
   local folder="$1" displayname="$2"
   local zip="$SCORM/$folder.zip"
   if [ ! -f "$zip" ]; then
-    echo "  ✗ $displayname: $zip fehlt — erst 'bash showcase/lms-fetch-testdata.sh' ausführen" >&2; return 1
+    echo "  ✗ $displayname: $zip fehlt — erst 'bash infra/seeds/lms-fetch-testdata.sh' ausführen" >&2; return 1
   fi
   local key; key="$(existing_key "$displayname")"
   if [ -n "$key" ]; then

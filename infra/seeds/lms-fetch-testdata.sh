@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Lädt frei verfügbare SCORM-1.2-Seed-Kurse nach testdata/scorm/ (gitignored).
 # Ersatz für den (noch nicht verfügbaren) Lemon-Export — reproduzierbarer Seed aus der Quelle,
-# analog zum Repeatable-Seed-Prinzip (vgl. showcase/smoke-portal-rechnungen.sh).
+# analog zum Repeatable-Seed-Prinzip (vgl. services/integration/smoke-portal-rechnungen.sh).
 # python wird als JSON-Parser UND (mangels zip-Binary) zum Packen genutzt.
-# Nutzung:  bash showcase/lms-fetch-testdata.sh
+# Nutzung:  bash infra/seeds/lms-fetch-testdata.sh
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"

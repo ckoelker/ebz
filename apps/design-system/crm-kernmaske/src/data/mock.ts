@@ -1,4 +1,4 @@
-// Mock-Daten für die Storybook-Abnahme — portiert aus showcase/crm-wireframe/mock-data.js.
+// Mock-Daten für die Storybook-Abnahme — portiert aus docs/wireframes/mock-data.js.
 // Wegwerf-/Demo-Daten, keine Persistenz. Deckt alle Funktionen ab (Privatperson,
 // Mehrfach-Zugehörigkeit + Hauptzugehörigkeit, Firmen-Hierarchie, Minderjährige,
 // Werbesperre/unvollständig).

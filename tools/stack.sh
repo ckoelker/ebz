@@ -147,7 +147,7 @@ schritt_seed() {
   ok "Portal-Rechnungen geseedet"
 
   echo "── LMS-Seed-Kurse (SCORM → OpenOLAT) ──"
-  # lms-fetch-testdata.sh legt die Pakete im REPO-Wurzel-testdata/scorm ab (nicht showcase/), daher ../.
+  # lms-fetch-testdata.sh legt die Pakete im REPO-Wurzel-testdata/scorm ab (Repo-Wurzel), daher ../.
   local scorm="$HIER/../testdata/scorm"
   if [ ! -d "$scorm" ] || [ -z "$(ls -A "$scorm" 2>/dev/null)" ]; then
     bash infra/seeds/lms-fetch-testdata.sh || warn "lms-fetch-testdata.sh fehlgeschlagen (Netz?) — LMS-Import übersprungen"

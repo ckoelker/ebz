@@ -14,7 +14,7 @@
 #   POST /lms/nachweise/einschreibung/{id}/synchronisieren    (Completion -> LernleistungsFakt)
 #
 # Idempotent (find-or-create je Schritt). Voraussetzung: lms-import-seed (Nugget 884736), Keycloak/Backend up.
-# Hook fuer showcase-aufbau.sh (Schritt `lms-nachweis`, nach `lms-share`).
+# Hook fuer tools/stack.sh (Schritt `lms-nachweis`, nach `lms-share`).
 set -uo pipefail
 
 # Issuer-Host, dem das Backend vertraut (Netzwerk-Alias, NICHT localhost:8088 — sonst 401 wegen iss-Mismatch).

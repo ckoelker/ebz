@@ -6,11 +6,11 @@ Idempotent + wiederholbar: legt nur an, was fehlt (Org/Projekt/Space/Charts/Dash
 
 Hintergrund: Passwort-Login ist deaktiviert (SSO-Zwang), daher fährt der Bootstrap denselben
 OIDC-Authorization-Code-Flow wie ein Browser (Lightdash → Keycloak-Login `staff/staff` → Callback).
-Der erste SSO-Nutzer wird Org-Admin (L21). Aufruf aus `showcase-aufbau.sh` (Schritt `lightdash`),
+Der erste SSO-Nutzer wird Org-Admin (L21). Aufruf aus `tools/stack.sh` (Schritt `lightdash`),
 nachdem dbt die Marts ins Schema `analytics` gebaut hat.
 
 Kein externer Zustand nötig — alles über die öffentliche Lightdash-API. ENV-Defaults passen zu
-showcase/.env und docker-compose.yml.
+.env und docker-compose.yml.
 """
 import os, re, html, sys, json, time, socket
 try:

@@ -371,7 +371,7 @@ def _swimlane(xml_text: str, name_zu_akteur: dict, name_zu_system: dict, titel: 
 
     nl = "\n"
     return (f'<?xml version="1.0" encoding="UTF-8"?>\n'
-            f'<!-- swimlane-laidout: eigener Layouter (showcase/prozessdoku/generate.py) -->\n'
+            f'<!-- swimlane-laidout: eigener Layouter (docs/prozessdoku/generate.py) -->\n'
             f'<bpmn:definitions xmlns:bpmn="{BPMN_NS}" xmlns:bpmndi="{DI_NS}"'
             f' xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC"'
             f' xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://ebz/prozessdoku">\n'

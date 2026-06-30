@@ -17,7 +17,7 @@ Leitplanken:
          (write_disposition="merge", primary_key="id") → Re-Runs sind unschädlich.
 
 Aufruf (Stack muss laufen):  python vendure_to_warehouse.py
-Konfiguration kommt aus Umgebungsvariablen (Defaults passen zu showcase/.env, Postgres
+Konfiguration kommt aus Umgebungsvariablen (Defaults passen zu .env, Postgres
 auf Host-Port 6543). Siehe README.md.
 """
 from __future__ import annotations

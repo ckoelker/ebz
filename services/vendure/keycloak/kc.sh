@@ -2,10 +2,10 @@
 # Keycloak-Admin-Helfer (Dev): holt ein master/admin-cli-Token und ruft die Admin-REST — als EIN
 # allowlist-fähiges Kommando (kein TOKEN=$(curl …)-Wrapper, der die curl-Whitelist aushebelt).
 #
-#   bash showcase/vendure/keycloak/kc.sh <METHODE> <PFAD> [JSON-DATEI]
-#   bash showcase/vendure/keycloak/kc.sh GET  /admin/realms/ebz-customers/organizations
-#   bash showcase/vendure/keycloak/kc.sh POST /admin/realms/ebz-customers/organizations org.json
-#   bash showcase/vendure/keycloak/kc.sh PUT  /admin/realms/ebz-customers realm.json
+#   bash services/vendure/keycloak/kc.sh <METHODE> <PFAD> [JSON-DATEI]
+#   bash services/vendure/keycloak/kc.sh GET  /admin/realms/ebz-customers/organizations
+#   bash services/vendure/keycloak/kc.sh POST /admin/realms/ebz-customers/organizations org.json
+#   bash services/vendure/keycloak/kc.sh PUT  /admin/realms/ebz-customers realm.json
 #
 # Env-Overrides: KC (Default http://localhost:8088), KC_ADMIN (admin), KC_ADMIN_PW (admin).
 set -euo pipefail

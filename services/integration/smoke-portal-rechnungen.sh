@@ -9,7 +9,7 @@
 # (Realm ebz-customers) für den Abruf. Prüft damit auch die Tenant-Trennung (customers vs. staff).
 #
 # Voraussetzung:  docker compose --profile controlling up -d   (integration:8090, keycloak:8080)
-# Aufruf:         bash showcase/integration/smoke-portal-rechnungen.sh
+# Aufruf:         bash services/integration/smoke-portal-rechnungen.sh
 # Ergebnis:       Exit 0 = PASS, sonst FAIL. Re-run-fähig (jeder Lauf legt eine frische Org an).
 #
 # Hinweis Browser-Test danach: Portal http://localhost:5175 → Login customer/customer (Carla Kundin)
