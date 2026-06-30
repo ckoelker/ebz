@@ -52,11 +52,14 @@ import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungPosition
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.model.RechnungVersandStatus;
 import de.netzfactor.ebz.controlling.integration.rechnung.datev.Buchungssatz;
+import de.netzfactor.ebz.controlling.integration.rechnung.datev.DatevBelegbildService;
 import de.netzfactor.ebz.controlling.integration.rechnung.datev.DatevService;
 import de.netzfactor.ebz.controlling.integration.rechnung.datev.DatevUebergabe;
+import de.netzfactor.ebz.controlling.integration.rechnung.datev.PeppolVersand;
 import de.netzfactor.ebz.controlling.integration.rechnung.gobd.GobdArchivService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.BestellungBillingService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.DebitorHoheitService;
+import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungPeppolVersandService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungVersandService;
 import de.netzfactor.ebz.controlling.integration.rechnung.service.RechnungslaufService;
@@ -86,6 +89,9 @@ public class RechnungResource {
     RechnungVersandService rechnungVersand;
 
     @Inject
+    RechnungPeppolVersandService rechnungPeppolVersand;
+
+    @Inject
     ZugferdService zugferd;
 
     @Inject
@@ -99,6 +105,9 @@ public class RechnungResource {
 
     @Inject
     DatevService datev;
+
+    @Inject
+    DatevBelegbildService datevBelegbild;
 
     @Inject
     BestellungBillingService bestellungBilling;
@@ -257,6 +266,41 @@ public class RechnungResource {
         DatevUebergabe.Protokoll p = datev.uebergeben(datev.belege(v, b, bereich), v, b);
         return new DatevProtokollDto(p.modus(), p.referenz(), p.anzahlBuchungen(),
                 p.artefakt() == null ? 0 : p.artefakt().length, p.hinweis());
+    }
+
+    /**
+     * D2 — lädt das Belegbild (ZUGFeRD-PDF) eines festgeschriebenen Belegs in den DATEV-Belegbilderservice
+     * ({@code accounting:documents}). ZUGFeRD wird erzeugt und gegen den Mustang-Validator geprüft (Pflicht-
+     * Tor); erst dann erfolgt der Upload. Antwort = vergebene DATEV-Dokument-GUID + Belegbezug. Setzt einen
+     * konfigurierten DATEV-Cloud-Zugang voraus ({@code datev.cloud.*}).
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/datev/belegbild/{id}")
+    @Consumes(MediaType.WILDCARD)
+    @Transactional
+    public Response datevBelegbild(@PathParam("id") Long id) {
+        Rechnung r = Rechnung.findById(id);
+        if (r == null) {
+            return notFound();
+        }
+        if (r.status != RechnungStatus.AUSGESTELLT && r.status != RechnungStatus.BEZAHLT
+                && r.status != RechnungStatus.STORNIERT) {
+            return jsonFehler(Response.Status.CONFLICT,
+                    "Belegbild nur für festgeschriebene Belege (Status: " + r.status + ").");
+        }
+        try {
+            RechnungZugferdDaten daten = zugferdMapper.baue(r);
+            ZugferdService.Ergebnis erg = zugferd.erzeugeUndValidiere(daten);
+            if (!erg.valide()) {
+                return jsonFehler(Response.Status.BAD_GATEWAY,
+                        "ZUGFeRD-Validierung fehlgeschlagen — nicht übertragen. Report: " + erg.report());
+            }
+            DatevBelegbildService.Beleg beleg = datevBelegbild.uebertrage(erg.pdf(), r.nummer);
+            return Response.ok(beleg).build();
+        } catch (Exception ex) {
+            return jsonFehler(Response.Status.BAD_GATEWAY, "DATEV-Belegbild-Übertragung fehlgeschlagen: " + ex.getMessage());
+        }
     }
 
     private static LocalDate datum(String s, LocalDate fallback) {
@@ -449,6 +493,20 @@ public class RechnungResource {
     @Transactional
     public RechnungDto versenden(@PathParam("id") Long id) {
         return toRechnung(rechnungVersand.versende(id));
+    }
+
+    /**
+     * D5 — versendet die E-Rechnung zusätzlich über das Peppol-/TRAFFIQX-Netz (DATEV SmartTransfer), den
+     * zweiten Versandweg neben der E-Mail (B2B-Empfänger im Netz). Erzeugung bleibt eigen (ZUGFeRD, Mustang-
+     * Validator als Pflicht-Tor); Empfänger wird aus der USt-IdNr. des Debitors als Peppol-ID abgeleitet.
+     * Antwort = Übertragungsquittung. Fehler (kein Empfänger / nicht festgeschrieben / invalide) → 409.
+     */
+    @RolesAllowed("rechnung-pflege")
+    @POST
+    @Path("/rechnungen/{id}/versenden/peppol")
+    @Consumes(MediaType.WILDCARD)
+    public PeppolVersand.Quittung versendenPeppol(@PathParam("id") Long id) {
+        return rechnungPeppolVersand.versende(id);
     }
 
     // ───────────────────────── Lebenszyklus (Service) ─────────────────────────

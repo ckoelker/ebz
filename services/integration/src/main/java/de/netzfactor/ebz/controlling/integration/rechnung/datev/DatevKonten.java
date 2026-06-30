@@ -61,6 +61,40 @@ public interface DatevKonten {
     @WithDefault("4")
     int sachkontenLaenge();
 
+    /** DATEV-Cloud-Zugang (Buchungsdatenservice) — nur für {@code modus=cloud} relevant. */
+    Cloud cloud();
+
+    /**
+     * OAuth- und Mandant-Zugang zur DATEV-Cloud (Sandbox-Defaults leer; per Env gesetzt, siehe
+     * {@code DATEV-Sandbox-Onboarding.md}). Der Refresh-Token <b>rotiert</b> bei jedem Refresh — der
+     * {@code DatevTokenService} hält den jeweils neuen Wert; dieser Wert hier ist nur der <i>Bootstrap</i>.
+     */
+    interface Cloud {
+
+        /** OAuth-App {@code client_id} — zugleich Pflicht-Header {@code X-DATEV-Client-Id} bei JEDEM Call. */
+        @WithDefault("")
+        String clientId();
+
+        @WithDefault("")
+        String clientSecret();
+
+        /** Bootstrap-Refresh-Token (per {@code tests/e2e/datev-token-bootstrap.mjs} erzeugt). */
+        @WithDefault("")
+        String refreshToken();
+
+        /** DATEV-Mandant {@code {Beraternummer}-{Mandant}} (Sandbox 455148-2 = Buchungsdatenservice) — Pfadsegment des Imports. */
+        @WithDefault("455148-2")
+        String mandant();
+
+        /** Wie oft der Import-Job nach dem Upload gepollt wird, bis er als verarbeitet gilt. */
+        @WithDefault("8")
+        int jobPollVersuche();
+
+        /** Pause zwischen zwei Job-Pollings (ms). */
+        @WithDefault("250")
+        long jobPollPauseMs();
+    }
+
     default String erloeskonto(Steuerfall fall) {
         return switch (fall) {
             case BEFREIT -> erloesBefreit();

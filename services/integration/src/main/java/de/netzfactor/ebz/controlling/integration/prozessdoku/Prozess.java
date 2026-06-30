@@ -40,7 +40,8 @@ public final class Prozess {
         SUITE8("Suite8"),
         OPENOLAT("OpenOLAT"),
         HUBSPOT("HubSpot"),
-        DATEV("DATEV");
+        DATEV("DATEV"),
+        SMARTTRANSFER("DATEV SmartTransfer/Peppol");
 
         public final String label;
 

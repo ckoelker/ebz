@@ -49,6 +49,14 @@ node datev-clients.mjs                  # Smoke: refresh→access→GET clients 
 Nötige `.env`-Variablen: `DATEV_CLIENT_ID`, `DATEV_CLIENT_SECRET`, `DATEV_SANDBOX_USER`, `DATEV_SANDBOX_PASSWORD`
 → erzeugt `DATEV_REFRESH_TOKEN`. (Optional `DATEV_SANDBOX_CLIENT_ID=455148-2`.)
 
+## Umsetzungsstand D1–D5 (2026-06-30, Branch `feat/datev-cloud`)
+Gebaut + `mvn test-compile` grün (Laufzeit-Tests laufen über `tools/stack.sh`; Default `datev.modus=extf` → bestehende Tests unberührt):
+- **D1 Buchungsdatenservice** — `DatevCloudApi` (Token + Extf), `DatevTokenService` (Access-Cache + Refresh-Rotation), `DatevCloudUebergabe` (`@Identifier("cloud")`: EXTF-Upload → Job-Poll, Pflicht-Header), Weg-Auswahl in `DatevService` (`extf|cloud-mock|cloud`). Test: `DatevCloudUebergabeTest` gegen `DatevWireMockResource`.
+- **D2 Belegbilder** — `accounting:documents` Multipart-PUT mit selbst erzeugter GUID (`DatevBelegbildService`), Endpoint `POST /rechnung/datev/belegbild/{id}` (ZUGFeRD erzeugen+validieren→hochladen). Test: `DatevBelegbildTest`.
+- **D3 OPOS-Regelkreis** — Port `OposQuelle` (+ `OposQuelleMock`, real = DATEVconnect/on-prem), `OposRegelkreisService` (Match über Belegnummer → `RechnungService.bezahlen` → BEZAHLT, idempotent), `OposDispatcher` (`@Scheduled`, `opos.dispatcher.*`). Test: `DatevOposRegelkreisTest`.
+- **D5 SmartTransfer/Peppol** — Port `PeppolVersand` (+ `PeppolVersandMock`), `RechnungPeppolVersandService` (ZUGFeRD-Validierung als Tor, Empfänger aus USt-IdNr. → Peppol-ID 9930), Endpoint `POST /rechnung/rechnungen/{id}/versenden/peppol`. Test: `PeppolVersandTest`.
+- **Offen/„gegen Sandbox final verifizieren":** EXTF-Import-Content-Type + Job-Status-Felder (D1), Belegbild-Metadaten-Schema (D2); D3 real = DATEVconnect (Kanzlei), D5 real = SmartTransfer-Transport-API. Opt-in echter Sandbox-Smoke via `tests/e2e/datev-clients.mjs`.
+
 ## Konsequenzen für den Bau (D1)
 1. **Eigener `DatevTokenService`** (CDI): hält/rotiert Refresh-Token, cached Access-Token bis `expires_in`,
    POSTet Basic-Auth `client_id:secret` an den Token-Endpoint. Kein `oidc-client`-Extension nötig.

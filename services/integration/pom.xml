@@ -319,6 +319,16 @@
       <version>1.3.0</version>
       <scope>test</scope>
     </dependency>
+    <!-- ── D1 DATEV-Cloud (Buchungsdatenservice): WireMock-Stub der DATEV-API (Token + extf-files-
+         Import/Job-Poll) für die deterministische, offline laufende Test-Suite. Plain standalone-JAR
+         (shaded → kein BOM-/Versions-Abgleich gegen Quarkus 3.37, [[verify-version-compatibility]]),
+         bewusst KEINE Quarkiverse-Extension. Realer Sandbox-Smoke separat opt-in. -->
+    <dependency>
+      <groupId>org.wiremock</groupId>
+      <artifactId>wiremock-standalone</artifactId>
+      <version>3.13.1</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>
