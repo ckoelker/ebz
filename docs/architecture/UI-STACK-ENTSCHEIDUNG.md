@@ -113,9 +113,17 @@ und das fällt klar auf **Storybook + Nuxt UI**, aus mechanischen Gründen (nich
   Glue-Code**. shadcn-vue („owned code") = mehr Bespoke-Fläche, die der Agent korrekt halten muss.
 - **Eigentlicher Hebel = die Gates** (Typecheck → build-storybook → Naht-Wächter). Typisierte CSF + Nuxt-UI-
   Props **füttern** diese Gates am besten; shadcn/Histoire liefern dafür weniger.
-- **Fair benannt, wo es auch jetzt beißt:** generische Komponenten in CSF brauchen Casts
-  (`… as unknown as Meta<…>`); Nuxt UIs lose getippte Slots/`any`-Spalten verstecken gelegentlich Typfehler
-  vor dem Typecheck → ein Bug rutscht bis Build/Runtime durch.
+- **Fair benannt, wo es auch jetzt beißt:** generische Komponenten in CSF brauchen **einen** Cast in der
+  Storybook-**Meta** (`component: X as unknown as Meta<…>['component']`, s. `ListenTabelle.stories.ts`).
+  **Wichtige Differenzierung — NICHT verwechseln:** Die *Komponente selbst* und ihre *Consumer* sind voll
+  typsicher (Variante A: `<script setup generic="T">`, `row.original` typisiert, per `summeCentXX`-Probe
+  bewiesen). Der Cast ist **reine Storybook-↔-Vue-Generics-Reibung an der Meta-Definition** — Storybooks
+  `Meta<…>` kann eine generische SFC nicht ausdrücken; ohne Cast (`Meta<typeof X>`) fallen die `args` der
+  generischen Komponente weg (= der ursprüngliche Fehler). Bewusst als ehrlicher Ein-Zeilen-Cast gelassen
+  (ein `defineMeta<T>`-Wrapper würde ihn nur kapseln, Netto-Typgewinn null). Also: **Komponente typsicher ✓,
+  nur die Story-Meta trägt den Cast.**
+- Nuxt UIs lose getippte Slots/`any`-Spalten verstecken gelegentlich Typfehler vor dem Typecheck → ein Bug
+  rutscht bis Build/Runtime durch.
 
 ## Revisit-Trigger
 Design-geführte Bespoke-Anforderung wird verbindlich · zweiter UI-Mitwirkender mit Pflege-Kapazität ·
