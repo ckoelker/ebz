@@ -1,7 +1,11 @@
+> ⏸️ **GEPARKT / INAKTIV (2026-06-30).** Planung **ohne Ergebnis** geschlossen. Dieses Dokument ist **KEIN
+> aktiver Treiber** und soll **laufende/zukünftige Entwicklung NICHT beeinflussen**. Reine Recherche-/Optionen-
+> Ablage. Wiederaufnahme **nur auf ausdrückliche Anforderung** (Voraussetzung: reale Suite8-Baseline vom EBZ).
+
 # RFI / Marktvergleich — Gästehaus-Software (Suite8-Ablöse)
 
 > Löst den offenen Punkt **⚪ #19 / Integration S4** aus [Soll-Bebauungsplan](Soll-Bebauungsplan-und-Schnittstellen.md)
-> und [Capability-Map #11](Zielarchitektur-Capability-Map.md). Stand 2026-06-30. **Status: RFI — Entscheidung offen**
+> und [Capability-Map #11](Zielarchitektur-Capability-Map.md). Stand 2026-06-30. **Status: GEPARKT (ohne Ergebnis) — inaktiv**
 > (es fehlt die reale Suite8-Kosten-/Modul-Baseline, vom EBZ beizustellen). Recherche-Quellen am Ende.
 
 ## 1. Ausgangslage

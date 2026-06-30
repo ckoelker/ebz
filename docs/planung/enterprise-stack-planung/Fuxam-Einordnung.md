@@ -1,8 +1,12 @@
+> ⏸️ **GEPARKT / INAKTIV (2026-06-30).** Reine Recherche-Ablage, **KEIN aktiver Treiber** — soll
+> **laufende/zukünftige Entwicklung NICHT beeinflussen**. Ergebnis: für den Bildungs-Kern **keine Option**.
+> Wiederaufnahme **nur auf ausdrückliche Anforderung**.
+
 # Fuxam — Einordnung (Bildungs-Suite-Konsolidierer?)
 
 > Notiz zur Bildungs-Planung (Stand 2026-06-30). **Gehört NICHT zum Gästehaus/PMS-Thema** — Fuxam ist reine
 > Bildungs-Software. Hier nur eingeordnet, weil es bestehende EBZ-Entscheidungen (OpenOLAT/Sket) berührt.
-> **Status: beobachten, noch nicht entscheidungsreif.**
+> **Status: GEPARKT (inaktiv, 2026-06-30) — kein Einfluss auf laufende Entwicklung.**
 
 ## Was Fuxam ist
 **FuxamOne** — KI-gestützte **All-in-One-Bildungsplattform**: **Campus-Management + LMS + digitale Prüfungen +

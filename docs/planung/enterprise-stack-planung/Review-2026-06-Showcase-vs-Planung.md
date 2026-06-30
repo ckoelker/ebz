@@ -55,7 +55,7 @@ EOL-Ablösungen).
 | 8/16 | Buchung / Abo-Billing | ERPNext/Odoo Admission · Kill Bill/Stripe | **Vendure Subscriptions/Installments** (F4–F6, Stripe-Plan) | 🟡 in Vendure gebündelt statt separater Abo-Engine |
 | 6/17 | **Rechnungsstellung / E-Rechnung / FiBu** | **Business Central/DATEV / Invoice Ninja — Buy, niemals selbst** | **Eigenes Quarkus-Billing R1–R7**: Belegfluss, ZUGFeRD/XRechnung, GoBD-WORM (MinIO), DATEV hinter Interface (EXTF+Cloud-Mock), Debitoren-Hoheit, Hochschul-Split/Raten, Vendure-Quelle | 🔴 **größte Divergenz** — entgegen Leitprinzip selbst gebaut (Neubewertung §4) |
 | 5/9/12/13/14/15 | Pflicht-/Spezial-Satelliten (Schild-NRW, WebUntis, Sket, Moodle, Teams) | behalten + anbinden (L6) | **nicht im Showcase** (synthetische/Fixture-Daten, Vendure als Quelle) | ⚪ nicht adressiert |
-| 11/19 | Berufsschul-Java-App / Gästehaus-PMS | anbinden/schrumpfen bzw. klären | Gästehaus: **Suite8-Ablöse, RFI läuft** ([RFI](PMS-Gaestehaus-RFI.md)); Java-App weiter offen | 🟠 PMS adressiert |
+| 11/19 | Berufsschul-Java-App / Gästehaus-PMS | anbinden/schrumpfen bzw. klären | Gästehaus: Suite8-Ablöse **RFI GEPARKT/ohne Ergebnis** ([RFI](PMS-Gaestehaus-RFI.md), inaktiv); Java-App weiter offen | ⏸️ geparkt |
 
 ---
 
