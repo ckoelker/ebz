@@ -101,5 +101,5 @@ for (const v of violations) {
   }
   console.error(`      ${v.file}:${v.line}  (importiert ${v.spec})\n        ${v.text}`);
 }
-console.error('\nNaht siehe showcase/DESIGN-SYSTEM.md (Landkarte/Naht).');
+console.error('\nNaht siehe docs/architecture/DESIGN-SYSTEM.md (Landkarte/Naht).');
 process.exit(1);
