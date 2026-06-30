@@ -40,6 +40,8 @@ ebz/
 
 Reihenfolge bewusst: billig+sicher zuerst (0,1), dann der Root-Lift als EIN gegateter atomarer Schritt.
 
+**Compose `include:`-Split: VERWORFEN (Nutzer-Entscheid 2026-06-30).** Nicht „vertagt", sondern bewusst nicht gebaut. Begründung: Selektives Hochfahren leistet bereits die **Profile** (`--profile controlling`) → der Hauptnutzen ist abgedeckt; der Rest (Merge-Konflikte, Datei-Navigierbarkeit) ist ein **Team**-Argument und lohnt solo nicht (vgl. „schwere Zeremonie erst mit Team"). Kosten dagegen real: bei `include:` lösen relative Pfade je Datei zur eigenen Basis auf + Volumes/Networks-Merge → subtile Fehlerquelle. Die **Single-File** `docker-compose.yml` (mit `name: ebz`, korrekt gepfadet) ist greppbar + `docker compose config`-validiert und bleibt der Stand. **Wiederaufgreifen nur bei:** zweitem Mitwirkenden ODER wenn die Datei beim Arbeiten spürbar lästig wird.
+
 ## Resume-Punkt (für Wiedereinstieg nach Compaction)
 **Stand:** Phase 0+1+2 fertig. Reorg **abgeschlossen** — `showcase/` aufgelöst, Voll-Stack-Gate (`tools/stack.sh`) grün (UP/SEED/Java/SPA/Storybook/Vendure/E2E/BPMN/Lightdash).
 **Beim Root-Lift aufgetretene & gefixte Fallstricke (für die Zukunft):**
@@ -48,5 +50,5 @@ Reihenfolge bewusst: billig+sicher zuerst (0,1), dann der Root-Lift als EIN gega
 - Verschobene Python-**venvs**: `python.exe` läuft weiter, aber console-script-Exes (`dbt.exe`) brechen → in stack.sh `dbt` via `python -m dbt.cli.main` (move-fest).
 - `generate.py` Span-Log-Pfad war repo-relativ (`integration`→`services/integration`).
 
-**Offener, bewusst vertagter Folgeschritt:** Compose `include:`-Split (infra/compose/*) — siehe Phase-2-Eintrag (Risiko/Wert; separat gegatet, wenn gewünscht).
+**Compose `include:`-Split: VERWORFEN** (nicht vertagt) — Single-File bleibt der Stand; Begründung siehe Phasen-Abschnitt. Reorg damit **final abgeschlossen**, keine offenen Folgeschritte.
 Nutzer-Vorgaben: einzelne schlichte Kommandos, md-Edits sind erlaubt, selbständig committen+pushen.
