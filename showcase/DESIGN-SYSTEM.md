@@ -78,13 +78,13 @@ Jede neue geteilte Komponente bekommt **co-located** `Name.stories.ts` im richti
   schmaler, kommentierter Cast im `component`-Feld (generische SFC passt nicht in Storybooks Component-Typ).
 
 ## Noch offen — in dieser Reihenfolge
-1. **Abdeckung-Rest** — ERLEDIGT bis auf Stack-Rebuild (2026-06-30): **alle** Tabellen (portal/storefront/
-   mdm) auf `ListenTabelle`, kein rohes `<UTable>` mehr. mdm-Paginierung läuft per Attr-Fallthrough
-   durch (UTable = Single-Root), `ref="table"` war vestigial → entfernt. storefront prominente Flachpreise
+1. **Abdeckung-Rest** — ✅ ERLEDIGT (2026-06-30): **alle** Tabellen (portal/storefront/mdm) auf
+   `ListenTabelle`, kein rohes `<UTable>` mehr. mdm-Paginierung läuft per Attr-Fallthrough durch
+   (UTable = Single-Root), `ref="table"` war vestigial → entfernt. storefront prominente Flachpreise
    ([slug]-Variante + Warenkorb-Zeile) → `PreisBadge tone="primary"` (PreisBadge um `tone` generalisiert).
    Bewusst NICHT migriert: Katalog-PriceRange (kein flacher Cent → bleibt `preis()`), dt/dd-Summenzeilen,
-   portal Aktivitäten/Nachrichten (Timeline/Chat). **Offen:** echter Docker-Stack-Rebuild (alle
-   `COPY ui-base`/`customer-ui`) als Meilenstein-Validierung.
+   portal Aktivitäten/Nachrichten (Timeline/Chat). **Docker-Stack-Rebuild grün** (alle 3 Images mit
+   `COPY ui-base`/`customer-ui` gebaut, exit 0) → Dockerfile-Verdrahtung validiert.
 2. **Erzwingung** (danach): ESLint-Importgrenzen (`@nuxt/ui`/Roh-Komponenten nur im DS-Paket),
    dependency-cruiser auf die Apps, Story-Coverage-Test — als CI-/`showcase-aufbau`-Schritt. Erst damit
    ist „nur was definiert ist" garantiert (statt nur befolgt).
