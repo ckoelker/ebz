@@ -16,6 +16,20 @@ KI-Planung + Mobile-App**, vermarktet für **Hochschulen, Berufsschulen, Akademi
 - **Befund:** sehr **frühe Phase, leicht finanziert, kleines Team**; wenige, kleine, **private** Hochschulen als
   Referenz — **keine großen/öffentlichen, keine Berufsschul-Referenz** gefunden (trotz Berufsschul-Marketing).
 
+## Vorgänger / Basis: „smarTest" → „Future of Exam"
+- Fuxam ist die **Umbenennung/Fortführung von „smarTest"** — kein gestandenes Vorgängerunternehmen, sondern die
+  **Frühform desselben jungen Vorhabens** (Studentenprojekt an der **CODE University Berlin**, 2021; Julian
+  Schröder war mit dem LMS/Papierprüfungen der Hochschule unzufrieden).
+- Register: **Fuxam GmbH** eingetragen **08.02.2022** (HRB 238572 B, AG Charlottenburg; erste Registerspur
+  29.12.2021). Name **Fuxam = „FUture of eXAM"**.
+- **Kern-Erkenntnis:** Die **technische Basis ist ein Prüfungs-/Klausur-Tool** (smarTest/FuxamExams). **Campus-
+  Management + LMS sind später angebaute Breite** (ab 2023). → **Reife-Gefälle:** das **Exam-Modul** ist am
+  ältesten/tiefsten, **LMS und Campus-Management am jüngsten/dünnsten**.
+- **Folge für EBZ:** Fuxam würde euch ausgerechnet bei seinen **jüngsten Modulen** herausfordern — **LMS gegen
+  euer integriertes OpenOLAT** und **Campus-Mgmt als OpenEduCat-Ersatz** —, während die eigentliche Kernkompetenz
+  (digitale Prüfungen) nur einen **Teilbereich** abdeckt. smarTest selbst hat **keine eigenständigen
+  Referenzen/Historie** (kein Reifenachweis aus der Vorgänger-Phase).
+
 ## Substanz-Lücke (Due-Diligence offen)
 Öffentlich **nicht** auffindbar: **API-/Interop-Doku** (LTI/SCORM/xAPI für LMS-Interop), DSGVO/Hosting-Details,
 Datenmodell, Skalierungs-/Verfügbarkeitsangaben, unabhängige (nicht referenz-gestützte) Reviews. → Eindruck
