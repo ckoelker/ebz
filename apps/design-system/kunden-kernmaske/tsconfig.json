@@ -1,0 +1,36 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "useDefineForClassFields": true,
+    "strict": true,
+    "jsx": "preserve",
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "skipLibCheck": true,
+    "noEmit": true,
+    "types": ["node"],
+    "paths": {
+      "@crm-ui/*": ["../../../packages/crm-ui/src/*"],
+      "@customer-ui/*": ["../../../packages/customer-ui/src/*"],
+      "@ui-base/*": ["../../../packages/ui-base/src/*"],
+      "vue": ["./node_modules/vue"]
+    }
+  },
+  "include": [
+    "src/**/*.ts",
+    "src/**/*.d.ts",
+    "src/**/*.vue",
+    "auto-imports.d.ts",
+    "components.d.ts",
+    ".storybook/**/*.ts",
+    "../../../packages/crm-ui/src/domain/**/*.ts",
+    "../../../packages/customer-ui/src/**/*.ts",
+    "../../../packages/customer-ui/src/**/*.vue",
+    "../../../packages/ui-base/src/**/*.ts",
+    "../../../packages/ui-base/src/**/*.vue"
+  ]
+}

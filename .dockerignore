@@ -1,0 +1,22 @@
+# Gilt für Builds mit Context = Repo-Root (die SPA/SSR-Apps in apps/, die die geteilten Pakete in
+# packages/ als Geschwister brauchen). Hält den Build-Context schlank — sonst würde der gesamte
+# Monorepo-Baum inkl. aller node_modules/dist gesendet (mehrere GB).
+# Hinweis: Backend-Builds (services/*) nutzen EIGENE Contexts (build.context: ./services/…) mit
+# eigener .dockerignore und sind von dieser Datei NICHT betroffen.
+**/node_modules
+**/dist
+**/.nuxt
+**/.output
+**/target
+**/storybook-static
+**/test-results
+**/screenshots
+**/*.tsbuildinfo
+**/.git
+.git
+# Für App-Builds nicht benötigte Top-Level-Bereiche (schlanker Context):
+services
+data
+infra
+docs
+tests

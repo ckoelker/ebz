@@ -54,15 +54,15 @@ Thumbs.db
 *.swp
 .claude/settings.local.json
 
-# Prozessdoku — generierte BPMN (aus den OTel-Spans erzeugt: bash showcase/prozessdoku/build.sh)
-showcase/docs/bpmn/
-showcase/prozessdoku/out/
+# Prozessdoku — generierte BPMN (aus den OTel-Spans erzeugt: bash docs/prozessdoku/build.sh)
+docs/bpmn/
+docs/prozessdoku/out/
 
 # LMS-Seed-/Testdaten — heruntergeladene SCORM-Pakete (nicht committen, nur lokal/dev)
 testdata/
 **/testdata/
 
-# OpenOLAT-Build-Artefakte (heruntergeladen via showcase/openolat/fetch-artifacts.sh; nicht committen)
-showcase/openolat/openolat_*.war
-showcase/openolat/postgresql.jar
-showcase/openolat/dart-sass.tar.gz
+# OpenOLAT-Build-Artefakte (heruntergeladen via services/openolat/fetch-artifacts.sh; nicht committen)
+services/openolat/openolat_*.war
+services/openolat/postgresql.jar
+services/openolat/dart-sass.tar.gz
