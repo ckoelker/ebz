@@ -52,6 +52,32 @@ geteilte prop-reine Primitive, **solo/Vibecoding**, Produktiv **erst >1 Jahr**, 
 schwere Zeremonie „erst mit Team". Das favorisiert den **maximalen Hebel pro Stunde** (Nuxt UI) auf einem
 **ökosystem-sicheren** Workshop (Storybook).
 
+## DAS entscheidende Kriterium für uns: prozess-/formulargetriebenes ERP → Theming statt Ownership
+**Produktnatur (Nutzer-Klarstellung 2026-06-30):** Wir bauen eine **ERP-Landschaft mit Fokus auf
+prozess-gesteuerte, formular-unterstützte Entwicklung von ERP-Funktionen.** Der Kunde *darf* Designwünsche
+äußern, aber sie sollen **mit möglichst geringem Aufwand** umsetzbar sein. Das ist das **Gegenteil** des
+design-geführten Boutique-Profils, für das „Ownership > Abstraktion" (shadcn-vue) spricht.
+
+**Designwünsche zerfallen in zwei Klassen:**
+1. **Look & Feel** (Farben, Abstände, Radius, Typo, Tabellen-Dichte, Branding) — **~95 % der Kundenwünsche.**
+   → über **Theming** (Design-Tokens / `app.config` / Tailwind-Variablen): EINE zentrale Änderung, alle
+   Formulare/Listen erben sie. Mit Nuxt UI ein Einzeiler.
+2. **Echt neuartiges Widget**, das keine Lib hat — seltener Sonderfall. → punktuell auf **Reka UI** hinter der
+   prop-reinen Naht, einmalig, ohne die ganze Lib zu besitzen.
+
+**Warum Ownership (shadcn-vue) hier teurer macht:** shadcn-vue kopiert *jede* Komponente in unser Repo →
+selbst ein Klasse-1-Wunsch wird zu **Code-Editieren in N eigenen Komponenten + Dauer-Wartung** (Updates,
+a11y, Fixes selbst). Beispiel „kompaktere Tabellen, Navy-Buttons, eckige Ecken": Nuxt UI = Theme-Tokens
+zentral setzen, fertig; shadcn-vue = eigene Table-/Button-Komponenten anfassen und fortan pflegen.
+
+**Passung zum Stack:** Nuxt UI liefert `UForm`/`UTable`/`UModal`/`UStepper` + Validation-Anbindung fertig —
+genau die Bausteine fürs formulargetriebene ERP, nahtlos zu **Stack B** (Bean Validation → OpenAPI →
+zod/vee-validate → Forms).
+
+**Merksatz:** *„Ownership > Abstraktion" gilt für design-getriebene Boutique-Produkte. Wir bauen ein
+prozess-getriebenes ERP → hier gilt **Abstraktion + Theming > Ownership**.* shadcn-vue würde Designwünsche
+**teurer** machen, nicht billiger.
+
 ## Zitierbare Argumente (fürs Gespräch)
 1. **Gleiches Fundament:** beide auf Reka UI → weder a11y noch Kontrolle verloren; Nuxt UI *kapselt* nur.
 2. **Der SSR-Shop entscheidet:** shadcn-vue hieße SSR/Color-Mode/Forms/Table selbst bauen — Wochen Arbeit ohne Designnutzen.
