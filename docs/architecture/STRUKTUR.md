@@ -41,6 +41,12 @@ ebz/
 Reihenfolge bewusst: billig+sicher zuerst (0,1), dann der Root-Lift als EIN gegateter atomarer Schritt.
 
 ## Resume-Punkt (für Wiedereinstieg nach Compaction)
-**Stand:** Phase 0+1 fertig + committet. **Als Nächstes: Phase 2 (atomarer Root-Lift, 2+3 gefaltet)** — siehe Phase-2-Eintrag oben. Großer Schritt: erst vollständige Ziel-Mapping-Tabelle (jeder showcase/-Eintrag → Zielpfad) erstellen, dann `git mv` in Blöcken, dann alle Kopplungen (Inventar oben) nachziehen, dann Gates.
-Arbeitsweise je Phase: `git mv` → Referenzen nachziehen (Inventar oben) → Gate → eigener Commit+Push.
+**Stand:** Phase 0+1+2 fertig. Reorg **abgeschlossen** — `showcase/` aufgelöst, Voll-Stack-Gate (`tools/stack.sh`) grün (UP/SEED/Java/SPA/Storybook/Vendure/E2E/BPMN/Lightdash).
+**Beim Root-Lift aufgetretene & gefixte Fallstricke (für die Zukunft):**
+- Default-**Projektname** wechselte mit dem Verzeichnis (`showcase`→`ebz`); jetzt deterministisch via `name: ebz` in docker-compose.yml + `stack.sh PROJEKT`-Default.
+- Verschobene **pnpm-`node_modules`** sind unbrauchbar (Symlinks/State auf alten Pfad) → pro App/Paket `pnpm install` (CI=true) bzw. bei „Already up to date"-Falle `rm -rf node_modules` erzwingen. Docker-Builds sind unbetroffen (frischer In-Image-Install).
+- Verschobene Python-**venvs**: `python.exe` läuft weiter, aber console-script-Exes (`dbt.exe`) brechen → in stack.sh `dbt` via `python -m dbt.cli.main` (move-fest).
+- `generate.py` Span-Log-Pfad war repo-relativ (`integration`→`services/integration`).
+
+**Offener, bewusst vertagter Folgeschritt:** Compose `include:`-Split (infra/compose/*) — siehe Phase-2-Eintrag (Risiko/Wert; separat gegatet, wenn gewünscht).
 Nutzer-Vorgaben: einzelne schlichte Kommandos, md-Edits sind erlaubt, selbständig committen+pushen.

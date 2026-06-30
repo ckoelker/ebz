@@ -10,6 +10,8 @@
 #   Adminer :8082 (Server: postgres · DBs: vendure | controlling | lightdash)
 #   Keycloak :8088 (admin/admin)
 
+name: ebz
+
 services:
   # Single Source of Truth: EIN Postgres-Container hält alle DBs —
   #   vendure (Shop) · controlling (Warehouse) · lightdash (BI-Metadaten).

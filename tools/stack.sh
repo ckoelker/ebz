@@ -26,7 +26,7 @@ HIER="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$HIER/.."
 
 # ── Konfiguration (per Env überschreibbar) ──────────────────────────────────────────────────────
-PROJEKT="${COMPOSE_PROJECT_NAME:-showcase}"          # Container heißen ${PROJEKT}-<svc>-1
+PROJEKT="${COMPOSE_PROJECT_NAME:-ebz}"          # Container heißen ${PROJEKT}-<svc>-1
 COMPOSE=(docker compose --profile controlling)
 KC="${KC:-http://keycloak.localhost:8080}"
 RESOLVE=(--resolve "keycloak.localhost:8080:127.0.0.1")  # curl: *.localhost plattformneutral auf 127.0.0.1
@@ -162,7 +162,7 @@ schritt_seed() {
   ok "dlt-Load erledigt"
 
   echo "── Controlling-Marts (dbt build inkl. Unit-Tests) ──"
-  ( cd data/dbt && .venv/Scripts/dbt build --profiles-dir . ) || fail "dbt build fehlgeschlagen"
+  ( cd data/dbt && .venv/Scripts/python -m dbt.cli.main build --profiles-dir . ) || fail "dbt build fehlgeschlagen"
   ok "dbt-Marts gebaut + Tests grün"
 }
 

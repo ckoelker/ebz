@@ -23,7 +23,7 @@ from pm4py.objects.bpmn.exporter import exporter as bpmn_exporter
 BPMN_NS = "http://www.omg.org/spec/BPMN/20100524/MODEL"
 
 ROOT = Path(__file__).resolve().parent
-SPANS = ROOT.parent / "integration" / "target" / "prozess-log" / "spans.jsonl"
+SPANS = ROOT.parent.parent / "services" / "integration" / "target" / "prozess-log" / "spans.jsonl"
 OUT = ROOT / "out"
 
 # Echte Swimlanes (Lane = Akteur) in den Subprozessen? True → eigener Swimlane-Layouter (_swimlane,
