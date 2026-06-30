@@ -35,7 +35,7 @@ SHOP="${SHOP:-http://localhost:3000}"                # vendure
 MVN="${MVN:-mvn}"
 
 # Schritt-Reihenfolge (Voll-Lauf führt sie genau so aus).
-SCHRITTE=(preflight reset up seed mandanten-seed lms-share lms-nachweis lms-zertifikat test-java test-spa storybook test-vendure test-e2e bpmn lightdash summary)
+SCHRITTE=(preflight naht reset up seed mandanten-seed lms-share lms-nachweis lms-zertifikat test-java test-spa storybook test-vendure test-e2e bpmn lightdash summary)
 
 # ── Hübsche Ausgabe ─────────────────────────────────────────────────────────────────────────────
 rot=$'\e[31m'; gruen=$'\e[32m'; gelb=$'\e[33m'; blau=$'\e[36m'; fett=$'\e[1m'; aus=$'\e[0m'
@@ -228,6 +228,15 @@ schritt_test_spa() {
   ok "storefront grün"
 }
 
+schritt_naht() {
+  phase "LINT — Design-System-Naht (cross-seam-Imports, statisch)"
+  # Statischer Wächter: kundennahe Apps (portal/storefront) ↛ @crm-ui/ui, mdm ↛ @customer-ui,
+  # @ui-base bleibt neutral. Fängt die EINE Architektur-Invariante, die typecheck/build NICHT sieht
+  # (ein falscher Paket-Import kompiliert fehlerfrei). Keine Abhängigkeiten/kein Stack nötig → fail-fast.
+  node tools/check-seam.mjs || fail "Naht-Wächter rot (cross-seam-Import)"
+  ok "Naht grün"
+}
+
 schritt_storybook() {
   phase "BUILD — Storybooks (Design-Systeme: typecheck + build-storybook)"
   # Zwei eigenständige Storybook-Pakete (eigene pnpm-Installs, kein Root-Workspace): das interne
@@ -308,6 +317,7 @@ EOF
 fuehre_aus() {
   case "$1" in
     preflight)    schritt_preflight ;;
+    naht)         schritt_naht ;;
     reset)        schritt_reset ;;
     up)           schritt_up ;;
     seed)         schritt_seed ;;

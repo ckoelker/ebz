@@ -85,9 +85,12 @@ Jede neue geteilte Komponente bekommt **co-located** `Name.stories.ts` im richti
    Bewusst NICHT migriert: Katalog-PriceRange (kein flacher Cent → bleibt `preis()`), dt/dd-Summenzeilen,
    portal Aktivitäten/Nachrichten (Timeline/Chat). **Docker-Stack-Rebuild grün** (alle 3 Images mit
    `COPY ui-base`/`customer-ui` gebaut, exit 0) → Dockerfile-Verdrahtung validiert.
-2. **Erzwingung** (danach): ESLint-Importgrenzen (`@nuxt/ui`/Roh-Komponenten nur im DS-Paket),
-   dependency-cruiser auf die Apps, Story-Coverage-Test — als CI-/`showcase-aufbau`-Schritt. Erst damit
-   ist „nur was definiert ist" garantiert (statt nur befolgt).
+2. **Erzwingung** — schlanker Kern ✅ ERLEDIGT (2026-06-30): **Naht-Wächter** `tools/check-seam.mjs`
+   (Text-Scan über Import-Specifier, dependency-frei — `.vue`-tauglich, anders als dependency-cruiser)
+   + Schritt `naht` in `showcase-aufbau.sh` (fail-fast, früh). Fängt die EINE Invariante, die
+   typecheck/build nicht sieht: kundennahe Apps ↛ `@crm-ui/ui`, mdm ↛ `@customer-ui`, `@ui-base`
+   bleibt neutral. **Bewusst vertagt** (Langhorizont-Entscheidung, kein Team in Sicht): volle
+   ESLint-Importgrenzen + Story-Coverage als harte CI-Gates — lohnt erst mit Team/stabilen Mustern.
 - **Komponenten-Generator** (Tempo-Klausel Punkt 1).
 
 ## Entschieden — `ListenTabelle`-Typsicherheit (Variante A, umgesetzt 2026-06-30)
