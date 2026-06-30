@@ -2,6 +2,9 @@
 
 # Wegwerf-/Generier-Outputs (unversioniert) — z.B. Architektur-MD+PDF aus ARCHITEKTUR-GENERIERUNG.md
 /tmp/
+# Transiente Test-Artefakte (Playwright-Reports/Traces) — überall im Baum
+test-results/
+**/test-results/
 
 # Secrets / lokale Env (NICHT committen) — .env.example und frontend/.env.development bleiben versioniert
 .env
