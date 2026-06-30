@@ -9,8 +9,9 @@ const meta = {
     cent: { control: { type: 'number', step: 100 }, description: 'Betrag in Minor Units (Cent)' },
     currency: { control: 'inline-radio', options: ['EUR', 'CHF', 'USD'] },
     size: { control: 'inline-radio', options: ['sm', 'md', 'lg', 'xl'] },
+    tone: { control: 'inline-radio', options: ['default', 'primary'] },
   },
-  args: { cent: 149900, currency: 'EUR', size: 'md' },
+  args: { cent: 149900, currency: 'EUR', size: 'md', tone: 'default' },
 } satisfies Meta<typeof PreisBadge>
 
 export default meta
@@ -23,6 +24,7 @@ export const Standard: Story = {
   },
 }
 
+export const MarkenAkzent: Story = { args: { tone: 'primary', size: 'xl' } }
 export const Gross: Story = { args: { size: 'xl' } }
 export const Schweizerfranken: Story = { args: { currency: 'CHF' } }
 export const Gratis: Story = { args: { cent: 0 } }

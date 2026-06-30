@@ -12,6 +12,7 @@ import type { RegistryItemDto } from '@/api/model';
 import { getBildungAngebote } from '@/api/endpoints/bildung-resource/bildung-resource';
 import { typen, alleTypen, projiziereInShop, type Typ } from '@/bildung';
 import { login } from '@/auth';
+import ListenTabelle from '@ui-base/ui/ListenTabelle.vue';
 import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
 
 const router = useRouter();
@@ -162,8 +163,7 @@ const page = computed({
       @update:open="projektionMeldung = null"
     />
 
-    <UTable
-      ref="table"
+    <ListenTabelle
       v-model:pagination="pagination"
       :data="gefiltert"
       :columns="columns"
@@ -222,7 +222,7 @@ const page = computed({
           />
         </div>
       </template>
-    </UTable>
+    </ListenTabelle>
 
     <div v-if="gefiltert.length > pagination.pageSize" class="flex justify-end mt-3">
       <UPagination v-model:page="page" :total="gefiltert.length" :items-per-page="pagination.pageSize" />

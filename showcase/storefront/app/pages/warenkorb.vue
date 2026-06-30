@@ -2,6 +2,8 @@
 // Warenkorb (öffentlich, ohne Login): Positionen + Menge/Plätze + Entfernen. Die Teilnehmer:innen-
 // Erfassung wandert in den Checkout (erst nach Login), ebenso die Pflichtprüfung. „Zur Kasse" ist
 // hier immer möglich — die Kasse erzwingt Anmeldung und Teilnehmerdaten.
+import PreisBadge from '@customer-ui/ui/PreisBadge.vue'
+
 const { order, refresh, adjust, remove, busy } = useCart()
 await refresh()
 useHead({ title: 'Warenkorb' })
@@ -46,7 +48,7 @@ async function entfernenBestaetigen() {
               <UBadge color="neutral" variant="subtle">{{ l.productVariant.sku }}</UBadge>
             </div>
             <div class="text-right">
-              <p class="font-semibold text-(--ui-primary)">{{ euro(l.linePriceWithTax, order.currencyCode) }}</p>
+              <PreisBadge :cent="l.linePriceWithTax" :currency="order.currencyCode" tone="primary" class="block" />
               <p class="text-xs text-(--ui-text-muted)">{{ euro(l.unitPriceWithTax, order.currencyCode) }} / {{ istSeminar(l) ? 'Platz' : 'Stück' }}</p>
             </div>
           </div>

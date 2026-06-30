@@ -2,6 +2,8 @@
 // Produkt-Detailseite (SSR), Speaking-URL /<slug>?termin=<nr> mit canonical auf die Produktseite.
 // Rendert Detailblöcke je nach gefüllten Feldern; Vertragsangebote (bestellbar=false) zeigen
 // statt Buchung einen Anmelde-/Vertrags-Deeplink. Warenkorb/Checkout folgen in P4.
+import PreisBadge from '@customer-ui/ui/PreisBadge.vue'
+
 const route = useRoute()
 const slug = computed(() => String(route.params.slug))
 
@@ -112,7 +114,7 @@ const bloecke = computed(() => [
                 <span class="block text-(--ui-text-muted)">
                   {{ v.customFields?.ort }}<template v-if="v.customFields?.veranstaltungsformat"> · {{ formatLabel[v.customFields.veranstaltungsformat] || v.customFields.veranstaltungsformat }}</template>
                 </span>
-                <span class="block font-semibold text-(--ui-primary)">{{ euro(v.priceWithTax, v.currencyCode) }}</span>
+                <PreisBadge :cent="v.priceWithTax" :currency="v.currencyCode" tone="primary" size="sm" class="block" />
               </span>
             </label>
           </div>

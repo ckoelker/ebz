@@ -11,6 +11,7 @@ import { AnmeldungStatus } from '@/api/model';
 import { offeneAnmeldungen, bestaetigeAnmeldung, ApiFehler, type OffeneAnmeldungView } from '@/dubletten';
 import { auth, login } from '@/auth';
 import NichtAbgestimmtBanner from '@/components/NichtAbgestimmtBanner.vue';
+import ListenTabelle from '@ui-base/ui/ListenTabelle.vue';
 
 const qc = useQueryClient();
 const status = ref<AnmeldungStatus>(AnmeldungStatus.ANGEFRAGT);
@@ -112,7 +113,7 @@ const page = computed({
       @update:open="meldung = null"
     />
 
-    <UTable
+    <ListenTabelle
       v-model:pagination="pagination"
       :data="data ?? []"
       :columns="columns"
@@ -136,7 +137,7 @@ const page = computed({
           <UIcon name="i-lucide-check-circle" /> bestätigt
         </span>
       </template>
-    </UTable>
+    </ListenTabelle>
 
     <div v-if="(data?.length ?? 0) > pagination.pageSize" class="flex justify-end mt-3">
       <UPagination v-model:page="page" :total="data?.length ?? 0" :items-per-page="pagination.pageSize" />

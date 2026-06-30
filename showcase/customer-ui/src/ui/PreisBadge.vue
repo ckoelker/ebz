@@ -7,7 +7,9 @@ const props = withDefaults(defineProps<{
   cent?: number | null
   currency?: string
   size?: 'sm' | 'md' | 'lg' | 'xl'
-}>(), { currency: 'EUR', size: 'md' })
+  /** Farbe: 'default' (kräftige Standardschrift, z. B. Tabellen) oder 'primary' (Marken-Akzent, z. B. Shop). */
+  tone?: 'default' | 'primary'
+}>(), { currency: 'EUR', size: 'md', tone: 'default' })
 
 const klasse: Record<NonNullable<typeof props.size>, string> = {
   sm: 'text-sm', md: 'text-base', lg: 'text-lg', xl: 'text-2xl',
@@ -15,5 +17,8 @@ const klasse: Record<NonNullable<typeof props.size>, string> = {
 </script>
 
 <template>
-  <span class="font-semibold tabular-nums text-highlighted" :class="klasse[size]">{{ euro(cent, currency) }}</span>
+  <span
+    class="font-semibold tabular-nums"
+    :class="[klasse[size], tone === 'primary' ? 'text-primary' : 'text-highlighted']"
+  >{{ euro(cent, currency) }}</span>
 </template>
